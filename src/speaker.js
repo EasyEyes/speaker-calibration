@@ -7,7 +7,7 @@ class Speaker extends AudioPeer {
   constructor(
     initParameters = {
       targetElementId: null,
-      siteURL: process.env.DEPLOY_URL + 'listener?',
+      siteURL: process.env.DEPLOY_URL + '/listener?',
     }
   ) {
     super(initParameters.targetElementId);
