@@ -7,13 +7,11 @@ class Speaker extends AudioPeer {
   constructor(
     initParameters = {
       targetElementId: null,
-      siteURL: null,
+      // siteURL: null,
     }
   ) {
     super(initParameters.targetElementId);
-    console.log('Speaker constructor');
-    console.log(process.env)
-    this.siteUrl = initParameters.siteURL || process.env.DEPLOY_URL + '/listener?';
+    this.siteUrl = process.env.DEPLOY_URL + '/listener?';
 
     /* Set up callbacks that handle any events related to our peer object. */
     this.peer.on("open", this.#onPeerOpen);
