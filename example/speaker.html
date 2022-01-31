@@ -59,7 +59,7 @@
     <script type="text/javascript">
       document.getElementById("calibrationBeginButton").onclick = () => {
         const speakerParameters = {
-          siteURL: process.env.DEPLOY_URL + '/listener?',
+          // siteURL: process.env.DEPLOY_URL + '/listener?',
           targetElementId: "main",
         };
         window.speaker = new soundCheck.Speaker(speakerParameters);
