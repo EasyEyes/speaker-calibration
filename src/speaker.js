@@ -11,7 +11,7 @@ class Speaker extends AudioPeer {
     }
   ) {
     super(initParameters.targetElementId);
-    this.siteUrl = process.env.DEPLOY_URL + '/listener?';
+    this.siteUrl = window.location.href + '/listener?';
 
     /* Set up callbacks that handle any events related to our peer object. */
     this.peer.on("open", this.#onPeerOpen);
