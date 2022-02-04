@@ -8,7 +8,7 @@ module.exports = {
     path: path.resolve(__dirname, 'dist'),
     filename: '[name].js',
     library: {
-      name: 'soundCheck',
+      name: 'speakerCalibrator',
       type: 'umd',
     },
   },

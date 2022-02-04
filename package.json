@@ -1,8 +1,8 @@
 {
-  "name": "sound-check",
+  "name": "speaker-calibration",
   "version": "0.0.10",
   "description": "What those loudspeakers do tho",
-  "main": "dist/soundCheck.js",
+  "main": "dist/main.js",
   "module": "src/index.js",
   "directories": {
     "example": "example",
@@ -10,17 +10,26 @@
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "webpack",
-    "watch": "webpack --watch",
-    "serve:dev": "webpack serve --open",
+    "build:watch": "webpack --watch",
     "start:dev": "nodemon ./dist/server.js"
   },
   "keywords": [],
-  "author": "Augustin Burchell <augustin.burchell@gmail.com> (https://aburchell.github.io/)",
+  "constributors": [
+    {
+      "name" : "Augustin Burchell",
+      "email" : "augustin.burchell@gmail.com",
+      "url" : "https://aburchell.github.io/"
+    },
+    {
+      "name" : "Hugo De Moraes",
+      "email" : "demoraeshugo@gmail.com",
+      "url" : "https://github.com/demoraeshugo"
+    }
+  ],
   "license": "ISC",
   "repository": {
     "type": "git",
-    "url": "https://github.com/EasyEyes/sound-check"
+    "url": "https://github.com/EasyEyes/speaker-calibration"
   },
   "dependencies": {
     "express": "^4.17.1",
