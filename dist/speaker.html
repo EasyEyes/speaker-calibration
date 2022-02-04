@@ -16,6 +16,7 @@
   <body>
     <main>
       <h1>Sound check &#128264;</h1>
+      <!--
       <p>
         Every speaker is different. To better understand yours, let's calibrate!
       </p>
@@ -47,13 +48,15 @@
         the intended sound, then discarded; it is never saved to disk, or sent
         anywhere online.
       </p>
+      -->
       <button id="calibrationBeginButton" type="button">Calibrate sound</button>
+      <div id="display"></div>
     </main>
     <script>
       document.getElementById("calibrationBeginButton").onclick = () => {
         const speakerParameters = {
           siteUrl: window.location.href.substring(0, location.href.lastIndexOf('/')),
-          targetElementId: "main",
+          targetElementId: "display",
         };
         window.speaker = new speakerCalibrator.Speaker(speakerParameters);
       };

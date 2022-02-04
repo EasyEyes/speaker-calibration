@@ -3,7 +3,6 @@
   "version": "0.0.10",
   "description": "What those loudspeakers do tho",
   "main": "dist/main.js",
-  "module": "src/index.js",
   "directories": {
     "example": "example",
     "bin": "dist"
@@ -27,18 +26,18 @@
       "url" : "https://github.com/demoraeshugo"
     }
   ],
-  "license": "ISC",
+  "license": "MIT",
   "repository": {
     "type": "git",
     "url": "https://github.com/EasyEyes/speaker-calibration"
   },
   "dependencies": {
-    "express": "^4.17.1",
     "peerjs": "^1.3.2",
     "qrcode": "^1.4.4",
     "uuid": "^8.3.2"
   },
   "devDependencies": {
+    "express": "^4.17.1",
     "css-loader": "^5.2.6",
     "nodemon": "^2.0.15",
     "style-loader": "^2.0.0",
