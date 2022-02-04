@@ -7,11 +7,14 @@ class Speaker extends AudioPeer {
   constructor(
     initParameters = {
       targetElementId: null,
-      // siteURL: null,
+      siteUrl: null,
     }
   ) {
-    super(initParameters.targetElementId);
-    this.siteUrl = window.location.href + '/listener?';
+    super(initParameters);
+    //console.log(initParameters.siteUrl);
+    this.siteUrl += "/listener?";
+
+    console.log(this.siteUrl);
 
     /* Set up callbacks that handle any events related to our peer object. */
     this.peer.on("open", this.#onPeerOpen);
@@ -24,7 +27,7 @@ class Speaker extends AudioPeer {
   /**
    * Callback method for when a peer connection is opened
    * Creates a QR code with the peer id and displays it
-   * @param {*} id 
+   * @param {*} id
    */
   #onPeerOpen = (id) => {
     // Workaround for peer.reconnect deleting previous id
@@ -59,15 +62,15 @@ class Speaker extends AudioPeer {
       document.getElementById(this.targetElement).appendChild(qrCanvas);
     } else {
       // or just print it to console
-      console.log("Peer reachable at: ", uri);
+      console.log("TEST: Peer reachable at: ", uri);
     }
   };
 
   /**
    * Callback method for when a peer connection is established
    * Enforces that only one connection is established
-   * @param {*} connection 
-   * @returns 
+   * @param {*} connection
+   * @returns
    */
   #onPeerConnection = (connection) => {
     // Allow only a single connection
@@ -102,8 +105,8 @@ class Speaker extends AudioPeer {
 
   /**
    * Callback method for when data is received from the peer
-   * 
-   * @param {*} data 
+   *
+   * @param {*} data
    */
   #onIncomingData = (data) => {
     // Get data, eg audio analysis results, from the user's mobile device
@@ -119,7 +122,7 @@ class Speaker extends AudioPeer {
         break;
     }
   };
-  
+
   #calibrateAudio = (connection) => {
     // Called once the connection to the Listener peer is up and usable.
     // TODO actually make the correct sounds

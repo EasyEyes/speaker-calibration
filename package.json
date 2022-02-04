@@ -2,7 +2,8 @@
   "name": "sound-check",
   "version": "0.0.10",
   "description": "What those loudspeakers do tho",
-  "main": "dist/main.js",
+  "main": "dist/soundCheck.js",
+  "module": "src/index.js",
   "directories": {
     "example": "example",
     "bin": "dist"
@@ -10,7 +11,9 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "webpack",
-    "devStart": "nodemon index.js"
+    "watch": "webpack --watch",
+    "serve:dev": "webpack serve --open",
+    "start:dev": "nodemon ./dist/server.js"
   },
   "keywords": [],
   "author": "Augustin Burchell <augustin.burchell@gmail.com> (https://aburchell.github.io/)",
@@ -30,6 +33,7 @@
     "nodemon": "^2.0.15",
     "style-loader": "^2.0.0",
     "webpack": "^5.40.0",
-    "webpack-cli": "^4.7.2"
+    "webpack-cli": "^4.7.2",
+    "webpack-dev-server": "^4.7.3"
   }
 }

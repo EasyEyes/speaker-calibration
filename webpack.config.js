@@ -1,13 +1,16 @@
 const webpack = require('webpack')
+const path = require('path');
 
 module.exports = {
   mode: 'development',
   entry: './src/main.js',
   output: {
-    path: `${__dirname}/dist`,
+    path: path.resolve(__dirname, 'dist'),
     filename: '[name].js',
-    library: 'soundCheck',
-    libraryTarget: 'umd',
+    library: {
+      name: 'soundCheck',
+      type: 'umd',
+    },
   },
   module: {
     rules: [
@@ -16,4 +19,9 @@ module.exports = {
       },
     ],
   },
-};
+  // devServer: {
+  //   static: {
+  //     directory: path.resolve(__dirname, 'dist'),
+  //   },
+  // },
+}

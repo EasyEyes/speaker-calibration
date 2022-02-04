@@ -6,7 +6,12 @@ const pressFeedbackURI =
 // -- Parameters --
 
 export class AudioPeer {
-  constructor(targetElementId = null) {
+  constructor(
+    initParameters = {
+      targetElementId: null,
+      siteUrl: null,
+    }
+  ) {
     // PeerJS
     /* Create the Peer object for our end of the connection. */
     this.peer = new Peer(null, { debug: 2 });
@@ -14,7 +19,9 @@ export class AudioPeer {
     this.lastPeerId = null;
 
     // Display information to HTML elem with given id
-    this.targetElement = targetElementId;
+    this.targetElement = initParameters.targetElementId;
+
+    this.siteUrl = initParameters.siteUrl;
 
     // Store for all incoming data
     this.dataStore = [];
@@ -27,8 +34,8 @@ export class AudioPeer {
 
   /**
    * Helper method to display information to DOM element
-   * @param {string} message 
-   * @param {boolean} append 
+   * @param {string} message
+   * @param {boolean} append
    */
   displayUpdate = (message, append = false) => {
     // If the specified elem exists, update that elem
@@ -67,7 +74,7 @@ export class AudioPeer {
 
   /**
    * Helper method for when an error occurs
-   * @param {*} err 
+   * @param {*} err
    */
   onPeerError = (err) => {
     this.displayUpdate(err);
@@ -85,8 +92,8 @@ export class AudioPeer {
 
   /**
    * Helper method that converts an object to a query string
-   * @param {*} params 
-   * @returns 
+   * @param {*} params
+   * @returns
    */
   queryStringFromObject = (params) => {
     return Object.keys(params)
