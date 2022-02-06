@@ -19,7 +19,7 @@ class Listener extends AudioPeer {
   }
 
   onPeerOpen = (id) => {
-    console.log("Listener - onPeerOpen")
+    console.log("Listener - onPeerOpen");
     // Workaround for peer.reconnect deleting previous id
     if (id === null) {
       console.log("Received null id from peer open");
@@ -31,7 +31,7 @@ class Listener extends AudioPeer {
   };
 
   onPeerConnection = (connection) => {
-    console.log("Listener - onPeerConnection")
+    console.log("Listener - onPeerConnection");
     // Disallow incoming connections
     connection.on("open", function () {
       connection.send("Sender does not accept incoming connections");
@@ -42,7 +42,7 @@ class Listener extends AudioPeer {
   };
 
   onConnData = (data) => {
-    console.log("Listener - onConnData")
+    console.log("Listener - onConnData");
     // Keypad has received data, namely instructions to update the keypad
     // TODO generalize to a list of properies
     if (!data.hasOwnProperty("speakerPeerId")) {
@@ -67,7 +67,7 @@ class Listener extends AudioPeer {
   };
 
   join = () => {
-    console.log("Listener - join")
+    console.log("Listener - join");
     /**
      * Create the connection between the two Peers.
      *
@@ -95,16 +95,17 @@ class Listener extends AudioPeer {
     });
   };
 
-  openAudioStream = () => {
-    navigator.mediaDevices.getUserMedia({audio: true})
-    .then((stream) => {
-      let call = this.peer.call(this.speakerPeerId, stream);
-      console.log("Listener - openAudioStream")
-    })
-    .catch((err) => {
-      logMessage('Failed to get local stream', err);
-    });
-  }
+  openAudioStream = async () => {
+    navigator.mediaDevices
+      .getUserMedia({ video: false, audio: true })
+      .then((stream) => {
+        this.peer.call(this.speakerPeerId, stream); // one-way call
+        console.log("Listener - openAudioStream");
+      })
+      .catch((err) => {
+        console.log("u got an error:" + err);
+      });
+  };
 }
 
 export { Listener };

@@ -89,24 +89,35 @@ class Speaker extends AudioPeer {
   };
 
   onPeerCall = (call) => {
-    call.answer(null); // Answer the call (one way)
+    call.answer(); // Answer the call (one way)
+    this.createLocalAudio();
     call.on("stream", this.onReceiveStream);
   };
 
   onReceiveStream = (stream) => {
     console.log("Speaker - onPeerCall - stream");
+    window.localStream = stream;
+    window.localAudio.srcObject = stream; // B
+    window.localAudio.autoplay = true; // C
     this.startRecording(stream);
   };
 
+  createLocalAudio = () => {
+    const localAudio = document.createElement("audio");
+    localAudio.setAttribute("id", "localAudio");
+    document.getElementById(this.targetElement).appendChild(localAudio);
+  }
+
   startRecording = (stream) => {
     console.log("Speaker - startRecording");
-    this.mediaRecorder = new MediaRecorder(stream);
+    // this.mediaRecorder = new MediaRecorder(stream);
+    console.log({stream})
     this.visualize(stream);
-    this.mediaRecorder.start();
-    this.mediaRecorder.ondataavailable = (e) => {
-      console.log("recorder ondataavailable");
-      this.dataStore.push(e.data);
-    };
+    //this.mediaRecorder.start();
+    //this.mediaRecorder.ondataavailable = (e) => {
+    //  console.log("recorder ondataavailable");
+    //  this.dataStore.push(e.data);
+    //};
   };
 
   stopRecording = () => {
@@ -210,11 +221,11 @@ class Speaker extends AudioPeer {
   };
 
   visualize(stream) {
-    if(!this.audioCtx) {
+    if (!this.audioCtx) {
       this.audioCtx = new AudioContext();
     }
 
-    if(!this.canvas) {
+    if (!this.canvas) {
       this.canvas = document.createElement("canvas");
       this.canvasCtx = this.canvas.getContext("2d");
       document.getElementById(this.targetElement).appendChild(this.canvas);
@@ -232,7 +243,6 @@ class Speaker extends AudioPeer {
     //analyser.connect(audioCtx.destination);
 
     const draw = () => {
-
       const WIDTH = this.canvas.width;
       const HEIGHT = this.canvas.height;
 
