@@ -89,12 +89,13 @@ class Speaker extends AudioPeer {
     call.answer(); // Answer the call (one way)
     call.on("stream", (stream) => {
       console.log("Speaker - onPeerCall - stream");
-      this.startRecording(stream);
-      this.calibrateAudio(stream);
+      this.startRecording(stream).then(() => {
+        this.calibrateAudio(stream);
+      });
     });
   };
 
-  startRecording = (stream) => {
+  startRecording = async (stream) => {
     this.mediaRecorder = new MediaRecorder(stream);
     this.mediaRecorder.start();
     console.log(this.mediaRecorder.state);
@@ -110,34 +111,34 @@ class Speaker extends AudioPeer {
     console.log("recorder stopped");
     this.mediaRecorder.onstop = (e) => {
       console.log("recorder stopped");
-    
-      const clipName = prompt('Enter a name for your sound clip');
-    
-      const clipContainer = document.createElement('article');
-      const clipLabel = document.createElement('p');
-      const audio = document.createElement('audio');
-      const deleteButton = document.createElement('button');
-    
-      clipContainer.classList.add('clip');
-      audio.setAttribute('controls', '');
+
+      const clipName = prompt("Enter a name for your sound clip");
+
+      const clipContainer = document.createElement("article");
+      const clipLabel = document.createElement("p");
+      const audio = document.createElement("audio");
+      const deleteButton = document.createElement("button");
+
+      clipContainer.classList.add("clip");
+      audio.setAttribute("controls", "");
       deleteButton.innerHTML = "Delete";
       clipLabel.innerHTML = clipName;
-    
+
       clipContainer.appendChild(audio);
       clipContainer.appendChild(clipLabel);
       clipContainer.appendChild(deleteButton);
       document.getElementById(this.targetElement).appendChild(clipContainer);
-    
-      const blob = new Blob(this.dataStore, { 'type' : 'audio/ogg; codecs=opus' });
+
+      const blob = new Blob(this.dataStore, { type: "audio/ogg; codecs=opus" });
       this.dataStore = [];
       const audioURL = window.URL.createObjectURL(blob);
       audio.src = audioURL;
-    
-      deleteButton.onclick = function(e) {
+
+      deleteButton.onclick = function (e) {
         let evtTgt = e.target;
         evtTgt.parentNode.parentNode.removeChild(evtTgt.parentNode);
-      }
-    }
+      };
+    };
   };
 
   onPeerClose = () => {
@@ -187,7 +188,7 @@ class Speaker extends AudioPeer {
     }
   };
 
-  calibrateAudio = (connection) => {
+  calibrateAudio = async (connection) => {
     console.log("Speaker - calibrateAudio");
     // Called once the connection to the Listener peer is up and usable.
     // TODO actually make the correct sounds
@@ -197,12 +198,28 @@ class Speaker extends AudioPeer {
     oscillator.connect(gainNode);
     gainNode.connect(this.audioContext.destination);
 
+    console.log("PLAYING SOUND");
+
     const duration = 2000;
     oscillator.start(this.audioContext.currentTime);
     oscillator.stop(this.audioContext.currentTime + duration / 1000);
 
-    console.log("PLAYING SOUND");
-    this.stopRecording();
+    console.log({ oscillator, gainNode });
+
+    await setTimeout(() => {
+      this.stopRecording();
+    }, duration);
+
+    // await new Promise((resolve) => {
+    //   if (!oscillator) {
+    //     // insert desired number of milliseconds to pause here
+    //     console.log("awaiting onended");
+    //     setTimeout(resolve, 250);
+    //   } else {
+    //     oscillator.onended = resolve;
+    //     this.stopRecording();
+    //   }
+    // });
   };
 }
 /* 
