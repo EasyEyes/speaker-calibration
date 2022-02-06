@@ -14,6 +14,9 @@ class Speaker extends AudioPeer {
     //console.log(initParameters.siteUrl);
     this.siteUrl += "/listener?";
     this.mediaRecorder = null;
+    this.audioCtx = null;
+    this.canvas = null;
+    this.canvasCtx = null;
 
     /* Set up callbacks that handle any events related to our peer object. */
     this.peer.on("open", this.onPeerOpen);
@@ -86,32 +89,29 @@ class Speaker extends AudioPeer {
   };
 
   onPeerCall = (call) => {
-    call.answer(); // Answer the call (one way)
-    call.on("stream", (stream) => {
-      console.log("Speaker - onPeerCall - stream");
-      this.startRecording(stream).then(() => {
-        this.calibrateAudio(stream);
-      });
-    });
+    call.answer(null); // Answer the call (one way)
+    call.on("stream", this.onReceiveStream);
   };
 
-  startRecording = async (stream) => {
+  onReceiveStream = (stream) => {
+    console.log("Speaker - onPeerCall - stream");
+    this.startRecording(stream);
+  };
+
+  startRecording = (stream) => {
+    console.log("Speaker - startRecording");
     this.mediaRecorder = new MediaRecorder(stream);
+    this.visualize(stream);
     this.mediaRecorder.start();
-    console.log(this.mediaRecorder.state);
-    console.log("recorder started");
     this.mediaRecorder.ondataavailable = (e) => {
+      console.log("recorder ondataavailable");
       this.dataStore.push(e.data);
     };
   };
 
   stopRecording = () => {
     this.mediaRecorder.stop();
-    console.log(this.mediaRecorder.state);
-    console.log("recorder stopped");
     this.mediaRecorder.onstop = (e) => {
-      console.log("recorder stopped");
-
       const clipName = prompt("Enter a name for your sound clip");
 
       const clipContainer = document.createElement("article");
@@ -191,10 +191,9 @@ class Speaker extends AudioPeer {
   calibrateAudio = async (connection) => {
     console.log("Speaker - calibrateAudio");
     // Called once the connection to the Listener peer is up and usable.
-    // TODO actually make the correct sounds
-    // Actually play the sounds [3]
     const oscillator = this.audioContext.createOscillator();
     const gainNode = this.audioContext.createGain();
+
     oscillator.connect(gainNode);
     gainNode.connect(this.audioContext.destination);
 
@@ -204,23 +203,73 @@ class Speaker extends AudioPeer {
     oscillator.start(this.audioContext.currentTime);
     oscillator.stop(this.audioContext.currentTime + duration / 1000);
 
-    console.log({ oscillator, gainNode });
-
-    await setTimeout(() => {
+    setTimeout(() => {
       this.stopRecording();
-    }, duration);
-
-    // await new Promise((resolve) => {
-    //   if (!oscillator) {
-    //     // insert desired number of milliseconds to pause here
-    //     console.log("awaiting onended");
-    //     setTimeout(resolve, 250);
-    //   } else {
-    //     oscillator.onended = resolve;
-    //     this.stopRecording();
-    //   }
-    // });
+      console.log(this.dataStore);
+    }, duration * 2);
   };
+
+  visualize(stream) {
+    if(!this.audioCtx) {
+      this.audioCtx = new AudioContext();
+    }
+
+    if(!this.canvas) {
+      this.canvas = document.createElement("canvas");
+      this.canvasCtx = this.canvas.getContext("2d");
+      document.getElementById(this.targetElement).appendChild(this.canvas);
+    }
+
+    const source = this.audioCtx.createMediaStreamSource(stream);
+    const analyser = this.audioCtx.createAnalyser();
+
+    analyser.fftSize = 2048;
+
+    const bufferLength = analyser.frequencyBinCount;
+    const dataArray = new Uint8Array(bufferLength);
+
+    source.connect(analyser);
+    //analyser.connect(audioCtx.destination);
+
+    const draw = () => {
+
+      const WIDTH = this.canvas.width;
+      const HEIGHT = this.canvas.height;
+
+      requestAnimationFrame(draw);
+
+      analyser.getByteTimeDomainData(dataArray);
+
+      this.canvasCtx.fillStyle = "rgb(200, 200, 200)";
+      this.canvasCtx.fillRect(0, 0, WIDTH, HEIGHT);
+
+      this.canvasCtx.lineWidth = 2;
+      this.canvasCtx.strokeStyle = "rgb(0, 0, 0)";
+
+      this.canvasCtx.beginPath();
+
+      let sliceWidth = (WIDTH * 1.0) / bufferLength;
+      let x = 0;
+
+      for (let i = 0; i < bufferLength; i++) {
+        let v = dataArray[i] / 128.0;
+        let y = (v * HEIGHT) / 2;
+
+        if (i === 0) {
+          this.canvasCtx.moveTo(x, y);
+        } else {
+          this.canvasCtx.lineTo(x, y);
+        }
+
+        x += sliceWidth;
+      }
+
+      this.canvasCtx.lineTo(this.canvas.width, this.canvas.height / 2);
+      this.canvasCtx.stroke();
+    };
+
+    draw();
+  }
 }
 /* 
 Referenced links:
