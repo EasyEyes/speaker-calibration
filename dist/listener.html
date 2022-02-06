@@ -19,15 +19,17 @@
         your experience.
       </p>
     <![endif]-->
-    <p>
-      This is the listener page
-    </p>
+    <h1>Listener Page &#128264;</h1>
+    <button id="calibrationBeginButton" type="button">Calibrate sound</button>
     <div id="display" ></div>
     <script type="text/javascript">
       const listenerParameters = {
         targetElementId: "display"
       };
-      window.listener = new speakerCalibrator.Listener(listenerParameters);
+      document.getElementById("calibrationBeginButton").onclick = () => {
+        window.listener = new speakerCalibrator.Listener(listenerParameters);
+        console.log(window.listener)
+      };
     </script>
   </body>
 </html>

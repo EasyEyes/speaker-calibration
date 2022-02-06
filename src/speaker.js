@@ -13,24 +13,22 @@ class Speaker extends AudioPeer {
     super(initParameters);
     //console.log(initParameters.siteUrl);
     this.siteUrl += "/listener?";
+    this.mediaRecorder = null;
 
     /* Set up callbacks that handle any events related to our peer object. */
-    this.peer.on("open", this.#onPeerOpen);
-    this.peer.on("connection", this.#onPeerConnection);
-    this.peer.on("disconnected", this.onPeerDisconnected);
+    this.peer.on("open", this.onPeerOpen);
+    this.peer.on("connection", this.onPeerConnection);
+    this.peer.on("call", this.onPeerCall);
     this.peer.on("close", this.onPeerClose);
+    this.peer.on("disconnected", this.onPeerDisconnected);
     this.peer.on("error", this.onPeerError);
   }
 
-  /**
-   * Callback method for when a peer connection is opened
-   * Creates a QR code with the peer id and displays it
-   * @param {*} id
-   */
-  #onPeerOpen = (id) => {
+  onPeerOpen = (id) => {
+    console.log("Speaker - onPeerOpen");
     // Workaround for peer.reconnect deleting previous id
     if (id === null) {
-      this.displayUpdate("Received null id from peer open");
+      console.log("Received null id from peer open");
       this.peer.id = this.lastPeerId;
     } else {
       this.lastPeerId = this.peer.id;
@@ -40,6 +38,10 @@ class Speaker extends AudioPeer {
       alert("DEBUG Check you assumption that id === this.peer.id");
     }
 
+    this.showQRCode();
+  };
+
+  showQRCode = () => {
     // Get query string, the URL parameters to specify a Listener
     const queryStringParameters = {
       speakerPeerId: this.peer.id,
@@ -64,13 +66,9 @@ class Speaker extends AudioPeer {
     }
   };
 
-  /**
-   * Callback method for when a peer connection is established
-   * Enforces that only one connection is established
-   * @param {*} connection
-   * @returns
-   */
-  #onPeerConnection = (connection) => {
+  onPeerConnection = (connection) => {
+    console.log("Speaker - onPeerConnection");
+
     // Allow only a single connection
     if (this.conn && this.conn.open) {
       connection.on("open", function () {
@@ -81,32 +79,100 @@ class Speaker extends AudioPeer {
       });
       return;
     }
+
     this.conn = connection;
-    this.displayUpdate("Connected to: ", this.conn.peer);
-    this.#ready();
+    console.log("Connected to: ", this.conn.peer);
+    this.ready();
   };
 
-  /**
-   * Helper method that defines callbacks to handle incoming data and connection events
-   */
-  #ready = () => {
+  onPeerCall = (call) => {
+    call.answer(); // Answer the call (one way)
+    call.on("stream", (stream) => {
+      console.log("Speaker - onPeerCall - stream");
+      this.startRecording(stream);
+      this.calibrateAudio(stream);
+    });
+  };
+
+  startRecording = (stream) => {
+    this.mediaRecorder = new MediaRecorder(stream);
+    this.mediaRecorder.start();
+    console.log(this.mediaRecorder.state);
+    console.log("recorder started");
+    this.mediaRecorder.ondataavailable = (e) => {
+      this.dataStore.push(e.data);
+    };
+  };
+
+  stopRecording = () => {
+    this.mediaRecorder.stop();
+    console.log(this.mediaRecorder.state);
+    console.log("recorder stopped");
+    this.mediaRecorder.onstop = (e) => {
+      console.log("recorder stopped");
+    
+      const clipName = prompt('Enter a name for your sound clip');
+    
+      const clipContainer = document.createElement('article');
+      const clipLabel = document.createElement('p');
+      const audio = document.createElement('audio');
+      const deleteButton = document.createElement('button');
+    
+      clipContainer.classList.add('clip');
+      audio.setAttribute('controls', '');
+      deleteButton.innerHTML = "Delete";
+      clipLabel.innerHTML = clipName;
+    
+      clipContainer.appendChild(audio);
+      clipContainer.appendChild(clipLabel);
+      clipContainer.appendChild(deleteButton);
+      document.getElementById(this.targetElement).appendChild(clipContainer);
+    
+      const blob = new Blob(this.dataStore, { 'type' : 'audio/ogg; codecs=opus' });
+      this.dataStore = [];
+      const audioURL = window.URL.createObjectURL(blob);
+      audio.src = audioURL;
+    
+      deleteButton.onclick = function(e) {
+        let evtTgt = e.target;
+        evtTgt.parentNode.parentNode.removeChild(evtTgt.parentNode);
+      }
+    }
+  };
+
+  onPeerClose = () => {
+    this.conn = null;
+    console.log("Connection destroyed");
+  };
+
+  onPeerDisconnected = () => {
+    console.log("Connection lost. Please reconnect");
+
+    // Workaround for peer.reconnect deleting previous id
+    this.peer.id = this.lastPeerId;
+    this.peer._lastServerId = this.lastPeerId;
+    this.peer.reconnect();
+  };
+
+  onPeerError = (error) => {
+    console.log(error);
+  };
+
+  ready = () => {
+    console.log("Speaker - ready");
     // Perform callback with data
-    this.conn.on("data", this.#onIncomingData);
+    this.conn.on("data", this.onIncomingData);
     this.conn.on("close", () => {
-      this.displayUpdate("Connection reset<br>Awaiting connection...");
+      console.log("Connection reset<br>Awaiting connection...");
       this.conn = null;
     });
 
     // Start playing calibration noises
-    calibrateAudio(this.conn);
+    //this.calibrateAudio(this.conn);
   };
 
-  /**
-   * Callback method for when data is received from the peer
-   *
-   * @param {*} data
-   */
-  #onIncomingData = (data) => {
+  onIncomingData = (data) => {
+    console.log("Speaker - onIncomingData");
     // Get data, eg audio analysis results, from the user's mobile device
     data.timeStoredBySpeaker = Date.now();
     this.dataStore.push(data);
@@ -121,7 +187,8 @@ class Speaker extends AudioPeer {
     }
   };
 
-  #calibrateAudio = (connection) => {
+  calibrateAudio = (connection) => {
+    console.log("Speaker - calibrateAudio");
     // Called once the connection to the Listener peer is up and usable.
     // TODO actually make the correct sounds
     // Actually play the sounds [3]
@@ -134,7 +201,8 @@ class Speaker extends AudioPeer {
     oscillator.start(this.audioContext.currentTime);
     oscillator.stop(this.audioContext.currentTime + duration / 1000);
 
-    this.displayUpdate("PLAYING SOUND");
+    console.log("PLAYING SOUND");
+    this.stopRecording();
   };
 }
 /* 
