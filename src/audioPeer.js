@@ -27,7 +27,7 @@ export class AudioPeer {
     this.dataStore = [];
 
     // Create and play sounds using this audio context
-    this.audioContext = new (window.AudioContext ||
+    this.sourceAudioContext = new (window.AudioContext ||
       window.webkitAudioContext ||
       window.audioContext)();
   }

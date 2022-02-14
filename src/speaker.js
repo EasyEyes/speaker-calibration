@@ -1,7 +1,7 @@
-// import { QRCode  } from "qrcode";
 var QRCode = require("qrcode");
 import "./speaker.css";
 import { AudioPeer } from "./audioPeer.js";
+import { AudioCalibrator } from "./audioCalibrator.js";
 
 class Speaker extends AudioPeer {
   constructor(
@@ -11,12 +11,10 @@ class Speaker extends AudioPeer {
     }
   ) {
     super(initParameters);
-    //console.log(initParameters.siteUrl);
+
     this.siteUrl += "/listener?";
-    this.mediaRecorder = null;
-    this.audioCtx = null;
-    this.canvas = null;
-    this.canvasCtx = null;
+    this.ac = new AudioCalibrator();
+    //this.ar = new AudioRecorder();
 
     /* Set up callbacks that handle any events related to our peer object. */
     this.peer.on("open", this.onPeerOpen);
@@ -27,8 +25,41 @@ class Speaker extends AudioPeer {
     this.peer.on("error", this.onPeerError);
   }
 
+  /**
+   * Called after the peer conncection has been opened.
+   * Generates a QR code for the connection and displays it.
+   */
+  showQRCode = () => {
+    // Get query string, the URL parameters to specify a Listener
+    const queryStringParameters = {
+      speakerPeerId: this.peer.id,
+    };
+    let queryString = this.queryStringFromObject(queryStringParameters);
+    const uri = this.siteUrl + queryString;
+
+    // Display QR code for the participant to scan
+    const qrCanvas = document.createElement("canvas");
+    qrCanvas.setAttribute("id", "qrCanvas");
+    console.log(uri);
+    QRCode.toCanvas(qrCanvas, uri, (error) => {
+      if (error) console.error(error);
+    });
+
+    // If specified HTML Id is available, show QR code there
+    if (!!document.getElementById(this.targetElement)) {
+      document.getElementById(this.targetElement).appendChild(qrCanvas);
+    } else {
+      // or just print it to console
+      console.log("TEST: Peer reachable at: ", uri);
+    }
+  };
+
+  /**
+   * Called when the peer connection is opened.
+   * Saves the peer id and calls the QR code generator.
+   * @param {Object} peerConnection - The peer connection object.
+   */
   onPeerOpen = (id) => {
-    console.log("Speaker - onPeerOpen");
     // Workaround for peer.reconnect deleting previous id
     if (id === null) {
       console.log("Received null id from peer open");
@@ -42,31 +73,6 @@ class Speaker extends AudioPeer {
     }
 
     this.showQRCode();
-  };
-
-  showQRCode = () => {
-    // Get query string, the URL parameters to specify a Listener
-    const queryStringParameters = {
-      speakerPeerId: this.peer.id,
-    };
-    let queryString = this.queryStringFromObject(queryStringParameters);
-    const uri = this.siteUrl + queryString;
-
-    // Display QR code for the participant to scan
-    const qrCanvas = document.createElement("canvas");
-    qrCanvas.setAttribute("id", "qrCanvas");
-    console.log(uri);
-    QRCode.toCanvas(qrCanvas, uri, function (error) {
-      if (error) console.error(error);
-    });
-
-    // If specified HTML Id is available, show QR code there
-    if (!!document.getElementById(this.targetElement)) {
-      document.getElementById(this.targetElement).appendChild(qrCanvas);
-    } else {
-      // or just print it to console
-      console.log("TEST: Peer reachable at: ", uri);
-    }
   };
 
   onPeerConnection = (connection) => {
@@ -88,141 +94,9 @@ class Speaker extends AudioPeer {
     this.ready();
   };
 
-  onPeerCall = (call) => {
-    call.answer(); // Answer the call (one way)
-    this.createLocalAudio();
-    call.on("stream", this.onReceiveStream);
-  };
-
-  onReceiveStream = (stream) => {
-    console.log("Speaker - onPeerCall - stream");
-    window.localStream = stream;
-    window.localAudio.srcObject = stream; // B
-    window.localAudio.autoplay = true; // C
-    this.startRecording(stream);
-  };
-
-  createLocalAudio = () => {
-    const localAudio = document.createElement("audio");
-    localAudio.setAttribute("id", "localAudio");
-    document.getElementById(this.targetElement).appendChild(localAudio);
-  }
-
-  startRecording = (stream) => {
-    console.log("Speaker - startRecording");
-    // this.mediaRecorder = new MediaRecorder(stream);
-    console.log({stream})
-    this.visualize(stream);
-    //this.mediaRecorder.start();
-    //this.mediaRecorder.ondataavailable = (e) => {
-    //  console.log("recorder ondataavailable");
-    //  this.dataStore.push(e.data);
-    //};
-  };
-
-  stopRecording = () => {
-    this.mediaRecorder.stop();
-    this.mediaRecorder.onstop = (e) => {
-      const clipName = prompt("Enter a name for your sound clip");
-
-      const clipContainer = document.createElement("article");
-      const clipLabel = document.createElement("p");
-      const audio = document.createElement("audio");
-      const deleteButton = document.createElement("button");
-
-      clipContainer.classList.add("clip");
-      audio.setAttribute("controls", "");
-      deleteButton.innerHTML = "Delete";
-      clipLabel.innerHTML = clipName;
-
-      clipContainer.appendChild(audio);
-      clipContainer.appendChild(clipLabel);
-      clipContainer.appendChild(deleteButton);
-      document.getElementById(this.targetElement).appendChild(clipContainer);
-
-      const blob = new Blob(this.dataStore, { type: "audio/ogg; codecs=opus" });
-      this.dataStore = [];
-      const audioURL = window.URL.createObjectURL(blob);
-      audio.src = audioURL;
-
-      deleteButton.onclick = function (e) {
-        let evtTgt = e.target;
-        evtTgt.parentNode.parentNode.removeChild(evtTgt.parentNode);
-      };
-    };
-  };
-
-  onPeerClose = () => {
-    this.conn = null;
-    console.log("Connection destroyed");
-  };
-
-  onPeerDisconnected = () => {
-    console.log("Connection lost. Please reconnect");
-
-    // Workaround for peer.reconnect deleting previous id
-    this.peer.id = this.lastPeerId;
-    this.peer._lastServerId = this.lastPeerId;
-    this.peer.reconnect();
-  };
-
-  onPeerError = (error) => {
-    console.log(error);
-  };
-
-  ready = () => {
-    console.log("Speaker - ready");
-    // Perform callback with data
-    this.conn.on("data", this.onIncomingData);
-    this.conn.on("close", () => {
-      console.log("Connection reset<br>Awaiting connection...");
-      this.conn = null;
-    });
-
-    // Start playing calibration noises
-    //this.calibrateAudio(this.conn);
-  };
-
-  onIncomingData = (data) => {
-    console.log("Speaker - onIncomingData");
-    // Get data, eg audio analysis results, from the user's mobile device
-    data.timeStoredBySpeaker = Date.now();
-    this.dataStore.push(data);
-    // TODO in listener.js, use data.msg to specify message type
-    switch (data.msg) {
-      case "handshakeOK":
-        console.log("Handshake OK");
-        break;
-      default:
-        console.log("Data received from Listener peer!", data);
-        break;
-    }
-  };
-
-  calibrateAudio = async (connection) => {
-    console.log("Speaker - calibrateAudio");
-    // Called once the connection to the Listener peer is up and usable.
-    const oscillator = this.audioContext.createOscillator();
-    const gainNode = this.audioContext.createGain();
-
-    oscillator.connect(gainNode);
-    gainNode.connect(this.audioContext.destination);
-
-    console.log("PLAYING SOUND");
-
-    const duration = 2000;
-    oscillator.start(this.audioContext.currentTime);
-    oscillator.stop(this.audioContext.currentTime + duration / 1000);
-
-    setTimeout(() => {
-      this.stopRecording();
-      console.log(this.dataStore);
-    }, duration * 2);
-  };
-
   visualize(stream) {
-    if (!this.audioCtx) {
-      this.audioCtx = new AudioContext();
+    if (!this.sourceAudioCtx) {
+      this.sourceAudioCtx = new AudioContext();
     }
 
     if (!this.canvas) {
@@ -231,8 +105,8 @@ class Speaker extends AudioPeer {
       document.getElementById(this.targetElement).appendChild(this.canvas);
     }
 
-    const source = this.audioCtx.createMediaStreamSource(stream);
-    const analyser = this.audioCtx.createAnalyser();
+    const source = this.sourceAudioCtx.createMediaStreamSource(stream);
+    const analyser = this.sourceAudioCtx.createAnalyser();
 
     analyser.fftSize = 2048;
 
@@ -280,7 +154,72 @@ class Speaker extends AudioPeer {
 
     draw();
   }
+
+  /**
+   * Called after a call is established and data is flowing.
+   * Sets up the local audio stream and starts the calibration process.
+   * @param {MediaStream} stream - The stream of audio from the Listener.
+   */
+  onReceiveStream = (stream) => {
+    window.localStream = stream;
+    window.localAudio.srcObject = stream;
+    window.localAudio.autoplay = true;
+
+    // Start calibration
+    if (!this.ac.getCalibrationStatus()) {
+      this.visualize(stream);
+      this.ac.startCalibration(stream);
+    }
+  };
+
+  /**
+   * Called when a call is made by the Listener.
+   * Answers the call in a one-way manner, and sets up a stream listener.
+   * @param {*} call
+   */
+  onPeerCall = (call) => {
+    call.answer(); // Answer the call (one way)
+    this.ac.createLocalAudio(document.getElementById(this.targetElement));
+    call.on("stream", this.onReceiveStream);
+  };
+
+  onPeerClose = () => {
+    this.conn = null;
+    console.log("Connection destroyed");
+  };
+
+  onPeerDisconnected = () => {
+    console.log("Connection lost. Please reconnect");
+
+    // Workaround for peer.reconnect deleting previous id
+    this.peer.id = this.lastPeerId;
+    this.peer._lastServerId = this.lastPeerId;
+    this.peer.reconnect();
+  };
+
+  onPeerError = (error) => {
+    console.log(error);
+  };
+
+  onIncomingData = (data) => {
+    console.log("Speaker - onIncomingData");
+    console.log({ data });
+  };
+
+  ready = () => {
+    console.log("Speaker - ready");
+    // Perform callback with data
+    this.conn.on("data", this.onIncomingData);
+    this.conn.on("close", () => {
+      console.log("Connection reset<br>Awaiting connection...");
+      this.conn = null;
+    });
+
+    // Start playing calibration noises
+    //this.calibrateAudio(this.conn);
+  };
 }
+
 /* 
 Referenced links:
 https://stackoverflow.com/questions/28016664/when-you-pass-this-as-an-argument/28016676#28016676

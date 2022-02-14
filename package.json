@@ -16,14 +16,14 @@
   "keywords": [],
   "constributors": [
     {
-      "name" : "Augustin Burchell",
-      "email" : "augustin.burchell@gmail.com",
-      "url" : "https://aburchell.github.io/"
+      "name": "Augustin Burchell",
+      "email": "augustin.burchell@gmail.com",
+      "url": "https://aburchell.github.io/"
     },
     {
-      "name" : "Hugo De Moraes",
-      "email" : "demoraeshugo@gmail.com",
-      "url" : "https://github.com/demoraeshugo"
+      "name": "Hugo De Moraes",
+      "email": "demoraeshugo@gmail.com",
+      "url": "https://github.com/demoraeshugo"
     }
   ],
   "license": "MIT",
@@ -37,8 +37,9 @@
     "uuid": "^8.3.2"
   },
   "devDependencies": {
-    "express": "^4.17.1",
     "css-loader": "^5.2.6",
+    "express": "^4.17.1",
+    "jsdoc": "^3.6.10",
     "nodemon": "^2.0.15",
     "style-loader": "^2.0.0",
     "webpack": "^5.40.0",
