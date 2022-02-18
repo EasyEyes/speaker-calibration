@@ -1,19 +1,21 @@
 /**
- * AudioRecorder provides a simple interface for recording audio from a microphone using the Media Recorder API.
+ * AudioRecorder provides a simple interface for recording audio from a microphone
+ * using the Media Recorder API.
  */
 export class AudioRecorder {
   /** @private */
-  #mediaRecorder = null;
+  #mediaRecorder;
   /** @private */
   #recordedChunks = [];
   /** @private */
-  #audioBlob = null;
+  #audioBlob;
   /** @private */
   #audioContext;
   /** @private */
   #fileReader;
   /** @private */
-  #arrayBuffer = null;
+  #arrayBuffer;
+
   // the class constructor
   constructor() {
     this.#audioContext = new (window.AudioContext ||
@@ -84,7 +86,7 @@ export class AudioRecorder {
    */
   startRecording = (stream) => {
     // Set up media recorder if needed
-    if (this.#mediaRecorder === null) this.#setMediaRecorder(stream);
+    if (!this.#mediaRecorder) this.#setMediaRecorder(stream);
     this.#mediaRecorder.start();
   };
 

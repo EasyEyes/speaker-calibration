@@ -94,67 +94,6 @@ class Speaker extends AudioPeer {
     this.ready();
   };
 
-  visualize(stream) {
-    if (!this.sourceAudioCtx) {
-      this.sourceAudioCtx = new AudioContext();
-    }
-
-    if (!this.canvas) {
-      this.canvas = document.createElement("canvas");
-      this.canvasCtx = this.canvas.getContext("2d");
-      document.getElementById(this.targetElement).appendChild(this.canvas);
-    }
-
-    const source = this.sourceAudioCtx.createMediaStreamSource(stream);
-    const analyser = this.sourceAudioCtx.createAnalyser();
-
-    analyser.fftSize = 2048;
-
-    const bufferLength = analyser.frequencyBinCount;
-    const dataArray = new Uint8Array(bufferLength);
-
-    source.connect(analyser);
-    //analyser.connect(audioCtx.destination);
-
-    const draw = () => {
-      const WIDTH = this.canvas.width;
-      const HEIGHT = this.canvas.height;
-
-      requestAnimationFrame(draw);
-
-      analyser.getByteTimeDomainData(dataArray);
-
-      this.canvasCtx.fillStyle = "rgb(200, 200, 200)";
-      this.canvasCtx.fillRect(0, 0, WIDTH, HEIGHT);
-
-      this.canvasCtx.lineWidth = 2;
-      this.canvasCtx.strokeStyle = "rgb(0, 0, 0)";
-
-      this.canvasCtx.beginPath();
-
-      let sliceWidth = (WIDTH * 1.0) / bufferLength;
-      let x = 0;
-
-      for (let i = 0; i < bufferLength; i++) {
-        let v = dataArray[i] / 128.0;
-        let y = (v * HEIGHT) / 2;
-
-        if (i === 0) {
-          this.canvasCtx.moveTo(x, y);
-        } else {
-          this.canvasCtx.lineTo(x, y);
-        }
-
-        x += sliceWidth;
-      }
-
-      this.canvasCtx.lineTo(this.canvas.width, this.canvas.height / 2);
-      this.canvasCtx.stroke();
-    };
-
-    draw();
-  }
-
   /**
    * Called after a call is established and data is flowing.
    * Sets up the local audio stream and starts the calibration process.
@@ -167,7 +106,6 @@ class Speaker extends AudioPeer {
 
     // Start calibration
     if (!this.ac.getCalibrationStatus()) {
-      this.visualize(stream);
       this.ac.startCalibration(stream);
     }
   };
@@ -214,9 +152,6 @@ class Speaker extends AudioPeer {
       console.log("Connection reset<br>Awaiting connection...");
       this.conn = null;
     });
-
-    // Start playing calibration noises
-    //this.calibrateAudio(this.conn);
   };
 }
 

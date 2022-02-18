@@ -1,14 +1,44 @@
 import { AudioRecorder } from "./audioRecorder.js";
+import { visualize } from "./visualize.js";
 
 class AudioCalibrator extends AudioRecorder {
   /** @private */
   #isCalibrating = false;
   /** @private */
-  #sourceAudioContext = null;
+  #sourceAudioContext;
+  /** @private */
+  #sourceAudioAnalyser;
+  /** @private */
+  #sinkAudioContext
+  /** @private */
+  #sinkAudioAnalyser;
+
   // the class constructor
   constructor() {
     super();
   }
+
+  #createAudioAnalyzer = (
+    audioContext,
+    source,
+    bufferSize = 512,
+    featureExtractors = ["amplitudeSpectrum"],
+    callback = (features) => {
+      console.log(features);
+    }
+  ) => {
+    if (typeof Meyda === "undefined") {
+      console.log("Meyda could not be found! Have you included it?");
+    } else {
+      return Meyda.createMeydaAnalyzer({
+        audioContext: audioContext,
+        source: source,
+        bufferSize: bufferSize,
+        featureExtractors: featureExtractors,
+        callback: callback,
+      });
+    }
+  };
 
   /**
    * Called when a call is received.
@@ -27,6 +57,8 @@ class AudioCalibrator extends AudioRecorder {
    */
   #playCalibrationAudio = () => {
     this.#sourceAudioContext = new AudioContext();
+    this.#sourceAudioAnalyser = this.#sourceAudioContext.createAnalyser();
+
     const oscillator = this.#sourceAudioContext.createOscillator();
     const gainNode = this.#sourceAudioContext.createGain();
 
@@ -51,6 +83,14 @@ class AudioCalibrator extends AudioRecorder {
    */
   getCalibrationStatus = () => {
     return this.#isCalibrating;
+  };
+
+  setSinkAudio = (stream) => {
+    this.#sinkAudioContext = new AudioContext();
+    this.#sinkAudioAnalyser = this.#sinkAudioContext.createAnalyser();
+    let source = this.#sinkAudioContext.createMediaStreamSource(stream)
+    source.connect(this.#sinkAudioAnalyser);
+    visualize(this.#sinkAudioAnalyser);
   }
 
   /**
@@ -59,6 +99,8 @@ class AudioCalibrator extends AudioRecorder {
    * @param {MediaStream} stream - The stream of audio from the Listener.
    */
   startCalibration = async (stream) => {
+    this.setSinkAudio(stream);
+
     let numRounds = 0;
 
     while (!this.#isCalibrating && numRounds <= 2) {
