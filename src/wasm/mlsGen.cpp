@@ -70,7 +70,8 @@ extern "C"
         delete[] delayLine;
     }
 
-    EMSCRIPTEN_KEEPALIVE void FastHadamard(double *x, long P1, long N)
+    EMSCRIPTEN_KEEPALIVE
+    void FastHadamard(double *x, long P1, long N)
     {
         long i, i1, j, k, k1, k2;
         double temp;
@@ -161,8 +162,35 @@ extern "C"
         }
     }
 
-    EMSCRIPTEN_KEEPALIVE
-    int main() {}
+    // EMSCRIPTEN_KEEPALIVE
+    // void test()
+    // {
+    //     const long N = 18;
+    //     const long P = (1 << N) - 1;
+    //     long i;
+    //     bool *mls = new bool[P];
+    //     long *tagL = new long[P];
+    //     long *tagS = new long[P];
+    //     double *signal = new double[P];
+    //     double *perm = new double[P + 1];
+    //     double *resp = new double[P + 1];
+    //     GenerateMls(mls, P, N);               // Generate the Maximum length sequence
+    //     GeneratetagL(mls, tagL, P, N);        // Generate tagL for the L matrix
+    //     GeneratetagS(mls, tagS, P, N);        // Generate tagS for the S matrix
+    //     GenerateSignal(mls, signal, P);       // Do a simulated measurement and get the signal
+    //     PermuteSignal(signal, perm, tagS, P); // Permute the signal according to tagS
+    //     FastHadamard(perm, P + 1, N);         // Do a Hadamard transform in place
+    //     PermuteResponse(perm, resp, tagL, P); // Permute the impulseresponse according to tagL
+    //     printf("Impulse response:\n");
+    //     for (i = 0; i < 10; i++)
+    //         printf("%10.5f\n", resp[i]);
+    //     delete[] mls;
+    //     delete[] tagL;
+    //     delete[] tagS;
+    //     delete[] signal;
+    //     delete[] perm;
+    //     delete[] resp;
+    // }
 
 #ifdef __cplusplus
 }

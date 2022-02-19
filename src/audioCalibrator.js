@@ -9,7 +9,7 @@ class AudioCalibrator extends AudioRecorder {
   /** @private */
   #sourceAudioAnalyser;
   /** @private */
-  #sinkAudioContext
+  #sinkAudioContext;
   /** @private */
   #sinkAudioAnalyser;
 
@@ -88,10 +88,10 @@ class AudioCalibrator extends AudioRecorder {
   setSinkAudio = (stream) => {
     this.#sinkAudioContext = new AudioContext();
     this.#sinkAudioAnalyser = this.#sinkAudioContext.createAnalyser();
-    let source = this.#sinkAudioContext.createMediaStreamSource(stream)
+    let source = this.#sinkAudioContext.createMediaStreamSource(stream);
     source.connect(this.#sinkAudioAnalyser);
     visualize(this.#sinkAudioAnalyser);
-  }
+  };
 
   /**
    * Method to start the calibration process.
