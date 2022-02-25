@@ -7,6 +7,7 @@
     <meta name="description" content="" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <script src="./main.js"></script>
+    <!-- <script src="./wasm.js"></script> -->
     <link
       rel="icon"
       href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔈</text></svg>"
@@ -16,39 +17,6 @@
   <body>
     <main>
       <h1>Speaker Page &#128264;</h1>
-      <!--
-      <p>
-        Every speaker is different. To better understand yours, let's calibrate!
-      </p>
-      <h2>What do you mean, calibrate?</h2>
-      <p>
-        We are going to play some specific sounds from your computer speakers,
-        then let your iOS device (ie your iPhone or iPad) listen to the sounds
-        and compare them to the specific sounds we expected.
-      </p>
-      <p>
-        By comparing what your mobile device hears, and what we expected your
-        computer to play, we can make a model of the specific quirks of your
-        speakers, so we can play and interpret sounds correctly.
-      </p>
-      <h2>Privacy</h2>
-      <p>
-        Your privacy is incredibly important to us. In the interest of honest
-        and useful science, are invested in privacy and transparency.
-      </p>
-      <p>
-        In order for the sound calibration to work, our website needs permission
-        to use the speaker of your computer (to play sounds) and the microphone
-        of your iOS device (to listen to sounds).
-      </p>
-      <p>
-        Importantly though, recordings never leave your iOS device. The audio
-        coming in from the microphone on your iOS device is immediated run
-        through some mathematical analysis, ie comparing the recorded sound to
-        the intended sound, then discarded; it is never saved to disk, or sent
-        anywhere online.
-      </p>
-      -->
       <button id="calibrationBeginButton" type="button">Calibrate sound</button>
       <div id="display"></div>
     </main>
@@ -61,6 +29,11 @@
         window.speaker = new speakerCalibrator.Speaker(speakerParameters);
         console.log(window.speaker)
       };
+
+      // Module.onRuntimeInitialized = _ => {
+      //   console.log("onRuntimeInitialized");
+      //   console.log(Module);
+      // };
     </script>
   </body>
 </html>

@@ -9,8 +9,8 @@
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "webpack",
-    "build:watch": "webpack --watch",
+    "build:wasm": "make rebuild",
+    "build:webpack:watch": "webpack --watch",
     "start:dev": "nodemon ./dist/server.js"
   },
   "keywords": [],
@@ -37,12 +37,14 @@
     "uuid": "^8.3.2"
   },
   "devDependencies": {
+    "copy-webpack-plugin": "^5.1.2",
     "css-loader": "^5.2.6",
     "express": "^4.17.1",
+    "file-loader": "^6.2.0",
     "jsdoc": "^3.6.10",
     "nodemon": "^2.0.15",
     "style-loader": "^2.0.0",
-    "webpack": "^5.40.0",
+    "webpack": "~5.69.1",
     "webpack-cli": "^4.7.2",
     "webpack-dev-server": "^4.7.3"
   }

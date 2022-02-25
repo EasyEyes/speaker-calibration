@@ -1,5 +1,6 @@
 import { AudioRecorder } from "./audioRecorder.js";
 import { visualize } from "./visualize.js";
+import { wasmBrowserInstantiate } from "./mlsGen/initiateWasm.js";
 
 class AudioCalibrator extends AudioRecorder {
   /** @private */
@@ -12,10 +13,19 @@ class AudioCalibrator extends AudioRecorder {
   #sinkAudioContext;
   /** @private */
   #sinkAudioAnalyser;
+  /** @private */
+  #mlsGen;
 
   // the class constructor
   constructor() {
     super();
+
+    // TODO: this "feels" wrong, but it works for now, so...
+    // perhaps later we can look at a better design pattern
+    wasmBrowserInstantiate("./mlsGen.wasm").then((res) => {
+      this.#mlsGen = res;
+      console.log(res);
+    });
   }
 
   #createAudioAnalyzer = (

@@ -1,22 +1,30 @@
-const webpack = require('webpack')
-const path = require('path');
+const path = require("path");
+const CopyPlugin = require("copy-webpack-plugin");
 
 module.exports = {
-  mode: 'development',
-  entry: './src/main.js',
+  mode: "development",
+  entry: {
+    main: "./src/main.js",
+  },
   output: {
-    path: path.resolve(__dirname, 'dist'),
-    filename: '[name].js',
+    path: path.resolve(__dirname, "dist"),
+    filename: "[name].js",
     library: {
-      name: 'speakerCalibrator',
-      type: 'umd',
+      name: "speakerCalibrator",
+      type: "umd",
     },
   },
   module: {
     rules: [
-      { test: /\.css$/, 
-        use: [ 'style-loader', 'css-loader', ],
+      {
+        test: /\.css$/,
+        use: ["style-loader", "css-loader"],
       },
     ],
   },
-}
+  // experiments: {
+  //   asyncWebAssembly: true,
+  //   syncWebAssembly: true,
+  // },
+  // plugins: [new CopyPlugin([{ from: "src/mleGen/build", to: "" }])],
+};
