@@ -36,7 +36,8 @@ SRC_DIR = $(addprefix ./src/,$(PROJECT_NAME)/)
 
 # WASM files
 SRC_FILE := $(addprefix $(SRC_DIR),$(PROJECT_NAME).cpp) # SRC_DIR + PROJECT_NAME + .cpp
-OUTPUT_TARGET := $(addprefix $(DIST_DIR),$(PROJECT_NAME).js) # DIST_DIR + PROJECT_NAME + .js
+OUTPUT_WASM_JS := $(addprefix $(DIST_DIR),$(PROJECT_NAME).js) # DIST_DIR + PROJECT_NAME + .js
+OUTPUT_WASM := $(addprefix $(DIST_DIR),$(PROJECT_NAME).wasm) # DIST_DIR + PROJECT_NAME + .wasm
 OUTPUT := $(addprefix $(DIST_DIR),$(PROJECT_NAME).*) # DIST_DIR + PROJECT_NAME + .*
 
 # emcc compiler options
@@ -45,12 +46,17 @@ STD = --std=c++11 # C++ standard
 OPTIMIZE = -O2 # optimization level
 ENV = -s ENVIRONMENT='web' # environment
 NOENTRY = --no-entry # no entry point (no main function)
+STANDALONE = -s STANDALONE_WASM # standalone WASM
 
-# 	@echo "Building WASM files..."
-# build the WASM files
+# build the WASM + JS files
+$(PROJECT_NAME)_js:
+	@mkdir -p $(@D)
+	@$(call run_and_test, $(CC) $(STD) $(SRC_FILE) -o $(OUTPUT_WASM_JS) $(OPTIMIZE) $(ENV) $(NOENTRY))
+
+# build the single WASM file
 $(PROJECT_NAME):
 	@mkdir -p $(@D)
-	@$(call run_and_test, $(CC) $(STD) $(SRC_FILE) -o $(OUTPUT_TARGET) $(OPTIMIZE) $(ENV) $(NOENTRY))
+	@$(call run_and_test, $(CC) $(STD) $(SRC_FILE) -o $(OUTPUT_WASM) $(STANDALONE) $(OPTIMIZE) $(ENV) $(NOENTRY))
 
 # clean the WASM files
 .PHONY: clean
