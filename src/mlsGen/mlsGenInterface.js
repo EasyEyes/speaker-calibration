@@ -15,27 +15,28 @@ class MlsGenInterface {
     });
   }
 
-  getMls() {
+  calculateMls(N = 18) {
     // Get function.
     const { _getMls, HEAPU8 } = this.#wasmInstance;
 
     // Create the arrays.
-    // TODO: work around, make this a parameter to the function.
-    const length = 262143; // (1 << 18) - 1 from cpp code
-
+    // eslint-disable-next-line no-bitwise
+    const P = (1 << N) - 1; 
     const offset = 0;
-    const result = new Uint8Array(HEAPU8.buffer, offset, length);
+    const result = new Uint8Array(HEAPU8.buffer, offset, P);
 
     // Call the function.
-    _getMls(result.byteOffset);
+    _getMls(result.byteOffset, N, P);
 
     // save the result.
     this.#mls = result;
+  }
 
-    console.log(result);
-
-    // return the result.
-    return result;
+  getMls() {
+    if(!this.#mls) {
+      this.calculateMls()
+    }
+    return this.#mls;
   }
 }
 

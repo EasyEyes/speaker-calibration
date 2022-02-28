@@ -8,7 +8,6 @@ class Listener extends AudioPeer {
     this.receiverPeerId = null;
 
     const urlParameters = this.parseURLSearchParams();
-    // TODO use `speakerPeerId` in query str produced by speaker.js
     this.speakerPeerId = urlParameters.speakerPeerId;
 
     this.peer.on("open", this.onPeerOpen);

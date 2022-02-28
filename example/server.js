@@ -12,7 +12,7 @@ app.use('/dist', express.static(path.join(__dirname, '../dist'))); // sere the d
 // Middleware to check we have all the params we need
 const checkParams = (req, res, next) => {
   if (!Object.prototype.hasOwnProperty.call(req.query, 'speakerPeerId')) {
-    console.log('No peerID given.'); // TODO Breaking! Serve error
+    console.log('No peerID given.');
     throw new Error('No peerID given -- unable to connect to peer.');
   }
   next();

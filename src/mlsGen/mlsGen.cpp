@@ -5,16 +5,6 @@
 extern "C"
 {
 #endif
-    const long N = 18;
-    const long P = (1 << N) - 1;
-    long i;
-    bool *mls = new bool[P];
-    long *tagL = new long[P];
-    long *tagS = new long[P];
-    double *my_signal = new double[P];
-    double *perm = new double[P + 1];
-    double *resp = new double[P + 1];
-
     EMSCRIPTEN_KEEPALIVE
     void GenerateSignal(bool *mls, double *signal, long P)
     {
@@ -172,30 +162,40 @@ extern "C"
         }
     }
 
-    EMSCRIPTEN_KEEPALIVE
-    void test()
-    {
-        GenerateMls(mls, P, N);               // Generate the Maximum length sequence
-        GeneratetagL(mls, tagL, P, N);        // Generate tagL for the L matrix
-        GeneratetagS(mls, tagS, P, N);        // Generate tagS for the S matrix
-        GenerateSignal(mls, signal, P);       // Do a simulated measurement and get the signal
-        PermuteSignal(my_signal, perm, tagS, P); // Permute the signal according to tagS
-        FastHadamard(perm, P + 1, N);         // Do a Hadamard transform in place
-        PermuteResponse(perm, resp, tagL, P); // Permute the impulseresponse according to tagL
-        // printf("Impulse response:\n");
-        // for (i = 0; i < 10; i++)
-        //     printf("%10.5f\n", resp[i]);
-        delete[] mls;
-        delete[] tagL;
-        delete[] tagS;
-        delete[] signal;
-        delete[] perm;
-        delete[] resp;
-    }
+    // EMSCRIPTEN_KEEPALIVE
+    // void test()
+    // {
+    //     const long N = 18;
+    //     const long P = (1 << N) - 1;
+    //     long i;
+    //     bool *mls = new bool[P];
+    //     long *tagL = new long[P];
+    //     long *tagS = new long[P];
+    //     double *my_signal = new double[P];
+    //     double *perm = new double[P + 1];
+    //     double *resp = new double[P + 1];
+    //     GenerateMls(mls, P, N);               // Generate the Maximum length sequence
+    //     GeneratetagL(mls, tagL, P, N);        // Generate tagL for the L matrix
+    //     GeneratetagS(mls, tagS, P, N);        // Generate tagS for the S matrix
+    //     GenerateSignal(mls, signal, P);       // Do a simulated measurement and get the signal
+    //     PermuteSignal(my_signal, perm, tagS, P); // Permute the signal according to tagS
+    //     FastHadamard(perm, P + 1, N);         // Do a Hadamard transform in place
+    //     PermuteResponse(perm, resp, tagL, P); // Permute the impulseresponse according to tagL
+    //     // printf("Impulse response:\n");
+    //     // for (i = 0; i < 10; i++)
+    //     //     printf("%10.5f\n", resp[i]);
+    //     delete[] mls;
+    //     delete[] tagL;
+    //     delete[] tagS;
+    //     delete[] signal;
+    //     delete[] perm;
+    //     delete[] resp;
+    // }
 
     EMSCRIPTEN_KEEPALIVE
-    void getMls(bool *result)
+    void getMls(bool *result, long N, long P)
     {
+        bool *mls = new bool[P];
         GenerateMls(mls, P, N);
         for(int i = 0; i < P; i++)
         {

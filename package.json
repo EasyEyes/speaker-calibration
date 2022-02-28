@@ -8,7 +8,6 @@
     "bin": "dist"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
     "build:wasm": "make rebuild",
     "build:webpack": "webpack --watch",
     "start:dev": "nodemon ./example/server.js",
