@@ -21,7 +21,7 @@ In `/example` you will find a small example app that uses the `speaker-calibrati
 ### Javascript 
 In `package.json` you will see some key scripts:
 1.  `build:wasm` cleans and rebuilds the wasm files
-2.  `build:webpack` tells webpack to build the `speakerCalibrator` library and output to `/dist`
+2.  `build:watch` tells webpack to build the `speaker-calibration` library in development watch mode, outputing to `/dist`
 3.  `start:dev` spins up an `express.js` server on port `3000` using `nodemon`. It serves the `/dist` & `/example` folders.
 4.  `lint` runs `eslint` on all js files in the project
 5.  `lint:fix` lints and automatically fixes all js files in the project. 

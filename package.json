@@ -8,8 +8,9 @@
     "bin": "dist"
   },
   "scripts": {
+    "build": "webpack",
     "build:wasm": "make rebuild",
-    "build:webpack": "webpack --watch",
+    "build:watch": "webpack --watch",
     "start:dev": "nodemon ./example/server.js",
     "lint": "eslint src --ext .js",
     "lint:fix": "npm run lint -- --fix"
