@@ -79,7 +79,7 @@ class AudioPeer {
    */
   onPeerError = (err) => {
     this.displayUpdate(err);
-    alert(`${err}`);
+    console.log(`${err}`);
   };
 
   /**

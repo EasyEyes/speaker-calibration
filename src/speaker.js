@@ -63,14 +63,14 @@ class Speaker extends AudioPeer {
   onPeerOpen = id => {
     // Workaround for peer.reconnect deleting previous id
     if (id === null) {
-      console.log('Received null id from peer open');
+      console.error('Received null id from peer open');
       this.peer.id = this.lastPeerId;
     } else {
       this.lastPeerId = this.peer.id;
     }
 
     if (id !== this.peer.id) {
-      alert('DEBUG Check you assumption that id === this.peer.id');
+      console.warn('DEBUG Check you assumption that id === this.peer.id');
     }
 
     this.showQRCode();
