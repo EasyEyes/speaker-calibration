@@ -1,5 +1,5 @@
 // eslint-disable-next-line import/extensions
-const createMLSGenModule = require("../../dist/mlsGen.js");
+const createMLSGenModule = require('../../dist/mlsGen.js');
 
 class MlsGenInterface {
   /** @private */
