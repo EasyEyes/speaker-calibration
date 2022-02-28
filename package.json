@@ -11,7 +11,7 @@
     "build": "webpack",
     "build:wasm": "make rebuild",
     "build:watch": "webpack --watch",
-    "start:dev": "nodemon ./example/server.js",
+    "start:dev": "nodemon ./dist/example/server.js",
     "lint": "eslint src --ext .js",
     "lint:fix": "npm run lint -- --fix"
   },
