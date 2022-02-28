@@ -1,54 +1,37 @@
-import { AudioRecorder } from "./audioRecorder.js";
-import { visualize } from "./visualize.js";
-import { wasmBrowserInstantiate } from "./mlsGen/initiateWasm.js";
+import AudioRecorder from "./audioRecorder";
+import visualize from "./visualize";
+import MlsGenInterface from "./mlsGen/mlsGenInterface";
 
 class AudioCalibrator extends AudioRecorder {
   /** @private */
   #isCalibrating = false;
+
+  /** @private */
+  #sourceAudio;
+
   /** @private */
   #sourceAudioContext;
+
   /** @private */
   #sourceAudioAnalyser;
+
   /** @private */
   #sinkAudioContext;
+
   /** @private */
   #sinkAudioAnalyser;
+
   /** @private */
-  #mlsGen;
+  #mlsGenInterface;
+
+  /** @private */
+  #mlsData;
 
   // the class constructor
   constructor() {
     super();
-
-    // TODO: this "feels" wrong, but it works for now, so...
-    // perhaps later we can look at a better design pattern
-    wasmBrowserInstantiate("./mlsGen.wasm").then((res) => {
-      this.#mlsGen = res;
-      console.log(res);
-    });
+    this.#mlsGenInterface = new MlsGenInterface();
   }
-
-  #createAudioAnalyzer = (
-    audioContext,
-    source,
-    bufferSize = 512,
-    featureExtractors = ["amplitudeSpectrum"],
-    callback = (features) => {
-      console.log(features);
-    }
-  ) => {
-    if (typeof Meyda === "undefined") {
-      console.log("Meyda could not be found! Have you included it?");
-    } else {
-      return Meyda.createMeydaAnalyzer({
-        audioContext: audioContext,
-        source: source,
-        bufferSize: bufferSize,
-        featureExtractors: featureExtractors,
-        callback: callback,
-      });
-    }
-  };
 
   /**
    * Called when a call is received.
@@ -61,24 +44,43 @@ class AudioCalibrator extends AudioRecorder {
   };
 
   /**
+   * Converts a Uint8Array to a correct Buffer
+   * @param {Uint8Array} array
+   * @returns
+   */
+  #typedArrayToBuffer = (array) =>
+    array.buffer.slice(array.byteOffset, array.byteLength + array.byteOffset);
+
+  /**
    * Creates an audio context and plays it for a few seconds.
    * @private
    * @returns {Promise} - Resolves when the audio is done playing.
    */
   #playCalibrationAudio = () => {
-    this.#sourceAudioContext = new AudioContext();
-    this.#sourceAudioAnalyser = this.#sourceAudioContext.createAnalyser();
-
-    const oscillator = this.#sourceAudioContext.createOscillator();
-    const gainNode = this.#sourceAudioContext.createGain();
-
-    oscillator.connect(gainNode);
-    gainNode.connect(this.#sourceAudioContext.destination);
-
+    const buffer = new ArrayBuffer(this.#mlsData.length);
+    const view = new Uint8Array(buffer);
     const duration = 2000;
+    // const buffer = this.#typedArrayToBuffer(this.#mlsData);
 
-    oscillator.start(this.#sourceAudioContext.currentTime);
-    oscillator.stop(this.#sourceAudioContext.currentTime + duration / 1000);
+    // console.log({ buffer });
+
+    for (let i; i < this.#mlsData.length; i += 1) {
+      view[i] = this.#mlsData[i];
+    }
+
+    this.#sourceAudioContext = new AudioContext();
+
+    // TODO: Uncaught (in promise) DOMException: Unable to decode audio data
+    // Possibly to do with the type of audio data being passed in.
+    this.#sourceAudioContext.decodeAudioData(buffer).then((buf) => {
+      // Create a source node from the buffer
+      this.#sourceAudio = this.#sourceAudioContext.createBufferSource();
+      this.#sourceAudio.buffer = buf;
+      // Connect to the final output node (the speakers)
+      this.#sourceAudio.connect(this.#sourceAudioContext.destination);
+      // Play immediately
+      this.#sourceAudio.start(0);
+    });
 
     // let's return a promise so we can await the end of each track
     return new Promise((resolve) => {
@@ -91,14 +93,12 @@ class AudioCalibrator extends AudioRecorder {
    * @public
    * @returns {Boolean} - True if the audio is being calibrated, false otherwise.
    */
-  getCalibrationStatus = () => {
-    return this.#isCalibrating;
-  };
+  getCalibrationStatus = () => this.#isCalibrating;
 
   setSinkAudio = (stream) => {
     this.#sinkAudioContext = new AudioContext();
     this.#sinkAudioAnalyser = this.#sinkAudioContext.createAnalyser();
-    let source = this.#sinkAudioContext.createMediaStreamSource(stream);
+    const source = this.#sinkAudioContext.createMediaStreamSource(stream);
     source.connect(this.#sinkAudioAnalyser);
     visualize(this.#sinkAudioAnalyser);
   };
@@ -110,6 +110,7 @@ class AudioCalibrator extends AudioRecorder {
    */
   startCalibration = async (stream) => {
     this.setSinkAudio(stream);
+    this.#mlsData = this.#mlsGenInterface.getMls();
 
     let numRounds = 0;
 
@@ -117,13 +118,14 @@ class AudioCalibrator extends AudioRecorder {
       // start recording
       this.startRecording(stream);
       // play calibration audio
+      // eslint-disable-next-line no-await-in-loop
       await this.#playCalibrationAudio().then(() => {
         // when done, stop recording
         this.stopRecording();
-        numRounds++;
       });
+      numRounds += 1;
     }
   };
 }
 
-export { AudioCalibrator };
+export default AudioCalibrator;

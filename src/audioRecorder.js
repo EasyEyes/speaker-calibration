@@ -2,17 +2,22 @@
  * AudioRecorder provides a simple interface for recording audio from a microphone
  * using the Media Recorder API.
  */
-export class AudioRecorder {
+class AudioRecorder {
   /** @private */
   #mediaRecorder;
+
   /** @private */
   #recordedChunks = [];
+
   /** @private */
   #audioBlob;
+
   /** @private */
   #audioContext;
+
   /** @private */
   #fileReader;
+
   /** @private */
   #arrayBuffer;
 
@@ -61,7 +66,7 @@ export class AudioRecorder {
     // Set up file reader on loaded end event
     this.#fileReader.onloadend = this.#onFileReaderLoad;
 
-    //Load blob
+    // Load blob
     this.#fileReader.readAsArrayBuffer(this.#audioBlob);
   };
 
@@ -98,3 +103,5 @@ export class AudioRecorder {
     this.#mediaRecorder.stop();
   };
 }
+
+export default AudioRecorder;

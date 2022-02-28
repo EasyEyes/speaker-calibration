@@ -1,5 +1,5 @@
 import "./listener.css";
-import { AudioPeer } from "./audioPeer.js";
+import AudioPeer from "./audioPeer";
 
 class Listener extends AudioPeer {
   constructor(listenerParameters = { targetElementId: null }) {
@@ -33,9 +33,9 @@ class Listener extends AudioPeer {
   onPeerConnection = (connection) => {
     console.log("Listener - onPeerConnection");
     // Disallow incoming connections
-    connection.on("open", function () {
+    connection.on("open", () => {
       connection.send("Sender does not accept incoming connections");
-      setTimeout(function () {
+      setTimeout(() => {
         connection.close();
       }, 500);
     });
@@ -45,17 +45,16 @@ class Listener extends AudioPeer {
     console.log("Listener - onConnData");
     // Keypad has received data, namely instructions to update the keypad
     // TODO generalize to a list of properies
-    if (!data.hasOwnProperty("speakerPeerId")) {
+    const hasSpeakerID = Object.prototype.hasOwnProperty.call(data, "speakerPeerId");
+    if (!hasSpeakerID) {
       console.error(
         'Error in parsing data received! Must set "speakerPeerId" properties'
       );
     } else {
       // this.conn.close();
       console.log(this.speakerPeerId);
-      if (data.hasOwnProperty("speakerPeerId")) {
-        this.speakerPeerId = data["speakerPeerId"];
-      }
-      let newParams = {
+      this.speakerPeerId = data.speakerPeerId;
+      const newParams = {
         speakerPeerId: this.speakerPeerId,
       };
       /*
@@ -84,13 +83,13 @@ class Listener extends AudioPeer {
     });
 
     this.conn.on("open", () => {
-      //console.log("TODO Implement real on connection fn");
+      // console.log("TODO Implement real on connection fn");
       this.openAudioStream();
     });
 
     // Handle incoming data (messages only since this is the signal sender)
     this.conn.on("data", this.onConnData);
-    this.conn.on("close", function () {
+    this.conn.on("close", () => {
       console.log("Connection closed");
     });
   };
@@ -103,9 +102,9 @@ class Listener extends AudioPeer {
         console.log("Listener - openAudioStream");
       })
       .catch((err) => {
-        console.log("u got an error:" + err);
+        console.log(`u got an error:${err}`);
       });
   };
 }
 
-export { Listener };
+export default Listener;

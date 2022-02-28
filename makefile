@@ -47,18 +47,19 @@ OPTIMIZE = -O2 # optimization level
 ENV = -s ENVIRONMENT='web' # environment
 NOENTRY = --no-entry # no entry point (no main function)
 STANDALONE = -s STANDALONE_WASM # standalone WASM
+MODULARIZE = -s MODULARIZE=1 -s 'EXPORT_NAME="createMLSGenModule"' # puts all of the generated JavaScript into a factory function
 
-# build the WASM + JS files
-$(PROJECT_NAME)_js:
+# build the WASM + JS glue module
+$(PROJECT_NAME)_module:
 	@mkdir -p $(@D)
-	@$(call run_and_test, $(CC) $(STD) $(SRC_FILE) -o $(OUTPUT_WASM_JS) $(OPTIMIZE) $(ENV) $(NOENTRY))
+	@$(call run_and_test, $(CC) $(STD) $(SRC_FILE) -o $(OUTPUT_WASM_JS) $(MODULARIZE) $(OPTIMIZE) $(ENV) $(NOENTRY))
 
-# build the single WASM file
-$(PROJECT_NAME):
+# build the standalone WASM file
+$(PROJECT_NAME)_wasm:
 	@mkdir -p $(@D)
 	@$(call run_and_test, $(CC) $(STD) $(SRC_FILE) -o $(OUTPUT_WASM) $(STANDALONE) $(OPTIMIZE) $(ENV) $(NOENTRY))
 
-# clean the WASM files
+# clean the WASM + JS files
 .PHONY: clean
 clean:
 	@mkdir -p $(@D)
@@ -66,4 +67,4 @@ clean:
 
 .PHONY: rebuild
 rebuild:
-	@make clean; make $(PROJECT_NAME)
+	@make clean; make $(PROJECT_NAME)_module

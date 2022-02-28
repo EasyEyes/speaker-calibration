@@ -1,4 +1,4 @@
-import { Listener } from "./listener.js";
-import { Speaker } from "./speaker.js";
+import Listener from "./listener";
+import Speaker from "./speaker";
 
 export { Listener, Speaker };
