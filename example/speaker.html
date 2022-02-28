@@ -6,8 +6,7 @@
     <title>Speaker</title>
     <meta name="description" content="" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <script src="./main.js"></script>
-    <!-- <script src="./wasm.js"></script> -->
+    <script src="../dist/main.js"></script>
     <link
       rel="icon"
       href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔈</text></svg>"
@@ -20,14 +19,24 @@
       <button id="calibrationBeginButton" type="button">Calibrate sound</button>
       <div id="display"></div>
     </main>
+    <!-- <script>
+      console.log("Hello World");
+      Module.onRuntimeInitialized = (_) => {
+        console.log("onRuntimeInitialized");
+        console.log(Module);
+      };
+    </script> -->
     <script>
       document.getElementById("calibrationBeginButton").onclick = () => {
         const speakerParameters = {
-          siteUrl: window.location.href.substring(0, location.href.lastIndexOf('/')),
+          siteUrl: window.location.href.substring(
+            0,
+            location.href.lastIndexOf("/")
+          ),
           targetElementId: "display",
         };
         window.speaker = new speakerCalibrator.Speaker(speakerParameters);
-        console.log(window.speaker)
+        console.log(window.speaker);
       };
 
       // Module.onRuntimeInitialized = _ => {
