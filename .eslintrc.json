@@ -13,6 +13,15 @@
     },
     "rules": {
         "no-console": 0, //TODO: set to 1 in final submission
-        "class-methods-use-this": 0 //TODO: set to 1 in final submission
+        "class-methods-use-this": 0, //TODO: set to 1 in final submission
+        "require-jsdoc": ["error", {
+            "require": {
+                "FunctionDeclaration": true,
+                "MethodDefinition": true,
+                "ClassDeclaration": true,
+                "ArrowFunctionExpression": true,
+                "FunctionExpression": true
+            }
+        }]
     }
 }

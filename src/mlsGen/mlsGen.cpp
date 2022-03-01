@@ -1,5 +1,6 @@
-// #include "stdio.h"
-// #include <emscripten/emscripten.h>
+// setup emscripten for vscode intelli sense: 
+// https://gist.github.com/wayou/59f3a8e4fbab050fbb32e94dd9582660'
+#include <emscripten/emscripten.h>
 #include <emscripten/bind.h>
 
 using namespace emscripten;
@@ -19,16 +20,16 @@ private:
 public:
     MLSGen(long N);
     ~MLSGen();
-    bool *getMls();
+    void getMls(bool *resBuff);
     double *getResp();
-    void generateSignal(bool *mls, double *signal, long P);
-    void generateMls(bool *mls, long P, long N);
-    void fastHadamard(double *x, long P1, long N);
-    void permuteSignal(double *sig, double *perm, long *tagS, long P);
-    void permuteResponse(double *perm, double *resp, long *tagL, long P);
-    void generateTagL(bool *mls, long *tagL, long P, long N);
-    void generateTagS(bool *mls, long *tagS, long P, long N);
-    void getMls(bool *result, long N, long P);
+    void setSig(double *signal);
+    // void generateSignal(bool *mls, double *signal, long P);
+    void generateMls();
+    void fastHadamard();
+    void permuteSignal();
+    void permuteResponse();
+    void generateTagL();
+    void generateTagS();
 };
 
 MLSGen::MLSGen(long N)
@@ -53,9 +54,20 @@ MLSGen::~MLSGen()
     delete[] resp;
 }
 
-bool *MLSGen::getMls()
+// we can't return a pointer to an array so we instead pass a buffer 
+// to be filled with the MLS
+void MLSGen::getMls(bool *resBuff)
 {
-    return mls;
+    // if mls is not generated, generate it
+    if (*(&mls + 1) - mls != P)
+    {
+        generateMls();
+    }
+    // copy mls to resBuff
+    for (int i = 0; i < P; i++)
+    {
+        resBuff[i] = mls[i];
+    }
 }
 
 double *MLSGen::getResp()
@@ -63,23 +75,36 @@ double *MLSGen::getResp()
     return resp;
 }
 
-void MLSGen::generateSignal(bool *mls, double *signal, long P)
+void MLSGen::setSig(double *signal)
 {
-    long i;
-    double *input = new double[P];
-    for (i = 0; i < P; i++) // Change 0 to 1 and 1 to -1
+    if (*(&signal + 1) - signal != P)
     {
-        input[i] = -2 * mls[i] + 1;
+        printf("Error: signal length does not match MLS length\n");
+        return;
     }
-    for (i = 0; i < P; i++) // Simulate a system with h = {2, 0.4, 0.2, -0.1, -0.8}, just an example
+    for (long i = 0; i < P; i++)
     {
-        signal[i] =
-            2.0 * input[(P + i - 0) % P] + 0.4 * input[(P + i - 1) % P] + 0.2 * input[(P + i - 2) % P] - 0.1 * input[(P + i - 3) % P] - 0.8 * input[(P + i - 4) % P];
+        my_signal[i] = signal[i];
     }
-    delete[] input;
 }
 
-void MLSGen::generateMls(bool *mls, long P, long N)
+// void MLSGen::generateSignal(bool *mls, double *signal, long P)
+// {
+//     long i;
+//     double *input = new double[P];
+//     for (i = 0; i < P; i++) // Change 0 to 1 and 1 to -1
+//     {
+//         input[i] = -2 * mls[i] + 1;
+//     }
+//     for (i = 0; i < P; i++) // Simulate a system with h = {2, 0.4, 0.2, -0.1, -0.8}, just an example
+//     {
+//         signal[i] =
+//             2.0 * input[(P + i - 0) % P] + 0.4 * input[(P + i - 1) % P] + 0.2 * input[(P + i - 2) % P] - 0.1 * input[(P + i - 3) % P] - 0.8 * input[(P + i - 4) % P];
+//     }
+//     delete[] input;
+// }
+
+void MLSGen::generateMls()
 {
     const long maxNoTaps = 18;
     const bool tapsTab[16][18] = {
@@ -126,10 +151,11 @@ void MLSGen::generateMls(bool *mls, long P, long N)
     delete[] delayLine;
 }
 
-void MLSGen::fastHadamard(double *x, long P1, long N)
+void MLSGen::fastHadamard()
 {
-    long i, i1, j, k, k1, k2;
+    long i, i1, j, k, k1, k2, P1;
     double temp;
+    P1 = P + 1;
     k1 = P1;
     for (k = 0; k < N; k++)
     {
@@ -139,27 +165,27 @@ void MLSGen::fastHadamard(double *x, long P1, long N)
             for (i = j; i < P1; i = i + k1)
             {
                 i1 = i + k2;
-                temp = x[i] + x[i1];
-                x[i1] = x[i] - x[i1];
-                x[i] = temp;
+                temp = mls[i] + mls[i1];
+                mls[i1] = mls[i] - mls[i1];
+                mls[i] = temp;
             }
         }
         k1 = k1 >> 1;
     }
 }
 
-void MLSGen::permuteSignal(double *sig, double *perm, long *tagS, long P)
+void MLSGen::permuteSignal()
 {
     long i;
     double dc = 0;
     for (i = 0; i < P; i++)
-        dc += sig[i];
+        dc += my_signal[i];
     perm[0] = -dc;
     for (i = 0; i < P; i++) // Just a permutation of the measured signal
-        perm[tagS[i]] = sig[i];
+        perm[tagS[i]] = my_signal[i];
 }
 
-void MLSGen::permuteResponse(double *perm, double *resp, long *tagL, long P)
+void MLSGen::permuteResponse()
 {
     long i;
     const double fact = 1 / double(P + 1);
@@ -170,7 +196,7 @@ void MLSGen::permuteResponse(double *perm, double *resp, long *tagL, long P)
     resp[P] = 0;
 }
 
-void MLSGen::generateTagL(bool *mls, long *tagL, long P, long N)
+void MLSGen::generateTagL()
 {
     long i, j;
     long *colSum = new long[P];
@@ -200,7 +226,7 @@ void MLSGen::generateTagL(bool *mls, long *tagL, long P, long N)
     delete[] index;
 }
 
-void MLSGen::generateTagS(bool *mls, long *tagS, long P, long N)
+void MLSGen::generateTagS()
 {
     long i, j;
     for (i = 0; i < P; i++) // For each column in the S matrix
@@ -213,23 +239,11 @@ void MLSGen::generateTagS(bool *mls, long *tagS, long P, long N)
     }
 }
 
-// testing passing data to the MLSGen class
-void MLSGen::getMls(bool *result, long N, long P)
-{
-    bool *mls = new bool[P];
-    generateMls(mls, P, N);
-    for (int i = 0; i < P; i++)
-    {
-        result[i] = mls[i];
-    }
-}
-
 // Binding code
-EMSCRIPTEN_BINDINGS(mlsGen)
+EMSCRIPTEN_BINDINGS(mls_gen_module)
 {
     class_<MLSGen>("MLSGen")
         .constructor<long>()
-        .function("generateSignal", &MLSGen::generateSignal)
         .function("generateMls", &MLSGen::generateMls)
         .function("fastHadamard", &MLSGen::fastHadamard)
         .function("permuteSignal", &MLSGen::permuteSignal)
@@ -237,9 +251,9 @@ EMSCRIPTEN_BINDINGS(mlsGen)
         .function("generateTagL", &MLSGen::generateTagL)
         .function("generateTagS", &MLSGen::generateTagS)
         .function("getMls", &MLSGen::getMls, allow_raw_pointers())
-        .function("getResp", &MLSGen::getResp, allow_raw_pointers());
-    // .property("mls", &MLSGen::getMls) I guess not a property becuase of missing setter
-    // .property("resp", &MLSGen::getResp);
+        .function("getResp", &MLSGen::getResp, allow_raw_pointers())
+        .function("setSig", &MLSGen::setSig, allow_raw_pointers());
+    // .function("generateSignal", &MLSGen::generateSignal)
 }
 
 // EMSCRIPTEN_KEEPALIVE
