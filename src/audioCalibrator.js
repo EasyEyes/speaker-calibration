@@ -60,9 +60,6 @@ class AudioCalibrator extends AudioRecorder {
     const buffer = new ArrayBuffer(this.#mlsData.length);
     const view = new Uint8Array(buffer);
     const duration = 2000;
-    // const buffer = this.#typedArrayToBuffer(this.#mlsData);
-
-    // console.log({ buffer });
 
     for (let i; i < this.#mlsData.length; i += 1) {
       view[i] = this.#mlsData[i];

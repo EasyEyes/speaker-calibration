@@ -48,6 +48,12 @@ ENV = -s ENVIRONMENT='web' # environment
 NOENTRY = --no-entry # no entry point (no main function)
 STANDALONE = -s STANDALONE_WASM # standalone WASM
 MODULARIZE = -s MODULARIZE=1 -s 'EXPORT_NAME="createMLSGenModule"' # puts all of the generated JavaScript into a factory function
+BIND = -lembind # links against embind library
+
+# build the WASM + JS glue module, linked to embind library
+$(PROJECT_NAME)_bind:
+	@mkdir -p $(@D)
+	@$(call run_and_test, $(CC) $(STD) $(BIND) $(SRC_FILE) -o $(OUTPUT_WASM_JS) $(MODULARIZE) $(OPTIMIZE) $(ENV) $(NOENTRY))
 
 # build the WASM + JS glue module
 $(PROJECT_NAME)_module:
@@ -67,4 +73,4 @@ clean:
 
 .PHONY: rebuild
 rebuild:
-	@make clean; make $(PROJECT_NAME)_module
+	@make clean; make $(PROJECT_NAME)_bind
