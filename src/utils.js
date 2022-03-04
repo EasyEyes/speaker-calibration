@@ -1,9 +1,13 @@
-const targetElementId = "display";
+const targetElementId = 'display';
 
-export default function visualize(targetAnalyser) {
+/**
+ * Utility function to visualize audio data
+ * @param {*} targetAnalyser
+ */
+const visualize = targetAnalyser => {
   const analyser = targetAnalyser;
-  const canvas = document.createElement("canvas");
-  const canvasCtx = canvas.getContext("2d");
+  const canvas = document.createElement('canvas');
+  const canvasCtx = canvas.getContext('2d');
   document.getElementById(targetElementId).appendChild(canvas);
 
   analyser.fftSize = 2048;
@@ -11,6 +15,7 @@ export default function visualize(targetAnalyser) {
   const bufferLength = analyser.frequencyBinCount;
   const dataArray = new Uint8Array(bufferLength);
 
+  // eslint-disable-next-line require-jsdoc
   const draw = () => {
     const WIDTH = canvas.width;
     const HEIGHT = canvas.height;
@@ -19,11 +24,11 @@ export default function visualize(targetAnalyser) {
 
     analyser.getByteTimeDomainData(dataArray);
 
-    canvasCtx.fillStyle = "rgb(200, 200, 200)";
+    canvasCtx.fillStyle = 'rgb(200, 200, 200)';
     canvasCtx.fillRect(0, 0, WIDTH, HEIGHT);
 
     canvasCtx.lineWidth = 2;
-    canvasCtx.strokeStyle = "rgb(0, 0, 0)";
+    canvasCtx.strokeStyle = 'rgb(0, 0, 0)';
 
     canvasCtx.beginPath();
 
@@ -48,4 +53,16 @@ export default function visualize(targetAnalyser) {
   };
 
   draw();
-}
+};
+
+/**
+ * Utlity function to pause execution for a given time
+ * @param {number} seconds
+ * @returns {Promise}
+ */
+const sleep = seconds =>
+  new Promise(resolve => {
+    setTimeout(resolve, seconds * 1000);
+  });
+
+export {sleep, visualize};

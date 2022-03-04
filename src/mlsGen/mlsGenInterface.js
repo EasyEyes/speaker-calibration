@@ -1,3 +1,4 @@
+/* eslint-disable dot-notation */
 // eslint-disable-next-line import/extensions
 const createMLSGenModule = require('../../dist/mlsGen.js');
 
@@ -10,7 +11,7 @@ class MlsGenInterface {
 
   /** @private */
   // eslint-disable-next-line no-bitwise
-  #P = (1 << 18) - 1; 
+  #P = (1 << 18) - 1;
 
   /** @private */
   #MLSGen;
@@ -18,45 +19,61 @@ class MlsGenInterface {
   /** @private */
   #WASMInstance;
 
+  /** @private */
+  #MlsSignal;
+
+  /** @private */
+  #initializationPromise;
+
   /**
    * Creates an instance of MlsGenInterface.
    * Makes a call to the WASM glue code to load the WASM module.
    */
-  constructor() {
-    // load the WASM module and save the instance.
-    createMLSGenModule().then((instance) => {
-      this.#WASMInstance = instance;
-      this.#MLSGen = new instance.MLSGen(this.N);
-      console.log(this.#MLSGen);
-    });
+  constructor(WASMInstance) {
+    this.#WASMInstance = WASMInstance;
   }
 
-  /* 
-  TODO: Figure out the best way to interact with this module.
-        1. Return the MLS signal (as an array), appears problematic with the pointer bindings
-        2. Pass a buffer to the function to be filled with the MLS, I did this before but need
-           to go back and look at how it was done. Currently throwing an error.
-        3. Circumvent this all together by calling the webAudio API in the CPP code directly.
-  */
-  getMls = () => {
   /**
-   * Calculate the Maximum Length Sequence (MLS) with period P = 2^N - 1 
-   * using the MLSGen WASM module.
-   * @param {Number} N 
+   * Factory function that provide an asynchronous function that fetches the WASM module
+   * and returns a promise that resolves when the module is loaded.
+   * @returns {MlsGenInterface} mlsGenInterface
    */
-    // Get function.
-    const { HEAPU8 } = this.#WASMInstance;
+  static factory = async () =>
+    new MlsGenInterface(await createMLSGenModule().then(instance => instance));
 
-    // Create the arrays.
-    // eslint-disable-next-line no-bitwise
-    const offset = 0;
-    const result = new Uint8Array(HEAPU8.buffer, offset, this.#P);
+  // const mlsGenInterface = new MlsGenInterface();
+  // await mlsGenInterface.initialize();
 
-    // Call the function.
-    this.#MLSGen.getMls(result.byteOffset, this.#N, this.#P);
+  // #doInitialize = async () => {
+  //   this.#WASMInstance = ;
+  //   console.log({WASMInstance: this.#WASMInstance});
+  // };
 
-    console.log(result);
-  }
+  // initialize = async () => {
+  //   // prevent concurrent calls firing initialization more than once
+  //   if (!this.#initializationPromise) {
+  //     this.#initializationPromise = this.#doInitialize();
+  //   }
+  //   return this.initializationPromise;
+  // };
+
+  /**
+   * Calculate the Maximum Length Sequence (MLS) with period P = 2^N - 1
+   * using the MLSGen WASM module.
+   */
+  getMls = () => {
+    let shallowCopy;
+    try {
+      this.#MLSGen = new this.#WASMInstance['MLSGen'](this.#N);
+      this.#MLSGen['generateMls']();
+      shallowCopy = [...this.#MLSGen['getGeneratedSignal']()];
+    } catch (error) {
+      console.error(error);
+    } finally {
+      this.#MLSGen.delete();
+    }
+    return shallowCopy;
+  };
 }
 
 export default MlsGenInterface;

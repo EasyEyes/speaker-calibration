@@ -10,8 +10,8 @@
   "scripts": {
     "build": "webpack",
     "build:wasm": "make rebuild",
-    "build:watch": "webpack --watch",
-    "start:dev": "nodemon ./dist/example/server.js",
+    "build:dev": "webpack --watch",
+    "serve:dev": "nodemon ./dist/example/server.js",
     "lint": "eslint src --ext .js",
     "lint:fix": "npm run lint -- --fix",
     "build:doc": "jsdoc src -r -d ./doc"

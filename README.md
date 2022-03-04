@@ -21,8 +21,8 @@ In `/dist/example` you will find a small example app that uses the `speaker-cali
 ### Javascript 
 In `package.json` you will see some key scripts:
 1.  `build:wasm` cleans and rebuilds the wasm files
-2.  `build:watch` tells webpack to build the `speaker-calibration` library in development watch mode, outputing to `/dist`
-3.  `start:dev` spins up an `express.js` server on port `3000` using `nodemon`. It serves the `/dist` & `/dist/example` folders.
+2.  `build:dev` tells webpack to build the `speaker-calibration` library in development watch mode, outputing to `/dist`
+3.  `serve:dev` spins up an `express.js` server on port `3000` using `nodemon`. It serves the `/dist` & `/dist/example` folders.
 4.  `lint` runs `eslint` on all js files in the project
 5.  `lint:fix` lints and automatically fixes all js files in the project. 
 6.  `build:doc` builds the documentation using `jsdoc`. Outputs to `/doc`
@@ -32,6 +32,7 @@ Run `(1)` & `(2)` in seperate shell windows, with this setup you will be able to
 TODO Make `(5)` a precommit hook
 
 ### CPP/WASM
+We are using [Emscripten](https://emscripten.org/) to compile the C++ code into a wasm file. Usage requires the installation of the Emscriten compiler. Instructions can be found on their website.
 In `makefile` you will see a few recipies:
 - `mlsGen_bind` compiles the cpp files to wasm, generating a modularized javascript "glue" file, using embind. This is the current build target
 - `mlsGen_module` compiles the cpp files to wasm, generating a modularized javascript "glue" file. 

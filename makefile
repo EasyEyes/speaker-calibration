@@ -36,34 +36,24 @@ SRC_DIR = $(addprefix ./src/,$(PROJECT_NAME)/)
 
 # WASM files
 SRC_FILE := $(addprefix $(SRC_DIR),$(PROJECT_NAME).cpp) # SRC_DIR + PROJECT_NAME + .cpp
+OBJ_FILE := $(addprefix $(SRC_DIR),$(PROJECT_NAME).o)
 OUTPUT_WASM_JS := $(addprefix $(DIST_DIR),$(PROJECT_NAME).js) # DIST_DIR + PROJECT_NAME + .js
 OUTPUT_WASM := $(addprefix $(DIST_DIR),$(PROJECT_NAME).wasm) # DIST_DIR + PROJECT_NAME + .wasm
 OUTPUT := $(addprefix $(DIST_DIR),$(PROJECT_NAME).*) # DIST_DIR + PROJECT_NAME + .*
 
 # emcc compiler options
 CC = em++ # emcc compiler front end
-STD = --std=c++11 # C++ standard
-OPTIMIZE = -O2 # optimization level
+STD = --std=c++17 # C++ standard
+OPTIMIZE = -O3 # Pptimization level O0 ~ 28.8 kB, O1 ~ 20.3 kB, O2 ~ 20.3 kB, O3 ~ 19.7 kB
 ENV = -s ENVIRONMENT='web' # environment
 NOENTRY = --no-entry # no entry point (no main function)
-STANDALONE = -s STANDALONE_WASM # standalone WASM
 MODULARIZE = -s MODULARIZE=1 -s 'EXPORT_NAME="createMLSGenModule"' # puts all of the generated JavaScript into a factory function
 BIND = -lembind # links against embind library
-
-# build the WASM + JS glue module, linked to embind library
-$(PROJECT_NAME)_bind:
+# $(NOENTRY) $(ENV)
+# build the WASM + JS glue module, linked with embind
+$(PROJECT_NAME)_bind: # $(OBJ_FILE)
 	@mkdir -p $(@D)
-	@$(call run_and_test, $(CC) $(STD) $(BIND) $(SRC_FILE) -o $(OUTPUT_WASM_JS) $(MODULARIZE) $(OPTIMIZE) $(ENV) $(NOENTRY))
-
-# build the WASM + JS glue module
-$(PROJECT_NAME)_module:
-	@mkdir -p $(@D)
-	@$(call run_and_test, $(CC) $(STD) $(SRC_FILE) -o $(OUTPUT_WASM_JS) $(MODULARIZE) $(OPTIMIZE) $(ENV) $(NOENTRY))
-
-# build the standalone WASM file
-$(PROJECT_NAME)_wasm:
-	@mkdir -p $(@D)
-	@$(call run_and_test, $(CC) $(STD) $(SRC_FILE) -o $(OUTPUT_WASM) $(STANDALONE) $(OPTIMIZE) $(ENV) $(NOENTRY))
+	@$(call run_and_test, $(CC) $(STD) $(BIND) $(SRC_FILE) -o $(OUTPUT_WASM_JS) $(MODULARIZE) $(OPTIMIZE) $(ENV) )
 
 # clean the WASM + JS files
 .PHONY: clean
