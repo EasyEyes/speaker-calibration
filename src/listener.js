@@ -1,4 +1,3 @@
-import './listener.css';
 import AudioPeer from './audioPeer';
 
 /**

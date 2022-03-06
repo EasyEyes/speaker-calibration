@@ -1,4 +1,3 @@
-import './speaker.css';
 import AudioPeer from './audioPeer';
 import AudioCalibrator from './audioCalibrator';
 

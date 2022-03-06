@@ -1,4 +1,4 @@
-const targetElementId = 'display';
+const targetElementId = 'viz';
 
 /**
  * Utility function to visualize audio data
