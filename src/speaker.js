@@ -112,7 +112,7 @@ class Speaker extends AudioPeer {
   onReceiveStream = stream => {
     window.localStream = stream;
     window.localAudio.srcObject = stream;
-    window.localAudio.autoplay = true;
+    window.localAudio.autoplay = false;
 
     // Start calibration
     if (!this.ac.getCalibrationStatus()) {

@@ -31,13 +31,8 @@ class AudioCalibrator extends AudioRecorder {
   /** @private */
   #mlsBufferView;
 
-  /**
-   * Creates an instance of AudioCalibrator
-   * Makes a call to the super constructor, and initializes MLSGenInterface
-   */
-  constructor() {
-    super();
-  }
+  /** @private */
+  #numCalibratingRounds = 1;
 
   /**
    * Called when a call is received.
@@ -48,14 +43,6 @@ class AudioCalibrator extends AudioRecorder {
     localAudio.setAttribute('id', 'localAudio');
     targetElement.appendChild(localAudio);
   };
-
-  /**
-   * Converts a Float32Array to a correct Buffer
-   * @param {Float32Array} array
-   * @returns
-   */
-  #typedArrayToBuffer = array =>
-    array.buffer.slice(array.byteOffset, array.byteLength + array.byteOffset);
 
   /**
    * Creates an audio context and plays it for a few seconds.
@@ -103,45 +90,61 @@ class AudioCalibrator extends AudioRecorder {
    */
   getCalibrationStatus = () => this.#isCalibrating;
 
-  setSinkAudio = stream => {
+  #setSinkAudio = stream => {
     this.#sinkAudioContext = new AudioContext();
     this.#sinkAudioAnalyser = this.#sinkAudioContext.createAnalyser();
     const source = this.#sinkAudioContext.createMediaStreamSource(stream);
     source.connect(this.#sinkAudioAnalyser);
-    visualize(this.#sinkAudioAnalyser);
+    // visualize(this.#sinkAudioAnalyser);
   };
 
   /**
-   * Method to start the calibration process.
+   *
+   * @param {*} stream
+   */
+  #calibrationSteps = async stream => {
+    this.#mlsBufferView = this.#mlsGenInterface.getMLS();
+
+    let numRounds = 0;
+
+    // calibration loop
+    while (!this.#isCalibrating && numRounds < this.#numCalibratingRounds) {
+      // start recording
+      this.startRecording(stream);
+      // play calibration audio
+      console.log(`Calibration Round ${numRounds}`);
+      // eslint-disable-next-line no-await-in-loop
+      await this.#playCalibrationAudio().then(() => {
+        // when done, stop recording
+        console.log('Calibration Round Complete');
+        this.stopRecording();
+      });
+      // eslint-disable-next-line no-await-in-loop
+      await sleep(2);
+      numRounds += 1;
+    }
+
+    console.log('Setting Recorded Signal');
+    this.#mlsGenInterface.setRecordedSignal();
+    console.log('TEST IR: ', this.#mlsGenInterface.getImpulseResponse());
+  };
+
+  /**
+   * Public method to start the calibration process. Objects intialized from webassembly allocate new memory
+   * and must be manually freed. This function is responsible for intializing the MlsGenInterface, 
+   * and wrapping the calibration steps with a garbage collection safe gaurd. 
    * @public
    * @param {MediaStream} stream - The stream of audio from the Listener.
    */
   startCalibration = async stream => {
-    this.setSinkAudio(stream);
-
+    this.#setSinkAudio(stream);
+    // initialize the MLSGenInterface object with it's factory method
     await MlsGenInterface.factory().then(async mlsGenInterface => {
       this.#mlsGenInterface = mlsGenInterface;
-      console.assert(this.#mlsGenInterface instanceof MlsGenInterface);
-      this.#mlsBufferView = this.#mlsGenInterface.getMls();
-
-      let numRounds = 0;
-
-      while (!this.#isCalibrating && numRounds <= 2) {
-        // start recording
-        this.startRecording(stream);
-        // play calibration audio
-        console.log(`Calibration Round ${numRounds}`);
-        // eslint-disable-next-line no-await-in-loop
-        await this.#playCalibrationAudio().then(() => {
-          // when done, stop recording
-          console.log('Calibration Round Complete');
-          this.stopRecording();
-        });
-        // eslint-disable-next-line no-await-in-loop
-        await sleep(2);
-        numRounds += 1;
-      }
+      console.log('mlsGenInterface', this.#mlsGenInterface);
     });
+    // after intializating, start the calibration steps with garbage collection
+    this.#mlsGenInterface.withGarbageCollection(this.#calibrationSteps, [stream]);
   };
 }
 

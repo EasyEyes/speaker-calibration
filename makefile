@@ -44,12 +44,12 @@ OUTPUT := $(addprefix $(DIST_DIR),$(PROJECT_NAME).*) # DIST_DIR + PROJECT_NAME +
 # emcc compiler options
 CC = em++ # emcc compiler front end
 STD = --std=c++17 # C++ standard
-OPTIMIZE = -O3 # Pptimization level O0 ~ 28.8 kB, O1 ~ 20.3 kB, O2 ~ 20.3 kB, O3 ~ 19.7 kB
+OPTIMIZE = -O3 # Optimization level O0 ~ 28.8 kB, O1 ~ 20.3 kB, O2 ~ 20.3 kB, O3 ~ 19.7 kB
 ENV = -s ENVIRONMENT='web' # environment
 NOENTRY = --no-entry # no entry point (no main function)
 MODULARIZE = -s MODULARIZE=1 -s 'EXPORT_NAME="createMLSGenModule"' # puts all of the generated JavaScript into a factory function
 BIND = -lembind # links against embind library
-# $(NOENTRY) $(ENV)
+
 # build the WASM + JS glue module, linked with embind
 $(PROJECT_NAME)_bind: # $(OBJ_FILE)
 	@mkdir -p $(@D)

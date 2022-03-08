@@ -1,3 +1,4 @@
+/* eslint-disable prefer-destructuring */
 /* eslint-disable dot-notation */
 // eslint-disable-next-line import/extensions
 const createMLSGenModule = require('../../dist/mlsGen.js');
@@ -7,23 +8,13 @@ const createMLSGenModule = require('../../dist/mlsGen.js');
  */
 class MlsGenInterface {
   /** @private */
-  #N = 18;
+  static N = 18;
 
   /** @private */
-  // eslint-disable-next-line no-bitwise
-  #P = (1 << 18) - 1;
+  #WASMInstance; // the WASM module instance
 
   /** @private */
-  #MLSGen;
-
-  /** @private */
-  #WASMInstance;
-
-  /** @private */
-  #MlsSignal;
-
-  /** @private */
-  #initializationPromise;
+  #MLSGenInstance; // the MLSGen object instance
 
   /**
    * Creates an instance of MlsGenInterface.
@@ -31,6 +22,8 @@ class MlsGenInterface {
    */
   constructor(WASMInstance) {
     this.#WASMInstance = WASMInstance;
+    console.warn('initializing MLSGen, need to manually garbage collect');
+    this.#MLSGenInstance = new this.#WASMInstance['MLSGen'](MlsGenInterface.N);
   }
 
   /**
@@ -41,39 +34,75 @@ class MlsGenInterface {
   static factory = async () =>
     new MlsGenInterface(await createMLSGenModule().then(instance => instance));
 
-  // const mlsGenInterface = new MlsGenInterface();
-  // await mlsGenInterface.initialize();
+  /**
+   * A Higher-Order function that takes an async callback function that access the MLSGen object,
+   * providing safe garbage collection.
+   * @param {function} func
+   * @param {array} args
+   */
+  withGarbageCollection = async (func, params) => {
+    try {
+      await func(...params);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      // garbage collect
+      if (
+        this !== undefined &&
+        this !== null &&
+        this.#MLSGenInstance !== undefined &&
+        this.#MLSGenInstance !== null
+      ) {
+        this.#MLSGenInstance.delete();
+        console.warn(`GARBAGE COLLECTION: deleted MLSGen`);
+      }
+    }
+  };
 
-  // #doInitialize = async () => {
-  //   this.#WASMInstance = ;
-  //   console.log({WASMInstance: this.#WASMInstance});
-  // };
+  /**
+   * Calculate and return the Impulse Response of the recorded signal.
+   * @returns 
+   */
+  getImpulseResponse = () => this.#MLSGenInstance['getImpulseResponse']();
 
-  // initialize = async () => {
-  //   // prevent concurrent calls firing initialization more than once
-  //   if (!this.#initializationPromise) {
-  //     this.#initializationPromise = this.#doInitialize();
-  //   }
-  //   return this.initializationPromise;
-  // };
+  /**
+   * Given a recorded MLS signal, this function sets the recordedSignal property of the MLSGen object.
+   * @param {Float32Array} signal
+   */
+  setRecordedSignal = (
+    signal = [
+      1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+      1,
+    ]
+  ) => {
+    // get memory view
+    const recordedSignalMemoryView = this.#MLSGenInstance['getRecordedSignalMemoryView']();
+
+    // iterate and set
+    for (let i = 0; i < signal.length; i += 1) {
+      recordedSignalMemoryView[i] = signal[i];
+    }
+  };
 
   /**
    * Calculate the Maximum Length Sequence (MLS) with period P = 2^N - 1
    * using the MLSGen WASM module.
    */
-  getMls = () => {
-    let shallowCopy;
-    try {
-      this.#MLSGen = new this.#WASMInstance['MLSGen'](this.#N);
-      this.#MLSGen['generateMls']();
-      shallowCopy = [...this.#MLSGen['getGeneratedSignal']()];
-    } catch (error) {
-      console.error(error);
-    } finally {
-      this.#MLSGen.delete();
-    }
-    return shallowCopy;
-  };
+  getMLS = () => this.#MLSGenInstance['getMLS']();
 }
 
 export default MlsGenInterface;
+
+/*
+    // Get function.
+    const { _getMls, HEAPU8 } = this.#wasmInstance;
+    // Create the arrays.
+    // eslint-disable-next-line no-bitwise
+    const P = (1 << N) - 1; 
+    const offset = 0;
+    const result = new Uint8Array(HEAPU8.buffer, offset, P);
+    // Call the function.
+    _getMls(result.byteOffset, N, P);
+    // save the result.
+    this.#mls = result;
+*/

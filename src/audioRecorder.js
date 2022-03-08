@@ -21,6 +21,9 @@ class AudioRecorder {
   /** @private */
   #arrayBuffer;
 
+  /** @private */
+  #recordedSignals = [];
+
   /**
    * creates a new AudioRecorder instance. 
    * Sets up the audio context and file reader.
@@ -44,6 +47,7 @@ class AudioRecorder {
     this.#audioContext.decodeAudioData(this.#arrayBuffer, (audioBuffer) => {
       // Do something with audioBuffer
       console.log(audioBuffer.getChannelData(0));
+      this.#recordedSignals.push(audioBuffer.getChannelData(0));
     });
   };
 
