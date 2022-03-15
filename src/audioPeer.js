@@ -52,7 +52,7 @@ class AudioPeer {
    * @param {string} message
    * @param {boolean} append
    */
-  displayUpdate = (message, append = false) => {
+  displayUpdate = (message, append = true) => {
     // If the specified elem exists, update that elem
     if (document.getElementById(this.targetElement)) {
       const displayElement = document.getElementById(this.targetElement);

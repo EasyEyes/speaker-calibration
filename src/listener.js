@@ -113,6 +113,7 @@ class Listener extends AudioPeer {
   };
 
   openAudioStream = async () => {
+    this.displayUpdate('Listener - openAudioStream');
     navigator.mediaDevices
       .getUserMedia({video: false, audio: true})
       .then(stream => {
@@ -120,7 +121,7 @@ class Listener extends AudioPeer {
         console.log('Listener - openAudioStream');
       })
       .catch(err => {
-        this.displayUpdate(`error opening audio stream:${err}`);
+        this.displayUpdate(`You need to grant permission to use the microphone, error:${err}`);
       });
   };
 }
