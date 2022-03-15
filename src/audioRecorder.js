@@ -46,6 +46,8 @@ class AudioRecorder {
     // Convert array buffer into audio buffer
     this.#audioContext.decodeAudioData(this.#arrayBuffer, (audioBuffer) => {
       // Do something with audioBuffer
+      // TODO: Address the fact that the audio buffer is being continously filled,
+      // we want a new buffer each round.
       console.log(audioBuffer.getChannelData(0));
       this.#recordedSignals.push(audioBuffer.getChannelData(0));
     });

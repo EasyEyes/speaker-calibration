@@ -33,7 +33,7 @@ class AudioCalibrator extends AudioRecorder {
   #mlsBufferView;
 
   /** @private */
-  #numCalibratingRounds = 2;
+  #numCalibratingRounds = 1;
 
   /** @private */
   #sinkSamplingRate;
@@ -64,7 +64,6 @@ class AudioCalibrator extends AudioRecorder {
    * @returns {Promise} - Resolves when the audio is done playing.
    */
   #playCalibrationAudio = async () => {
-    // console.log({'mlsBufferView': this.#mlsBufferView, duration, bufferSize, 'sampleRate': this.#sourceAudioContext.sampleRate});
     const buffer = this.#sourceAudioContext.createBuffer(
       1, // number of channels
       this.#mlsBufferView.length, // length
@@ -87,11 +86,7 @@ class AudioCalibrator extends AudioRecorder {
     source.connect(this.#sourceAudioContext.destination);
     source.start(0);
 
-    // TODO: this is a hack to get the audio to play for a few seconds. We should instead play for the duation of the data
-    // let's return a promise so we can await the end of each track
     await sleep(buffer.duration);
-    // await this.#sourceAudioContext.suspend();
-    // return this.#sourceAudioContext.close();
   };
 
   /**
@@ -121,7 +116,6 @@ class AudioCalibrator extends AudioRecorder {
    */
   setSinkSamplingRate = sinkSamplingRate => {
     this.#sinkSamplingRate = sinkSamplingRate;
-    console.log('sinkSamplingRate', this.#sinkSamplingRate);
   };
 
   /**

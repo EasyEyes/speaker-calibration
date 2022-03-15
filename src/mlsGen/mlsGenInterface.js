@@ -41,6 +41,7 @@ class MlsGenInterface {
     if (sourceSamplingRate === undefined || sinkSamplingRate === undefined) {
       throw new Error('sourceSamplingRate and sinkSamplingRate must be defined');
     }
+    console.log(`sourceSamplingRate: ${sourceSamplingRate} sinkSamplingRate: ${sinkSamplingRate}`);
     return new MlsGenInterface(
       await createMLSGenModule().then(instance => instance),
       sourceSamplingRate,
