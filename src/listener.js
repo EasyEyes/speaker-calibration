@@ -27,7 +27,7 @@ class Listener extends AudioPeer {
   }
 
   onPeerOpen = id => {
-    console.log('Listener - onPeerOpen');
+    this.displayUpdate('Listener - onPeerOpen');
     // Workaround for peer.reconnect deleting previous id
     if (id === null) {
       this.displayUpdate('Received null id from peer open');
@@ -39,7 +39,7 @@ class Listener extends AudioPeer {
   };
 
   onPeerConnection = connection => {
-    console.log('Listener - onPeerConnection');
+    this.displayUpdate('Listener - onPeerConnection');
     // Disallow incoming connections
     connection.on('open', () => {
       connection.send('Sender does not accept incoming connections');
@@ -50,7 +50,7 @@ class Listener extends AudioPeer {
   };
 
   onConnData = data => {
-    console.log('Listener - onConnData');
+    this.displayUpdate('Listener - onConnData');
     // Keypad has received data, namely instructions to update the keypad
     // TODO generalize to a list of properies
     const hasSpeakerID = Object.prototype.hasOwnProperty.call(data, 'speakerPeerId');
@@ -58,7 +58,7 @@ class Listener extends AudioPeer {
       this.displayUpdate('Error in parsing data received! Must set "speakerPeerId" properties');
     } else {
       // this.conn.close();
-      console.log(this.speakerPeerId);
+      this.displayUpdate(this.speakerPeerId);
       this.speakerPeerId = data.speakerPeerId;
       const newParams = {
         speakerPeerId: this.speakerPeerId,
@@ -72,7 +72,7 @@ class Listener extends AudioPeer {
   };
 
   join = () => {
-    console.log('Listener - join');
+    this.displayUpdate('Listener - join');
     /**
      * Create the connection between the two Peers.
      *
@@ -118,7 +118,7 @@ class Listener extends AudioPeer {
       .getUserMedia({video: false, audio: true})
       .then(stream => {
         this.peer.call(this.speakerPeerId, stream); // one-way call
-        console.log('Listener - openAudioStream');
+        this.displayUpdate('Listener - openAudioStream');
       })
       .catch(err => {
         this.displayUpdate(`You need to grant permission to use the microphone, error:${err}`);
