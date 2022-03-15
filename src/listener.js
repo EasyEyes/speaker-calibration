@@ -30,7 +30,7 @@ class Listener extends AudioPeer {
     console.log('Listener - onPeerOpen');
     // Workaround for peer.reconnect deleting previous id
     if (id === null) {
-      console.log('Received null id from peer open');
+      this.displayUpdate('Received null id from peer open');
       this.peer.id = this.lastPeerId;
     } else {
       this.lastPeerId = this.peer.id;
@@ -55,7 +55,7 @@ class Listener extends AudioPeer {
     // TODO generalize to a list of properies
     const hasSpeakerID = Object.prototype.hasOwnProperty.call(data, 'speakerPeerId');
     if (!hasSpeakerID) {
-      console.error('Error in parsing data received! Must set "speakerPeerId" properties');
+      this.displayUpdate('Error in parsing data received! Must set "speakerPeerId" properties');
     } else {
       // this.conn.close();
       console.log(this.speakerPeerId);
@@ -90,7 +90,7 @@ class Listener extends AudioPeer {
 
     this.conn.on('open', () => {
       // console.log("TODO Implement real on connection fn");
-      // this.sendSamplingRate();
+      this.sendSamplingRate();
       this.openAudioStream();
     });
 
@@ -102,7 +102,7 @@ class Listener extends AudioPeer {
   };
 
   sendSamplingRate = () => {
-    console.log('Listener - sendSamplingRate');
+    this.displayUpdate('Listener - sendSamplingRate');
     // const audioCtx = new (window.AudioContext ||
     //   window.webkitAudioContext ||
     //   window.audioContext)();
@@ -120,7 +120,7 @@ class Listener extends AudioPeer {
         console.log('Listener - openAudioStream');
       })
       .catch(err => {
-        console.log(`u got an error:${err}`);
+        this.displayUpdate(`error opening audio stream:${err}`);
       });
   };
 }
