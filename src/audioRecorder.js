@@ -109,6 +109,8 @@ class AudioRecorder {
   stopRecording = () => {
     this.#mediaRecorder.stop();
   };
+
+  getRecordedSignals = (i) => this.#recordedSignals[i];
 }
 
 export default AudioRecorder;

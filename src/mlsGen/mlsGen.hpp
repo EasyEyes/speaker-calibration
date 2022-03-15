@@ -49,7 +49,7 @@ class MLSGen {
    * @brief Destroy the MLSGen object
    * 
    */
-  ~MLSGen();
+  void Destruct();
 
   /**
    * @brief Generates an MLS signal according to the parameters set in the

@@ -1,6 +1,7 @@
 import AudioRecorder from './audioRecorder';
 import {sleep, visualize} from './utils';
 import MlsGenInterface from './mlsGen/mlsGenInterface';
+import MyCharts from './myCharts';
 
 /**
  * Provides methods for calibrating the user's speakers
@@ -77,6 +78,7 @@ class AudioCalibrator extends AudioRecorder {
     source.connect(this.#sourceAudioContext.destination);
     source.start(0);
 
+    // TODO: this is a hack to get the audio to play for a few seconds. We should instead play for the duation of the data
     // let's return a promise so we can await the end of each track
     await sleep(5);
     await this.#sourceAudioContext.suspend();
@@ -104,6 +106,12 @@ class AudioCalibrator extends AudioRecorder {
    */
   #calibrationSteps = async stream => {
     this.#mlsBufferView = this.#mlsGenInterface.getMLS();
+    this.generatedMLSChart = new MyCharts(
+      'generated-signal-chart',
+      'generated mls',
+      'generated mls',
+      this.#mlsBufferView
+    );
 
     let numRounds = 0;
 
@@ -126,20 +134,28 @@ class AudioCalibrator extends AudioRecorder {
 
     console.log('Setting Recorded Signal');
     this.#mlsGenInterface.setRecordedSignal();
-    console.log('TEST IR: ', this.#mlsGenInterface.getImpulseResponse());
+    this.caputuredMLSChart = new MyCharts(
+      'captured-signal-chart',
+      'captured mls',
+      'captured mls',
+      this.getRecordedSignals(0)
+    );
+    const IR = this.#mlsGenInterface.getImpulseResponse();
+    this.IRChart = new MyCharts('ir-chart', 'ir', 'impulse response', IR);
+    console.log('TEST IR: ', IR);
   };
 
   /**
    * Public method to start the calibration process. Objects intialized from webassembly allocate new memory
-   * and must be manually freed. This function is responsible for intializing the MlsGenInterface, 
-   * and wrapping the calibration steps with a garbage collection safe gaurd. 
+   * and must be manually freed. This function is responsible for intializing the MlsGenInterface,
+   * and wrapping the calibration steps with a garbage collection safe gaurd.
    * @public
    * @param {MediaStream} stream - The stream of audio from the Listener.
    */
   startCalibration = async stream => {
     this.#setSinkAudio(stream);
     // initialize the MLSGenInterface object with it's factory method
-    await MlsGenInterface.factory().then(async mlsGenInterface => {
+    await MlsGenInterface.factory().then(mlsGenInterface => {
       this.#mlsGenInterface = mlsGenInterface;
       console.log('mlsGenInterface', this.#mlsGenInterface);
     });

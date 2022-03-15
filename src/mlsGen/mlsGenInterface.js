@@ -8,7 +8,7 @@ const createMLSGenModule = require('../../dist/mlsGen.js');
  */
 class MlsGenInterface {
   /** @private */
-  static N = 18;
+  static N = 18; // set based on async clock needs
 
   /** @private */
   #WASMInstance; // the WASM module instance
@@ -53,15 +53,17 @@ class MlsGenInterface {
         this.#MLSGenInstance !== undefined &&
         this.#MLSGenInstance !== null
       ) {
-        this.#MLSGenInstance.delete();
+        this.#MLSGenInstance['Destruct'](); // Call the destructor
+        this.#MLSGenInstance['delete'](); // Delete the object
         console.warn(`GARBAGE COLLECTION: deleted MLSGen`);
+        this.#WASMInstance['doLeakCheck'](); // Check for memory leaks
       }
     }
   };
 
   /**
    * Calculate and return the Impulse Response of the recorded signal.
-   * @returns 
+   * @returns
    */
   getImpulseResponse = () => this.#MLSGenInstance['getImpulseResponse']();
 
@@ -92,17 +94,3 @@ class MlsGenInterface {
 }
 
 export default MlsGenInterface;
-
-/*
-    // Get function.
-    const { _getMls, HEAPU8 } = this.#wasmInstance;
-    // Create the arrays.
-    // eslint-disable-next-line no-bitwise
-    const P = (1 << N) - 1; 
-    const offset = 0;
-    const result = new Uint8Array(HEAPU8.buffer, offset, P);
-    // Call the function.
-    _getMls(result.byteOffset, N, P);
-    // save the result.
-    this.#mls = result;
-*/

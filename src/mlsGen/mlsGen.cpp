@@ -1,5 +1,7 @@
 #include "mlsGen.hpp"
 
+#include <sanitizer/lsan_interface.h>
+
 using namespace emscripten;
 
 #ifdef __cplusplus
@@ -18,10 +20,11 @@ MLSGen::MLSGen(long N) {
   resp = new float[P + 1];
 }
 
-MLSGen::~MLSGen() {
+void MLSGen::Destruct() {
   delete[] mls;
   delete[] tagL;
   delete[] tagS;
+  delete[] generatedSignal;
   delete[] recordedSignal;
   delete[] perm;
   delete[] resp;
@@ -36,7 +39,7 @@ emscripten::val MLSGen::getMLS() {
     generatedSignal[i] = -2 * mls[i] + 1;
   }
   return emscripten::val(typed_memory_view(
-      *(&generatedSignal + 1) - generatedSignal, generatedSignal));
+      P, generatedSignal));
 }
 
 emscripten::val MLSGen::getRecordedSignalMemoryView() {
@@ -44,46 +47,33 @@ emscripten::val MLSGen::getRecordedSignalMemoryView() {
 }
 
 emscripten::val MLSGen::getImpulseResponse() {
-  generateTagL();     // Generate tagL for the L matrix
-  generateTagS();     // Generate tagS for the S matrix
-  permuteSignal();    // Permute the signal according to tagS
-  fastHadamard();     // Do a Hadamard transform in place
-  permuteResponse();  // Permute the impulseresponse according to tagL
-
+  // generateTagL();     // Generate tagL for the L matrix
+  // generateTagS();     // Generate tagS for the S matrix
+  // permuteSignal();    // Permute the signal according to tagS
+  // fastHadamard();     // Do a Hadamard transform in place
+  // permuteResponse();  // Permute the impulseresponse according to tagL
   // return emscripten::val(typed_memory_view(*(&resp + 1) - resp, resp));
 
   // test return value
-  return emscripten::val(typed_memory_view(*(&recordedSignal + 1) - recordedSignal, recordedSignal));
+  return emscripten::val(typed_memory_view(
+      *(&recordedSignal + 1) - recordedSignal, recordedSignal));
 }
 
 // Binding code
 EMSCRIPTEN_BINDINGS(mls_gen_module) {
   class_<MLSGen>("MLSGen")
       .constructor<long>()
+      .function("Destruct", &MLSGen::Destruct)
       .function("getMLS", &MLSGen::getMLS)
       .function("getRecordedSignalMemoryView",
                 &MLSGen::getRecordedSignalMemoryView)
       .function("getImpulseResponse", &MLSGen::getImpulseResponse);
+  function("doLeakCheck", &__lsan_do_recoverable_leak_check);
 };
 
 #ifdef __cplusplus
 }
 #endif
 
-//     bool *mls = new bool[P];
-//     long *tagL = new long[P];
-//     long *tagS = new long[P];
-//     double *recordedSignal = new double[P];
-//     double *perm = new double[P + 1];
-//     double *resp = new double[P + 1];
-//     generateMls(mls, P, N);               // Generate the Maximum length
-//     sequence generateTagL(mls, tagL, P, N);        // Generate tagL for the L
-//     matrix generateTagS(mls, tagS, P, N);        // Generate tagS for the S
-//     matrix generateSignal(mls, signal, P);       // Do a simulated
-//     measurement and get the signal permuteSignal(recordedSignal, perm, tagS,
-//     P); // Permute the signal according to tagS fastHadamard(perm, P + 1, N);
-//     Do a Hadamard transform in place permuteResponse(perm, resp, tagL, P);
-//     Permute the impulseresponse according to tagL
-//     // printf("Impulse response:\n");
-//     // for (i = 0; i < 10; i++)
-//     //     printf("%10.5f\n", resp[i]);
+// https://emscripten.org/docs/porting/connecting_cpp_and_javascript/embind.html
+// https://web.dev/webassembly-memory-debugging/
