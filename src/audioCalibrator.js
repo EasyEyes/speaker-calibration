@@ -1,7 +1,7 @@
 import AudioRecorder from './audioRecorder';
 import {sleep, visualize} from './utils';
 import MlsGenInterface from './mlsGen/mlsGenInterface';
-import MyCharts from './myCharts';
+import {GeneratedSignalChart, RecordedSignalChart, IRChart} from './myCharts';
 
 /**
  * Provides methods for calibrating the user's speakers
@@ -124,10 +124,8 @@ class AudioCalibrator extends AudioRecorder {
    */
   #calibrationSteps = async stream => {
     this.#mlsBufferView = this.#mlsGenInterface.getMLS();
-    this.generatedMLSChart = new MyCharts(
+    this.generatedMLSChart = new GeneratedSignalChart(
       'generated-signal-chart',
-      'generated mls',
-      'generated mls',
       this.#mlsBufferView
     );
 
@@ -155,14 +153,12 @@ class AudioCalibrator extends AudioRecorder {
     let recordedSignal = this.getRecordedSignals(0)
     recordedSignal = recordedSignal.slice(recordedSignal.findIndex((val) => val !== 0));
 
-    this.caputuredMLSChart = new MyCharts(
+    this.caputuredMLSChart = new RecordedSignalChart(
       'captured-signal-chart',
-      'captured mls',
-      'captured mls',
       recordedSignal,
     );
     const IR = this.#mlsGenInterface.getImpulseResponse();
-    this.IRChart = new MyCharts('ir-chart', 'ir', 'impulse response', IR);
+    this.IRChart = new IRChart('ir-chart', IR);
     console.log('TEST IR: ', IR);
   };
 
