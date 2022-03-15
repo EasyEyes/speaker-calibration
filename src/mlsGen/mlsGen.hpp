@@ -17,8 +17,8 @@ class MLSGen {
   // MLS parameters
   long N;
   long P;
-  long sourceSamplingRate;
-  long sinkSamplingRate;
+  long srcSR;
+  long sinkSR;
 
   // MLS data
   bool *mls;
@@ -45,7 +45,7 @@ class MLSGen {
    * 
    * @param N 
    */
-  MLSGen(long N, long sourceSamplingRate, long sinkSamplingRate);
+  MLSGen(long N, long srcSR, long sinkSR);
   
   /**
    * @brief Destroy the MLSGen object

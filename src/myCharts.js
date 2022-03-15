@@ -62,7 +62,7 @@ class MyCharts {
    * Constructor
    */
   constructor(elementID, label, text, bufferArray) {
-    const signalCopy = [...bufferArray.slice(0, bufferArray.length / 1000)];
+    const signalCopy = [...bufferArray.slice(0, bufferArray.length / 500)];
     const labels = [...signalCopy.keys()];
     this.ctx = document.getElementById(elementID);
     this.chart = new Chart(this.ctx, {

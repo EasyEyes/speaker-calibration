@@ -8,10 +8,10 @@ using namespace emscripten;
 extern "C" {
 #endif
 
-MLSGen::MLSGen(long N, long sourceSamplingRate, long sinkSamplingRate) {
+MLSGen::MLSGen(long N, long srcSR, long sinkSR) {
   MLSGen::N = N;
-  MLSGen::sourceSamplingRate = sourceSamplingRate;
-  MLSGen::sinkSamplingRate = sinkSamplingRate;
+  MLSGen::srcSR = srcSR;
+  MLSGen::sinkSR = sinkSR;
   P = (1 << N) - 1;
   mls = new bool[P];
   tagL = new long[P];
@@ -40,8 +40,7 @@ emscripten::val MLSGen::getMLS() {
   for (int i = 0; i < P; i++) {
     generatedSignal[i] = -2 * mls[i] + 1;
   }
-  return emscripten::val(typed_memory_view(
-      P, generatedSignal));
+  return emscripten::val(typed_memory_view(P, generatedSignal));
 }
 
 emscripten::val MLSGen::getRecordedSignalMemoryView() {
