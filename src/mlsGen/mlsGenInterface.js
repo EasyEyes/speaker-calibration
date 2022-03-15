@@ -86,18 +86,15 @@ class MlsGenInterface {
    * Given a recorded MLS signal, this function sets the recordedSignal property of the MLSGen object.
    * @param {Float32Array} signal
    */
-  setRecordedSignal = (
-    signal = [
-      1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-      1,
-    ]
-  ) => {
+  setRecordedSignal = signal => {
     // get memory view
     const recordedSignalMemoryView = this.#MLSGenInstance['getRecordedSignalMemoryView']();
-
+    console.log('length of recorded signal memory view: ', recordedSignalMemoryView.length);
+    console.log('length of signal: ', signal.length);
     // iterate and set
-    for (let i = 0; i < signal.length; i += 1) {
-      recordedSignalMemoryView[i] = signal[i];
+    for (let i = 0; i < recordedSignalMemoryView.length; i += 1) {
+      // set to 0 if undefined
+      recordedSignalMemoryView[i] = i < signal.length ? signal[i] : 0;
     }
   };
 

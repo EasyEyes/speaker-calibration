@@ -151,7 +151,7 @@ class AudioCalibrator extends AudioRecorder {
     }
 
     console.log('Setting Recorded Signal');
-    this.#mlsGenInterface.setRecordedSignal();
+    this.#mlsGenInterface.setRecordedSignal(this.getRecordedSignals(0));
     let recordedSignal = this.getRecordedSignals(0)
     recordedSignal = recordedSignal.slice(recordedSignal.findIndex((val) => val !== 0));
 

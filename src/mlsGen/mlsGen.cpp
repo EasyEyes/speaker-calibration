@@ -48,16 +48,16 @@ emscripten::val MLSGen::getRecordedSignalMemoryView() {
 }
 
 emscripten::val MLSGen::getImpulseResponse() {
-  // generateTagL();     // Generate tagL for the L matrix
-  // generateTagS();     // Generate tagS for the S matrix
-  // permuteSignal();    // Permute the signal according to tagS
-  // fastHadamard();     // Do a Hadamard transform in place
-  // permuteResponse();  // Permute the impulseresponse according to tagL
-  // return emscripten::val(typed_memory_view(*(&resp + 1) - resp, resp));
+  generateTagL();     // Generate tagL for the L matrix
+  generateTagS();     // Generate tagS for the S matrix
+  permuteSignal();    // Permute the signal according to tagS
+  fastHadamard();     // Do a Hadamard transform in place
+  permuteResponse();  // Permute the impulseresponse according to tagL
+  return emscripten::val(typed_memory_view(P + 1, resp));
 
   // test return value
-  return emscripten::val(typed_memory_view(
-      *(&recordedSignal + 1) - recordedSignal, recordedSignal));
+  // return emscripten::val(typed_memory_view(
+  //     *(&recordedSignal + 1) - recordedSignal, recordedSignal));
 }
 
 // Binding code

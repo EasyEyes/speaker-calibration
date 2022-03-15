@@ -126,9 +126,9 @@ void MLSGen::fastHadamard() {
     for (j = 0; j < k2; j++) {
       for (i = j; i < P1; i = i + k1) {
         i1 = i + k2;
-        temp = mls[i] + mls[i1];
-        mls[i1] = mls[i] - mls[i1];
-        mls[i] = temp;
+        temp = perm[i] + perm[i1];
+        perm[i1] = perm[i] - perm[i1];
+        perm[i] = temp;
       }
     }
     k1 = k1 >> 1;
