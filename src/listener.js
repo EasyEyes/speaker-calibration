@@ -103,12 +103,12 @@ class Listener extends AudioPeer {
 
   sendSamplingRate = () => {
     console.log('Listener - sendSamplingRate');
-    const audioCtx = new (window.AudioContext ||
-      window.webkitAudioContext ||
-      window.audioContext)();
+    // const audioCtx = new (window.AudioContext ||
+    //   window.webkitAudioContext ||
+    //   window.audioContext)();
     this.conn.send({
       name: 'samplingRate',
-      payload: audioCtx.sampleRate,
+      payload: 3800, //audioCtx.sampleRate,
     });
   };
 
