@@ -90,7 +90,7 @@ class Listener extends AudioPeer {
 
     this.conn.on('open', () => {
       // console.log("TODO Implement real on connection fn");
-      this.sendSamplingRate();
+      // this.sendSamplingRate();
       this.openAudioStream();
     });
 
