@@ -86,6 +86,7 @@ class Listener extends AudioPeer {
     }
 
     // Create connection to destination peer specified by the query param
+    this.displayUpdate(`Creating connection to: ${  this.speakerPeerId}`);
     this.conn = this.peer.connect(this.speakerPeerId, {
       reliable: true,
     });
@@ -112,7 +113,7 @@ class Listener extends AudioPeer {
     //   window.audioContext)();
     this.conn.send({
       name: 'samplingRate',
-      payload: 3800, //audioCtx.sampleRate,
+      payload: 3800, // audioCtx.sampleRate,
     });
   };
 
