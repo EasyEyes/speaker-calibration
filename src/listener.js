@@ -84,11 +84,13 @@ class Listener extends AudioPeer {
       this.displayUpdate('Closing old connection');
       this.conn.close();
     }
-    
+
     // Create connection to destination peer specified by the query param
     this.conn = this.peer.connect(this.speakerPeerId, {
       reliable: true,
     });
+
+    this.displayUpdate('Created connection');
 
     this.conn.on('open', () => {
       this.displayUpdate('Listener - conn open');
