@@ -33,7 +33,13 @@ class AudioCalibrator extends AudioRecorder {
   #mlsBufferView;
 
   /** @private */
-  #numCalibratingRounds = 1;
+  #numCalibratingRounds = 2;
+
+  /** @private */
+  #sinkSamplingRate;
+
+  /** @private */
+  #sourceSamplingRate;
 
   /**
    * Called when a call is received.
@@ -45,26 +51,29 @@ class AudioCalibrator extends AudioRecorder {
     targetElement.appendChild(localAudio);
   };
 
+  #setSourceAudio = () => {
+    this.#sourceAudioContext = new (window.AudioContext ||
+      window.webkitAudioContext ||
+      window.audioContext)();
+    this.#sourceSamplingRate = this.#sourceAudioContext.sampleRate;
+  };
+
   /**
    * Creates an audio context and plays it for a few seconds.
    * @private
    * @returns {Promise} - Resolves when the audio is done playing.
    */
   #playCalibrationAudio = async () => {
-    this.#sourceAudioContext = new AudioContext();
-
-    const duration = this.#mlsBufferView.length;
-    const bufferSize = duration; // duration * this.#sourceAudioContext.sampleRate; // use function above //new ArrayBuffer(this.#mlsData.length);
     // console.log({'mlsBufferView': this.#mlsBufferView, duration, bufferSize, 'sampleRate': this.#sourceAudioContext.sampleRate});
     const buffer = this.#sourceAudioContext.createBuffer(
-      1,
-      bufferSize,
-      this.#sourceAudioContext.sampleRate
+      1, // number of channels
+      this.#mlsBufferView.length, // length
+      this.#sourceSamplingRate // sample rate
     );
     const data = buffer.getChannelData(0); // get data
     // fill the buffer with our data
     try {
-      for (let i = 0; i < bufferSize; i += 1) {
+      for (let i = 0; i < this.#mlsBufferView.length; i += 1) {
         data[i] = this.#mlsBufferView[i];
       }
     } catch (error) {
@@ -80,9 +89,9 @@ class AudioCalibrator extends AudioRecorder {
 
     // TODO: this is a hack to get the audio to play for a few seconds. We should instead play for the duation of the data
     // let's return a promise so we can await the end of each track
-    await sleep(5);
-    await this.#sourceAudioContext.suspend();
-    return this.#sourceAudioContext.close();
+    await sleep(buffer.duration);
+    // await this.#sourceAudioContext.suspend();
+    // return this.#sourceAudioContext.close();
   };
 
   /**
@@ -92,12 +101,27 @@ class AudioCalibrator extends AudioRecorder {
    */
   getCalibrationStatus = () => this.#isCalibrating;
 
+  /**
+   * Create a sink audio context and attach it to the stream
+   * @param {*} stream
+   */
   #setSinkAudio = stream => {
-    this.#sinkAudioContext = new AudioContext();
+    this.#sinkAudioContext = new (window.AudioContext ||
+      window.webkitAudioContext ||
+      window.audioContext)();
     this.#sinkAudioAnalyser = this.#sinkAudioContext.createAnalyser();
     const source = this.#sinkAudioContext.createMediaStreamSource(stream);
     source.connect(this.#sinkAudioAnalyser);
     // visualize(this.#sinkAudioAnalyser);
+  };
+
+  /**
+   * Set the sink audio sampling rate to the given value
+   * @param {*} sinkSamplingRate
+   */
+  setSinkSamplingRate = sinkSamplingRate => {
+    this.#sinkSamplingRate = sinkSamplingRate;
+    console.log('sinkSamplingRate', this.#sinkSamplingRate);
   };
 
   /**
@@ -153,12 +177,15 @@ class AudioCalibrator extends AudioRecorder {
    * @param {MediaStream} stream - The stream of audio from the Listener.
    */
   startCalibration = async stream => {
+    this.#setSourceAudio();
     this.#setSinkAudio(stream);
     // initialize the MLSGenInterface object with it's factory method
-    await MlsGenInterface.factory().then(mlsGenInterface => {
-      this.#mlsGenInterface = mlsGenInterface;
-      console.log('mlsGenInterface', this.#mlsGenInterface);
-    });
+    await MlsGenInterface.factory(this.#sourceSamplingRate, this.#sinkSamplingRate).then(
+      mlsGenInterface => {
+        this.#mlsGenInterface = mlsGenInterface;
+        console.log('mlsGenInterface', this.#mlsGenInterface);
+      }
+    );
     // after intializating, start the calibration steps with garbage collection
     this.#mlsGenInterface.withGarbageCollection(this.#calibrationSteps, [stream]);
   };

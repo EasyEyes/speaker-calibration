@@ -8,8 +8,10 @@ using namespace emscripten;
 extern "C" {
 #endif
 
-MLSGen::MLSGen(long N) {
+MLSGen::MLSGen(long N, long sourceSamplingRate, long sinkSamplingRate) {
   MLSGen::N = N;
+  MLSGen::sourceSamplingRate = sourceSamplingRate;
+  MLSGen::sinkSamplingRate = sinkSamplingRate;
   P = (1 << N) - 1;
   mls = new bool[P];
   tagL = new long[P];
@@ -62,7 +64,7 @@ emscripten::val MLSGen::getImpulseResponse() {
 // Binding code
 EMSCRIPTEN_BINDINGS(mls_gen_module) {
   class_<MLSGen>("MLSGen")
-      .constructor<long>()
+      .constructor<long, long, long>()
       .function("Destruct", &MLSGen::Destruct)
       .function("getMLS", &MLSGen::getMLS)
       .function("getRecordedSignalMemoryView",

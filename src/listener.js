@@ -90,6 +90,7 @@ class Listener extends AudioPeer {
 
     this.conn.on('open', () => {
       // console.log("TODO Implement real on connection fn");
+      this.sendSamplingRate();
       this.openAudioStream();
     });
 
@@ -97,6 +98,17 @@ class Listener extends AudioPeer {
     this.conn.on('data', this.onConnData);
     this.conn.on('close', () => {
       console.log('Connection closed');
+    });
+  };
+
+  sendSamplingRate = () => {
+    console.log('Listener - sendSamplingRate');
+    const audioCtx = new (window.AudioContext ||
+      window.webkitAudioContext ||
+      window.audioContext)();
+    this.conn.send({
+      name: 'samplingRate',
+      payload: audioCtx.sampleRate,
     });
   };
 

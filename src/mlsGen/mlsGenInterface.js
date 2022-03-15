@@ -20,19 +20,33 @@ class MlsGenInterface {
    * Creates an instance of MlsGenInterface.
    * Makes a call to the WASM glue code to load the WASM module.
    */
-  constructor(WASMInstance) {
+  constructor(WASMInstance, sourceSamplingRate, sinkSamplingRate) {
     this.#WASMInstance = WASMInstance;
     console.warn('initializing MLSGen, need to manually garbage collect');
-    this.#MLSGenInstance = new this.#WASMInstance['MLSGen'](MlsGenInterface.N);
+    this.#MLSGenInstance = new this.#WASMInstance['MLSGen'](
+      MlsGenInterface.N,
+      sourceSamplingRate,
+      sinkSamplingRate
+    );
   }
 
   /**
    * Factory function that provide an asynchronous function that fetches the WASM module
    * and returns a promise that resolves when the module is loaded.
+   * @param {number} sourceSamplingRate - The sampling rate of the source audio.
+   * @param {number} sinkSamplingRate - The sampling rate of the sink audio.
    * @returns {MlsGenInterface} mlsGenInterface
    */
-  static factory = async () =>
-    new MlsGenInterface(await createMLSGenModule().then(instance => instance));
+  static factory = async (sourceSamplingRate, sinkSamplingRate) => {
+    if (sourceSamplingRate === undefined || sinkSamplingRate === undefined) {
+      throw new Error('sourceSamplingRate and sinkSamplingRate must be defined');
+    }
+    return new MlsGenInterface(
+      await createMLSGenModule().then(instance => instance),
+      sourceSamplingRate,
+      sinkSamplingRate
+    );
+  };
 
   /**
    * A Higher-Order function that takes an async callback function that access the MLSGen object,

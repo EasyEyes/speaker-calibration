@@ -6,7 +6,7 @@ const QRCode = require('qrcode');
 // TODO: some of these methods were preimplmented, but appear to be unused, cleanup
 /**
  * @class Handles the speaker's side of the connection. Responsible for initiating the connection,
- * rendering the QRCode, and answering the call. 
+ * rendering the QRCode, and answering the call.
  * @extends AudioPeer
  */
 class Speaker extends AudioPeer {
@@ -167,8 +167,18 @@ class Speaker extends AudioPeer {
    * @param {*} data
    */
   onIncomingData = data => {
-    // TODO: check if this function is needed or not
-    console.log({data});
+    // enforce object type
+    if (
+      !Object.prototype.hasOwnProperty.call(data, 'name') ||
+      !Object.prototype.hasOwnProperty.call(data, 'payload')
+    ) {
+      console.error('Received malformed data: ', data);
+      return;
+    }
+    // handle sampling rate sent from Listener
+    if (data.name === 'samplingRate') {
+      this.ac.setSinkSamplingRate(data.payload);
+    }
   };
 
   /**
