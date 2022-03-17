@@ -139,7 +139,7 @@ class IRChart extends MyCharts {
    * @param {*} elementID
    * @param {*} bufferArray
    */
-  constructor(elementID, bufferArray) {
+  constructor(elementID, bufferArray, sf) {
     super(elementID);
     const signalCopy = [...bufferArray.slice(0, bufferArray.length / 25)];
     const labels = [...signalCopy.keys()];
