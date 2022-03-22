@@ -96,6 +96,8 @@ class MlsGenInterface {
       // set to 0 if undefined
       recordedSignalMemoryView[i] = i < signal.length ? signal[i] : 0;
     }
+
+    return [...recordedSignalMemoryView];
   };
 
   /**

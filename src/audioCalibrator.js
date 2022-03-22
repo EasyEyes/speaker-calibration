@@ -1,5 +1,5 @@
 import AudioRecorder from './audioRecorder';
-import {sleep, visualize} from './utils';
+import {sleep} from './utils';
 import MlsGenInterface from './mlsGen/mlsGenInterface';
 import {GeneratedSignalChart, RecordedSignalChart, IRChart} from './myCharts';
 
@@ -88,7 +88,7 @@ class AudioCalibrator extends AudioRecorder {
     source.connect(this.#sourceAudioContext.destination);
     source.start(0);
 
-    await sleep(buffer.duration);
+    await sleep(buffer.duration * 2);
   };
 
   /**
@@ -151,9 +151,9 @@ class AudioCalibrator extends AudioRecorder {
     }
 
     console.log('Setting Recorded Signal');
-    this.#mlsGenInterface.setRecordedSignal(this.getRecordedSignals(0));
-    let recordedSignal = this.getRecordedSignals(0)
-    recordedSignal = recordedSignal.slice(recordedSignal.findIndex((val) => val !== 0));
+    const recordedSignal = this.#mlsGenInterface.setRecordedSignal(this.getRecordedSignals(0));
+    console.log(recordedSignal);
+    // recordedSignal = recordedSignal.slice(recordedSignal.findIndex((val) => val !== 0));
 
     this.caputuredMLSChart = new RecordedSignalChart(
       'captured-signal-chart',
