@@ -39,7 +39,7 @@ class AudioCalibrator extends AudioRecorder {
   #sinkSamplingRate;
 
   /** @private */
-  #sourceSamplingRate;
+  #sourceSamplingRate = 96000;
 
   /**
    * Called when a call is received.
@@ -52,10 +52,12 @@ class AudioCalibrator extends AudioRecorder {
   };
 
   #setSourceAudio = () => {
+    const options = {
+      sampleRate: this.#sourceSamplingRate
+    }
     this.#sourceAudioContext = new (window.AudioContext ||
       window.webkitAudioContext ||
-      window.audioContext)();
-    this.#sourceSamplingRate = this.#sourceAudioContext.sampleRate;
+      window.audioContext)(options);
   };
 
   /**
@@ -107,7 +109,6 @@ class AudioCalibrator extends AudioRecorder {
     this.#sinkAudioAnalyser = this.#sinkAudioContext.createAnalyser();
     const source = this.#sinkAudioContext.createMediaStreamSource(stream);
     source.connect(this.#sinkAudioAnalyser);
-    // visualize(this.#sinkAudioAnalyser);
   };
 
   /**
@@ -115,7 +116,7 @@ class AudioCalibrator extends AudioRecorder {
    * @param {*} sinkSamplingRate
    */
   setSinkSamplingRate = sinkSamplingRate => {
-    this.#sinkSamplingRate = sinkSamplingRate;
+    this.#sinkSamplingRate = parseInt(sinkSamplingRate, 10);
   };
 
   /**
@@ -126,7 +127,8 @@ class AudioCalibrator extends AudioRecorder {
     this.#mlsBufferView = this.#mlsGenInterface.getMLS();
     this.generatedMLSChart = new GeneratedSignalChart(
       'generated-signal-chart',
-      this.#mlsBufferView
+      this.#mlsBufferView,
+      this.#sourceSamplingRate,
     );
 
     let numRounds = 0;
@@ -156,9 +158,10 @@ class AudioCalibrator extends AudioRecorder {
     this.caputuredMLSChart = new RecordedSignalChart(
       'captured-signal-chart',
       recordedSignal,
+      this.#sinkSamplingRate,
     );
     const IR = this.#mlsGenInterface.getImpulseResponse();
-    this.IRChart = new IRChart('ir-chart', IR);
+    this.IRChart = new IRChart('ir-chart', IR, this.#sinkSamplingRate);
     console.log('TEST IR: ', IR);
   };
 

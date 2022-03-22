@@ -59,6 +59,9 @@ Chart.register(
  * Charting Class
  */
 class MyCharts {
+  /** @private */
+  static subSample = 1000;
+
   /**
    * Constructor
    */
@@ -74,6 +77,7 @@ class MyCharts {
             label: '',
             borderColor: '#3e95cd',
             fill: false,
+            pointStyle: false,
           },
         ],
       },
@@ -92,6 +96,38 @@ class MyCharts {
     this.chartDetails.data.datasets[0].label = label;
     this.chartDetails.options.title.text = text;
   };
+
+  linspace = (start, stop, num, endpoint = true) => {
+    const div = endpoint ? num - 1 : num;
+    const step = (stop - start) / div;
+    return Array.from({length: num}, (_, i) => (start + step * i).toFixed(2));
+  };
+
+  /**
+   * Retrieve a fixed number of elements from an array, evenly distributed but
+   * always including the first and last elements.
+   *
+   * @param   {Array} items - The array to operate on.
+   * @param   {number} n - The number of elements to extract.
+   * @returns {Array}
+   */
+  distributedCopy = (items, n) => {
+    const elements = [items[0]];
+    const totalItems = items.length - 2;
+    const interval = Math.floor(totalItems / (n - 2));
+    for (let i = 1; i < n - 1; i += 1) {
+      elements.push(items[i * interval]);
+    }
+    elements.push(items[items.length - 1]);
+    return elements;
+  };
+
+  getSubSampledData = (bufferArray, samplingRate) => {
+    const signalCopy = this.distributedCopy(bufferArray, MyCharts.subSample);
+    const MaxTimestamp = bufferArray.length / samplingRate;
+    const labels = this.linspace(0, MaxTimestamp, signalCopy.length);
+    return [signalCopy, labels];
+  };
 }
 
 /**
@@ -103,10 +139,9 @@ class GeneratedSignalChart extends MyCharts {
    * @param {*} elementID
    * @param {*} bufferArray
    */
-  constructor(elementID, bufferArray) {
+  constructor(elementID, bufferArray, samplingRate) {
     super(elementID);
-    const signalCopy = [...bufferArray.slice(0, bufferArray.length / 500)];
-    const labels = [...signalCopy.keys()];
+    const [signalCopy, labels] = this.getSubSampledData(bufferArray, samplingRate);
     this.setChartData(signalCopy, labels, 'MLS', 'Generated MLS');
     this.chart = new Chart(this.ctx, this.chartDetails);
   }
@@ -121,10 +156,9 @@ class RecordedSignalChart extends MyCharts {
    * @param {*} elementID
    * @param {*} bufferArray
    */
-  constructor(elementID, bufferArray) {
+  constructor(elementID, bufferArray, samplingRate) {
     super(elementID);
-    const signalCopy = [...bufferArray.slice(0, bufferArray.length / 500)];
-    const labels = [...signalCopy.keys()];
+    const [signalCopy, labels] = this.getSubSampledData(bufferArray, samplingRate);
     this.setChartData(signalCopy, labels, 'MLS', 'Recorded MLS');
     this.chart = new Chart(this.ctx, this.chartDetails);
   }
@@ -139,10 +173,9 @@ class IRChart extends MyCharts {
    * @param {*} elementID
    * @param {*} bufferArray
    */
-  constructor(elementID, bufferArray, sf) {
+  constructor(elementID, bufferArray, samplingRate) {
     super(elementID);
-    const signalCopy = [...bufferArray.slice(0, bufferArray.length / 25)];
-    const labels = [...signalCopy.keys()];
+    const [signalCopy, labels] = this.getSubSampledData(bufferArray, samplingRate);
     this.setChartData(signalCopy, labels, 'IR', 'Impulse Response');
     this.chart = new Chart(this.ctx, this.chartDetails);
   }

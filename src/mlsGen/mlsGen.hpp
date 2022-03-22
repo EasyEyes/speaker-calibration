@@ -17,6 +17,8 @@ class MLSGen {
   // MLS parameters
   long N;
   long P;
+
+  // Async Clock Adjustment Parameters
   long srcSR;
   long sinkSR;
 
@@ -31,6 +33,9 @@ class MLSGen {
   float *perm;
   float *resp;
 
+  // Async Clock Adjustment Data
+  float estimatedDiff;
+
   // Internals
   void generateMls();
   void fastHadamard();
@@ -38,12 +43,15 @@ class MLSGen {
   void permuteResponse();
   void generateTagL();
   void generateTagS();
+  void estimateDiff();
 
  public:
   /**
-   * @brief Construct a new MLSGen object with the given number of bits.
+   * @brief Construct a new MLSGen object with the given number of bits and sampling frequencies.
    * 
-   * @param N 
+   * @param N - number of bits
+   * @param srcSR - source sampling frequency
+   * @param sinkSR - sink sampling frequency
    */
   MLSGen(long N, long srcSR, long sinkSR);
   
@@ -196,6 +204,10 @@ void MLSGen::generateTagS() {
       tagS[i] += mls[(P + i - j) % P] * (1 << (N - 1 - j));
     }
   }
+}
+
+void MLSGen::estimateDiff() {
+  estimatedDiff = (-1 * srcSR) + (P * sinkSR);
 }
 
 #endif  // SPEAKER_CALIBRATION_SRC_MLSGEN_MLSGEN_HPP_
