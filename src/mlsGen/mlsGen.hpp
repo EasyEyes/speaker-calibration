@@ -228,10 +228,10 @@ void MLSGen::estimateDiff() {
 //     sequence generateTagL(mls, tagL, P, N);        // Generate tagL for the L
 //     matrix generateTagS(mls, tagS, P, N);        // Generate tagS for the S
 //     matrix generateSignal(mls, signal, P);       // Do a simulated
-//     measurement and get the signal permuteSignal(recordedSignal, perm, tagS,
-//     P); // Permute the signal according to tagS fastHadamard(perm, P + 1, N);
-//     // Do a Hadamard transform in place permuteResponse(perm, resp, tagL, P);
-//     // Permute the impulseresponse according to tagL
+//     measurement and get the signal 
+//     permuteSignal(recordedSignal, perm, tagS, P); // Permute the signal according to tagS 
+//     fastHadamard(perm, P + 1, N); Do a Hadamard transform in place 
+//     permuteResponse(perm, resp, tagL, P); Permute the impulseresponse according to tagL
 //     // printf("Impulse response:\n");
 //     // for (i = 0; i < 10; i++)
 //     //     printf("%10.5f\n", resp[i]);

@@ -25,7 +25,7 @@ class AudioRecorder {
   #recordedSignals = [];
 
   /**
-   * creates a new AudioRecorder instance. 
+   * creates a new AudioRecorder instance.
    * Sets up the audio context and file reader.
    */
   constructor() {
@@ -44,11 +44,11 @@ class AudioRecorder {
     this.#arrayBuffer = this.#fileReader.result;
 
     // Convert array buffer into audio buffer
-    this.#audioContext.decodeAudioData(this.#arrayBuffer, (audioBuffer) => {
+    this.#audioContext.decodeAudioData(this.#arrayBuffer, audioBuffer => {
       // Do something with audioBuffer
       // TODO: Address the fact that the audio buffer is being continously filled,
       // we want a new buffer each round.
-      // console.log(audioBuffer.getChannelData(0));
+      console.log(audioBuffer.getChannelData(0));
       this.#recordedSignals.push(audioBuffer.getChannelData(0));
     });
   };
@@ -58,8 +58,9 @@ class AudioRecorder {
    * @private
    * @param {*} e - The event object.
    */
-  #onRecorderDataAvailable = (e) => {
-    if (e.data.size > 0) this.#recordedChunks.push(e.data);
+  #onRecorderDataAvailable = e => {
+    console.log(e);
+    if (e.data && e.data.size > 0) this.#recordedChunks.push(e.data);
   };
 
   /**
@@ -69,7 +70,7 @@ class AudioRecorder {
   #onRecorderStop = () => {
     // Create a blob from the recorded audio chunks
     this.#audioBlob = new Blob(this.#recordedChunks, {
-      type: "audio/wav; codecs=MS_PCM",
+      type: 'audio/webm;codecs=opus',
     });
 
     // Set up file reader on loaded end event
@@ -84,13 +85,14 @@ class AudioRecorder {
    * @private
    * @param {MediaStream} stream - The stream of audio from the Listener.
    */
-  #setMediaRecorder = (stream) => {
+  #setMediaRecorder = stream => {
     // Create a new MediaRecorder object
-    this.#mediaRecorder = new MediaRecorder(stream, { mimeType: "audio/webm" });
+    this.#mediaRecorder = new MediaRecorder(stream);
+
+    // , { mimeType: "audio/webm;codecs=opus" });
 
     // Add event listeners
-    this.#mediaRecorder.ondataavailable = (e) =>
-      this.#onRecorderDataAvailable(e);
+    this.#mediaRecorder.ondataavailable = e => this.#onRecorderDataAvailable(e);
     this.#mediaRecorder.onstop = () => this.#onRecorderStop();
   };
 
@@ -98,9 +100,10 @@ class AudioRecorder {
    * Public method to start the recording process.
    * @param {MediaStream} stream - The stream of audio from the Listener.
    */
-  startRecording = (stream) => {
+  startRecording = stream => {
     // Set up media recorder if needed
     if (!this.#mediaRecorder) this.#setMediaRecorder(stream);
+    this.#recordedChunks = [];
     this.#mediaRecorder.start();
   };
 
@@ -109,10 +112,11 @@ class AudioRecorder {
    * @public
    */
   stopRecording = () => {
+    console.log(this.#mediaRecorder.state)
     this.#mediaRecorder.stop();
   };
 
-  getRecordedSignals = (i) => this.#recordedSignals[i];
+  getRecordedSignals = i => this.#recordedSignals[i];
 }
 
 export default AudioRecorder;

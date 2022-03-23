@@ -35,7 +35,7 @@
     "url": "https://github.com/EasyEyes/speaker-calibration"
   },
   "dependencies": {
-    "chart.js": "^3.7.1",
+    "d3": "^7.3.0",
     "peerjs": "^1.3.2",
     "qrcode": "^1.4.4",
     "uuid": "^8.3.2"

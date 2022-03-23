@@ -1,107 +1,92 @@
+/* eslint-disable require-jsdoc */
 /* eslint-disable max-classes-per-file */
-/* eslint-disable import/no-extraneous-dependencies */
-import {
-  Chart,
-  ArcElement,
-  LineElement,
-  BarElement,
-  PointElement,
-  BarController,
-  BubbleController,
-  DoughnutController,
-  LineController,
-  PieController,
-  PolarAreaController,
-  RadarController,
-  ScatterController,
-  CategoryScale,
-  LinearScale,
-  LogarithmicScale,
-  RadialLinearScale,
-  TimeScale,
-  TimeSeriesScale,
-  Decimation,
-  Filler,
-  Legend,
-  Title,
-  Tooltip,
-  SubTitle,
-} from 'chart.js';
+import * as d3 from 'd3';
 
-Chart.register(
-  ArcElement,
-  LineElement,
-  BarElement,
-  PointElement,
-  BarController,
-  BubbleController,
-  DoughnutController,
-  LineController,
-  PieController,
-  PolarAreaController,
-  RadarController,
-  ScatterController,
-  CategoryScale,
-  LinearScale,
-  LogarithmicScale,
-  RadialLinearScale,
-  TimeScale,
-  TimeSeriesScale,
-  Decimation,
-  Filler,
-  Legend,
-  Title,
-  Tooltip,
-  SubTitle
-);
+const parseTime = d3.timeParse('%f');
+
+const linspace = (start, stop, num, endpoint = true) => {
+  const div = endpoint ? num - 1 : num;
+  const step = (stop - start) / div;
+  return Array.from({length: num}, (_, i) => {
+    const val = start + step * i;
+    return val;
+  });
+};
+
+const formatSamplingData = (bufferArray, samplingRate) => {
+  const bufferLength = bufferArray.length;
+  const MaxTimestamp = bufferLength / samplingRate;
+  const timeSteps = linspace(0, MaxTimestamp, bufferLength);
+  return timeSteps.map((value, idx) => ({
+    date: new Date(+value * 1000),
+    value: bufferArray[idx],
+  }));
+};
 
 /**
  * Charting Class
  */
 class MyCharts {
-  /** @private */
-  static subSample = 1000;
-
   /**
    * Constructor
    */
-  constructor(elementID) {
-    this.ctx = document.getElementById(elementID);
-    this.chartDetails = {
-      type: 'line',
-      data: {
-        labels: [],
-        datasets: [
-          {
-            data: [],
-            label: '',
-            borderColor: '#3e95cd',
-            fill: false,
-            pointStyle: false,
-          },
-        ],
-      },
-      options: {
-        title: {
-          display: true,
-          text: '',
-        },
-      },
+  constructor(elementID, data) {
+    const margin = {
+      top: 10,
+      right: 30,
+      bottom: 30,
+      left: 60,
     };
+
+    const element = d3.select(`#d3-select`).node();
+
+    const width = element.getBoundingClientRect().width - margin.left - margin.right;
+
+    const height = 500 - margin.top - margin.bottom;
+
+    const x = d3.scaleTime().range([0, width]);
+
+    const y = d3.scaleLinear().range([height, 0]);
+
+    const xAxis = d3.axisBottom(x);
+
+    const yAxis = d3.axisLeft(y);
+
+    const line = d3
+      .line()
+      .x(d => x(d.date))
+      .y(d => y(d.value));
+
+    // append the svg object to the body of the page
+    const svg = d3
+      .select(`#${elementID}`)
+      .append('svg')
+      .attr('width', width + margin.left + margin.right)
+      .attr('height', height + margin.top + margin.bottom)
+      .append('g')
+      .attr('transform', `translate(${margin.left},${margin.top})`);
+
+    x.domain(d3.extent(data, d => d.date));
+    y.domain(d3.extent(data, d => d.value));
+
+    svg.append('g').attr('class', 'x axis').attr('transform', `translate(0,${height})`).call(xAxis);
+
+    svg
+      .append('g')
+      .attr('class', 'y axis')
+      .call(yAxis)
+      .append('text')
+      .attr('transform', 'rotate(-90)')
+      .attr('y', 6)
+      .attr('dy', '.71em')
+      .style('text-anchor', 'end')
+      .text('Price ($)');
+
+    svg.append('path').datum(data).attr('class', 'line').attr('d', line);
+
+    this.svg = svg;
+    this.data = data;
   }
-
-  setChartData = (data, labels, label, text) => {
-    this.chartDetails.data.labels = labels;
-    this.chartDetails.data.datasets[0].data = data;
-    this.chartDetails.data.datasets[0].label = label;
-    this.chartDetails.options.title.text = text;
-  };
-
-  linspace = (start, stop, num, endpoint = true) => {
-    const div = endpoint ? num - 1 : num;
-    const step = (stop - start) / div;
-    return Array.from({length: num}, (_, i) => (start + step * i).toFixed(2));
-  };
 
   /**
    * Retrieve a fixed number of elements from an array, evenly distributed but
@@ -140,10 +125,8 @@ class GeneratedSignalChart extends MyCharts {
    * @param {*} bufferArray
    */
   constructor(elementID, bufferArray, samplingRate) {
-    super(elementID);
-    const [signalCopy, labels] = this.getSubSampledData(bufferArray, samplingRate);
-    this.setChartData(signalCopy, labels, 'MLS', 'Generated MLS');
-    this.chart = new Chart(this.ctx, this.chartDetails);
+    const data = formatSamplingData(bufferArray, samplingRate);
+    super(elementID, data);
   }
 }
 
@@ -157,10 +140,8 @@ class RecordedSignalChart extends MyCharts {
    * @param {*} bufferArray
    */
   constructor(elementID, bufferArray, samplingRate) {
-    super(elementID);
-    const [signalCopy, labels] = this.getSubSampledData(bufferArray, samplingRate);
-    this.setChartData(signalCopy, labels, 'MLS', 'Recorded MLS');
-    this.chart = new Chart(this.ctx, this.chartDetails);
+    const data = formatSamplingData(bufferArray, samplingRate);
+    super(elementID, data);
   }
 }
 
@@ -174,10 +155,8 @@ class IRChart extends MyCharts {
    * @param {*} bufferArray
    */
   constructor(elementID, bufferArray, samplingRate) {
-    super(elementID);
-    const [signalCopy, labels] = this.getSubSampledData(bufferArray, samplingRate);
-    this.setChartData(signalCopy, labels, 'IR', 'Impulse Response');
-    this.chart = new Chart(this.ctx, this.chartDetails);
+    const data = formatSamplingData(bufferArray, samplingRate);
+    super(elementID, data);
   }
 }
 

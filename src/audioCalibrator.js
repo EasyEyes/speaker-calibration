@@ -53,8 +53,8 @@ class AudioCalibrator extends AudioRecorder {
 
   #setSourceAudio = () => {
     const options = {
-      sampleRate: this.#sourceSamplingRate
-    }
+      sampleRate: this.#sourceSamplingRate,
+    };
     this.#sourceAudioContext = new (window.AudioContext ||
       window.webkitAudioContext ||
       window.audioContext)(options);
@@ -87,6 +87,9 @@ class AudioCalibrator extends AudioRecorder {
     source.buffer = buffer;
     source.connect(this.#sourceAudioContext.destination);
     source.start(0);
+    
+    console.log(source);
+    console.log(`Buffer Duration: ${buffer.duration}`);
 
     await sleep(buffer.duration * 2);
   };
@@ -128,7 +131,7 @@ class AudioCalibrator extends AudioRecorder {
     this.generatedMLSChart = new GeneratedSignalChart(
       'generated-signal-chart',
       this.#mlsBufferView,
-      this.#sourceSamplingRate,
+      this.#sourceSamplingRate
     );
 
     let numRounds = 0;
@@ -152,13 +155,13 @@ class AudioCalibrator extends AudioRecorder {
 
     console.log('Setting Recorded Signal');
     const recordedSignal = this.#mlsGenInterface.setRecordedSignal(this.getRecordedSignals(0));
-    console.log(recordedSignal);
+    // console.log(recordedSignal);
     // recordedSignal = recordedSignal.slice(recordedSignal.findIndex((val) => val !== 0));
 
     this.caputuredMLSChart = new RecordedSignalChart(
       'captured-signal-chart',
       recordedSignal,
-      this.#sinkSamplingRate,
+      this.#sinkSamplingRate
     );
     const IR = this.#mlsGenInterface.getImpulseResponse();
     this.IRChart = new IRChart('ir-chart', IR, this.#sinkSamplingRate);
@@ -179,7 +182,7 @@ class AudioCalibrator extends AudioRecorder {
     await MlsGenInterface.factory(this.#sourceSamplingRate, this.#sinkSamplingRate).then(
       mlsGenInterface => {
         this.#mlsGenInterface = mlsGenInterface;
-        console.log('mlsGenInterface', this.#mlsGenInterface);
+        // console.log('mlsGenInterface', this.#mlsGenInterface);
       }
     );
     // after intializating, start the calibration steps with garbage collection

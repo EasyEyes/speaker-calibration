@@ -27,7 +27,8 @@
       Eius!</p>
     <div class="row">
       <div class="col-4">
-        <button id="calibrationBeginButton" type="button" class="btn btn-primary">Calibrate Speakers</button>
+        <button id="callPeerCallButton" type="button" class="btn btn-primary">Start Peer Call</button>
+        <button id="calibrationBeginButton" type="button" class="btn btn-primary d-none">Calibrate Speakers</button>
       </div>
       <div class="col-4">
         <div id="display"></div>
@@ -36,58 +37,41 @@
       </div>
     </div>
     <div class="row">
-      <div class="col">
-        <canvas id="generated-signal-chart" width="400" height="150"></canvas>
+      <div class="col" id="d3-select">
+        <div id="generated-signal-chart"></div>
       </div>
     </div>
     <div class="row">
       <div class="col">
-        <canvas id="captured-signal-chart" width="400" height="150"></canvas>
+        <div id="captured-signal-chart""></div>
       </div>
     </div>
-    <div class="row">
-      <div class="col">
-        <canvas id="ir-chart" width="400" height="150"></canvas>
+    <div class=" row">
+          <div class="col">
+            <div id="ir-chart"></div>
+          </div>
+        </div>
       </div>
-    </div>
-  </div>
-  <script>
-    document.getElementById("calibrationBeginButton").onclick = () => {
-      const speakerParameters = {
-        siteUrl: window.location.href.substring(
-          0,
-          location.href.lastIndexOf("/")
-        ),
-        targetElementId: "display",
-      };
-      window.speaker = new speakerCalibrator.Speaker(speakerParameters);
-      console.log(window.speaker);
-    }; 
-  </script>
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"
-    integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p"
-    crossorigin="anonymous"></script>
-  <!-- <script>
-    new Chart(document.getElementById("generated-signal-chart"), {
-      type: 'line',
-      data: {
-        labels: [],/*[1500, 1600, 1700, 1750, 1800, 1850, 1900, 1950, 1999, 2050],*/
-        datasets: [{
-          data: [],/*[86, 114, 106, 106, 107, 111, 133, 221, 783, 2478],*/
-          label: "Generated MLS",
-          borderColor: "#3e95cd",
-          fill: false
+      <script>
+        document.getElementById("callPeerCallButton").onclick = () => {
+          const speakerParameters = {
+            siteUrl: window.location.href.substring(
+              0,
+              location.href.lastIndexOf("/")
+            ),
+            targetElementId: "display",
+          };
+          window.speaker = new speakerCalibrator.Speaker(speakerParameters);
+          // console.log(window.speaker);
+          document.getElementById("callPeerCallButton").classList.add("d-none");
+        };
+        document.getElementById("calibrationBeginButton").onclick = () => {
+          window.speaker.startCalibration();
         }
-        ]
-      },
-      options: {
-        title: {
-          display: true,
-          text: 'Generated Maximum Length Sequence'
-        }
-      }
-    });
-  </script> -->
+      </script>
+      <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p"
+        crossorigin="anonymous"></script>
 </body>
 
 </html>

@@ -80,7 +80,10 @@ class MlsGenInterface {
    * Calculate and return the Impulse Response of the recorded signal.
    * @returns
    */
-  getImpulseResponse = () => this.#MLSGenInstance['getImpulseResponse']();
+  getImpulseResponse = () => {
+    const result = this.#MLSGenInstance['getImpulseResponse']();
+    return result.slice(0);
+  };
 
   /**
    * Given a recorded MLS signal, this function sets the recordedSignal property of the MLSGen object.
@@ -90,7 +93,7 @@ class MlsGenInterface {
     // get memory view
     const recordedSignalMemoryView = this.#MLSGenInstance['getRecordedSignalMemoryView']();
     console.log('length of recorded signal memory view: ', recordedSignalMemoryView.length);
-    console.log('length of signal: ', signal.length);
+    console.log('length of recorded signal: ', signal.length);
     // iterate and set
     for (let i = 0; i < recordedSignalMemoryView.length; i += 1) {
       // set to 0 if undefined
