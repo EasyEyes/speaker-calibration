@@ -68,30 +68,35 @@ class AudioCalibrator extends AudioRecorder {
   #playCalibrationAudio = async () => {
     const buffer = this.#sourceAudioContext.createBuffer(
       1, // number of channels
-      this.#mlsBufferView.length, // length
+      this.#mlsBufferView.length * 3, // length
       this.#sourceSamplingRate // sample rate
     );
     const data = buffer.getChannelData(0); // get data
     // fill the buffer with our data
     try {
-      for (let i = 0; i < this.#mlsBufferView.length; i += 1) {
-        data[i] = this.#mlsBufferView[i];
+      let idx;
+      for (let i = 0; i < 3; i += 1) {
+        for (let j = 0; j < this.#mlsBufferView.length; j += 1) {
+          // fill the buffer with 3 copies of the MLS buffer
+          idx = i * (this.#mlsBufferView.length - 1) + j;
+          data[idx] = this.#mlsBufferView[j];
+        }
       }
     } catch (error) {
       console.error(error);
     }
 
-    console.log(buffer.getChannelData(0));
+    // console.log(buffer.getChannelData(0));
 
     const source = this.#sourceAudioContext.createBufferSource();
     source.buffer = buffer;
     source.connect(this.#sourceAudioContext.destination);
     source.start(0);
-    
-    console.log(source);
-    console.log(`Buffer Duration: ${buffer.duration}`);
 
-    await sleep(buffer.duration * 2);
+    console.log(buffer.getChannelData(0));
+    console.log(source);
+
+    return sleep(buffer.duration * 2);
   };
 
   /**
