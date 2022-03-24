@@ -3,8 +3,10 @@
 
 // setup emscripten for vscode intelli sense:
 // https://gist.github.com/wayou/59f3a8e4fbab050fbb32e94dd9582660'
+#ifdef __EMSCRIPTEN__
 #include <emscripten/bind.h>
 #include <emscripten/val.h>
+#endif
 
 /**
  * @brief Exposes methods for generating an MLS signal, and calculating the
@@ -37,6 +39,7 @@ class MLSGen {
   float estimatedDiff;
 
   // Internals
+  void GenerateSignal();
   void generateMls();
   void fastHadamard();
   void permuteSignal();
@@ -47,17 +50,27 @@ class MLSGen {
 
  public:
   /**
-   * @brief Construct a new MLSGen object with the given number of bits and sampling frequencies.
-   * 
+   * @brief Construct a new MLSGen object with the given number of bits and
+   * sampling frequencies.
+   *
    * @param N - number of bits
    * @param srcSR - source sampling frequency
    * @param sinkSR - sink sampling frequency
    */
   MLSGen(long N, long srcSR, long sinkSR);
-  
+
+#ifndef __EMSCRIPTEN__
+  /**
+   * @brief Destruct the MLSGen object.
+   * @return void
+   */
+  ~MLSGen();
+#endif
+
+#ifdef __EMSCRIPTEN__
   /**
    * @brief Destroy the MLSGen object
-   * 
+   *
    */
   void Destruct();
 
@@ -70,19 +83,35 @@ class MLSGen {
   emscripten::val getMLS();
 
   /**
-   * @brief Get the Recorded Signal Memory View object. This memory view can then be set in the javascript code. 
-   * 
-   * @return emscripten::val 
+   * @brief Get the Recorded Signal Memory View object. This memory view can
+   * then be set in the javascript code.
+   *
+   * @return emscripten::val
    */
   emscripten::val getRecordedSignalMemoryView();
 
   /**
-   * @brief Get the Impulse Response. Returns a memory view of the impulse response.
-   * 
-   * @return emscripten::val 
+   * @brief Get the Impulse Response. Returns a memory view of the impulse
+   * response.
+   *
+   * @return emscripten::val
    */
   emscripten::val getImpulseResponse();
+#endif
 };
+
+void MLSGen::GenerateSignal() {
+  long i;
+  for (i = 0; i < P; i++)  // Simulate a system with h = {2, 0.4, 0.2, -0.1,
+                           // -0.8}, just an example
+  {
+    recordedSignal[i] = 2.0 * generatedSignal[(P + i - 0) % P] +
+                        0.4 * generatedSignal[(P + i - 1) % P] +
+                        0.2 * generatedSignal[(P + i - 2) % P] -
+                        0.1 * generatedSignal[(P + i - 3) % P] -
+                        0.8 * generatedSignal[(P + i - 4) % P];
+  }
+}
 
 void MLSGen::generateMls() {
   const long maxNoTaps = 18;
@@ -206,39 +235,6 @@ void MLSGen::generateTagS() {
   }
 }
 
-void MLSGen::estimateDiff() {
-  estimatedDiff = (-1 * srcSR) + (P * sinkSR);
-}
+void MLSGen::estimateDiff() { estimatedDiff = (-1 * srcSR) + (P * sinkSR); }
 
 #endif  // SPEAKER_CALIBRATION_SRC_MLSGEN_MLSGEN_HPP_
-
-// EMSCRIPTEN_KEEPALIVE
-// void test()
-// {
-//     const long N = 18;
-//     const long P = (1 << N) - 1;
-//     long i;
-//     bool *mls = new bool[P];
-//     long *tagL = new long[P];
-//     long *tagS = new long[P];
-//     double *recordedSignal = new double[P];
-//     double *perm = new double[P + 1];
-//     double *resp = new double[P + 1];
-//     generateMls(mls, P, N);               // Generate the Maximum length
-//     sequence generateTagL(mls, tagL, P, N);        // Generate tagL for the L
-//     matrix generateTagS(mls, tagS, P, N);        // Generate tagS for the S
-//     matrix generateSignal(mls, signal, P);       // Do a simulated
-//     measurement and get the signal 
-//     permuteSignal(recordedSignal, perm, tagS, P); // Permute the signal according to tagS 
-//     fastHadamard(perm, P + 1, N); Do a Hadamard transform in place 
-//     permuteResponse(perm, resp, tagL, P); Permute the impulseresponse according to tagL
-//     // printf("Impulse response:\n");
-//     // for (i = 0; i < 10; i++)
-//     //     printf("%10.5f\n", resp[i]);
-//     delete[] mls;
-//     delete[] tagL;
-//     delete[] tagS;
-//     delete[] signal;
-//     delete[] perm;
-//     delete[] resp;
-// }

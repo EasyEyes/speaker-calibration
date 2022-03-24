@@ -42,7 +42,7 @@ OUTPUT_WASM := $(addprefix $(DIST_DIR),$(PROJECT_NAME).wasm) # DIST_DIR + PROJEC
 OUTPUT := $(addprefix $(DIST_DIR),$(PROJECT_NAME).*) # DIST_DIR + PROJECT_NAME + .*
 
 # emcc compiler options
-CC = em++ # emcc compiler front end
+EMCC = em++ # emcc compiler front end
 STD = --std=c++17 # C++ standard
 OPTIMIZE = -O3 # Optimization level O0 ~ 28.8 kB, O1 ~ 20.3 kB, O2 ~ 20.3 kB, O3 ~ 19.7 kB
 ENV = -s ENVIRONMENT='web' # environment
@@ -51,10 +51,15 @@ MODULARIZE = -s MODULARIZE=1 -s 'EXPORT_NAME="createMLSGenModule"' # puts all of
 BIND = -lembind # links against embind library
 MEMORY_CHECKS = -s ASSERTIONS=1 -fsanitize=address -g2 
 
+# gcc compiler options
+GCC = gcc # gcc compiler front end
+
+# build a standard C++ binary
+
 # build the WASM + JS glue module, linked with embind
 $(PROJECT_NAME)_bind: # $(OBJ_FILE)
 	@mkdir -p $(@D)
-	@$(call run_and_test, $(CC) $(STD) $(BIND) $(SRC_FILE) -o $(OUTPUT_WASM_JS) $(MODULARIZE) $(OPTIMIZE) $(ENV) $(MEMORY_CHECKS) )
+	@$(call run_and_test, $(EMCC) $(STD) $(BIND) $(SRC_FILE) -o $(OUTPUT_WASM_JS) $(MODULARIZE) $(OPTIMIZE) $(ENV) $(MEMORY_CHECKS) )
 
 # clean the WASM + JS files
 .PHONY: clean

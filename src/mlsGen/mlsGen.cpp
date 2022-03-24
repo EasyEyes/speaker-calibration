@@ -2,8 +2,6 @@
 
 #include <sanitizer/lsan_interface.h>
 
-using namespace emscripten;
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -21,6 +19,22 @@ MLSGen::MLSGen(long N, long srcSR, long sinkSR) {
   perm = new float[P + 1];
   resp = new float[P + 1];
 }
+
+#ifndef __EMSCRIPTEN__
+MLSGen::~MLSGen() {
+  delete[] mls;
+  delete[] tagL;
+  delete[] tagS;
+  delete[] generatedSignal;
+  delete[] recordedSignal;
+  delete[] perm;
+  delete[] resp;
+}
+#endif
+
+#ifdef __EMSCRIPTEN__
+
+using namespace emscripten;
 
 void MLSGen::Destruct() {
   delete[] mls;
@@ -50,6 +64,7 @@ emscripten::val MLSGen::getRecordedSignalMemoryView() {
 emscripten::val MLSGen::getImpulseResponse() {
   generateTagL();     // Generate tagL for the L matrix
   generateTagS();     // Generate tagS for the S matrix
+  GenerateSignal();   // Generate the signal TEST PURPOSES
   permuteSignal();    // Permute the signal according to tagS
   fastHadamard();     // Do a Hadamard transform in place
   permuteResponse();  // Permute the impulseresponse according to tagL
@@ -67,6 +82,7 @@ EMSCRIPTEN_BINDINGS(mls_gen_module) {
       .function("getImpulseResponse", &MLSGen::getImpulseResponse);
   function("doLeakCheck", &__lsan_do_recoverable_leak_check);
 };
+#endif
 
 #ifdef __cplusplus
 }

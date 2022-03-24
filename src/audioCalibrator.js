@@ -68,20 +68,16 @@ class AudioCalibrator extends AudioRecorder {
   #playCalibrationAudio = async () => {
     const buffer = this.#sourceAudioContext.createBuffer(
       1, // number of channels
-      this.#mlsBufferView.length * 3, // length
+      this.#mlsBufferView.length, // length
       this.#sourceSamplingRate // sample rate
     );
     const data = buffer.getChannelData(0); // get data
     // fill the buffer with our data
     try {
-      let idx;
-      for (let i = 0; i < 3; i += 1) {
-        for (let j = 0; j < this.#mlsBufferView.length; j += 1) {
+        for (let i = 0; i < this.#mlsBufferView.length; i += 1) {
           // fill the buffer with 3 copies of the MLS buffer
-          idx = i * (this.#mlsBufferView.length - 1) + j;
-          data[idx] = this.#mlsBufferView[j];
+          data[i] = this.#mlsBufferView[i];
         }
-      }
     } catch (error) {
       console.error(error);
     }
@@ -158,16 +154,16 @@ class AudioCalibrator extends AudioRecorder {
       numRounds += 1;
     }
 
-    console.log('Setting Recorded Signal');
-    const recordedSignal = this.#mlsGenInterface.setRecordedSignal(this.getRecordedSignals(0));
+    // console.log('Setting Recorded Signal');
+    // const recordedSignal = this.#mlsGenInterface.setRecordedSignal(this.getRecordedSignals(0));
     // console.log(recordedSignal);
     // recordedSignal = recordedSignal.slice(recordedSignal.findIndex((val) => val !== 0));
 
-    this.caputuredMLSChart = new RecordedSignalChart(
-      'captured-signal-chart',
-      recordedSignal,
-      this.#sinkSamplingRate
-    );
+    // this.caputuredMLSChart = new RecordedSignalChart(
+    //   'captured-signal-chart',
+    //   recordedSignal,
+    //   this.#sinkSamplingRate
+    // );
     const IR = this.#mlsGenInterface.getImpulseResponse();
     this.IRChart = new IRChart('ir-chart', IR, this.#sinkSamplingRate);
     console.log('TEST IR: ', IR);

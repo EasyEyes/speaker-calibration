@@ -56,6 +56,9 @@ Thumbs.db
 *.key
 *.pem
 
+# ingnore CSV files
+*.csv
+
 # --------------------------------------------------------
 # BEGIN Explictly Allowed Files (i.e. do NOT ignore these)
 # --------------------------------------------------------
