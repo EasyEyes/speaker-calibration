@@ -74,6 +74,7 @@ void FastHadamard(double *x, long P1, long N) {
     k1 = k1 >> 1;
   }
 }
+
 void PermuteSignal(double *sig, double *perm, long *tagS, long P) {
   long i;
   double dc = 0;

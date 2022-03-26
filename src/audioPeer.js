@@ -29,7 +29,11 @@ class AudioPeer {
   constructor(param = initParameters) {
     // PeerJS
     /* Create the Peer object for our end of the connection. */
-    this.peer = new Peer(null, {debug: 2});
+    this.peer = new Peer({
+      secure: true,
+      host: 'easyeyes-peer-server.herokuapp.com',
+      port: 443,
+    });
     this.conn = null;
     this.lastPeerId = null;
 

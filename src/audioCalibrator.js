@@ -1,5 +1,5 @@
 import AudioRecorder from './audioRecorder';
-import {sleep} from './utils';
+import {sleep, saveToCSV} from './utils';
 import MlsGenInterface from './mlsGen/mlsGenInterface';
 import {GeneratedSignalChart, RecordedSignalChart, IRChart} from './myCharts';
 
@@ -154,7 +154,10 @@ class AudioCalibrator extends AudioRecorder {
       numRounds += 1;
     }
 
+    saveToCSV(this.getRecordedSignals(0))
+
     // console.log('Setting Recorded Signal');
+
     // const recordedSignal = this.#mlsGenInterface.setRecordedSignal(this.getRecordedSignals(0));
     // console.log(recordedSignal);
     // recordedSignal = recordedSignal.slice(recordedSignal.findIndex((val) => val !== 0));
