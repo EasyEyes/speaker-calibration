@@ -78,7 +78,7 @@ class AudioCalibrator extends AudioRecorder {
     console.log(buffer.getChannelData(0));
     console.log(source);
 
-    return sleep(buffer.duration);
+    return sleep(buffer.duration * 1.2);
   };
 
   /**
@@ -128,7 +128,7 @@ class AudioCalibrator extends AudioRecorder {
       numRounds += 1;
     }
 
-    // saveToCSV(this.getRecordedSignals(0));
+    saveToCSV(this.getRecordedSignals(0));
 
     // console.log('Setting Recorded Signal');
 
