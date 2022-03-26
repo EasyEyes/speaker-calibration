@@ -108,6 +108,7 @@ class Listener extends AudioPeer {
 
   sendSamplingRate = sampleRate => {
     this.displayUpdate('Listener - sendSamplingRate');
+    console.log(sampleRate)
     this.conn.send({
       name: 'samplingRate',
       payload: sampleRate,
@@ -126,7 +127,7 @@ class Listener extends AudioPeer {
         const capabilities = track.getCapabilities();
         if (capabilities.sampleRate.min <= 48000 && capabilities.sampleRate.max >= 48000) {
           track.applyConstraints({
-            sampleRate: {exact: 48000},
+            sampleRate: 48000,
           });
         }
         this.sendSamplingRate(track.getSettings().sampleRate);

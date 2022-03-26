@@ -139,7 +139,7 @@ class AudioCalibrator extends AudioRecorder {
     this.caputuredMLSChart = new RecordedSignalChart(
       'captured-signal-chart',
       this.getRecordedSignals(0),
-      this.#sinkSamplingRate.max
+      this.#sinkSamplingRate
     );
     // const IR = this.#mlsGenInterface.getImpulseResponse();
     // this.IRChart = new IRChart('ir-chart', IR, this.#sinkSamplingRate);
@@ -156,7 +156,7 @@ class AudioCalibrator extends AudioRecorder {
   startCalibration = async stream => {
     this.#setSourceAudio();
     // initialize the MLSGenInterface object with it's factory method
-    await MlsGenInterface.factory(this.#sinkSamplingRate.max, this.#sourceSamplingRate).then(
+    await MlsGenInterface.factory(this.#sinkSamplingRate, this.#sourceSamplingRate).then(
       mlsGenInterface => {
         this.#mlsGenInterface = mlsGenInterface;
       }
