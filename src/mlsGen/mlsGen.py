@@ -153,7 +153,6 @@ def generateTestRecordedSignal():
     for i in range(P):
         recordedSignal[i] = 2.0 * generatedSignal[(P + i - 0) % P] + 0.4 * generatedSignal[(P + i - 1) % P] + 0.2 * generatedSignal[(
             P + i - 2) % P] - 0.1 * generatedSignal[(P + i - 3) % P] - 0.8 * generatedSignal[(P + i - 4) % P]
-        # recordedSignal[i] = 2.0 * generatedSignal[i]
 
 
 def generateAndSaveTestRecordedSignal():
@@ -168,6 +167,19 @@ def loadTestRecordedSignal():
     print("Loading the test recorded signal...")
     path = os.path.join(dir_path, r'testRecordedSignal.csv')
     globals()['recordedSignal'] = readCSVData(path)
+
+
+def loadRecordedMLSSignal():
+    print("Loading the recorded MLS signal...")
+    numExamples = 3
+    recordedSignals = []
+    for i in range(numExamples):
+        fileName = rf'recordedMLSSignal_{i}.csv'
+        path = os.path.join(dir_path, fileName)
+        recordedSignals.append(readCSVData(path))
+        print(len(recordedSignals[i]))
+
+    globals()['recordedSignal'] = np.mean(recordedSignals, axis = 0)
 
 
 def loadMLSSequence():
@@ -229,7 +241,8 @@ def loadAllData():
     loadGeneratedSignal()
     loadTagL()
     loadTagS()
-    loadTestRecordedSignal()
+    #loadTestRecordedSignal()
+    loadRecordedMLSSignal()
 
 
 def plotBuffer(buffer, subsample=False):
@@ -276,30 +289,35 @@ def plotPerm(buffer, subsample=False):
 def plotAutoCorrelation(subsample=False):
     max_time = len(generatedSignal) / SAMPLE_RATE
     time_steps = np.linspace(0, max_time, len(generatedSignal))
+    
+    # truncate the recorded signal to the length of the generated signal
+    recorded_signal_truncated = recordedSignal[:len(generatedSignal)]
+    print(len(generatedSignal))
 
-    # y = signal.correlate(generatedSignal, recordedSignal, mode='same', method='fft') / P
+    y = signal.correlate(generatedSignal, recorded_signal_truncated, mode='same', method='fft') / P
 
-    corr = signal.correlate(recordedSignal, generatedSignal,mode='same', method='fft')
-    lags = signal.correlation_lags(len(generatedSignal), len(recordedSignal))
+    corr = signal.correlate(recorded_signal_truncated, generatedSignal,mode='same', method='fft')
+    lags = signal.correlation_lags(len(generatedSignal), len(recorded_signal_truncated))
     corr /= P
     
-    left = 13250
+    #left = 13250
+    left = 0
     right = 13500
 
     # plt.style.use('seaborn')
     # plt.plot(time_steps, y, linewidth=1.0)
     # plt.show()
     fig, (ax_orig, ax_noise, ax_corr, ax_wf) = plt.subplots(4, 1, figsize=(4.8, 4.8))
-    ax_orig.plot(generatedSignal[left:right])
+    ax_orig.plot(generatedSignal)
     ax_orig.set_title('Original signal')
     ax_orig.set_xlabel('Sample Number')
-    ax_noise.plot(recordedSignal[left:right])
+    ax_noise.plot(recorded_signal_truncated)
     ax_noise.set_title('Signal with noise')
     ax_noise.set_xlabel('Sample Number')
     
     left = 131071
     right = 131081
-    ax_corr.plot(corr[left:right])
+    ax_corr.plot(corr)
     ax_corr.set_title('Impulse Response (FFT)')
     ax_corr.set_xlabel('Samples')
     
@@ -339,6 +357,7 @@ def plotHardamardAutoCorrelation(subsample=False):
     fig.tight_layout()
     plt.show()
 
+
 def plotImpulseResponse(subsample=False):
     imp = resp
 
@@ -359,9 +378,9 @@ def testRun():
 
     # globals()['recordedSignal'] = generatedSignal
 
-    permuteSignal()
-    fastHadamard()
-    permuteResponse()
+    # permuteSignal()
+    # fastHadamard()
+    # permuteResponse()
 
     # plotHardamardAutoCorrelation()
 

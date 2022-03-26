@@ -95,7 +95,7 @@ class Listener extends AudioPeer {
 
     this.conn.on('open', () => {
       this.displayUpdate('Listener - conn open');
-      this.sendSamplingRate();
+      // this.sendSamplingRate();
       this.openAudioStream();
     });
 
@@ -106,29 +106,31 @@ class Listener extends AudioPeer {
     });
   };
 
-  sendSamplingRate = () => {
+  sendSamplingRate = stream => {
     this.displayUpdate('Listener - sendSamplingRate');
-    const options = {
-      sampleRate: 96000
-    }
-    const audioCtx = new (window.AudioContext ||
-      window.webkitAudioContext ||
-      window.audioContext)(options);
+    const track = stream.getAudioTracks()[0];
+    const capabilities = track.getCapabilities();
     this.conn.send({
       name: 'samplingRate',
-      payload: audioCtx.sampleRate,
+      payload: capabilities.sampleRate,
     });
   };
 
   openAudioStream = async () => {
     this.displayUpdate('Listener - openAudioStream');
+    const mediaStreamConstraints = {
+      audio: true,
+      video: false,
+    };
     navigator.mediaDevices
-      .getUserMedia({video: false, audio: true})
+      .getUserMedia(mediaStreamConstraints)
       .then(stream => {
+        this.sendSamplingRate(stream);
         this.peer.call(this.speakerPeerId, stream); // one-way call
         this.displayUpdate('Listener - openAudioStream');
       })
       .catch(err => {
+        console.log(err);
         this.displayUpdate(`You need to grant permission to use the microphone, error:${err}`);
       });
   };

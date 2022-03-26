@@ -12,19 +12,7 @@ class AudioCalibrator extends AudioRecorder {
   #isCalibrating = false;
 
   /** @private */
-  #sourceAudio;
-
-  /** @private */
   #sourceAudioContext;
-
-  /** @private */
-  #sourceAudioAnalyser;
-
-  /** @private */
-  #sinkAudioContext;
-
-  /** @private */
-  #sinkAudioAnalyser;
 
   /** @private */
   #mlsGenInterface;
@@ -39,7 +27,7 @@ class AudioCalibrator extends AudioRecorder {
   #sinkSamplingRate;
 
   /** @private */
-  #sourceSamplingRate = 96000;
+  #sourceSamplingRate = 48000;
 
   /**
    * Called when a call is received.
@@ -69,20 +57,18 @@ class AudioCalibrator extends AudioRecorder {
     const buffer = this.#sourceAudioContext.createBuffer(
       1, // number of channels
       this.#mlsBufferView.length, // length
-      this.#sourceSamplingRate // sample rate
+      this.#sourceAudioContext.sampleRate // sample rate
     );
     const data = buffer.getChannelData(0); // get data
     // fill the buffer with our data
     try {
-        for (let i = 0; i < this.#mlsBufferView.length; i += 1) {
-          // fill the buffer with 3 copies of the MLS buffer
-          data[i] = this.#mlsBufferView[i];
-        }
+      for (let i = 0; i < this.#mlsBufferView.length; i += 1) {
+        // fill the buffer with 3 copies of the MLS buffer
+        data[i] = this.#mlsBufferView[i];
+      }
     } catch (error) {
       console.error(error);
     }
-
-    // console.log(buffer.getChannelData(0));
 
     const source = this.#sourceAudioContext.createBufferSource();
     source.buffer = buffer;
@@ -92,7 +78,7 @@ class AudioCalibrator extends AudioRecorder {
     console.log(buffer.getChannelData(0));
     console.log(source);
 
-    return sleep(buffer.duration * 2);
+    return sleep(buffer.duration);
   };
 
   /**
@@ -103,24 +89,12 @@ class AudioCalibrator extends AudioRecorder {
   getCalibrationStatus = () => this.#isCalibrating;
 
   /**
-   * Create a sink audio context and attach it to the stream
-   * @param {*} stream
-   */
-  #setSinkAudio = stream => {
-    this.#sinkAudioContext = new (window.AudioContext ||
-      window.webkitAudioContext ||
-      window.audioContext)();
-    this.#sinkAudioAnalyser = this.#sinkAudioContext.createAnalyser();
-    const source = this.#sinkAudioContext.createMediaStreamSource(stream);
-    source.connect(this.#sinkAudioAnalyser);
-  };
-
-  /**
    * Set the sink audio sampling rate to the given value
    * @param {*} sinkSamplingRate
    */
   setSinkSamplingRate = sinkSamplingRate => {
-    this.#sinkSamplingRate = parseInt(sinkSamplingRate, 10);
+    this.#sinkSamplingRate = sinkSamplingRate;
+    console.log('sink sampling rate', this.#sinkSamplingRate);
   };
 
   /**
@@ -154,7 +128,7 @@ class AudioCalibrator extends AudioRecorder {
       numRounds += 1;
     }
 
-    saveToCSV(this.getRecordedSignals(0))
+    // saveToCSV(this.getRecordedSignals(0));
 
     // console.log('Setting Recorded Signal');
 
@@ -162,14 +136,14 @@ class AudioCalibrator extends AudioRecorder {
     // console.log(recordedSignal);
     // recordedSignal = recordedSignal.slice(recordedSignal.findIndex((val) => val !== 0));
 
-    // this.caputuredMLSChart = new RecordedSignalChart(
-    //   'captured-signal-chart',
-    //   recordedSignal,
-    //   this.#sinkSamplingRate
-    // );
-    const IR = this.#mlsGenInterface.getImpulseResponse();
-    this.IRChart = new IRChart('ir-chart', IR, this.#sinkSamplingRate);
-    console.log('TEST IR: ', IR);
+    this.caputuredMLSChart = new RecordedSignalChart(
+      'captured-signal-chart',
+      this.getRecordedSignals(0),
+      this.#sinkSamplingRate.max
+    );
+    // const IR = this.#mlsGenInterface.getImpulseResponse();
+    // this.IRChart = new IRChart('ir-chart', IR, this.#sinkSamplingRate);
+    // console.log('TEST IR: ', IR);
   };
 
   /**
@@ -181,12 +155,10 @@ class AudioCalibrator extends AudioRecorder {
    */
   startCalibration = async stream => {
     this.#setSourceAudio();
-    this.#setSinkAudio(stream);
     // initialize the MLSGenInterface object with it's factory method
-    await MlsGenInterface.factory(this.#sourceSamplingRate, this.#sinkSamplingRate).then(
+    await MlsGenInterface.factory(this.#sinkSamplingRate.max, this.#sourceSamplingRate).then(
       mlsGenInterface => {
         this.#mlsGenInterface = mlsGenInterface;
-        // console.log('mlsGenInterface', this.#mlsGenInterface);
       }
     );
     // after intializating, start the calibration steps with garbage collection
