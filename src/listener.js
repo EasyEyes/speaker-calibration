@@ -119,7 +119,9 @@ class Listener extends AudioPeer {
   openAudioStream = async () => {
     this.displayUpdate('Listener - openAudioStream');
     const mediaStreamConstraints = {
-      audio: true,
+      audio: {
+        sampleRate: { ideal: 48000 },
+      },
       video: false,
     };
     navigator.mediaDevices
