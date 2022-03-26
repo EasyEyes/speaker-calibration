@@ -106,28 +106,30 @@ class Listener extends AudioPeer {
     });
   };
 
-  sendSamplingRate = stream => {
+  sendSamplingRate = sampleRate => {
     this.displayUpdate('Listener - sendSamplingRate');
-    const track = stream.getAudioTracks()[0];
-    const capabilities = track.getCapabilities();
     this.conn.send({
       name: 'samplingRate',
-      payload: capabilities.sampleRate,
+      payload: sampleRate,
     });
   };
 
   openAudioStream = async () => {
     this.displayUpdate('Listener - openAudioStream');
-    const mediaStreamConstraints = {
-      audio: {
-        sampleRate: { ideal: 48000 },
-      },
-      video: false,
-    };
     navigator.mediaDevices
-      .getUserMedia(mediaStreamConstraints)
+      .getUserMedia({
+        audio: true,
+        video: false,
+      })
       .then(stream => {
-        this.sendSamplingRate(stream);
+        const track = stream.getAudioTracks()[0];
+        const capabilities = track.getCapabilities();
+        if (capabilities.sampleRate.min <= 48000 && capabilities.sampleRate.max >= 48000) {
+          track.applyConstraints({
+            sampleRate: {exact: 48000},
+          });
+        }
+        this.sendSamplingRate(track.getSettings().sampleRate);
         this.peer.call(this.speakerPeerId, stream); // one-way call
         this.displayUpdate('Listener - openAudioStream');
       })
