@@ -15,7 +15,7 @@ class AudioCalibrator extends AudioRecorder {
   #plot = true;
 
   /** @private */
-  #download = false;
+  #download = true;
 
   /** @private */
   #sourceAudioContext;
