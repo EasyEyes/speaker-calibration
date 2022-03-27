@@ -1,7 +1,7 @@
 import AudioRecorder from './audioRecorder';
 import {sleep, saveToCSV} from './utils';
 import MlsGenInterface from './mlsGen/mlsGenInterface';
-import {GeneratedSignalChart, RecordedSignalChart, IRChart} from './myCharts';
+import {GeneratedSignalChart, RecordedSignalChart} from './myCharts';
 
 /**
  * Provides methods for calibrating the user's speakers
@@ -10,6 +10,12 @@ import {GeneratedSignalChart, RecordedSignalChart, IRChart} from './myCharts';
 class AudioCalibrator extends AudioRecorder {
   /** @private */
   #isCalibrating = false;
+
+  /** @private */
+  #plot = true;
+
+  /** @private */
+  #download = false;
 
   /** @private */
   #sourceAudioContext;
@@ -27,7 +33,10 @@ class AudioCalibrator extends AudioRecorder {
   #sinkSamplingRate;
 
   /** @private */
-  #sourceSamplingRate = 48000;
+  #sourceSamplingRate = 96000;
+
+  /** @private */
+  #calibrationNodes = [];
 
   /**
    * Called when a call is received.
@@ -39,21 +48,18 @@ class AudioCalibrator extends AudioRecorder {
     targetElement.appendChild(localAudio);
   };
 
-  #setSourceAudio = () => {
+  /**
+   * Construct a Calibration Node with the calibration parameters.
+   * @private
+   */
+  #addCalibrationNode = () => {
     const options = {
       sampleRate: this.#sourceSamplingRate,
     };
     this.#sourceAudioContext = new (window.AudioContext ||
       window.webkitAudioContext ||
       window.audioContext)(options);
-  };
 
-  /**
-   * Creates an audio context and plays it for a few seconds.
-   * @private
-   * @returns {Promise} - Resolves when the audio is done playing.
-   */
-  #playCalibrationAudio = async () => {
     const buffer = this.#sourceAudioContext.createBuffer(
       1, // number of channels
       this.#mlsBufferView.length, // length
@@ -63,7 +69,7 @@ class AudioCalibrator extends AudioRecorder {
     // fill the buffer with our data
     try {
       for (let i = 0; i < this.#mlsBufferView.length; i += 1) {
-        // fill the buffer with 3 copies of the MLS buffer
+        // fill the array with the MLS buffer
         data[i] = this.#mlsBufferView[i];
       }
     } catch (error) {
@@ -73,12 +79,24 @@ class AudioCalibrator extends AudioRecorder {
     const source = this.#sourceAudioContext.createBufferSource();
     source.buffer = buffer;
     source.connect(this.#sourceAudioContext.destination);
-    source.start(0);
 
-    console.log(buffer.getChannelData(0));
-    console.log(source);
+    this.#calibrationNodes.push(source);
+  };
 
-    return sleep(buffer.duration * 1.2);
+  /**
+   * Creates an audio context and plays it for a few seconds.
+   * @private
+   * @returns {Promise} - Resolves when the audio is done playing.
+   */
+  #playCalibrationAudio = async () => {
+    // workaround, let's create and play 2 nodes in sequence
+    // TODO: fix the MLS generation so that it's order p^19 which equates to 5 seconds of audio
+    while (this.#calibrationNodes.length < 2) {
+      this.#addCalibrationNode();
+    }
+    this.#calibrationNodes[0].start(0);
+    this.#calibrationNodes[1].start(this.#calibrationNodes[0].buffer.duration);
+    return sleep(this.#calibrationNodes[0].buffer.duration * 2.2);
   };
 
   /**
@@ -102,13 +120,6 @@ class AudioCalibrator extends AudioRecorder {
    * @param {*} stream
    */
   #calibrationSteps = async stream => {
-    this.#mlsBufferView = this.#mlsGenInterface.getMLS();
-    this.generatedMLSChart = new GeneratedSignalChart(
-      'generated-signal-chart',
-      this.#mlsBufferView,
-      this.#sourceSamplingRate
-    );
-
     let numRounds = 0;
 
     // calibration loop
@@ -128,22 +139,25 @@ class AudioCalibrator extends AudioRecorder {
       numRounds += 1;
     }
 
-    saveToCSV(this.getRecordedSignals(0));
+    // if download set, download the CSV file
+    if (this.#download) {
+      saveToCSV(this.getRecordedSignals(0));
+    }
 
-    // console.log('Setting Recorded Signal');
+    // if plot set, plot the signals
+    if (this.#plot) {
+      // this.generatedMLSChart = new GeneratedSignalChart(
+      //   'generated-signal-chart',
+      //   this.#mlsBufferView,
+      //   this.#sourceSamplingRate
+      // );
 
-    // const recordedSignal = this.#mlsGenInterface.setRecordedSignal(this.getRecordedSignals(0));
-    // console.log(recordedSignal);
-    // recordedSignal = recordedSignal.slice(recordedSignal.findIndex((val) => val !== 0));
-
-    this.caputuredMLSChart = new RecordedSignalChart(
-      'captured-signal-chart',
-      this.getRecordedSignals(0),
-      this.#sinkSamplingRate
-    );
-    // const IR = this.#mlsGenInterface.getImpulseResponse();
-    // this.IRChart = new IRChart('ir-chart', IR, this.#sinkSamplingRate);
-    // console.log('TEST IR: ', IR);
+      this.caputuredMLSChart = new RecordedSignalChart(
+        'captured-signal-chart',
+        this.getRecordedSignals(0),
+        this.#sinkSamplingRate
+      );
+    }
   };
 
   /**
@@ -154,11 +168,11 @@ class AudioCalibrator extends AudioRecorder {
    * @param {MediaStream} stream - The stream of audio from the Listener.
    */
   startCalibration = async stream => {
-    this.#setSourceAudio();
     // initialize the MLSGenInterface object with it's factory method
     await MlsGenInterface.factory(this.#sinkSamplingRate, this.#sourceSamplingRate).then(
       mlsGenInterface => {
         this.#mlsGenInterface = mlsGenInterface;
+        this.#mlsBufferView = this.#mlsGenInterface.getMLS();
       }
     );
     // after intializating, start the calibration steps with garbage collection

@@ -108,7 +108,6 @@ class Listener extends AudioPeer {
 
   sendSamplingRate = sampleRate => {
     this.displayUpdate('Listener - sendSamplingRate');
-    console.log(sampleRate)
     this.conn.send({
       name: 'samplingRate',
       payload: sampleRate,
@@ -125,18 +124,19 @@ class Listener extends AudioPeer {
       .then(stream => {
         const track = stream.getAudioTracks()[0];
         const capabilities = track.getCapabilities();
-        if (capabilities.sampleRate.min <= 48000 && capabilities.sampleRate.max >= 48000) {
-          track.applyConstraints({
-            sampleRate: 48000,
-          });
-        }
+        this.displayUpdate(
+          `available sampling rate range: [${capabilities.sampleRate.min}, ${capabilities.sampleRate.max}]`
+        );
+        track.applyConstraints({
+          sampleRate: 96000,
+        });
         this.sendSamplingRate(track.getSettings().sampleRate);
         this.peer.call(this.speakerPeerId, stream); // one-way call
         this.displayUpdate('Listener - openAudioStream');
       })
       .catch(err => {
         console.log(err);
-        this.displayUpdate(`You need to grant permission to use the microphone, error:${err}`);
+        this.displayUpdate(`error:${err}`);
       });
   };
 }

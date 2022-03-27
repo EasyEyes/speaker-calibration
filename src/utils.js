@@ -85,4 +85,25 @@ const saveToCSV = (data, filename = 'recordedMLSignal.csv') => {
   link.click();
 };
 
-export {sleep, visualize, saveToCSV};
+/**
+ * Resamples the given buffer to the given sampling rate
+ * @param {*} audioBuffer 
+ * @param {*} targetSampleRate 
+ * @param {*} onComplete 
+ */
+function reSample(audioBuffer, targetSampleRate, onComplete) {
+  const channel = audioBuffer.numberOfChannels;
+  const samples = audioBuffer.length * targetSampleRate / audioBuffer.sampleRate;
+
+  const offlineContext = new OfflineAudioContext(channel, samples, targetSampleRate);
+  const bufferSource = offlineContext.createBufferSource();
+  bufferSource.buffer = audioBuffer;
+
+  bufferSource.connect(offlineContext.destination);
+  bufferSource.start(0);
+  offlineContext.startRendering().then((renderedBuffer)=> {
+      onComplete(renderedBuffer);
+  })
+}
+
+export {sleep, visualize, saveToCSV, reSample};
