@@ -35,21 +35,17 @@ class AudioRecorder {
     this.#fileReader = new FileReader();
   }
 
-  /**
-   * Event listener triggered when the file reader is done loading
-   * @private
-   */
-  #onFileReaderLoad = () => {
-    // read the file as an array buffer
-    this.#arrayBuffer = this.#fileReader.result;
+  #saveRecording = async () => {
+    this.#arrayBuffer = await this.#audioBlob.arrayBuffer();
 
     // Convert array buffer into audio buffer
-    this.#audioContext.decodeAudioData(this.#arrayBuffer, audioBuffer => {
+    await this.#audioContext.decodeAudioData(this.#arrayBuffer, audioBuffer => {
       // Do something with audioBuffer
       // TODO: Address the fact that the audio buffer is being continously filled,
       // we want a new buffer each round.
-      console.log(audioBuffer.getChannelData(0));
-      this.#recordedSignals.push(audioBuffer.getChannelData(0));
+      const data = audioBuffer.getChannelData(0);
+      console.log(data);
+      this.#recordedSignals.push(data);
     });
   };
 
@@ -59,7 +55,6 @@ class AudioRecorder {
    * @param {*} e - The event object.
    */
   #onRecorderDataAvailable = e => {
-    console.log(e);
     if (e.data && e.data.size > 0) this.#recordedChunks.push(e.data);
   };
 
@@ -72,12 +67,6 @@ class AudioRecorder {
     this.#audioBlob = new Blob(this.#recordedChunks, {
       type: 'audio/webm;codecs=opus',
     });
-
-    // Set up file reader on loaded end event
-    this.#fileReader.onloadend = this.#onFileReaderLoad;
-
-    // Load blob
-    this.#fileReader.readAsArrayBuffer(this.#audioBlob);
   };
 
   /**
@@ -89,11 +78,8 @@ class AudioRecorder {
     // Create a new MediaRecorder object
     this.#mediaRecorder = new MediaRecorder(stream);
 
-    // , { mimeType: "audio/webm;codecs=opus" });
-
     // Add event listeners
     this.#mediaRecorder.ondataavailable = e => this.#onRecorderDataAvailable(e);
-    this.#mediaRecorder.onstop = () => this.#onRecorderStop();
   };
 
   /**
@@ -111,12 +97,24 @@ class AudioRecorder {
    * Method to stop the recording process.
    * @public
    */
-  stopRecording = () => {
-    console.log(this.#mediaRecorder.state)
-    this.#mediaRecorder.stop();
+  stopRecording = async () => {
+    // Stop the media recorder, and wait for the data to be available
+    await new Promise(resolve => {
+      this.#mediaRecorder.onstop = () => {
+        // when the stop event is triggered, resolve the promise
+        this.#audioBlob = new Blob(this.#recordedChunks, {
+          type: 'audio/webm;codecs=opus',
+        });
+        resolve(this.#audioBlob);
+      };
+      // call stop
+      this.#mediaRecorder.stop();
+    });
+    // Now that we have data, save it
+    await this.#saveRecording();
   };
 
-  getRecordedSignals = i => this.#recordedSignals[i];
+  getRecordedSignal = () => this.#recordedSignals[this.#recordedSignals.length - 1];
 }
 
 export default AudioRecorder;

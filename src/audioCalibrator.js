@@ -1,7 +1,7 @@
 import AudioRecorder from './audioRecorder';
 import {sleep, saveToCSV} from './utils';
 import MlsGenInterface from './mlsGen/mlsGenInterface';
-import {GeneratedSignalChart, RecordedSignalChart} from './myCharts';
+import {RecordedSignalChart} from './myCharts';
 
 /**
  * Provides methods for calibrating the user's speakers
@@ -27,7 +27,7 @@ class AudioCalibrator extends AudioRecorder {
   #mlsBufferView;
 
   /** @private */
-  #numCalibratingRounds = 1;
+  #numCalibratingRounds = 5;
 
   /** @private */
   #sinkSamplingRate;
@@ -94,12 +94,12 @@ class AudioCalibrator extends AudioRecorder {
     while (this.#calibrationNodes.length < 2) {
       this.#addCalibrationNode();
     }
-    const {duration} = this.#calibrationNodes[0].buffer
-    const totalDuration = duration * 2.2;
+    const {duration} = this.#calibrationNodes[0].buffer;
+    const totalDuration = duration * 2.5;
     this.#calibrationNodes[0].start(0);
     this.#calibrationNodes[1].start(duration);
     console.log(`Playing ${totalDuration} seconds`);
-    return sleep(totalDuration);
+    await sleep(totalDuration);
   };
 
   /**
@@ -132,34 +132,31 @@ class AudioCalibrator extends AudioRecorder {
       // play calibration audio
       console.log(`Calibration Round ${numRounds}`);
       // eslint-disable-next-line no-await-in-loop
-      await this.#playCalibrationAudio().then(() => {
-        // when done, stop recording
-        console.log('Calibration Round Complete');
-        this.stopRecording();
-      });
+      await this.#playCalibrationAudio();
+      // when done, stop recording
+      console.log('Calibration Round Complete');
+      // eslint-disable-next-line no-await-in-loop
+      await this.stopRecording();
+
+      this.#calibrationNodes = [];
+      const recordedSignal = [...this.getRecordedSignal()];
+
+      // if download set, download the CSV file
+      if (this.#download) {
+        saveToCSV(recordedSignal, `recordedMLSignal_${numRounds}.csv`);
+      }
+
+      // if plot set, plot the signals
+      if (this.#plot) {
+        this.caputuredMLSChart = new RecordedSignalChart(
+          'captured-signal-chart',
+          recordedSignal,
+          this.#sinkSamplingRate
+        );
+      }
       // eslint-disable-next-line no-await-in-loop
       await sleep(2);
       numRounds += 1;
-    }
-
-    // if download set, download the CSV file
-    if (this.#download) {
-      saveToCSV(this.getRecordedSignals(0));
-    }
-
-    // if plot set, plot the signals
-    if (this.#plot) {
-      // this.generatedMLSChart = new GeneratedSignalChart(
-      //   'generated-signal-chart',
-      //   this.#mlsBufferView,
-      //   this.#sourceSamplingRate
-      // );
-
-      this.caputuredMLSChart = new RecordedSignalChart(
-        'captured-signal-chart',
-        this.getRecordedSignals(0),
-        this.#sinkSamplingRate
-      );
     }
   };
 
