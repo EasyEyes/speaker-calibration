@@ -36,6 +36,9 @@ class AudioCalibrator extends AudioRecorder {
   #sourceSamplingRate = 96000;
 
   /** @private */
+  #numCalibrationNodes = 3;
+
+  /** @private */
   #calibrationNodes = [];
 
   /**
@@ -91,13 +94,14 @@ class AudioCalibrator extends AudioRecorder {
   #playCalibrationAudio = async () => {
     // workaround, let's create and play 2 nodes in sequence
     // TODO: fix the MLS generation so that it's order p^19 which equates to 5 seconds of audio
-    while (this.#calibrationNodes.length < 2) {
+    while (this.#calibrationNodes.length < this.#numCalibrationNodes) {
       this.#addCalibrationNode();
     }
     const {duration} = this.#calibrationNodes[0].buffer;
-    const totalDuration = duration * 2.5;
-    this.#calibrationNodes[0].start(0);
-    this.#calibrationNodes[1].start(duration);
+    const totalDuration = duration * 1.2 * this.#numCalibrationNodes;
+    for (let i = 0; i < this.#calibrationNodes.length; i += 1) {
+      this.#calibrationNodes[i].start(i * duration);
+    }
     console.log(`Playing ${totalDuration} seconds`);
     await sleep(totalDuration);
   };
