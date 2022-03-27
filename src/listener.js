@@ -129,9 +129,12 @@ class Listener extends AudioPeer {
         this.displayUpdate(
           `available sampling rate range: [${capabilities.sampleRate.min}, ${capabilities.sampleRate.max}]`
         );
-        // track.applyConstraints({
-        //   sampleRate: 96000,
-        // });
+        const supportHQAudio =
+          capabilities.sampleRate.min >= 96000 && capabilities.sampleRate.max <= 96000;
+        track.applyConstraints({
+          sampleRate: supportHQAudio ? 96000 : 48000,
+          sampleSize: supportHQAudio ? 24 : 16,
+        });
         this.sendSamplingRate(track.getSettings().sampleRate);
         this.peer.call(this.speakerPeerId, stream); // one-way call
         this.displayUpdate('Listener - openAudioStream');

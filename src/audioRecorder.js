@@ -16,9 +16,6 @@ class AudioRecorder {
   #audioContext;
 
   /** @private */
-  #fileReader;
-
-  /** @private */
   #arrayBuffer;
 
   /** @private */
@@ -32,7 +29,6 @@ class AudioRecorder {
     this.#audioContext = new (window.AudioContext ||
       window.webkitAudioContext ||
       window.audioContext)();
-    this.#fileReader = new FileReader();
   }
 
   #saveRecording = async () => {
@@ -59,24 +55,17 @@ class AudioRecorder {
   };
 
   /**
-   * Event listener triggered when the media recorder stops recording.
-   * @private
-   */
-  #onRecorderStop = () => {
-    // Create a blob from the recorded audio chunks
-    this.#audioBlob = new Blob(this.#recordedChunks, {
-      type: 'audio/webm;codecs=opus',
-    });
-  };
-
-  /**
    * Method to create a media recorder object and set up event listeners.
    * @private
    * @param {MediaStream} stream - The stream of audio from the Listener.
    */
   #setMediaRecorder = stream => {
     // Create a new MediaRecorder object
-    this.#mediaRecorder = new MediaRecorder(stream);
+    console.log(stream.getAudioTracks()[0].getSettings());
+    const {sampleRate, sampleSize, channelCount} = stream.getAudioTracks()[0].getSettings();
+    this.#mediaRecorder = new MediaRecorder(stream, {
+      audioBitsPerSecond: sampleRate * sampleSize * channelCount,
+    });
 
     // Add event listeners
     this.#mediaRecorder.ondataavailable = e => this.#onRecorderDataAvailable(e);
