@@ -118,7 +118,9 @@ class Listener extends AudioPeer {
     this.displayUpdate('Listener - openAudioStream');
     navigator.mediaDevices
       .getUserMedia({
-        audio: true,
+        audio: {
+          sampleRate: 96000,
+        },
         video: false,
       })
       .then(stream => {
@@ -127,9 +129,9 @@ class Listener extends AudioPeer {
         this.displayUpdate(
           `available sampling rate range: [${capabilities.sampleRate.min}, ${capabilities.sampleRate.max}]`
         );
-        track.applyConstraints({
-          sampleRate: 96000,
-        });
+        // track.applyConstraints({
+        //   sampleRate: 96000,
+        // });
         this.sendSamplingRate(track.getSettings().sampleRate);
         this.peer.call(this.speakerPeerId, stream); // one-way call
         this.displayUpdate('Listener - openAudioStream');
