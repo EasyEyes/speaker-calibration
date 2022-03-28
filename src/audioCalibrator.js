@@ -15,7 +15,7 @@ class AudioCalibrator extends AudioRecorder {
   #plot = true;
 
   /** @private */
-  #download = true;
+  #download = false;
 
   /** @private */
   #sourceAudioContext;
@@ -27,7 +27,7 @@ class AudioCalibrator extends AudioRecorder {
   #mlsBufferView;
 
   /** @private */
-  #numCalibratingRounds = 5;
+  #numCalibratingRounds = 1;
 
   /** @private */
   #sinkSamplingRate;

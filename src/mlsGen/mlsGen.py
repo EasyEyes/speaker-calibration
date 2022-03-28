@@ -171,10 +171,10 @@ def loadTestRecordedSignal():
 
 def loadRecordedMLSSignal():
     print("Loading the recorded MLS signal...")
-    numExamples = 3
+    numExamples = 5
     recordedSignals = []
     for i in range(numExamples):
-        fileName = rf'recordedMLSSignal_{i}.csv'
+        fileName = rf'captures/recordedMLSignal_{i}.csv'
         path = os.path.join(dir_path, fileName)
         recordedSignals.append(readCSVData(path))
         print(len(recordedSignals[i]))
@@ -369,7 +369,37 @@ def plotImpulseResponse(subsample=False):
     ax.plot(imp[0:10], linewidth=1.0)
 
     plt.show()
+
+def butter_lowpass(cutoff, fs, order=5):
+    return signal.butter(order, cutoff, fs=fs, btype='low', analog=False)
+
+def butter_lowpass_filter(data, cutoff, fs, order=5):
+    b, a = butter_lowpass(cutoff, fs, order=order)
+    y = signal.lfilter(b, a, data)
+    return y
+
+def plotRecordedSignals(subsample=False):
+    # create a sliding window view (50% overlap)
+    max_time = len(recordedSignal) / SAMPLE_RATE
+    time_steps = np.linspace(0, max_time, len(recordedSignal))
     
+    analytic_signal = signal.hilbert(butter_lowpass_filter(recordedSignal, 5, 96.0, 20))
+    amplitude_envelope = np.abs(analytic_signal)
+
+    _, ax = plt.subplots()
+    ax.plot(time_steps, recordedSignal, label='Recorded Signal')
+    ax.plot(time_steps, amplitude_envelope, c='r', label='envelope')
+    plt.show()
+    # plot
+    # fig, ax = plt.subplots()
+
+    # fig.suptitle('Recorded Signals')
+    # plt.xlabel('Samples')
+    # plt.ylabel('amplitude')
+
+    # ax.plot(recordedSignal, linewidth=1.0)
+
+    # plt.show()
 
 def testRun():
     loadAllData()
@@ -388,7 +418,7 @@ def testRun():
 
     # plotBuffer(resp, subsample=10)
     # plotImpulseResponse()
-    plotAutoCorrelation()
+    plotRecordedSignals()
 
 
 if __name__ == '__main__':
