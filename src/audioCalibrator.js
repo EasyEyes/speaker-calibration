@@ -27,7 +27,7 @@ class AudioCalibrator extends AudioRecorder {
   #mlsBufferView;
 
   /** @private */
-  #numCalibratingRounds = 1;
+  #numCalibratingRounds = 5;
 
   /** @private */
   #sinkSamplingRate;
@@ -36,7 +36,7 @@ class AudioCalibrator extends AudioRecorder {
   #sourceSamplingRate = 96000;
 
   /** @private */
-  #numCalibrationNodes = 3;
+  #numCalibrationNodes = 2;
 
   /** @private */
   #calibrationNodes = [];
