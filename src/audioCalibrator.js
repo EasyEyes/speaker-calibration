@@ -98,11 +98,13 @@ class AudioCalibrator extends AudioRecorder {
       this.#addCalibrationNode();
     }
     const {duration} = this.#calibrationNodes[0].buffer;
-    const totalDuration = duration * 1.2 * this.#numCalibrationNodes;
+    const actualDuration = duration * this.#numCalibrationNodes;
+    const totalDuration = actualDuration * 1.2;
     for (let i = 0; i < this.#calibrationNodes.length; i += 1) {
       this.#calibrationNodes[i].start(i * duration);
     }
-    console.log(`Playing ${totalDuration} seconds`);
+    console.log(`Playing a buffer of ${actualDuration} seconds of audio`);
+    console.log(`Waiting a total of ${totalDuration} seconds`);
     await sleep(totalDuration);
   };
 
