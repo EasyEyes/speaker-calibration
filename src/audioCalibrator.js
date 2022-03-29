@@ -33,7 +33,7 @@ class AudioCalibrator extends AudioRecorder {
   #sinkSamplingRate;
 
   /** @private */
-  #sourceSamplingRate = 96000;
+  #sourceSamplingRate;
 
   /** @private */
   #numCalibrationNodes = 2;
@@ -175,6 +175,7 @@ class AudioCalibrator extends AudioRecorder {
    */
   startCalibration = async stream => {
     // initialize the MLSGenInterface object with it's factory method
+    this.#sourceSamplingRate = this.#sinkSamplingRate;
     await MlsGenInterface.factory(this.#sinkSamplingRate, this.#sourceSamplingRate).then(
       mlsGenInterface => {
         this.#mlsGenInterface = mlsGenInterface;

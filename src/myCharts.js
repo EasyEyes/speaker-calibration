@@ -2,8 +2,6 @@
 /* eslint-disable max-classes-per-file */
 import * as d3 from 'd3';
 
-const parseTime = d3.timeParse('%f');
-
 const linspace = (start, stop, num, endpoint = true) => {
   const div = endpoint ? num - 1 : num;
   const step = (stop - start) / div;

@@ -130,7 +130,7 @@ class Listener extends AudioPeer {
           `available sampling rate range: [${capabilities.sampleRate.min}, ${capabilities.sampleRate.max}]`
         );
         const supportHQAudio =
-          capabilities.sampleRate.min >= 96000 && capabilities.sampleRate.max <= 96000;
+          capabilities.sampleRate.min <= 96000 && capabilities.sampleRate.max >= 96000;
         track.applyConstraints({
           sampleRate: supportHQAudio ? 96000 : 48000,
           sampleSize: supportHQAudio ? 24 : 16,

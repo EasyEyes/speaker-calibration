@@ -33,6 +33,7 @@ class AudioRecorder {
     // Convert array buffer into audio buffer
     await this.#audioContext.decodeAudioData(this.#arrayBuffer, audioBuffer => {
       const data = audioBuffer.getChannelData(0);
+      console.log(`Decoded audio data: ${data.length} samples`);
       this.#recordedSignals.push(data);
     });
   };
@@ -54,7 +55,6 @@ class AudioRecorder {
   #setMediaRecorder = stream => {
     // Create a new MediaRecorder object
     console.log(stream.getAudioTracks()[0].getSettings());
-    const {sampleRate, sampleSize, channelCount} = stream.getAudioTracks()[0].getSettings();
     this.#mediaRecorder = new MediaRecorder(stream);
 
     // Add event listeners
