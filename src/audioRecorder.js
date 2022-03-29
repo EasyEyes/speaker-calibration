@@ -48,12 +48,15 @@ class AudioRecorder {
    */
   #setMediaRecorder = stream => {
     // Create a new MediaRecorder object
+    console.log(stream.getAudioTracks()[0].getSettings())
     const {sampleRate} = stream.getAudioTracks()[0].getSettings();
     this.#mediaRecorder = new MediaRecorder(stream);
 
     const options = {
       sampleRate,
     };
+
+    console.log(options)
 
     this.#audioContext = new (window.AudioContext ||
       window.webkitAudioContext ||
