@@ -24,16 +24,6 @@ class AudioRecorder {
   #saveRecording = async () => {
     this.#arrayBuffer = await this.#audioBlob.arrayBuffer();
 
-    console.log(this.#arrayBuffer);
-
-    this.#audioContext = new (window.AudioContext ||
-      window.webkitAudioContext ||
-      window.audioContext)({
-      sampleRate: this.#arrayBuffer.sampleRate,
-    });
-
-    console.log(this.#audioContext);
-
     // Convert array buffer into audio buffer
     await this.#audioContext.decodeAudioData(this.#arrayBuffer, audioBuffer => {
       const data = audioBuffer.getChannelData(0);
@@ -58,8 +48,18 @@ class AudioRecorder {
    */
   #setMediaRecorder = stream => {
     // Create a new MediaRecorder object
-    console.log(stream.getAudioTracks()[0].getSettings());
+    const {sampleRate} = stream.getAudioTracks()[0].getSettings();
     this.#mediaRecorder = new MediaRecorder(stream);
+
+    const options = {
+      sampleRate,
+    };
+
+    this.#audioContext = new (window.AudioContext ||
+      window.webkitAudioContext ||
+      window.audioContext)(options);
+
+    console.log(this.#audioContext);
 
     // Add event listeners
     this.#mediaRecorder.ondataavailable = e => this.#onRecorderDataAvailable(e);
@@ -86,7 +86,7 @@ class AudioRecorder {
       this.#mediaRecorder.onstop = () => {
         // when the stop event is triggered, resolve the promise
         this.#audioBlob = new Blob(this.#recordedChunks, {
-          type: 'audio/webm;codecs=opus',
+          type: 'audio/ogg; codecs=opus',
         });
         resolve(this.#audioBlob);
       };
