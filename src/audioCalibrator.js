@@ -60,8 +60,6 @@ class AudioCalibrator extends AudioRecorder {
       window.webkitAudioContext ||
       window.audioContext)(options);
 
-    console.log(this.#sourceAudioContext);
-
     const buffer = this.#sourceAudioContext.createBuffer(
       1, // number of channels
       this.#mlsBufferView.length, // length

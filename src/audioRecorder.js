@@ -48,24 +48,24 @@ class AudioRecorder {
    */
   #setMediaRecorder = stream => {
     // Create a new MediaRecorder object
-    console.log(stream.getAudioTracks()[0].getSettings())
-    const {sampleRate} = stream.getAudioTracks()[0].getSettings();
     this.#mediaRecorder = new MediaRecorder(stream);
-
-    const options = {
-      sampleRate,
-    };
-
-    console.log(options)
-
-    this.#audioContext = new (window.AudioContext ||
-      window.webkitAudioContext ||
-      window.audioContext)(options);
-
-    console.log(this.#audioContext);
 
     // Add event listeners
     this.#mediaRecorder.ondataavailable = e => this.#onRecorderDataAvailable(e);
+  };
+
+  #setAudioContext = stream => {
+    const settings = stream.getAudioTracks()[0].getSettings();
+    console.log(settings);
+    const {sampleRate} = settings;
+
+    this.#audioContext = new (window.AudioContext ||
+      window.webkitAudioContext ||
+      window.audioContext)({
+      sampleRate,
+    });
+
+    console.log(this.#audioContext);
   };
 
   /**
@@ -75,6 +75,7 @@ class AudioRecorder {
   startRecording = stream => {
     // Set up media recorder if needed
     if (!this.#mediaRecorder) this.#setMediaRecorder(stream);
+    this.#setAudioContext(stream);
     this.#recordedChunks = [];
     this.#mediaRecorder.start();
   };
