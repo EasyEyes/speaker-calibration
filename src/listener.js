@@ -114,6 +114,21 @@ class Listener extends AudioPeer {
     });
   };
 
+  applyTrackContraints = async stream => {
+    // Contraint the incoming audio to the sampling rate we want
+    const track = stream.getAudioTracks()[0];
+    const capabilities = track.getCapabilities();
+    const supportsHQ = capabilities.sampleRate.max >= 96000;
+    const contraints = {
+      sampleRate: supportsHQ ? 96000 : 48000,
+      sampleSize: supportsHQ ? 24 : 16,
+    };
+
+    // await the promise
+    await track.applyConstraints(contraints);
+    return track.getSettings().sampleRate;
+  };
+
   openAudioStream = async () => {
     this.displayUpdate('Listener - openAudioStream');
     const contraints = {
@@ -127,18 +142,8 @@ class Listener extends AudioPeer {
         video: false,
       })
       .then(stream => {
-        const track = stream.getAudioTracks()[0];
-
-        const capabilities = track.getCapabilities();
-        this.displayUpdate(
-          `available sampling rate range: [${capabilities.sampleRate.min}, ${capabilities.sampleRate.max}]`
-        );
-        track.applyConstraints(contraints).then(() => {
-          const trackSettings = track.getSettings();
-          this.displayUpdate(
-            `${trackSettings.sampleRate}, ${trackSettings.channelCount}, ${trackSettings.sampleSize}`
-          );
-          this.sendSamplingRate(track.getSettings().sampleRate);
+        this.applyTrackContraints(stream).then(sampleRate => {
+          this.sendSamplingRate(sampleRate);
           this.peer.call(this.speakerPeerId, stream); // one-way call
           this.displayUpdate('Listener - openAudioStream');
         });

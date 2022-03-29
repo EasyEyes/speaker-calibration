@@ -55,9 +55,9 @@ class AudioRecorder {
   };
 
   #setAudioContext = stream => {
-    const settings = stream.getAudioTracks()[0].getSettings();
-    console.log(settings);
-    const {sampleRate} = settings;
+    const track = stream.getAudioTracks()[0];
+    const {sampleRate} = track.getSettings();
+    console.log(track.getSettings());
 
     this.#audioContext = new (window.AudioContext ||
       window.webkitAudioContext ||
@@ -72,10 +72,11 @@ class AudioRecorder {
    * Public method to start the recording process.
    * @param {MediaStream} stream - The stream of audio from the Listener.
    */
-  startRecording = stream => {
+  startRecording = async stream => {
     // Set up media recorder if needed
-    if (!this.#mediaRecorder) this.#setMediaRecorder(stream);
+    // await this.#applyTrackContraints(stream);
     this.#setAudioContext(stream);
+    if (!this.#mediaRecorder) this.#setMediaRecorder(stream);
     this.#recordedChunks = [];
     this.#mediaRecorder.start();
   };

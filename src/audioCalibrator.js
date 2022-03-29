@@ -131,7 +131,8 @@ class AudioCalibrator extends AudioRecorder {
     // calibration loop
     while (!this.#isCalibrating && numRounds < this.#numCalibratingRounds) {
       // start recording
-      this.startRecording(stream);
+      // eslint-disable-next-line no-await-in-loop
+      await this.startRecording(stream);
       // play calibration audio
       console.log(`Calibration Round ${numRounds}`);
       // eslint-disable-next-line no-await-in-loop
