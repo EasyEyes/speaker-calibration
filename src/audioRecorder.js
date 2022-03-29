@@ -21,6 +21,9 @@ class AudioRecorder {
   /** @private */
   #recordedSignals = [];
 
+  /** @private */
+  sinkSamplingRate;
+
   #saveRecording = async () => {
     this.#arrayBuffer = await this.#audioBlob.arrayBuffer();
 
@@ -54,15 +57,11 @@ class AudioRecorder {
     this.#mediaRecorder.ondataavailable = e => this.#onRecorderDataAvailable(e);
   };
 
-  #setAudioContext = stream => {
-    const track = stream.getAudioTracks()[0];
-    const {sampleRate} = track.getSettings();
-    console.log(track.getSettings());
-
+  #setAudioContext = () => {
     this.#audioContext = new (window.AudioContext ||
       window.webkitAudioContext ||
       window.audioContext)({
-      sampleRate,
+      sampleRate: this.sinkSamplingRate,
     });
 
     console.log(this.#audioContext);
@@ -75,7 +74,7 @@ class AudioRecorder {
   startRecording = async stream => {
     // Set up media recorder if needed
     // await this.#applyTrackContraints(stream);
-    this.#setAudioContext(stream);
+    this.#setAudioContext();
     if (!this.#mediaRecorder) this.#setMediaRecorder(stream);
     this.#recordedChunks = [];
     this.#mediaRecorder.start();
@@ -105,6 +104,10 @@ class AudioRecorder {
   getLastRecordedSignal = () => this.#recordedSignals[this.#recordedSignals.length - 1];
 
   getAllRecordedSignals = () => this.#recordedSignals;
+
+  setSinkSamplingRate = sinkSamplingRate => {
+    this.sinkSamplingRate = sinkSamplingRate;
+  }
 }
 
 export default AudioRecorder;

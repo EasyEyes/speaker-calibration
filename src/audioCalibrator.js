@@ -27,9 +27,6 @@ class AudioCalibrator extends AudioRecorder {
   #numCalibratingRounds = 5;
 
   /** @private */
-  #sinkSamplingRate;
-
-  /** @private */
   #sourceSamplingRate;
 
   /** @private */
@@ -117,8 +114,9 @@ class AudioCalibrator extends AudioRecorder {
    * @param {*} sinkSamplingRate
    */
   setSinkSamplingRate = sinkSamplingRate => {
-    this.#sinkSamplingRate = sinkSamplingRate;
-    console.log('sink sampling rate', this.#sinkSamplingRate);
+    this.sinkSamplingRate = sinkSamplingRate;
+
+    console.log('sink sampling rate', this.sinkSamplingRate);
   };
 
   /**
@@ -150,7 +148,7 @@ class AudioCalibrator extends AudioRecorder {
         this.caputuredMLSChart = new RecordedSignalChart(
           'captured-signal-chart',
           recordedSignal,
-          this.#sinkSamplingRate
+          this.sinkSamplingRate
         );
       }
       // eslint-disable-next-line no-await-in-loop
@@ -168,8 +166,8 @@ class AudioCalibrator extends AudioRecorder {
    */
   startCalibration = async stream => {
     // initialize the MLSGenInterface object with it's factory method
-    this.#sourceSamplingRate = this.#sinkSamplingRate;
-    await MlsGenInterface.factory(this.#sinkSamplingRate, this.#sourceSamplingRate).then(
+    this.#sourceSamplingRate = this.sinkSamplingRate;
+    await MlsGenInterface.factory(this.sinkSamplingRate, this.#sourceSamplingRate).then(
       mlsGenInterface => {
         this.#mlsGenInterface = mlsGenInterface;
         this.#mlsBufferView = this.#mlsGenInterface.getMLS();
