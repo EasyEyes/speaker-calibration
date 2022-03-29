@@ -15,9 +15,6 @@ class AudioCalibrator extends AudioRecorder {
   #plot = true;
 
   /** @private */
-  #download = false;
-
-  /** @private */
   #sourceAudioContext;
 
   /** @private */
@@ -145,12 +142,7 @@ class AudioCalibrator extends AudioRecorder {
       await this.stopRecording();
 
       this.#calibrationNodes = [];
-      const recordedSignal = [...this.getRecordedSignal()];
-
-      // if download set, download the CSV file
-      if (this.#download) {
-        saveToCSV(recordedSignal, `recordedMLSignal_${numRounds}.csv`);
-      }
+      const recordedSignal = [...this.getLastRecordedSignal()];
 
       // if plot set, plot the signals
       if (this.#plot) {
@@ -183,7 +175,13 @@ class AudioCalibrator extends AudioRecorder {
       }
     );
     // after intializating, start the calibration steps with garbage collection
-    this.#mlsGenInterface.withGarbageCollection(this.#calibrationSteps, [stream]);
+    await this.#mlsGenInterface.withGarbageCollection(this.#calibrationSteps, [stream]);
+  };
+
+  downloadData = () => {
+    this.getAllRecordedSignals().forEach((signal, i) => {
+      saveToCSV(signal, `recordedMLSignal_${i}.csv`);
+    });
   };
 }
 

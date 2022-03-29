@@ -93,7 +93,9 @@ class AudioRecorder {
     await this.#saveRecording();
   };
 
-  getRecordedSignal = () => this.#recordedSignals[this.#recordedSignals.length - 1];
+  getLastRecordedSignal = () => this.#recordedSignals[this.#recordedSignals.length - 1];
+
+  getAllRecordedSignals = () => this.#recordedSignals;
 }
 
 export default AudioRecorder;

@@ -104,8 +104,6 @@ class Speaker extends AudioPeer {
     this.ready();
   };
 
-
-
   /**
    * Called after a call is established and data is flowing.
    * Sets up the local audio stream and starts the calibration process.
@@ -116,18 +114,20 @@ class Speaker extends AudioPeer {
     window.localAudio.srcObject = stream;
     window.localAudio.autoplay = false;
 
-    // // Start calibration
-    // if (!this.ac.getCalibrationStatus()) {
-    //   this.ac.startCalibration(stream);
-    // }
-    document.getElementById("calibrationBeginButton").classList.remove("d-none");
+    document.getElementById('calibrationBeginButton').classList.remove('d-none');
   };
 
-  startCalibration = () => {
-    if(!this.ac.getCalibrationStatus()) {
-      this.ac.startCalibration(window.localStream);
+  startCalibration = async () => {
+    if (!this.ac.getCalibrationStatus()) {
+      await this.ac.startCalibration(window.localStream);
+      document.getElementById('calibrationBeginButton').classList.add('d-none');
+      document.getElementById('downloadDataButton').classList.remove('d-none');
     }
-  }
+  };
+
+  downloadData = () => {
+    this.ac.downloadData();
+  };
 
   /**
    * Called when a call is made by the Listener.
