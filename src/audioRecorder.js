@@ -24,11 +24,15 @@ class AudioRecorder {
   #saveRecording = async () => {
     this.#arrayBuffer = await this.#audioBlob.arrayBuffer();
 
+    console.log(this.#arrayBuffer);
+
     this.#audioContext = new (window.AudioContext ||
       window.webkitAudioContext ||
       window.audioContext)({
       sampleRate: this.#arrayBuffer.sampleRate,
     });
+
+    console.log(this.#audioContext);
 
     // Convert array buffer into audio buffer
     await this.#audioContext.decodeAudioData(this.#arrayBuffer, audioBuffer => {
