@@ -30,7 +30,7 @@ class AudioCalibrator extends AudioRecorder {
   #sourceSamplingRate;
 
   /** @private */
-  #numCalibrationNodes = 2;
+  #numCalibrationNodes = 3;
 
   /** @private */
   #calibrationNodes = [];

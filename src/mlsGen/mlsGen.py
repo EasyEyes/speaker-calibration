@@ -4,6 +4,7 @@ import pandas as pd
 import os
 from scipy.fft import fft, fftfreq
 from scipy import signal
+from statsmodels.graphics.tsaplots import plot_acf as plt_acf
 
 dir_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), r'data')
 SAMPLE_RATE = 96000
@@ -285,41 +286,50 @@ def plotPerm(buffer, subsample=False):
     plt.plot(xf, np.abs(yf), linewidth=1.0)
     plt.show()
 
+def autocorr(x, t=1):
+    return np.corrcoef(np.array([x[:-t], x[t:]]))
 
 def plotAutoCorrelation(subsample=False):
     max_time = len(generatedSignal) / SAMPLE_RATE
     time_steps = np.linspace(0, max_time, len(generatedSignal))
     
-    # truncate the recorded signal to the length of the generated signal
-    recorded_signal_truncated = recordedSignal[:len(generatedSignal)]
-    print(len(generatedSignal))
+    # if len(recordedSignal) > len(generatedSignal):
+    #     start = 250000
+    #     end = start + len(generatedSignal)
+    #     # truncate the recorded signal to the length of the generated signal
+    #     globals()['recordedSignal'] = recordedSignal[start:end]
+    
+    globals()['recordedSignal'] = recordedSignal[0: len(generatedSignal)]
 
-    y = signal.correlate(generatedSignal, recorded_signal_truncated, mode='same', method='fft') / P
-
-    corr = signal.correlate(recorded_signal_truncated, generatedSignal,mode='same', method='fft')
-    lags = signal.correlation_lags(len(generatedSignal), len(recorded_signal_truncated))
+    corr = signal.correlate(recordedSignal, recordedSignal, mode='same', method='fft')
+    lags = signal.correlation_lags(len(recordedSignal), len(generatedSignal), mode='same')
     corr /= P
     
-    #left = 13250
-    left = 0
-    right = 13500
-
-    # plt.style.use('seaborn')
-    # plt.plot(time_steps, y, linewidth=1.0)
-    # plt.show()
-    fig, (ax_orig, ax_noise, ax_corr, ax_wf) = plt.subplots(4, 1, figsize=(4.8, 4.8))
+    fig, (ax_orig, ax_noise, ax_corr, ax_wf) = plt.subplots(4, 1, figsize=(10, 6))
+    
     ax_orig.plot(generatedSignal)
     ax_orig.set_title('Original signal')
     ax_orig.set_xlabel('Sample Number')
-    ax_noise.plot(recorded_signal_truncated)
+    
+    ax_noise.plot(recordedSignal)
     ax_noise.set_title('Signal with noise')
     ax_noise.set_xlabel('Sample Number')
     
-    left = 131071
-    right = 131081
-    ax_corr.plot(corr)
-    ax_corr.set_title('Impulse Response (FFT)')
-    ax_corr.set_xlabel('Samples')
+
+    midPoint = np.where(lags == 0)[0][0]
+    rang = 100
+    left = midPoint-rang
+    right = midPoint+rang
+    lags = lags[left:right]
+    corr = corr[left:right]
+    # print(midPoint)
+    # print(lags[midPoint], corr[midPoint])
+    # print(lags, corr)
+    # plt_acf(corr, ax=ax_corr, use_vlines=True, fft=False, lags=lags)
+    ax_corr.stem(lags, corr)
+    # ax_corr.setp(markerline, markersize = .01)
+    ax_corr.set_title('Cross-Correlation')
+    ax_corr.set_xlabel('Lag')
     
     left = 0
     right = 10
@@ -366,7 +376,8 @@ def plotImpulseResponse(subsample=False):
     fig.suptitle('Estimated Impulse Response')
     plt.xlabel('Sample Number')
 
-    ax.plot(imp[0:10], linewidth=1.0)
+    # ax.plot(imp, linewidth=1.0)
+    ax.plot(fft(imp), linewidth=1.0)
 
     plt.show()
 
@@ -378,17 +389,29 @@ def butter_lowpass_filter(data, cutoff, fs, order=5):
     y = signal.lfilter(b, a, data)
     return y
 
+def butter_highpass(cutoff, fs, order=5):
+    return signal.butter(order, cutoff, fs=fs, btype='high', analog=False)
+
+def butter_high_filter(data, cutoff, fs, order=5):
+    b, a = butter_lowpass(cutoff, fs, order=order)
+    y = signal.lfilter(b, a, data)
+    return y
+
 def plotRecordedSignals(subsample=False):
     # create a sliding window view (50% overlap)
     max_time = len(recordedSignal) / SAMPLE_RATE
     time_steps = np.linspace(0, max_time, len(recordedSignal))
     
-    analytic_signal = signal.hilbert(butter_lowpass_filter(recordedSignal, 5, 96.0, 20))
+
+    fs = SAMPLE_RATE
+    analytic_signal = signal.hilbert(recordedSignal)
     amplitude_envelope = np.abs(analytic_signal)
+    low_filtered = butter_high_filter(amplitude_envelope, 0.001, None, 2)
 
     _, ax = plt.subplots()
-    ax.plot(time_steps, recordedSignal, label='Recorded Signal')
-    ax.plot(time_steps, amplitude_envelope, c='r', label='envelope')
+    ax.plot(recordedSignal, label='Recorded Signal')
+    ax.plot(amplitude_envelope, c='r', label='envelope')
+    ax.plot(low_filtered, c='g', label='low pass')
     plt.show()
     # plot
     # fig, ax = plt.subplots()
@@ -401,12 +424,40 @@ def plotRecordedSignals(subsample=False):
 
     # plt.show()
 
+def compareToGeneratedSignal():
+    gen_max_time = len(generatedSignal) / SAMPLE_RATE
+    gen_time_steps = np.linspace(0, gen_max_time, len(generatedSignal))
+    
+    rec_max_time = len(recordedSignal) / SAMPLE_RATE
+    rec_time_steps = np.linspace(0, rec_max_time, len(recordedSignal))
+    
+    fig, (ax_gen, ax_rec) = plt.subplots(2, 1, figsize=(4.8, 4.8))
+    ax_gen.plot(gen_time_steps, generatedSignal)
+    ax_gen.set_title('Original signal')
+    ax_gen.set_xlabel('Time')
+    
+    ax_rec.plot(rec_time_steps, recordedSignal)
+    ax_rec.set_title('Recorded Signal with noise')
+    ax_rec.set_xlabel('Time')
+    
+    ax_gen.margins(0, 0.1)
+    ax_rec.margins(0, 0.1)
+    fig.tight_layout()
+    plt.show()
+
 def testRun():
     loadAllData()
     # generateAndSaveTestRecordedSignal()
     # generateAndSaveAllData()
-
-    # globals()['recordedSignal'] = generatedSignal
+    # plotRecordedSignals()
+    # print(len(generatedSignal))
+    th = 0.001 #np.average(recordedSignal[recordedSignal > 0]) / 2 # looking for ~ .00157
+    th_neg = -1 * th
+    print(th, th_neg)
+    first = recordedSignal[(recordedSignal > th) | (recordedSignal < th_neg)]
+    globals()['recordedSignal'] = first
+    
+    #compareToGeneratedSignal()
 
     # permuteSignal()
     # fastHadamard()
@@ -418,7 +469,7 @@ def testRun():
 
     # plotBuffer(resp, subsample=10)
     # plotImpulseResponse()
-    plotRecordedSignals()
+    plotAutoCorrelation()
 
 
 if __name__ == '__main__':
