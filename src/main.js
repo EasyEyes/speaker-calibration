@@ -1,4 +1,7 @@
-import Listener from "./listener";
-import Speaker from "./speaker";
+import Listener from './peer-connection/listener';
+import Speaker from './peer-connection/speaker';
 
-export { Listener, Speaker };
+import Volume from './use-cases/volume/volume';
+import ImpulseResponse from './use-cases/impulse-response/impulseResponse';
+
+export {Listener, Speaker, Volume, ImpulseResponse};

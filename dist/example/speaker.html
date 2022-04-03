@@ -62,7 +62,7 @@
             ),
             targetElementId: "display",
           };
-          window.speaker = new speakerCalibrator.Speaker(speakerParameters);
+          window.speaker = new speakerCalibrator.Speaker(speakerParameters, speakerCalibrator.Volume);
           // console.log(window.speaker);
           document.getElementById("callPeerCallButton").classList.add("d-none");
         };

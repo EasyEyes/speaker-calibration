@@ -1,7 +1,7 @@
 /* eslint-disable prefer-destructuring */
 /* eslint-disable dot-notation */
 // eslint-disable-next-line import/extensions
-const createMLSGenModule = require('../../dist/mlsGen.js');
+const createMLSGenModule = require('../../../../dist/mlsGen.js');
 
 /**
  * MLSGenInterface provides a class for interfacing with the MLSGen WASM module.
