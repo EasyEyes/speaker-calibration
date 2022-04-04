@@ -29,10 +29,13 @@ class Volume extends AudioCalibrator {
   #createCalibrationNode = () => {
     const audioContext = this.makeNewSourceAudioContext();
     const oscilator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+    // gainNode.gain.value = -437.98;
 
     oscilator.frequency.value = this.#CALIBRATION_TONE_FREQUENCY;
     oscilator.type = this.#CALIBRATION_TONE_TYPE;
-    oscilator.connect(audioContext.destination);
+    oscilator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
 
     this.addCalibrationNode(oscilator);
   };

@@ -90,7 +90,7 @@ class AudioRecorder {
       this.#mediaRecorder.onstop = () => {
         // when the stop event is triggered, resolve the promise
         this.#audioBlob = new Blob(this.#recordedChunks, {
-          type: 'audio/ogg; codecs=opus',
+          type: 'audio/wav; codecs=opus',
         });
         resolve(this.#audioBlob);
       };
