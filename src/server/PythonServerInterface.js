@@ -27,8 +27,9 @@ class PythonServerInterface {
       task: 'volume-calibration',
       data,
     });
-    const tokens = result.data.trim().split(':');
-    return parseFloat(tokens[1]);
+    const [soundGainDbSPL, P, L, vectorDb] = result.data.trim().split(',').map(res => res.split(':')[1]);
+    console.log(soundGainDbSPL, P, L, vectorDb);
+    return parseFloat(soundGainDbSPL);
   };
 
   asyncEmit = (eventName, data) =>
