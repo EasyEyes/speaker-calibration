@@ -1,5 +1,6 @@
 /* eslint-disable no-await-in-loop */
 import AudioRecorder from './audioRecorder';
+import PythonServerInterface from '../server/PythonServerInterface';
 import {sleep, saveToCSV} from '../utils';
 import {RecordedSignalChart} from '../myCharts';
 
@@ -16,6 +17,7 @@ class AudioCalibrator extends AudioRecorder {
     this.numCalibratingRounds = numCalibrationRounds;
     this.#plot = plot;
     this.numCalibrationNodes = numCalibrationNodes;
+    this.pyServer = new PythonServerInterface();
   }
 
   /** @private */

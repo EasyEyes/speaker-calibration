@@ -9,7 +9,7 @@ class Volume extends AudioCalibrator {
   /**
    *
    */
-  constructor(numCalibrationRounds = 1, plot = false, numCalibrationNodes = 1) {
+  constructor(numCalibrationRounds = 1, plot = true, numCalibrationNodes = 1) {
     super(numCalibrationRounds, plot, numCalibrationNodes);
   }
 
@@ -20,7 +20,27 @@ class Volume extends AudioCalibrator {
   #CALIBRATION_TONE_TYPE = 'sine';
 
   /** @private */
-  #CALIBRATION_TONE_DURATION = 5; // seconds
+  #CALIBRATION_TONE_DURATION = 8; // seconds
+
+  /** @private */
+  soundGainDBSPL = null;
+
+  handleIncomingData = data => {
+    console.log('Received data: ', data);
+    if (data.type === 'soundGainDBSPL') {
+      this.soundGainDBSPL = data.value;
+    } else {
+      throw new Error(`Unknown data type: ${data.type}`);
+    }
+  };
+
+  #getTruncatedSignal = () => {
+    const start = 3.5 * this.sourceSamplingRate;
+    const end = 4.5 * this.sourceSamplingRate;
+    return this.getLastRecordedSignal().slice(start, end);
+  };
+
+  getSoundGainDBSPL = () => this.soundGainDBSPL;
 
   /**
    * Construct a Calibration Node with the calibration parameters.
@@ -30,10 +50,14 @@ class Volume extends AudioCalibrator {
     const audioContext = this.makeNewSourceAudioContext();
     const oscilator = audioContext.createOscillator();
     const gainNode = audioContext.createGain();
-    // gainNode.gain.value = -437.98;
 
     oscilator.frequency.value = this.#CALIBRATION_TONE_FREQUENCY;
     oscilator.type = this.#CALIBRATION_TONE_TYPE;
+    // TODO: try to ramp the sin wave up instead of playing it at max amplitude from 0
+    // gainNode.gain.value = 0;
+    // gainNode.gain.setValueAtTime(0, 0);
+    // gainNode.gain.linearRampToValueAtTime(1, 6);
+
     oscilator.connect(gainNode);
     gainNode.connect(audioContext.destination);
 
@@ -56,6 +80,14 @@ class Volume extends AudioCalibrator {
 
   startCalibration = async stream => {
     await this.calibrationSteps(stream, this.#playCalibrationAudio, this.#createCalibrationNode);
+    console.log('Sending calibration data to server');
+
+    this.soundGainDBSPL = await this.pyServer.getVolumeCalibration({
+      sampleRate: this.sourceSamplingRate,
+      payload: this.#getTruncatedSignal(),
+    });
+
+    console.log(`Sound gain: ${this.soundGainDBSPL}`);
   };
 }
 
