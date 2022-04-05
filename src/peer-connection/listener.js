@@ -114,30 +114,39 @@ class Listener extends AudioPeer {
     });
   };
 
+  applyTrackContraints = async stream => {
+    // Contraint the incoming audio to the sampling rate we want
+    const track = stream.getAudioTracks()[0];
+    const capabilities = track.getCapabilities();
+    const supportsHQ = capabilities.sampleRate.max >= 96000;
+    const contraints = {
+      sampleRate: supportsHQ ? 96000 : 48000,
+      sampleSize: supportsHQ ? 24 : 16,
+    };
+
+    // await the promise
+    await track.applyConstraints(contraints);
+    return track.getSettings().sampleRate;
+  };
+
   openAudioStream = async () => {
     this.displayUpdate('Listener - openAudioStream');
+    const contraints = {
+      sampleRate: 96000,
+      channelCount: 1,
+      sampleSize: 24,
+    };
     navigator.mediaDevices
       .getUserMedia({
-        audio: {
-          sampleRate: 96000,
-        },
+        audio: contraints,
         video: false,
       })
       .then(stream => {
-        const track = stream.getAudioTracks()[0];
-        const capabilities = track.getCapabilities();
-        this.displayUpdate(
-          `available sampling rate range: [${capabilities.sampleRate.min}, ${capabilities.sampleRate.max}]`
-        );
-        const supportHQAudio =
-          capabilities.sampleRate.min >= 96000 && capabilities.sampleRate.max <= 96000;
-        track.applyConstraints({
-          sampleRate: supportHQAudio ? 96000 : 48000,
-          sampleSize: supportHQAudio ? 24 : 16,
+        this.applyTrackContraints(stream).then(sampleRate => {
+          this.sendSamplingRate(sampleRate);
+          this.peer.call(this.speakerPeerId, stream); // one-way call
+          this.displayUpdate('Listener - openAudioStream');
         });
-        this.sendSamplingRate(track.getSettings().sampleRate);
-        this.peer.call(this.speakerPeerId, stream); // one-way call
-        this.displayUpdate('Listener - openAudioStream');
       })
       .catch(err => {
         console.log(err);

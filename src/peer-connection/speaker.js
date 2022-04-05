@@ -1,5 +1,4 @@
 import AudioPeer from './audioPeer';
-import AudioCalibrator from './audioCalibrator';
 
 const QRCode = require('qrcode');
 
@@ -14,11 +13,11 @@ class Speaker extends AudioPeer {
    * Takes the url of the current site and a target element where html elements will be appended.
    * @param {initParameters} params - see type definition for initParameters
    */
-  constructor(params) {
+  constructor(params, Calibrator) {
     super(params);
 
     this.siteUrl += '/listener?';
-    this.ac = new AudioCalibrator();
+    this.ac = new Calibrator();
 
     /* Set up callbacks that handle any events related to our peer object. */
     this.peer.on('open', this.onPeerOpen);
@@ -104,8 +103,6 @@ class Speaker extends AudioPeer {
     this.ready();
   };
 
-
-
   /**
    * Called after a call is established and data is flowing.
    * Sets up the local audio stream and starts the calibration process.
@@ -116,18 +113,14 @@ class Speaker extends AudioPeer {
     window.localAudio.srcObject = stream;
     window.localAudio.autoplay = false;
 
-    // // Start calibration
-    // if (!this.ac.getCalibrationStatus()) {
-    //   this.ac.startCalibration(stream);
-    // }
-    document.getElementById("calibrationBeginButton").classList.remove("d-none");
+    document.getElementById('calibrationBeginButton').classList.remove('d-none');
   };
 
-  startCalibration = () => {
-    if(!this.ac.getCalibrationStatus()) {
-      this.ac.startCalibration(window.localStream);
-    }
-  }
+  startCalibration = async () => this.ac.startCalibration(window.localStream);
+
+  downloadData = () => {
+    this.ac.downloadData();
+  };
 
   /**
    * Called when a call is made by the Listener.
@@ -186,7 +179,7 @@ class Speaker extends AudioPeer {
     }
     // handle sampling rate sent from Listener
     if (data.name === 'samplingRate') {
-      this.ac.setSinkSamplingRate(data.payload);
+      this.ac.setSamplingRates(data.payload);
     }
   };
 

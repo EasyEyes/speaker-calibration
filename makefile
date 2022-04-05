@@ -32,7 +32,7 @@ PROJECT_NAME = mlsGen
 
 # directories
 DIST_DIR = ./dist/
-SRC_DIR = $(addprefix ./src/,$(PROJECT_NAME)/)
+SRC_DIR = $(addprefix ./src/use-cases/impulse-response/,$(PROJECT_NAME)/)
 
 # WASM files
 SRC_FILE := $(addprefix $(SRC_DIR),$(PROJECT_NAME).cpp) # SRC_DIR + PROJECT_NAME + .cpp

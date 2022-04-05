@@ -21,26 +21,16 @@ class AudioRecorder {
   /** @private */
   #recordedSignals = [];
 
-  /**
-   * creates a new AudioRecorder instance.
-   * Sets up the audio context and file reader.
-   */
-  constructor() {
-    this.#audioContext = new (window.AudioContext ||
-      window.webkitAudioContext ||
-      window.audioContext)();
-  }
+  /** @private */
+  sinkSamplingRate;
 
   #saveRecording = async () => {
     this.#arrayBuffer = await this.#audioBlob.arrayBuffer();
 
     // Convert array buffer into audio buffer
     await this.#audioContext.decodeAudioData(this.#arrayBuffer, audioBuffer => {
-      // Do something with audioBuffer
-      // TODO: Address the fact that the audio buffer is being continously filled,
-      // we want a new buffer each round.
       const data = audioBuffer.getChannelData(0);
-      console.log(data);
+      console.log(`Decoded audio data: ${data.length} samples`);
       this.#recordedSignals.push(data);
     });
   };
@@ -61,22 +51,30 @@ class AudioRecorder {
    */
   #setMediaRecorder = stream => {
     // Create a new MediaRecorder object
-    console.log(stream.getAudioTracks()[0].getSettings());
-    const {sampleRate, sampleSize, channelCount} = stream.getAudioTracks()[0].getSettings();
-    this.#mediaRecorder = new MediaRecorder(stream, {
-      audioBitsPerSecond: sampleRate * sampleSize * channelCount,
-    });
+    this.#mediaRecorder = new MediaRecorder(stream);
 
     // Add event listeners
     this.#mediaRecorder.ondataavailable = e => this.#onRecorderDataAvailable(e);
+  };
+
+  #setAudioContext = () => {
+    this.#audioContext = new (window.AudioContext ||
+      window.webkitAudioContext ||
+      window.audioContext)({
+      sampleRate: this.sinkSamplingRate,
+    });
+
+    console.log(this.#audioContext);
   };
 
   /**
    * Public method to start the recording process.
    * @param {MediaStream} stream - The stream of audio from the Listener.
    */
-  startRecording = stream => {
+  startRecording = async stream => {
     // Set up media recorder if needed
+    // await this.#applyTrackContraints(stream);
+    this.#setAudioContext();
     if (!this.#mediaRecorder) this.#setMediaRecorder(stream);
     this.#recordedChunks = [];
     this.#mediaRecorder.start();
@@ -92,7 +90,7 @@ class AudioRecorder {
       this.#mediaRecorder.onstop = () => {
         // when the stop event is triggered, resolve the promise
         this.#audioBlob = new Blob(this.#recordedChunks, {
-          type: 'audio/webm;codecs=opus',
+          type: 'audio/wav; codecs=opus',
         });
         resolve(this.#audioBlob);
       };
@@ -103,7 +101,13 @@ class AudioRecorder {
     await this.#saveRecording();
   };
 
-  getRecordedSignal = () => this.#recordedSignals[this.#recordedSignals.length - 1];
+  getLastRecordedSignal = () => this.#recordedSignals[this.#recordedSignals.length - 1];
+
+  getAllRecordedSignals = () => this.#recordedSignals;
+
+  setSinkSamplingRate = sinkSamplingRate => {
+    this.sinkSamplingRate = sinkSamplingRate;
+  }
 }
 
 export default AudioRecorder;
