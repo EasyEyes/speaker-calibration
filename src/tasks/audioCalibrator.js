@@ -22,6 +22,7 @@ class AudioCalibrator extends AudioRecorder {
   #isCalibrating = false;
 
   /** @private */
+
   #sourceAudioContext;
 
   /** @protected */
