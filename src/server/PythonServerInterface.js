@@ -27,9 +27,9 @@ class PythonServerInterface {
       task: 'volume-calibration',
       data,
     });
-    const tokens = result.data.split(',');
+    const tokens = result.data.trim().split(':');
     console.log({tokens});
-    return parseFloat(tokens[0]);
+    return parseFloat(tokens[1]);
   };
 
   asyncEmit = (eventName, data) =>
@@ -39,6 +39,9 @@ class PythonServerInterface {
       console.log('Awaiting response from Python server...');
       this.socket.on(eventName, result => {
         resolve(result);
+      });
+      this.socket.on('error', error => {
+        reject(error);
       });
       setTimeout(reject, 20000);
     });

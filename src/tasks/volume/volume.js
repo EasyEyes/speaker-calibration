@@ -88,6 +88,7 @@ class Volume extends AudioCalibrator {
     });
 
     console.log(`Sound gain: ${this.soundGainDBSPL}`);
+    return this.soundGainDBSPL;
   };
 }
 
