@@ -1,5 +1,5 @@
 {
-  "name": "speaker-calibration",
+  "name": "@EasyEyes/speaker-calibration",
   "version": "0.0.10",
   "description": "What those loudspeakers do tho",
   "main": "dist/main.js",
