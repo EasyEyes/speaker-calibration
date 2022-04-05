@@ -2,7 +2,6 @@ import AudioPeer from './audioPeer';
 
 const QRCode = require('qrcode');
 
-// TODO: some of these methods were preimplmented, but appear to be unused, cleanup
 /**
  * @class Handles the speaker's side of the connection. Responsible for initiating the connection,
  * rendering the QRCode, and answering the call.
@@ -12,28 +11,62 @@ class Speaker extends AudioPeer {
   /**
    * Takes the url of the current site and a target element where html elements will be appended.
    * @param {initParameters} params - see type definition for initParameters
+   * @param {AudioCalibrator} Calibrator - An instance of the AudioCalibrator class, should not use AudioCalibrator directly, instead use an extended class available in /tasks/
    */
   constructor(params, Calibrator) {
     super(params);
 
     this.siteUrl += '/listener?';
     this.ac = new Calibrator();
+    this.result = null;
 
     /* Set up callbacks that handle any events related to our peer object. */
-    this.peer.on('open', this.onPeerOpen);
-    this.peer.on('connection', this.onPeerConnection);
-    this.peer.on('call', this.onPeerCall);
-    this.peer.on('close', this.onPeerClose);
-    this.peer.on('disconnected', this.onPeerDisconnected);
-    this.peer.on('error', this.onPeerError);
+    this.peer.on('open', this.#onPeerOpen);
+    this.peer.on('connection', this.#onPeerConnection);
+    this.peer.on('close', this.#onPeerClose);
+    this.peer.on('disconnected', this.#onPeerDisconnected);
+    this.peer.on('error', this.#onPeerError);
   }
+
+  /**
+   * Async factory method that creates the Speaker object, and returns a promise that resolves to the result of the calibration.
+   * @param {*} params - The parameters to be passed to the peer object.
+   * @param {*} Calibrator - The class that defines the calibration process
+   * @param {Number} timeOut - The amount of time to wait before timing out the connection (in milliseconds)
+   * @public
+   */
+  static startCalibration = async (params, Calibrator, timeOut = 60000) => {
+    window.speaker = new Speaker(params, Calibrator);
+    const {speaker} = window;
+    // wrap the calibration process in a promise so we can await it
+    return new Promise((resolve, reject) => {
+      // when a call is received
+      speaker.peer.on('call', async call => {
+        // Answer the call (one way)
+        call.answer();
+        speaker.ac.createLocalAudio(document.getElementById(speaker.targetElement));
+        // when we start receiving audio
+        call.on('stream', async stream => {
+          window.localStream = stream;
+          window.localAudio.srcObject = stream;
+          window.localAudio.autoplay = false;
+          // resolve when we have a result
+          resolve((speaker.result = await speaker.ac.startCalibration(stream)));
+        });
+        // if we do not receive a result within the timeout, reject
+        setTimeout(() => {
+          reject(new Error(`Request timed out after ${timeOut / 1000} seconds. Please try again.`));
+        }, timeOut);
+      });
+    });
+  };
 
   /**
    * Called after the peer conncection has been opened.
    * Generates a QR code for the connection and displays it.
+   * @private
    */
-  showQRCode = () => {
-    // this.ac.test();
+  #showQRCode = () => {
     // Get query string, the URL parameters to specify a Listener
     const queryStringParameters = {
       speakerPeerId: this.peer.id,
@@ -62,8 +95,9 @@ class Speaker extends AudioPeer {
    * Called when the peer connection is opened.
    * Saves the peer id and calls the QR code generator.
    * @param {object} peerId - The peer id of the peer connection
+   * @private
    */
-  onPeerOpen = id => {
+  #onPeerOpen = id => {
     // Workaround for peer.reconnect deleting previous id
     if (id === null) {
       console.error('Received null id from peer open');
@@ -76,21 +110,22 @@ class Speaker extends AudioPeer {
       console.warn('DEBUG Check you assumption that id === this.peer.id');
     }
 
-    this.showQRCode();
+    this.#showQRCode();
   };
 
   /**
    * Called when the peer connection is established.
    * Enforces a single connection.
    * @param {*} connection - The connection object
+   * @private
    */
-  onPeerConnection = connection => {
-    console.log('Speaker - onPeerConnection');
+  #onPeerConnection = connection => {
+    console.log('Speaker - #onPeerConnection');
 
     // Allow only a single connection
     if (this.conn && this.conn.open) {
       connection.on('open', () => {
-        connection.send('Already connected to another client');
+        connection.send('Al#ready connected to another client');
         setTimeout(() => {
           connection.close();
         }, 500);
@@ -100,43 +135,14 @@ class Speaker extends AudioPeer {
 
     this.conn = connection;
     console.log('Connected to: ', this.conn.peer);
-    this.ready();
-  };
-
-  /**
-   * Called after a call is established and data is flowing.
-   * Sets up the local audio stream and starts the calibration process.
-   * @param {MediaStream} stream - The stream of audio from the Listener.
-   */
-  onReceiveStream = stream => {
-    window.localStream = stream;
-    window.localAudio.srcObject = stream;
-    window.localAudio.autoplay = false;
-
-    document.getElementById('calibrationBeginButton').classList.remove('d-none');
-  };
-
-  startCalibration = async () => this.ac.startCalibration(window.localStream);
-
-  downloadData = () => {
-    this.ac.downloadData();
-  };
-
-  /**
-   * Called when a call is made by the Listener.
-   * Answers the call in a one-way manner, and sets up a stream listener.
-   * @param {*} call
-   */
-  onPeerCall = call => {
-    call.answer(); // Answer the call (one way)
-    this.ac.createLocalAudio(document.getElementById(this.targetElement));
-    call.on('stream', this.onReceiveStream);
+    this.#ready();
   };
 
   /**
    * Called when the peer connection is closed.
+   * @private
    */
-  onPeerClose = () => {
+  #onPeerClose = () => {
     this.conn = null;
     console.log('Connection destroyed');
   };
@@ -144,8 +150,9 @@ class Speaker extends AudioPeer {
   /**
    * Called when the peer connection is disconnected.
    * Attempts to reconnect.
+   * @private
    */
-  onPeerDisconnected = () => {
+  #onPeerDisconnected = () => {
     console.log('Connection lost. Please reconnect');
 
     // Workaround for peer.reconnect deleting previous id
@@ -158,8 +165,9 @@ class Speaker extends AudioPeer {
   /**
    * Called when the peer connection encounters an error.
    * @param {*} error
+   * @private
    */
-  onPeerError = error => {
+  #onPeerError = error => {
     // TODO: check if this function is needed or not
     console.error(error);
   };
@@ -167,8 +175,9 @@ class Speaker extends AudioPeer {
   /**
    * Called when data is received from the peer connection.
    * @param {*} data
+   * @private
    */
-  onIncomingData = data => {
+  #onIncomingData = data => {
     // enforce object type
     if (
       !Object.prototype.hasOwnProperty.call(data, 'name') ||
@@ -184,15 +193,24 @@ class Speaker extends AudioPeer {
   };
 
   /**
-   * Called when the peer connection is ready.
+   * Called when the peer connection is #ready.
+   * @private
    */
-  ready = () => {
+  #ready = () => {
     // Perform callback with data
-    this.conn.on('data', this.onIncomingData);
+    this.conn.on('data', this.#onIncomingData);
     this.conn.on('close', () => {
       console.log('Connection reset<br>Awaiting connection...');
       this.conn = null;
     });
+  };
+
+  /**
+   * Debug method for downloading the recorded audio
+   * @public
+   */
+  downloadData = () => {
+    this.ac.downloadData();
   };
 }
 

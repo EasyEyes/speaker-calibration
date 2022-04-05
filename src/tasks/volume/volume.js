@@ -9,8 +9,8 @@ class Volume extends AudioCalibrator {
   /**
    *
    */
-  constructor(numCalibrationRounds = 1, plot = false, numCalibrationNodes = 1) {
-    super(numCalibrationRounds, plot, numCalibrationNodes);
+  constructor(numCalibrationRounds = 1, numCalibrationNodes = 1) {
+    super(numCalibrationRounds, numCalibrationNodes);
   }
 
   /** @private */

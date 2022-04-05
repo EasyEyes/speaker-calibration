@@ -2,7 +2,6 @@
 import AudioRecorder from './audioRecorder';
 import PythonServerInterface from '../server/PythonServerInterface';
 import {sleep, saveToCSV} from '../utils';
-import {RecordedSignalChart} from '../myCharts';
 
 /**
  * Provides methods for calibrating the user's speakers
@@ -12,19 +11,15 @@ class AudioCalibrator extends AudioRecorder {
   /**
    *
    */
-  constructor(numCalibrationRounds = 1, plot = false, numCalibrationNodes = 1) {
+  constructor(numCalibrationRounds = 1, numCalibrationNodes = 1) {
     super();
     this.numCalibratingRounds = numCalibrationRounds;
-    this.#plot = plot;
     this.numCalibrationNodes = numCalibrationNodes;
     this.pyServer = new PythonServerInterface();
   }
 
   /** @private */
   #isCalibrating = false;
-
-  /** @private */
-  #plot;
 
   /** @private */
   #sourceAudioContext;
@@ -86,16 +81,7 @@ class AudioCalibrator extends AudioRecorder {
       await afterRecord();
 
       this.calibrationNodes = [];
-      const recordedSignal = [...this.getLastRecordedSignal()];
 
-      // if plot set, plot the signals
-      if (this.#plot) {
-        const chart = new RecordedSignalChart(
-          'captured-signal-chart',
-          recordedSignal,
-          this.sinkSamplingRate
-        );
-      }
       // eslint-disable-next-line no-await-in-loop
       await sleep(2);
       numRounds += 1;

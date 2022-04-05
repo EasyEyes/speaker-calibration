@@ -27,9 +27,7 @@
       Eius!</p>
     <div class="row">
       <div class="col-4">
-        <button id="callPeerCallButton" type="button" class="btn btn-primary">Start Peer Call</button>
-        <button id="calibrationBeginButton" type="button" class="btn btn-primary d-none">Calibrate Speakers</button>
-        <button id="downloadDataButton" type="button" class="btn btn-primary d-none">Download Data</button>
+        <button id="calibrationBeginButton" type="button" class="btn btn-primary">Calibrate Speakers</button>
       </div>
       <div class="col-4">
         <div id="display"></div>
@@ -59,7 +57,9 @@
         </div>
       </div>
       <script>
-        document.getElementById("callPeerCallButton").onclick = () => {
+        document.getElementById("calibrationBeginButton").onclick = async () => {
+          const spinner = document.getElementById("spinner");
+          const volumeCalibrationResult = document.getElementById("volumeCalibrationResult");
           const speakerParameters = {
             siteUrl: window.location.href.substring(
               0,
@@ -67,23 +67,9 @@
             ),
             targetElementId: "display",
           };
-          window.speaker = new speakerCalibrator.Speaker(speakerParameters, speakerCalibrator.Volume);
-          // console.log(window.speaker);
-          document.getElementById("callPeerCallButton").classList.add("d-none");
-        };
-        document.getElementById("calibrationBeginButton").onclick = async () => {
-          const spinner = document.getElementById("spinner");
-          const volumeCalibrationResult = document.getElementById("volumeCalibrationResult");
-          spinner.classList.remove("d-none");
-          document.getElementById('calibrationBeginButton').classList.add('d-none');
-          document.getElementById('downloadDataButton').classList.remove('d-none');
-          const dbSPL = await window.speaker.startCalibration();
-          volumeCalibrationResult.innerHTML = `Sound Gain: ${dbSPL} dB SPL`;
-          spinner.classList.add("d-none");
-          volumeCalibrationResult.classList.remove("d-none");
-        }
-        document.getElementById("downloadDataButton").onclick = () => {
-          window.speaker.downloadData();
+          const { Speaker, VolumeCalibration } = speakerCalibrator;
+          const dbSPL = await Speaker.startCalibration(speakerParameters, VolumeCalibration);
+          console.log(dbSPL);
         }
       </script>
       <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"

@@ -10,8 +10,8 @@ class ImpulseResponse extends AudioCalibrator {
   /**
    *
    */
-  constructor(numCalibrationRounds = 2, plot = false, numCalibrationNodes = 2) {
-    super(numCalibrationRounds, plot, numCalibrationNodes);
+  constructor(numCalibrationRounds = 2, numCalibrationNodes = 2) {
+    super(numCalibrationRounds, numCalibrationNodes);
   }
 
   /** @private */
