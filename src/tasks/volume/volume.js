@@ -35,9 +35,10 @@ class Volume extends AudioCalibrator {
   };
 
   #getTruncatedSignal = () => {
-    const start = 3.5 * this.sourceSamplingRate;
-    const end = 4.5 * this.sourceSamplingRate;
-    return this.getLastRecordedSignal().slice(start, end);
+    const start = Math.floor(3.5 * this.sourceSamplingRate);
+    const end = Math.floor(4.5 * this.sourceSamplingRate);
+    const result = Array.from(this.getLastRecordedSignal().slice(start, end));
+    return result;
   };
 
   getSoundGainDBSPL = () => this.soundGainDBSPL;
