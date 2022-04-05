@@ -9,7 +9,7 @@ class Volume extends AudioCalibrator {
   /**
    *
    */
-  constructor(numCalibrationRounds = 1, plot = true, numCalibrationNodes = 1) {
+  constructor(numCalibrationRounds = 1, plot = false, numCalibrationNodes = 1) {
     super(numCalibrationRounds, plot, numCalibrationNodes);
   }
 
@@ -20,7 +20,7 @@ class Volume extends AudioCalibrator {
   #CALIBRATION_TONE_TYPE = 'sine';
 
   /** @private */
-  #CALIBRATION_TONE_DURATION = 8; // seconds
+  #CALIBRATION_TONE_DURATION = 5; // seconds
 
   /** @private */
   soundGainDBSPL = null;

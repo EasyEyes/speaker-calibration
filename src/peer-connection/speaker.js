@@ -116,13 +116,7 @@ class Speaker extends AudioPeer {
     document.getElementById('calibrationBeginButton').classList.remove('d-none');
   };
 
-  startCalibration = async () => {
-    if (!this.ac.getCalibrationStatus()) {
-      await this.ac.startCalibration(window.localStream);
-      document.getElementById('calibrationBeginButton').classList.add('d-none');
-      document.getElementById('downloadDataButton').classList.remove('d-none');
-    }
-  };
+  startCalibration = async () => this.ac.startCalibration(window.localStream);
 
   downloadData = () => {
     this.ac.downloadData();

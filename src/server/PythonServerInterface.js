@@ -28,13 +28,11 @@ class PythonServerInterface {
       data,
     });
     const tokens = result.data.trim().split(':');
-    console.log({tokens});
     return parseFloat(tokens[1]);
   };
 
   asyncEmit = (eventName, data) =>
     new Promise((resolve, reject) => {
-      console.log({eventName, data});
       this.socket.emit(eventName, data);
       console.log('Awaiting response from Python server...');
       this.socket.on(eventName, result => {
