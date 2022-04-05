@@ -69,6 +69,6 @@ Thumbs.db
 !.phpcs.xml.dist
 !.env.example
 !.eslintrc.json
-!.prettierrc.json
+!.prettierrc
 !.eslintignore
 !.prettierignore

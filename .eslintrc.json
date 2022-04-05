@@ -1,27 +1,38 @@
 {
-    "env": {
-        "browser": true,
-        "es2021": true
-    },
-    "extends": [
-        "airbnb-base",
-        "prettier"
-    ],
-    "parserOptions": {
-        "ecmaVersion": "latest",
-        "sourceType": "module"
-    },
-    "rules": {
-        "no-console": 0, //TODO: set to 1 in final submission
-        "class-methods-use-this": 0, //TODO: set to 1 in final submission
-        "require-jsdoc": ["error", {
-            "require": {
-                "FunctionDeclaration": true,
-                "MethodDefinition": true,
-                "ClassDeclaration": true,
-                "ArrowFunctionExpression": true,
-                "FunctionExpression": true
-            }
-        }]
-    }
+  "env": {
+    "browser": true,
+    "es2021": true
+  },
+  "extends": ["airbnb-base", "prettier", "plugin:compat/recommended"],
+  "parserOptions": {
+    "ecmaVersion": "latest",
+    "sourceType": "module"
+  },
+  "rules": {
+    "no-console": 0, //TODO: set to 1 in final submission
+    "class-methods-use-this": 0, //TODO: set to 1 in final submission
+    "require-jsdoc": [
+      "error",
+      {
+        "require": {
+          "FunctionDeclaration": true,
+          "MethodDefinition": true,
+          "ClassDeclaration": true,
+          "ArrowFunctionExpression": true,
+          "FunctionExpression": true
+        }
+      }
+    ]
+  },
+  "settings": {
+    "polyfills": [
+      // Example of marking entire API and all methods and properties as polyfilled
+      "Promise",
+      // Example of instance method, must add `.prototype.`
+      "Array.prototype.from",
+      "Object.prototype.fromEntries",
+      "navigator.mediaDevices",
+      "window.AudioContext"
+    ]
+  }
 }
