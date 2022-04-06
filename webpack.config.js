@@ -1,7 +1,7 @@
 const path = require('path');
+const {BundleAnalyzerPlugin} = require('webpack-bundle-analyzer')
 
-module.exports = {
-  mode: 'development',
+const config = {
   entry: {
     main: './src/main.js',
   },
@@ -21,9 +21,11 @@ module.exports = {
       },
     ],
   },
-  // experiments: {
-  //   asyncWebAssembly: true,
-  //   syncWebAssembly: true,
-  // },
-  // plugins: [new CopyPlugin([{ from: "src/mleGen/build", to: "" }])],
+  plugins: []
 };
+
+if (process.env.WEBPACK_ANALYZE === 'true') {
+  config.plugins.push(new BundleAnalyzerPlugin())
+}
+
+module.exports = config;
