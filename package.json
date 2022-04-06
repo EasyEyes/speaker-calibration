@@ -15,7 +15,8 @@
     "lint": "eslint src --ext .js",
     "lint:fix": "npm run lint -- --fix",
     "format": "prettier --write \"**/*.{js,json,md,html,css}\"",
-    "build:doc": "jsdoc src -r -d ./doc"
+    "build:doc": "jsdoc src -r -d ./doc",
+    "test": ""
   },
   "keywords": [],
   "constributors": [
