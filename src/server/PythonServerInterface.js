@@ -28,6 +28,7 @@ class PythonServerInterface {
   };
 
   getVolumeCalibration = async data => {
+    console.log(data)
     const result = await this.asyncEmit('data', {
       task: 'volume-calibration',
       data,
