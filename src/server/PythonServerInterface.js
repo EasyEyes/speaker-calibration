@@ -12,7 +12,12 @@ class PythonServerInterface {
    */
   constructor(url = PythonServerInterface.PYTHON_SERVER_URL) {
     // 'http://localhost:3001/'
-    this.socket = io(url);
+    this.socket = io(url, {
+      reconnection: true,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000,
+      reconnectionAttempts: 99999,
+    });
   }
 
   getImpulseResponse = async data => {
@@ -23,6 +28,7 @@ class PythonServerInterface {
   };
 
   getVolumeCalibration = async data => {
+    console.log(data)
     const result = await this.asyncEmit('data', {
       task: 'volume-calibration',
       data,

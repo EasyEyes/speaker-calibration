@@ -1,4 +1,5 @@
 import AudioPeer from './audioPeer';
+import {sleep} from '../utils';
 
 const QRCode = require('qrcode');
 
@@ -50,6 +51,12 @@ class Speaker extends AudioPeer {
           window.localStream = stream;
           window.localAudio.srcObject = stream;
           window.localAudio.autoplay = false;
+          
+          // if the sinkSamplingRate is not set sleep
+          while (!speaker.ac.sampleRatesSet()) {
+            console.log('SinkSamplingRate is undefined, sleeping');
+            await sleep(1);
+          }
           // resolve when we have a result
           resolve((speaker.result = await speaker.ac.startCalibration(stream)));
         });
