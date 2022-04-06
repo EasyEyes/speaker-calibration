@@ -93,10 +93,10 @@ class Listener extends AudioPeer {
 
     this.displayUpdate('Created connection');
 
-    this.conn.on('open', () => {
+    this.conn.on('open', async () => {
       this.displayUpdate('Listener - conn open');
       // this.sendSamplingRate();
-      this.openAudioStream();
+      await this.openAudioStream();
     });
 
     // Handle incoming data (messages only since this is the signal sender)
@@ -114,7 +114,7 @@ class Listener extends AudioPeer {
     });
   };
 
-  applyTrackContraints = async stream => {
+  applyHQTrackConstraints = async stream => {
     // Contraint the incoming audio to the sampling rate we want
     const track = stream.getAudioTracks()[0];
     const capabilities = track.getCapabilities();
@@ -125,7 +125,12 @@ class Listener extends AudioPeer {
     };
 
     // await the promise
-    await track.applyConstraints(contraints);
+    try {
+      await track.applyConstraints(contraints);
+    } catch (err) {
+      console.log(err);
+      this.displayUpdate(`Error applying contraints to track: ${err}`);
+    }
     return track.getSettings().sampleRate;
   };
 
@@ -142,15 +147,20 @@ class Listener extends AudioPeer {
         video: false,
       })
       .then(stream => {
-        this.applyTrackContraints(stream).then(sampleRate => {
-          this.sendSamplingRate(sampleRate);
-          this.peer.call(this.speakerPeerId, stream); // one-way call
-          this.displayUpdate('Listener - openAudioStream');
-        });
+        this.applyHQTrackConstraints(stream)
+          .then(sampleRate => {
+            this.sendSamplingRate(sampleRate);
+            this.peer.call(this.speakerPeerId, stream); // one-way call
+            this.displayUpdate('Listener - openAudioStream');
+          })
+          .catch(err => {
+            console.log(err);
+            this.displayUpdate(`Error in applying track contraints ${err}`);
+          });
       })
       .catch(err => {
         console.log(err);
-        this.displayUpdate(`error:${err}`);
+        this.displayUpdate(`Error in opening audio stream ${err}`);
       });
   };
 }

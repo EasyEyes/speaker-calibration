@@ -107,7 +107,7 @@ class AudioRecorder {
 
   setSinkSamplingRate = sinkSamplingRate => {
     this.sinkSamplingRate = sinkSamplingRate;
-  }
+  };
 }
 
 export default AudioRecorder;
