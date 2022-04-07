@@ -19,6 +19,15 @@ const config = {
         test: /\.css$/,
         use: ['style-loader', 'css-loader'],
       },
+      {
+        exclude: [
+          path.resolve(__dirname, 'doc'),
+        ]
+      },
+      {
+        test: /\.(cpp|hpp)$/,
+        loader: 'dumb-loader',
+      }
     ],
   },
   plugins: []

@@ -1,10 +1,6 @@
 # Speaker-Calibration
 
-[![Netlify Status](https://api.netlify.com/api/v1/badges/4662ab8c-dd4f-43ce-8e2d-add7a406300a/deploy-status)](https://app.netlify.com/sites/focused-hodgkin-0a6531/deploys)
-
-# Contribution Guidelines
-
-_As of 03/01/2022_
+_As of 04/06/2022_
 
 ## Initial Setup
 
@@ -15,30 +11,18 @@ _As of 03/01/2022_
 ## Local Development
 
 All outputs from the scripts/recipies below should be automatically placed in the `/dist` directory.
-This is what will be served once the library is published.
-
-### Example
-
-In `/dist/example` you will find a small example app that uses the `speaker-calibration` library.
 
 ### Javascript
-
 In `package.json` you will see some key scripts:
 
-1.  `build:wasm` cleans and rebuilds the wasm files
+1.  `build:prod` - tells webpack to build the library for production.
 2.  `build:dev` tells webpack to build the `speaker-calibration` library in development watch mode,
     outputing to `/dist`
-3.  `serve:dev` spins up an `express.js` server on port `3000` using `nodemon`. It serves the
-    `/dist` & `/dist/example` folders.
+3.  `build:wasm` cleans and rebuilds the wasm files
 4.  `lint` runs `eslint` on all js files in the project
 5.  `lint:fix` lints and automatically fixes all js files in the project.
 6.  `build:doc` builds the documentation using `jsdoc`. Outputs to `/doc`
-
-Run `(1)` & `(2)` in seperate shell windows, with this setup you will be able to modify both the
-library and front end examples with hot reload built in. `(3)` provides a simple abstraction on the
-`makefile` recipies below. Run `(5)` precommit to keep you code standardized.
-
-TODO Make `(5)` a precommit hook
+7.  `test` runs all tests in the project.
 
 ### CPP/WASM
 
@@ -57,7 +41,7 @@ requires the installation of the Emscriten compiler. Instructions can be found o
 
 We use [jsdoc](https://jsdoc.app/) standards to document our library.
 
-### Listing
+### Linting
 
 We use [ESLint](https://eslint.org/) to lint our code and enforce best practices. We are currently
 using [AirBnB's JavaScript Style Guide](https://airbnb.io/javascript/)
@@ -65,8 +49,3 @@ using [AirBnB's JavaScript Style Guide](https://airbnb.io/javascript/)
 ### Styling
 
 We use [Prettier](https://prettier.io/) to format our code.
-
-## Deployment
-
-Changes publshed to `main` will automatically trigger a deploy on the `netlify` project TODO: Fix
-netlify deploy not serving the /dist & /example folders
