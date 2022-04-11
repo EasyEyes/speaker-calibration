@@ -1,5 +1,5 @@
 const path = require('path');
-const {BundleAnalyzerPlugin} = require('webpack-bundle-analyzer')
+const {BundleAnalyzerPlugin} = require('webpack-bundle-analyzer');
 
 const config = {
   entry: {
@@ -21,11 +21,11 @@ const config = {
       },
     ],
   },
-  plugins: []
+  plugins: [],
 };
 
 if (process.env.WEBPACK_ANALYZE === 'true') {
-  config.plugins.push(new BundleAnalyzerPlugin())
+  config.plugins.push(new BundleAnalyzerPlugin());
 }
 
 module.exports = config;

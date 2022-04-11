@@ -30,7 +30,6 @@ class AudioRecorder {
     // Convert array buffer into audio buffer
     await this.#audioContext.decodeAudioData(this.#arrayBuffer, audioBuffer => {
       const data = audioBuffer.getChannelData(0);
-      console.log(`Decoded audio data: ${data.length} samples`);
       this.#recordedSignals.push(data);
     });
   };
@@ -63,8 +62,6 @@ class AudioRecorder {
       window.audioContext)({
       sampleRate: this.sinkSamplingRate,
     });
-
-    console.log(this.#audioContext);
   };
 
   /**

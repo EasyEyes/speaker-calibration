@@ -28,23 +28,27 @@ class PythonServerInterface {
   };
 
   getVolumeCalibration = async data => {
-    console.log(data)
-    const result = await this.asyncEmit('data', {
-      task: 'volume-calibration',
-      data,
-    });
-    const [soundGainDbSPL, P, L, vectorDb] = result.data
-      .trim()
-      .split(',')
-      .map(res => res.split(':')[1]);
-    console.log(soundGainDbSPL, P, L, vectorDb);
-    return parseFloat(soundGainDbSPL);
+    let serverRep;
+    let res;
+    try {
+      serverRep = await this.asyncEmit('data', {
+        task: 'volume-calibration',
+        data,
+      });
+      const [soundGainDbSPL, P, L, vectorDb] = serverRep.data
+        .trim()
+        .split(',')
+        .map(resp => parseFloat(resp.split(':')[1]));
+      res = soundGainDbSPL;
+    } catch (e) {
+      throw new Error(e);
+    }
+    return res;
   };
 
   asyncEmit = (eventName, data) =>
     new Promise((resolve, reject) => {
       this.socket.emit(eventName, data);
-      console.log('Awaiting response from Python server...');
       this.socket.on(eventName, result => {
         resolve(result);
       });

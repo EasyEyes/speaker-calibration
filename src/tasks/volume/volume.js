@@ -34,9 +34,9 @@ class Volume extends AudioCalibrator {
     }
   };
 
-  #getTruncatedSignal = () => {
-    const start = Math.floor(3.5 * this.sourceSamplingRate);
-    const end = Math.floor(4.5 * this.sourceSamplingRate);
+  #getTruncatedSignal = (left = 3.5, right = 4.5) => {
+    const start = Math.floor(left * this.sourceSamplingRate);
+    const end = Math.floor(right * this.sourceSamplingRate);
     const result = Array.from(this.getLastRecordedSignal().slice(start, end));
     return result;
   };
@@ -79,16 +79,33 @@ class Volume extends AudioCalibrator {
     await sleep(totalDuration);
   };
 
+  #sendToServerForProcessing = () => {
+    console.log('Sending data to server');
+    this.pyServer
+      .getVolumeCalibration({
+        sampleRate: this.sourceSamplingRate,
+        payload: this.#getTruncatedSignal(),
+      })
+      .then(res => {
+        if (this.soundGainDBSPL === null) {
+          this.soundGainDBSPL = res;
+        }
+      })
+      .catch(err => {
+        console.warn(err);
+      });
+  };
+
   startCalibration = async stream => {
-    await this.calibrationSteps(stream, this.#playCalibrationAudio, this.#createCalibrationNode);
-    console.log('Sending calibration data to server');
+    do {
+      await this.calibrationSteps(
+        stream,
+        this.#playCalibrationAudio,
+        this.#createCalibrationNode,
+        this.#sendToServerForProcessing
+      );
+    } while (this.soundGainDBSPL === null);
 
-    this.soundGainDBSPL = await this.pyServer.getVolumeCalibration({
-      sampleRate: this.sourceSamplingRate,
-      payload: this.#getTruncatedSignal(),
-    });
-
-    console.log(`Sound gain: ${this.soundGainDBSPL}`);
     return this.soundGainDBSPL;
   };
 }

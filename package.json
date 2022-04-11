@@ -9,7 +9,7 @@
   },
   "scripts": {
     "build:prod": "webpack --mode production --progress",
-    "build:dev": "WEBPACK_ANALYZE=true webpack --watch --mode development --progress",
+    "build:dev": "webpack --watch --mode development --progress",
     "serve:dev": "nodemon ./dist/example/server.js",
     "build:wasm": "make rebuild",
     "lint": "eslint src --ext .js",
