@@ -1,6 +1,6 @@
 {
   "name": "speaker-calibration",
-  "version": "1.0.7",
+  "version": "1.0.6",
   "description": "What those loudspeakers do tho",
   "main": "dist/main.js",
   "directories": {
@@ -9,7 +9,8 @@
   },
   "scripts": {
     "build:prod": "webpack --mode production --progress",
-    "build:dev": "WEBPACK_ANALYZE=true webpack --watch --mode development --progress",
+    "build:dev": "webpack --watch --mode development --progress",
+    "serve:dev": "nodemon ./dist/example/server.js",
     "build:wasm": "make rebuild",
     "lint": "eslint src --ext .js",
     "lint:fix": "npm run lint -- --fix",
@@ -46,7 +47,9 @@
     "eslint-plugin-compat": "^4.0.2",
     "eslint-plugin-import": "^2.25.4",
     "eslint-plugin-no-floating-promise": "^1.0.2",
+    "express": "^4.17.1",
     "jsdoc": "^3.6.10",
+    "nodemon": "^2.0.15",
     "prettier": "^2.5.1",
     "style-loader": "^2.0.0",
     "webpack": "~5.69.1",

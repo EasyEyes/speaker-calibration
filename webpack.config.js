@@ -1,5 +1,5 @@
 const path = require('path');
-const {BundleAnalyzerPlugin} = require('webpack-bundle-analyzer')
+const {BundleAnalyzerPlugin} = require('webpack-bundle-analyzer');
 
 const config = {
   entry: {
@@ -19,22 +19,13 @@ const config = {
         test: /\.css$/,
         use: ['style-loader', 'css-loader'],
       },
-      {
-        exclude: [
-          path.resolve(__dirname, 'doc'),
-        ]
-      },
-      {
-        test: /\.(cpp|hpp)$/,
-        loader: 'dumb-loader',
-      }
     ],
   },
-  plugins: []
+  plugins: [],
 };
 
 if (process.env.WEBPACK_ANALYZE === 'true') {
-  config.plugins.push(new BundleAnalyzerPlugin())
+  config.plugins.push(new BundleAnalyzerPlugin());
 }
 
 module.exports = config;

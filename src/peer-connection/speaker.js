@@ -1,7 +1,6 @@
-import QRCode from 'qrcode/build/qrcode'
+import QRCode from 'qrcode';
 import AudioPeer from './audioPeer';
 import {sleep} from '../utils';
-
 
 /**
  * @class Handles the speaker's side of the connection. Responsible for initiating the connection,
@@ -51,11 +50,10 @@ class Speaker extends AudioPeer {
           window.localStream = stream;
           window.localAudio.srcObject = stream;
           window.localAudio.autoplay = false;
-          
+
           // if the sinkSamplingRate is not set sleep
           while (!speaker.ac.sampleRatesSet()) {
             console.log('SinkSamplingRate is undefined, sleeping');
-            // eslint-disable-next-line no-await-in-loop
             await sleep(1);
           }
           // resolve when we have a result

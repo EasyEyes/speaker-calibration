@@ -105,7 +105,7 @@ class AudioCalibrator extends AudioRecorder {
     console.log('sampling rate', samplingRate);
   };
 
-  sampleRatesSet = () => this.sourceSamplingRate && this.sinkSamplingRate
+  sampleRatesSet = () => this.sourceSamplingRate && this.sinkSamplingRate;
 
   addCalibrationNode = node => {
     this.calibrationNodes.push(node);

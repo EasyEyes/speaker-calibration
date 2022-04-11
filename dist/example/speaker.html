@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html class="no-js" lang="">
+
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="x-ua-compatible" content="ie=edge" />
+  <title>Speaker</title>
+  <meta name="description" content="" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <!--CSS-->
+  <link href="../example/styles.css" rel="stylesheet" typ="text/css">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet"
+    integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+  <script src="../main.js"></script>
+  <link rel="icon"
+    href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔈</text></svg>" />
+  <!--<script src="https://www.unpkg.com/sound-check"></script>-->
+  <!-- <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"
+    integrity="sha256-ErZ09KkZnzjpqcane4SCyyHsKAXMvID9/xwbl/Aq1pc=" crossorigin="anonymous"></script> -->
+</head>
+
+<body>
+  <div class="container">
+    <h1>Speaker Page</h1>
+    <p class="lead">Lorem ipsum dolor sit amet, consectetur adipisicing elit. Officia maxime sapiente repudiandae est,
+      magnam ex sint iure quo porro ullam debitis inventore at temporibus quod ducimus nesciunt dolorem laboriosam.
+      Eius!</p>
+    <div class="row">
+      <div class="col-4">
+        <button id="calibrationBeginButton" type="button" class="btn btn-primary">Calibrate Speakers</button>
+      </div>
+      <div class="col-4">
+        <div id="display"></div>
+      </div>
+      <div class="col-4">
+        <div class="d-flex align-items-center d-none" id="spinner">
+          <strong>Calibrating Volume...</strong>
+          <div class="spinner-border ml-auto" role="status" aria-hidden="true"></div>
+        </div>
+        <h4 id="volumeCalibrationResult" class="d-none"></h4>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col" id="d3-select">
+        <div id="generated-signal-chart"></div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col">
+        <div id="captured-signal-chart""></div>
+      </div>
+    </div>
+    <div class=" row">
+          <div class="col">
+            <div id="ir-chart"></div>
+          </div>
+        </div>
+      </div>
+      <script>
+        document.getElementById("calibrationBeginButton").onclick = async () => {
+          const spinner = document.getElementById("spinner");
+          const volumeCalibrationResult = document.getElementById("volumeCalibrationResult");
+          const speakerParameters = {
+            siteUrl: window.location.href.substring(
+              0,
+              location.href.lastIndexOf("/")
+            ),
+            targetElementId: "display",
+          };
+          const { Speaker, VolumeCalibration } = speakerCalibrator;
+          const dbSPL = await Speaker.startCalibration(speakerParameters, VolumeCalibration);
+          volumeCalibrationResult.innerText = `Sound Gain ${dbSPL.toFixed(3)} dB SPL`;
+          volumeCalibrationResult.classList.remove("d-none");
+        }
+      </script>
+      <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p"
+        crossorigin="anonymous"></script>
+</body>
+
+</html>
