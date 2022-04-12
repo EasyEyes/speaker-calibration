@@ -36,14 +36,17 @@ class AudioCalibrator extends AudioRecorder {
   /** @protected */
   calibrationNodes = [];
 
+  /** @protected */
+  localAudio;
+
   /**
    * Called when a call is received.
    * Creates a local audio DOM element and attaches it to the page.
    */
   createLocalAudio = targetElement => {
-    const localAudio = document.createElement('audio');
-    localAudio.setAttribute('id', 'localAudio');
-    targetElement.appendChild(localAudio);
+    this.localAudio = document.createElement('audio');
+    this.localAudio.setAttribute('id', 'localAudio');
+    targetElement.appendChild(this.localAudio);
   };
 
   /**

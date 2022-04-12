@@ -54,10 +54,7 @@ class Volume extends AudioCalibrator {
 
     oscilator.frequency.value = this.#CALIBRATION_TONE_FREQUENCY;
     oscilator.type = this.#CALIBRATION_TONE_TYPE;
-    // TODO: try to ramp the sin wave up instead of playing it at max amplitude from 0
-    // gainNode.gain.value = 0;
-    // gainNode.gain.setValueAtTime(0, 0);
-    // gainNode.gain.linearRampToValueAtTime(1, 6);
+    gainNode.gain.value = 0.04;
 
     oscilator.connect(gainNode);
     gainNode.connect(audioContext.destination);
