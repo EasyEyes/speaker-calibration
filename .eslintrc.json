@@ -28,13 +28,13 @@
   },
   "settings": {
     "polyfills": [
-      // Example of marking entire API and all methods and properties as polyfilled
       "Promise",
-      // Example of instance method, must add `.prototype.`
-      "Array.prototype.from",
-      "Object.prototype.fromEntries",
+      "Array.from",
+      "Object.fromEntries",
       "navigator.mediaDevices",
-      "window.AudioContext"
+      "AudioContext",
+      "MediaRecorder",
+      "URLSearchParams"
     ]
   }
 }

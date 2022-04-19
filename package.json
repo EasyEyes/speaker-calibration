@@ -1,21 +1,21 @@
 {
-  "name": "@easyeyes/speaker-calibration",
-  "version": "0.0.10",
-  "description": "What those loudspeakers do tho",
+  "name": "speaker-calibration",
+  "version": "1.0.9",
+  "description": "Speaker calibration library for auditory testing",
   "main": "dist/main.js",
   "directories": {
-    "example": "example",
     "bin": "dist"
   },
   "scripts": {
-    "build": "webpack",
-    "build:wasm": "make rebuild",
-    "build:dev": "webpack --watch",
+    "build:prod": "webpack --mode production --progress",
+    "build:dev": "webpack --watch --mode development --progress",
     "serve:dev": "nodemon ./dist/example/server.js",
+    "build:wasm": "make rebuild",
     "lint": "eslint src --ext .js",
     "lint:fix": "npm run lint -- --fix",
     "format": "prettier --write \"**/*.{js,json,md,html,css}\"",
-    "build:doc": "jsdoc src -r -d ./doc"
+    "build:doc": "jsdoc src -r -d ./doc",
+    "test": ""
   },
   "keywords": [],
   "constributors": [
@@ -33,7 +33,6 @@
   "license": "MIT",
   "repository": "git://github.com/EasyEyes/speaker-calibration.git",
   "dependencies": {
-    "d3": "^7.3.0",
     "peerjs": "^1.3.2",
     "qrcode": "^1.4.4",
     "socket.io-client": "^4.4.1",
@@ -53,6 +52,7 @@
     "prettier": "^2.5.1",
     "style-loader": "^2.0.0",
     "webpack": "~5.69.1",
+    "webpack-bundle-analyzer": "^4.5.0",
     "webpack-cli": "^4.9.2"
   },
   "browserslist": [
