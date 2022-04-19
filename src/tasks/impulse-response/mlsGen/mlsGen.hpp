@@ -1,5 +1,5 @@
-#ifndef SPEAKER_CALIBRATION_SRC_MLSGEN_MLSGEN_HPP_
-#define SPEAKER_CALIBRATION_SRC_MLSGEN_MLSGEN_HPP_
+#ifndef SPEAKER_CALIBRATION_SRC_TASKS_IMPULSE_RESPOMSE_MLSGEN_MLSGEN_HPP_
+#define SPEAKER_CALIBRATION_SRC_TASKS_IMPULSE_RESPOMSE_MLSGEN_MLSGEN_HPP_
 
 // setup emscripten for vscode intelli sense:
 // https://gist.github.com/wayou/59f3a8e4fbab050fbb32e94dd9582660'
@@ -237,4 +237,4 @@ void MLSGen::generateTagS() {
 
 void MLSGen::estimateDiff() { estimatedDiff = (-1 * srcSR) + (P * sinkSR); }
 
-#endif  // SPEAKER_CALIBRATION_SRC_MLSGEN_MLSGEN_HPP_
+#endif  // SPEAKER_CALIBRATION_SRC_TASKS_IMPULSE_RESPOMSE_MLSGEN_MLSGEN_HPP_

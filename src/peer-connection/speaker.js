@@ -1,6 +1,7 @@
 import QRCode from 'qrcode';
 import AudioPeer from './audioPeer';
 import {sleep} from '../utils';
+import {CalibrationTimedOutError} from './peerErrors';
 
 /**
  * @class Handles the speaker's side of the connection. Responsible for initiating the connection,
@@ -61,7 +62,13 @@ class Speaker extends AudioPeer {
         });
         // if we do not receive a result within the timeout, reject
         setTimeout(() => {
-          reject(new Error(`Request timed out after ${timeOut / 1000} seconds. Please try again.`));
+          reject(
+            new CalibrationTimedOutError(
+              `Calibration failed to produce a result after ${
+                timeOut / 1000
+              } seconds. Please try again.`
+            )
+          );
         }, timeOut);
       });
     });
@@ -131,7 +138,7 @@ class Speaker extends AudioPeer {
     // Allow only a single connection
     if (this.conn && this.conn.open) {
       connection.on('open', () => {
-        connection.send('Al#ready connected to another client');
+        connection.send('Already connected to another client');
         setTimeout(() => {
           connection.close();
         }, 500);

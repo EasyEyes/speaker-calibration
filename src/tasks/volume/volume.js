@@ -25,23 +25,22 @@ class Volume extends AudioCalibrator {
   /** @private */
   soundGainDBSPL = null;
 
-  handleIncomingData = data => {
-    console.log('Received data: ', data);
-    if (data.type === 'soundGainDBSPL') {
-      this.soundGainDBSPL = data.value;
-    } else {
-      throw new Error(`Unknown data type: ${data.type}`);
-    }
-  };
-
   #getTruncatedSignal = (left = 3.5, right = 4.5) => {
     const start = Math.floor(left * this.sourceSamplingRate);
     const end = Math.floor(right * this.sourceSamplingRate);
     const result = Array.from(this.getLastRecordedSignal().slice(start, end));
+    const checkResult = list => {
+      const setItem = new Set(list);
+      if (setItem.size === 1 && setItem.has(0)) {
+        console.warn('The last capture failed, all recorded signal is zero');
+      }
+      if (setItem.size === 0) {
+        console.warn('The last capture failed, no recorded signal to truncate');
+      }
+    };
+    checkResult(result);
     return result;
   };
-
-  getSoundGainDBSPL = () => this.soundGainDBSPL;
 
   /**
    * Construct a Calibration Node with the calibration parameters.

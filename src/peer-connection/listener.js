@@ -1,4 +1,5 @@
 import AudioPeer from './audioPeer';
+import {UnsupportedDeviceError, MissingSpeakerIdError} from './peerErrors';
 
 /**
  * @class Handles the listener's side of the connection. Responsible for getting access to user's microphone,
@@ -29,13 +30,20 @@ class Listener extends AudioPeer {
   onPeerOpen = id => {
     this.displayUpdate('Listener - onPeerOpen');
     // Workaround for peer.reconnect deleting previous id
+
     if (id === null) {
       this.displayUpdate('Received null id from peer open');
       this.peer.id = this.lastPeerId;
     } else {
       this.lastPeerId = this.peer.id;
     }
-    this.join();
+
+    const mobileOS = this.getMobileOS();
+    if (mobileOS === 'iOS') {
+      this.join();
+    } else {
+      throw new UnsupportedDeviceError(`${mobileOS} is not supported`);
+    }
   };
 
   onPeerConnection = connection => {
@@ -51,11 +59,10 @@ class Listener extends AudioPeer {
 
   onConnData = data => {
     this.displayUpdate('Listener - onConnData');
-    // Keypad has received data, namely instructions to update the keypad
-    // TODO generalize to a list of properies
     const hasSpeakerID = Object.prototype.hasOwnProperty.call(data, 'speakerPeerId');
     if (!hasSpeakerID) {
-      this.displayUpdate('Error in parsing data received! Must set "speakerPeerId" properties');
+      this.displayUpdate('Error in parsing data received! Must set "speakerPeerId" property');
+      throw new MissingSpeakerIdError('Must set "speakerPeerId" property');
     } else {
       // this.conn.close();
       this.displayUpdate(this.speakerPeerId);
@@ -106,6 +113,21 @@ class Listener extends AudioPeer {
     });
   };
 
+  getMobileOS = () => {
+    const ua = navigator.userAgent;
+    if (/android/i.test(ua)) {
+      return 'Android';
+    }
+    if (
+      /iPad|iPhone|iPod/.test(ua) ||
+      ((navigator?.userAgentData?.platform || navigator?.platform) === 'MacIntel' &&
+        navigator.maxTouchPoints > 1)
+    ) {
+      return 'iOS';
+    }
+    return 'Other';
+  };
+
   sendSamplingRate = sampleRate => {
     this.displayUpdate('Listener - sendSamplingRate');
     this.conn.send({
@@ -128,7 +150,7 @@ class Listener extends AudioPeer {
     try {
       await track.applyConstraints(contraints);
     } catch (err) {
-      console.log(err);
+      console.warn(err);
       this.displayUpdate(`Error applying contraints to track: ${err}`);
     }
     return track.getSettings().sampleRate;
