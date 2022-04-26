@@ -1,8 +1,12 @@
 import PythonServerInterface from '../PythonServerInterface';
 import {io} from 'socket.io-client';
 
-const mockData = {
+const mockVolumeCalibrationResponse = {
   data: 'soundGainDBSL:124253.23535464,P:312.342,L:12343.45,vectorDb:1353.354',
+};
+
+const mockImpulseResponseResponse = {
+  data: '',
 };
 
 jest.mock('socket.io-client', () => {
@@ -11,7 +15,11 @@ jest.mock('socket.io-client', () => {
       return {
         on: jest.fn(),
         emit: jest.fn((eventName, data) => {
-          return Promise.resolve({data: mockData});
+          if (eventName == 'volume-calibration') {
+            return Promise.resolve({data: mockVolumeCalibrationResponse});
+          } else if (eventName == 'impulse-response') {
+            return Promise.resolve({data: mockImpulseResponseResponse});
+          }
         }),
       };
     }),
@@ -19,27 +27,27 @@ jest.mock('socket.io-client', () => {
 });
 
 describe('the PythonServerInterface class', () => {
-  it('should construct properly', () => {
-    const pythonServerInterface = new PythonServerInterface();
-    expect(io).toBeCalledWith(pythonServerInterface.PYTHON_SERVER_URL, {
-      reconnection: true,
-      reconnectionDelay: 1000,
-      reconnectionDelayMax: 5000,
-      reconnectionAttempts: 99999,
-    });
+  let pyServer;
+  beforeEach(() => {
+    pyServer = new PythonServerInterface('test-url');
+  });
+  it('should get the impulse response calibration result', () => {
+    expect(pyServer.getImpulseResponse()).toBeInstanceOf(Promise);
   });
 
-  describe('the getImpulseResponse function', () => {
-    it('should return a Promise', () => {
-      expect(pythonServerInterface.getImpulseResponse()).toBeInstanceOf(Promise);
-    });
-  });
+  it('should get the volume calibration result', async () => {
+    const mockSocket = pyServer.socket;
+    const volumeCalibrationExpectedParams = [
+      'data',
+      {data: {test: 'data'}, task: 'volume-calibration'},
+    ];
+    const mockData = {test: 'data'};
+    const mockVolumeCalibrationCall = pyServer.getVolumeCalibration(mockData);
 
-  describe('the getVolumeCalibration function', () => {
-    it('should make a call to the socket server and handle results', () => {
-      expect(pythonServerInterface.getVolumeCalibration('test-url')).toBeInstanceOf(Promise);
-      expect(io.emit).toBeCalledTimes(1);
-      expect(io.emit).toBeCalledWith('test-url');
-    });
+    expect(mockVolumeCalibrationCall).toBeInstanceOf(Promise);
+    expect(mockSocket.emit).toBeCalledTimes(1);
+    expect(mockSocket.emit).toHaveBeenCalledWith(...volumeCalibrationExpectedParams);
+    // await mockVolumeCalibrationCall;
+    expect(mockVolumeCalibrationCall).resolves.toBe(mockVolumeCalibrationResponse);
   });
 });

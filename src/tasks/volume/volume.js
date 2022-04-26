@@ -32,10 +32,13 @@ class Volume extends AudioCalibrator {
     const checkResult = list => {
       const setItem = new Set(list);
       if (setItem.size === 1 && setItem.has(0)) {
-        console.warn('The last capture failed, all recorded signal is zero');
+        console.warn(
+          'The last capture failed, all recorded signal is zero',
+          this.getAllRecordedSignals()
+        );
       }
       if (setItem.size === 0) {
-        console.warn('The last capture failed, no recorded signal to truncate');
+        console.warn('The last capture failed, no recorded signal');
       }
     };
     checkResult(result);

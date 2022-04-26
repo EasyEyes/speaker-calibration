@@ -1,7 +1,11 @@
 import QRCode from 'qrcode';
 import AudioPeer from './audioPeer';
 import {sleep} from '../utils';
-import {CalibrationTimedOutError} from './peerErrors';
+import {
+  UnsupportedDeviceError,
+  MissingSpeakerIdError,
+  CalibrationTimedOutError,
+} from './peerErrors';
 
 /**
  * @class Handles the speaker's side of the connection. Responsible for initiating the connection,
@@ -199,9 +203,19 @@ class Speaker extends AudioPeer {
       console.error('Received malformed data: ', data);
       return;
     }
-    // handle sampling rate sent from Listener
-    if (data.name === 'samplingRate') {
-      this.ac.setSamplingRates(data.payload);
+
+    console.log(data);
+
+    switch (data.name) {
+      case 'samplingRate':
+        this.ac.setSamplingRates(data.payload);
+        break;
+      case UnsupportedDeviceError.name:
+      case MissingSpeakerIdError.name:
+        throw data.payload;
+        break;
+      default:
+        break;
     }
   };
 

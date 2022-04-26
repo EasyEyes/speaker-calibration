@@ -9,13 +9,15 @@
   "scripts": {
     "build:prod": "webpack --mode production --progress",
     "build:dev": "webpack --watch --mode development --progress",
+    "build:dev:analyze": "webpack --watch --mode development --progress --analyze",
     "serve:dev": "nodemon ./dist/example/server.js",
     "build:wasm": "make rebuild",
     "lint": "eslint src --ext .js",
     "lint:fix": "npm run lint -- --fix",
     "format": "prettier --write \"**/*.{js,json,md,html,css}\"",
     "build:doc": "jsdoc src -r -d ./doc",
-    "test": "jest"
+    "test": "jest",
+    "test:watch": "jest --watchAll --coverage"
   },
   "keywords": [],
   "constributors": [

@@ -1,11 +1,13 @@
 import Volume from '../volume.js';
 
 describe('the Volume class', () => {
-  const volume = new Volume();
+  let vm;
+  beforeEach(() => {
+    vm = new Volume();
+  });
 
-  describe('the startCalibration function', () => {
-    it('should return a Promise', () => {
-      expect(volume.startCalibration()).toBeInstanceOf(Promise);
-    });
+  it('should return a Promise', () => {
+    const calibrationResp = vm.startCalibration();
+    expect(calibrationResp).toBeInstanceOf(Promise);
   });
 });

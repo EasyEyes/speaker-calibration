@@ -23,27 +23,27 @@
         </h1>
         <div class="clearfix">
           <div class="fl pad1y space-right2">
-            <span class="strong">48.38% </span>
+            <span class="strong">72.58% </span>
             <span class="quiet">Statements</span>
-            <span class="fraction">30/62</span>
+            <span class="fraction">45/62</span>
+          </div>
+
+          <div class="fl pad1y space-right2">
+            <span class="strong">87.5% </span>
+            <span class="quiet">Branches</span>
+            <span class="fraction">7/8</span>
           </div>
 
           <div class="fl pad1y space-right2">
             <span class="strong">100% </span>
-            <span class="quiet">Branches</span>
-            <span class="fraction">3/3</span>
-          </div>
-
-          <div class="fl pad1y space-right2">
-            <span class="strong">50% </span>
             <span class="quiet">Functions</span>
-            <span class="fraction">3/6</span>
+            <span class="fraction">6/6</span>
           </div>
 
           <div class="fl pad1y space-right2">
-            <span class="strong">48.38% </span>
+            <span class="strong">72.58% </span>
             <span class="quiet">Lines</span>
-            <span class="fraction">30/62</span>
+            <span class="fraction">45/62</span>
           </div>
         </div>
         <p class="quiet">
@@ -57,7 +57,7 @@
           </div>
         </template>
       </div>
-      <div class="status-line low"></div>
+      <div class="status-line medium"></div>
       <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -134,6 +134,14 @@
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
@@ -141,14 +149,10 @@
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -164,22 +168,18 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
@@ -205,18 +205,18 @@ class PythonServerInterface {
     });
   }
 &nbsp;
-  getImpulseResponse = <span class="fstat-no" title="function not covered" >async data =&gt; {</span>
-<span class="cstat-no" title="statement not covered" >    this.asyncEmit('data', {</span>
-<span class="cstat-no" title="statement not covered" >      task: 'impulse-response',</span>
-<span class="cstat-no" title="statement not covered" >      data,</span>
-<span class="cstat-no" title="statement not covered" >    });</span>
-<span class="cstat-no" title="statement not covered" >  };</span>
+  getImpulseResponse = async data =&gt; {
+    this.asyncEmit('data', {
+      task: 'impulse-response',
+      data,
+    });
+  };
 &nbsp;
-  getVolumeCalibration = <span class="fstat-no" title="function not covered" >async data =&gt; {</span>
-<span class="cstat-no" title="statement not covered" >    let serverRep;</span>
-<span class="cstat-no" title="statement not covered" >    let res;</span>
-<span class="cstat-no" title="statement not covered" >    try {</span>
-<span class="cstat-no" title="statement not covered" >      serverRep = await this.asyncEmit('data', {</span>
+  getVolumeCalibration = async data =&gt; {
+    let serverRep;
+    let res;
+    try {
+<span class="branch-0 cbranch-no" title="branch not covered" >      serverRep = await this.asyncEmit('data', {</span>
 <span class="cstat-no" title="statement not covered" >        task: 'volume-calibration',</span>
 <span class="cstat-no" title="statement not covered" >        data,</span>
 <span class="cstat-no" title="statement not covered" >      });</span>
@@ -231,17 +231,17 @@ class PythonServerInterface {
 <span class="cstat-no" title="statement not covered" >    return res;</span>
 <span class="cstat-no" title="statement not covered" >  };</span>
 &nbsp;
-  asyncEmit = <span class="fstat-no" title="function not covered" >(eventName, data) =&gt;</span>
-<span class="cstat-no" title="statement not covered" >    new Promise((resolve, reject) =&gt; {</span>
-<span class="cstat-no" title="statement not covered" >      this.socket.emit(eventName, data);</span>
-<span class="cstat-no" title="statement not covered" >      this.socket.on(eventName, result =&gt; {</span>
+  asyncEmit = (eventName, data) =&gt;
+    new Promise((resolve, reject) =&gt; {
+      this.socket.emit(eventName, data);
+      this.socket.on(eventName, result =&gt; {
 <span class="cstat-no" title="statement not covered" >        resolve(result);</span>
 <span class="cstat-no" title="statement not covered" >      });</span>
-<span class="cstat-no" title="statement not covered" >      this.socket.on('error', error =&gt; {</span>
+      this.socket.on('error', error =&gt; {
 <span class="cstat-no" title="statement not covered" >        reject(error);</span>
 <span class="cstat-no" title="statement not covered" >      });</span>
-<span class="cstat-no" title="statement not covered" >      setTimeout(reject, 20000);</span>
-<span class="cstat-no" title="statement not covered" >    });</span>
+      setTimeout(reject, 20000);
+    });
 }
 &nbsp;
 export default PythonServerInterface;
@@ -254,7 +254,7 @@ export default PythonServerInterface;
     <div class="footer quiet pad2 space-top1 center small">
       Code coverage generated by
       <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-      at Fri Apr 15 2022 12:14:25 GMT-0400 (Eastern Daylight Time)
+      at Thu Apr 21 2022 00:46:58 GMT-0400 (Eastern Daylight Time)
     </div>
     <script src="../../prettify.js"></script>
     <script>

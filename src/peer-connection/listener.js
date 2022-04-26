@@ -38,12 +38,7 @@ class Listener extends AudioPeer {
       this.lastPeerId = this.peer.id;
     }
 
-    const mobileOS = this.getMobileOS();
-    if (mobileOS === 'iOS') {
-      this.join();
-    } else {
-      throw new UnsupportedDeviceError(`${mobileOS} is not supported`);
-    }
+    this.join();
   };
 
   onPeerConnection = connection => {
@@ -158,6 +153,15 @@ class Listener extends AudioPeer {
 
   openAudioStream = async () => {
     this.displayUpdate('Listener - openAudioStream');
+    const mobileOS = this.getMobileOS();
+    if (process.env.NODE_ENV !== 'development' && mobileOS !== 'iOS') {
+      const err = new UnsupportedDeviceError(`${mobileOS} is not supported`);
+      this.conn.send({
+        name: err.name,
+        payload: err,
+      });
+      return;
+    }
     const contraints = {
       sampleRate: 96000,
       channelCount: 1,
