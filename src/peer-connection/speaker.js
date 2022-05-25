@@ -18,11 +18,14 @@ class Speaker extends AudioPeer {
    * @param {initParameters} params - see type definition for initParameters
    * @param {AudioCalibrator} Calibrator - An instance of the AudioCalibrator class, should not use AudioCalibrator directly, instead use an extended class available in /tasks/
    */
-  constructor(params, Calibrator) {
+  constructor(params, Calibrator, calibratorParams) {
     super(params);
 
     this.siteUrl += '/listener?';
-    this.ac = new Calibrator();
+    console.log(calibratorParams);
+    this.ac = new Calibrator(calibratorParams);
+    console.log(this.ac);
+    console.log('Hello');
     this.result = null;
 
     /* Set up callbacks that handle any events related to our peer object. */
@@ -40,9 +43,10 @@ class Speaker extends AudioPeer {
    * @param {Number} timeOut - The amount of time to wait before timing out the connection (in milliseconds)
    * @public
    */
-  static startCalibration = async (params, Calibrator, timeOut = 60000) => {
-    window.speaker = new Speaker(params, Calibrator);
+  static startCalibration = async (params, Calibrator, calibratorParams, timeOut = 60000) => {
+    window.speaker = new Speaker(params, Calibrator, calibratorParams);
     const {speaker} = window;
+
     // wrap the calibration process in a promise so we can await it
     return new Promise((resolve, reject) => {
       // when a call is received
@@ -62,7 +66,8 @@ class Speaker extends AudioPeer {
             await sleep(1);
           }
           // resolve when we have a result
-          resolve((speaker.result = await speaker.ac.startCalibration(stream)));
+          speaker.result = await speaker.ac.startCalibration(stream);
+          resolve(speaker.result);
         });
         // if we do not receive a result within the timeout, reject
         setTimeout(() => {
@@ -91,6 +96,11 @@ class Speaker extends AudioPeer {
     const queryString = this.queryStringFromObject(queryStringParameters);
     const uri = this.siteUrl + queryString;
 
+    const linkTag = document.createElement('a');
+    linkTag.setAttribute('href', uri);
+    linkTag.innerHTML = "Click here to connect to the speaker's microphone";
+    linkTag.target = '_blank';
+
     // Display QR code for the participant to scan
     const qrCanvas = document.createElement('canvas');
     qrCanvas.setAttribute('id', 'qrCanvas');
@@ -101,6 +111,7 @@ class Speaker extends AudioPeer {
 
     // If specified HTML Id is available, show QR code there
     if (document.getElementById(this.targetElement)) {
+      document.getElementById(this.targetElement).appendChild(linkTag);
       document.getElementById(this.targetElement).appendChild(qrCanvas);
     } else {
       // or just print it to console

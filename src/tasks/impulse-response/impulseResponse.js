@@ -10,15 +10,25 @@ class ImpulseResponse extends AudioCalibrator {
   /**
    *
    */
-  constructor(numCalibrationRounds = 2, numCalibrationNodes = 2) {
+  constructor({download = false, numCalibrationRounds = 2, numCalibrationNodes = 2}) {
     super(numCalibrationRounds, numCalibrationNodes);
+    this.#download = download;
   }
+
+  /** @private */
+  #download;
 
   /** @private */
   #mlsGenInterface;
 
   /** @private */
   #mlsBufferView;
+
+  #afterRecord = () => {
+    if (this.#download) {
+      this.downloadData();
+    }
+  };
 
   /**
    * Construct a Calibration Node with the calibration parameters.
@@ -111,6 +121,7 @@ class ImpulseResponse extends AudioCalibrator {
       stream,
       this.#playCalibrationAudio,
       this.#setCalibrationNodesFromBuffer,
+      this.#afterRecord,
     ]);
   };
 }

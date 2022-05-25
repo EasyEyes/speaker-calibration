@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<coverage generated="1650988912258" clover="3.2.0">
-  <project timestamp="1650988912258" name="All files">
+<coverage generated="1650991329939" clover="3.2.0">
+  <project timestamp="1650991329939" name="All files">
     <metrics statements="62" coveredstatements="45" conditionals="8" coveredconditionals="7" methods="6" coveredmethods="6" elements="76" coveredelements="58" complexity="0" loc="62" ncloc="62" packages="1" files="1" classes="1"/>
     <file name="PythonServerInterface.js" path="/Users/hugo/Desktop/dev/easyeyes/speaker-calibration/src/server/PythonServerInterface.js">
       <metrics statements="62" coveredstatements="45" conditionals="8" coveredconditionals="7" methods="6" coveredmethods="6"/>
