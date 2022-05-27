@@ -22,10 +22,7 @@ class Speaker extends AudioPeer {
     super(params);
 
     this.siteUrl += '/listener?';
-    console.log(calibratorParams);
     this.ac = new Calibrator(calibratorParams);
-    console.log(this.ac);
-    console.log('Hello');
     this.result = null;
 
     /* Set up callbacks that handle any events related to our peer object. */

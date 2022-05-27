@@ -63,6 +63,10 @@
             <label class="form-label" for="numCalibrationRoundsInput">Calibration Rounds</label>
           </div>
           <div class="row">
+            <input type="number" id="numCalibrationNodesInput" class="form-control" value="1" />
+            <label class="form-label" for="numCalibrationNodesInput">Calibration Nodes</label>
+          </div>
+          <div class="row">
             <button id="calibrationBeginButton" type="button" class="btn btn-primary">
               Calibrate
             </button>
@@ -120,6 +124,7 @@
 
         const calibratorParams = {
           numCalibrationRounds: document.getElementById('numCalibrationRoundsInput').value,
+          numCalibrationNodes: document.getElementById('numCalibrationNodesInput').value,
           download: document.getElementById('flexSwitchCheckDownload').checked,
         };
 

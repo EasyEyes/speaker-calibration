@@ -10,7 +10,7 @@ class ImpulseResponse extends AudioCalibrator {
   /**
    *
    */
-  constructor({download = false, numCalibrationRounds = 2, numCalibrationNodes = 2}) {
+  constructor({download = false, numCalibrationRounds = 2, numCalibrationNodes = 3}) {
     super(numCalibrationRounds, numCalibrationNodes);
     this.#download = download;
   }

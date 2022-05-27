@@ -130,9 +130,9 @@ class AudioCalibrator extends AudioRecorder {
    * Download the result of the calibration roudns
    */
   downloadData = () => {
-    this.getAllRecordedSignals().forEach((signal, i) => {
-      saveToCSV(signal, `recordedMLSignal_${i}.csv`);
-    });
+    const recordings = this.getAllRecordedSignals();
+    const i = recordings.length-1;
+    saveToCSV(recordings[i], `recordedMLSignal_${i}.csv`);
   };
 }
 
