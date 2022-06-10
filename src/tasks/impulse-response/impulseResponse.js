@@ -24,10 +24,31 @@ class ImpulseResponse extends AudioCalibrator {
   /** @private */
   #mlsBufferView;
 
+  /** @private */
+  invertedImpulseResponse = null;
+
   #afterRecord = () => {
     if (this.#download) {
       this.downloadData();
     }
+    this.#sendToServerForProcessing();
+  };
+
+  #sendToServerForProcessing = () => {
+    console.log('Sending data to server');
+    this.pyServer
+      .getImpulseResponse({
+        sampleRate: this.sourceSamplingRate,
+        payload: this.getLastRecordedSignal(),
+      })
+      .then(res => {
+        if (this.invertedImpulseResponse === null) {
+          this.invertedImpulseResponse = res;
+        }
+      })
+      .catch(err => {
+        console.warn(err);
+      });
   };
 
   /**
@@ -116,13 +137,17 @@ class ImpulseResponse extends AudioCalibrator {
       }
     );
 
-    // after intializating, start the calibration steps with garbage collection
-    await this.#mlsGenInterface.withGarbageCollection(this.calibrationSteps, [
-      stream,
-      this.#playCalibrationAudio,
-      this.#setCalibrationNodesFromBuffer,
-      this.#afterRecord,
-    ]);
+    do {
+      // after intializating, start the calibration steps with garbage collection
+      await this.#mlsGenInterface.withGarbageCollection(this.calibrationSteps, [
+        stream,
+        this.#playCalibrationAudio,
+        this.#setCalibrationNodesFromBuffer,
+        this.#afterRecord,
+      ]);
+    } while (this.invertedImpulseResponse === null);
+
+    return this.invertedImpulseResponse
   };
 }
 

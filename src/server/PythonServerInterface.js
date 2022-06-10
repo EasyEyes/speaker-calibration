@@ -21,10 +21,22 @@ class PythonServerInterface {
   }
 
   getImpulseResponse = async data => {
-    this.asyncEmit('data', {
-      task: 'impulse-response',
-      data,
-    });
+    let serverRep;
+    let res;
+    try {
+      serverRep = await this.asyncEmit('data', {
+        task: 'impulse-response',
+        data,
+      });
+      const [g] = serverRep.data
+        .trim()
+        .split(',')
+        .map(resp => parseFloat(resp.split(':')[1]));
+      res = g;
+    } catch (e) {
+      throw new Error(e);
+    }
+    return res;
   };
 
   getVolumeCalibration = async data => {
