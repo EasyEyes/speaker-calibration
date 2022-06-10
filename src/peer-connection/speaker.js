@@ -40,7 +40,7 @@ class Speaker extends AudioPeer {
    * @param {Number} timeOut - The amount of time to wait before timing out the connection (in milliseconds)
    * @public
    */
-  static startCalibration = async (params, Calibrator, calibratorParams, timeOut = 60000) => {
+  static startCalibration = async (params, Calibrator, calibratorParams, timeOut = 120000) => {
     window.speaker = new Speaker(params, Calibrator, calibratorParams);
     const {speaker} = window;
 
