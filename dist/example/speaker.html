@@ -145,11 +145,12 @@
         const runImpulseResponseCalibration = async () => {
           console.log({calibratorParams});
           try {
-            const ir = await Speaker.startCalibration(
+            const invertedIR = await Speaker.startCalibration(
               speakerParameters,
               ImpulseResponseCalibration,
               calibratorParams
             );
+            console.log({invertedIR});
           } catch (err) {
             calibrationResult.innerText = `${err.name}: ${err.message}`;
           }
