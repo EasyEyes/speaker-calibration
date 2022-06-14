@@ -101,7 +101,7 @@ class ImpulseResponse extends AudioCalibrator {
         payload: signalCsv ? csvToArray(signalCsv) : this.getLastRecordedSignal(),
       })
       .then(res => {
-        if (this.invertedImpulseResponse === null) {
+        if (this.invertedImpulseResponse == null) {
           this.invertedImpulseResponse = res;
           console.log(this.invertedImpulseResponse);
         }
@@ -206,7 +206,7 @@ class ImpulseResponse extends AudioCalibrator {
         this.#setCalibrationNodesFromBuffer,
         this.#afterRecord,
       ]);
-    } while (this.invertedImpulseResponse === null);
+    } while (this.invertedImpulseResponse === null && this.numCalibratingRoundsCompleted < this.numCalibratingRounds);
 
     return this.invertedImpulseResponse;
   };

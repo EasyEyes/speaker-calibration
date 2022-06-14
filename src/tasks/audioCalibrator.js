@@ -27,6 +27,9 @@ class AudioCalibrator extends AudioRecorder {
   /** @protected */
   numCalibratingRounds;
 
+  /** @protected */
+  numCalibratingRoundsCompleted = 0;
+
   /** @private */
   sourceSamplingRate;
 
@@ -62,10 +65,10 @@ class AudioCalibrator extends AudioRecorder {
     beforeRecord = () => {},
     afterRecord = () => {}
   ) => {
-    let numRounds = 0;
+    this.numCalibratingRoundsCompleted = 0;
 
     // calibration loop
-    while (!this.#isCalibrating && numRounds < this.numCalibratingRounds) {
+    while (!this.#isCalibrating && this.numCalibratingRoundsCompleted < this.numCalibratingRounds) {
       // before recording
       await beforeRecord();
 
@@ -73,7 +76,7 @@ class AudioCalibrator extends AudioRecorder {
       await this.startRecording(stream);
 
       // play calibration audio
-      console.log(`Calibration Round ${numRounds}`);
+      console.log(`Calibration Round ${this.numCalibratingRoundsCompleted}`);
       await playCalibrationAudio();
 
       // when done, stop recording
@@ -87,7 +90,7 @@ class AudioCalibrator extends AudioRecorder {
 
       // eslint-disable-next-line no-await-in-loop
       await sleep(2);
-      numRounds += 1;
+      this.numCalibratingRoundsCompleted += 1;
     }
   };
 
