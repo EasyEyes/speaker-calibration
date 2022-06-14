@@ -32,7 +32,7 @@ PROJECT_NAME = mlsGen
 
 # directories
 DIST_DIR = ./dist/
-SRC_DIR = $(addprefix ./src/use-cases/impulse-response/,$(PROJECT_NAME)/)
+SRC_DIR = $(addprefix ./src/tasks/impulse-response/,$(PROJECT_NAME)/)
 
 # WASM files
 SRC_FILE := $(addprefix $(SRC_DIR),$(PROJECT_NAME).cpp) # SRC_DIR + PROJECT_NAME + .cpp
@@ -59,7 +59,7 @@ GCC = gcc # gcc compiler front end
 # build the WASM + JS glue module, linked with embind
 $(PROJECT_NAME)_bind: # $(OBJ_FILE)
 	@mkdir -p $(@D)
-	@$(call run_and_test, $(EMCC) $(STD) $(BIND) $(SRC_FILE) -o $(OUTPUT_WASM_JS) $(MODULARIZE) $(OPTIMIZE) $(ENV) $(MEMORY_CHECKS) )
+	@$(call run_and_test, $(EMCC) $(STD) $(BIND) $(SRC_FILE) -o $(OUTPUT_WASM_JS) $(MODULARIZE) $(OPTIMIZE) $(ENV) $(MEMORY_CHECKS))
 
 # clean the WASM + JS files
 .PHONY: clean

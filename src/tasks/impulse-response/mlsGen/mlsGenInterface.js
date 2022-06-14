@@ -81,8 +81,7 @@ class MlsGenInterface {
    * @returns
    */
   getImpulseResponse = () => {
-    const result = this.#MLSGenInstance['getImpulseResponse']();
-    return result.slice(0, 10);
+    return this.#MLSGenInstance['getImpulseResponse']();
   };
 
   /**

@@ -5,12 +5,17 @@ import {io} from 'socket.io-client';
  */
 class PythonServerInterface {
   static PYTHON_SERVER_URL = 'https://easyeyes-python-server.herokuapp.com';
+  static TEST_SERVER_URL = 'http://localhost:3001';
 
   /**
    *
    * @param {string} url
    */
-  constructor(url = PythonServerInterface.PYTHON_SERVER_URL) {
+  constructor(
+    url = process.env.PY_SERVER_DEBUG
+      ? PythonServerInterface.TEST_SERVER_URL
+      : PythonServerInterface.PYTHON_SERVER_URL
+  ) {
     // 'http://localhost:3001/'
     this.socket = io(url, {
       reconnection: true,
@@ -20,22 +25,31 @@ class PythonServerInterface {
     });
   }
 
+  /**
+   * @param {array} data
+   * g = inverted impulse response, when convolved with the impulse
+   * reponse, they cancel out.
+   * @returns {Float<array>}
+   */
   getImpulseResponse = async data => {
-    let serverRep;
-    let res;
+    let res = null;
+
     try {
-      serverRep = await this.asyncEmit('data', {
+      const serverResponse = await this.asyncEmit('data', {
         task: 'impulse-response',
         data,
       });
-      const [g] = serverRep.data
+
+      const g = serverResponse.data
         .trim()
         .split(',')
-        .map(resp => parseFloat(resp.split(':')[1]));
+        .map(value => parseFloat(value));
+
       res = g;
-    } catch (e) {
-      throw new Error(e);
+    } catch (error) {
+      console.error(error);
     }
+
     return res;
   };
 
@@ -67,7 +81,7 @@ class PythonServerInterface {
       this.socket.on('error', error => {
         reject(error);
       });
-      setTimeout(reject, 20000);
+      setTimeout(reject, 60000);
     });
 }
 

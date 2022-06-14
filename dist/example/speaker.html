@@ -72,7 +72,13 @@
             </button>
           </div>
           <div class="row">
+            <input id="csv-file" type="file" />
+          </div>
+          <div class="row">
             <div id="display"></div>
+            <button id="sendToServerButton" type="button" class="btn btn-primary">
+              Send To Server
+            </button>
           </div>
         </div>
 
@@ -104,6 +110,37 @@
     <script>
       const flexSwitchCheckIR = document.getElementById('flexSwitchCheckIR');
       const flexSwitchCheckVolume = document.getElementById('flexSwitchCheckVolume');
+      const csvUpload = document.getElementById('csv-file');
+      const sendToServerButton = document.getElementById('sendToServerButton');
+
+      const {Speaker, VolumeCalibration, ImpulseResponseCalibration} = speakerCalibrator;
+
+      const handleFileUpload = (e) => {
+        const calibratorParams = {
+          numCalibrationRounds: 0,
+          numCalibrationNodes: 0,
+          download: false,
+        };
+
+        console.log("Hey")
+        const f = e.target.files[0]; 
+        if (f) {
+          e.preventDefault();
+          const reader = new FileReader();
+    
+          reader.onload = function (e) {
+            console.log("Hello World")
+            const text = e.target.result;
+            const testIRCalibration = new ImpulseResponseCalibration(calibratorParams);
+            testIRCalibration.sourceSamplingRate = 96000;
+            testIRCalibration.sendToServerForProcessing(text)
+          };
+          
+          reader.readAsText(f);
+        }
+      }
+
+      csvUpload.addEventListener('change', handleFileUpload);
 
       flexSwitchCheckIR.onchange = () => {
         flexSwitchCheckVolume.checked = !flexSwitchCheckIR.checked;
@@ -128,7 +165,6 @@
           download: document.getElementById('flexSwitchCheckDownload').checked,
         };
 
-        const {Speaker, VolumeCalibration, ImpulseResponseCalibration} = speakerCalibrator;
         const runVolumeCalibration = async () => {
           try {
             const dbSPL = await Speaker.startCalibration(

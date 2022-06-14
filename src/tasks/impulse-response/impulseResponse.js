@@ -1,7 +1,8 @@
 import AudioCalibrator from '../audioCalibrator';
 import MlsGenInterface from './mlsGen/mlsGenInterface';
+// import fftw from 'fftw-js';
 
-import {sleep} from '../../utils';
+import {sleep, csvToArray} from '../../utils';
 
 /**
  *
@@ -27,27 +28,86 @@ class ImpulseResponse extends AudioCalibrator {
   /** @private */
   invertedImpulseResponse = null;
 
+  /** @private */
+  #recordedSignal;
+
+  /** @private */
+  #P;
+
+  // #argMax = array => {
+  //   return [].reduce.call(array, (m, c, i, arr) => (c > arr[m] ? i : m), 0);
+  // };
+
+  // #arrayAverage = array => array.reduce((a, b) => a + b) / array.length;
+
+  // #npdiff = arr1 => arr1.map((x, i) => arr1[i + 1] - x);
+
+  // #compute_correlation = (recorded, generated, P) => {
+  //   let size;
+  //   const v = generated.slice(len(recorded) - 2 * P, len(recorded)); // take the last 2P samples of the recorded signal
+  //   const g_reversed = generated.reverse();
+  //   const g_avg = this.#arrayAverage(g_reversed);
+  //   const v_reversed = v.reverse();
+  //   const v_avg = this.#arrayAverage(v);
+
+  //   // cross correlate to find the best match
+  //   size = len(v) * len(generated);
+  //   const fftr2r_x = new fftw.r2r.fft1d(size);
+  //   const xCorr = fftr2r_x.backward(
+  //     fftr2r_x.forward(v - v_avg) * fftr2r_x.forward(g_reversed - g_avg)
+  //   );
+  //   fftr2r_x.dispose(); // manual garbage collection
+  //   const lag = this.#argMax(xCorr) - Math.floor(v.length / 2);
+
+  //   // auto correlate to find the sampling difference
+  //   size = len(v) * len(v);
+  //   const fftr2r_auto = new fftw.r2r.fft1d(size);
+  //   const autoCorr_full = fftr2r_auto.backward(
+  //     fftr2r_auto.forward(v) * fftr2r_auto.forward(v_reversed)
+  //   );
+  //   const autoCorr = autoCorr_full.slice(len(autoCorr_full) - len(v), len(autoCorr_full));
+  //   const inflection = this.#npdiff(Math.sign(this.#npdiff(autoCorr)));
+  //   const peaks = inflection.map((x, i) => (x < 0 ? 1 : 0));
+  // };
+
+  // #compute_inverse_impulse_response = h => {
+  //   const n = len(h);
+  //   const fftc2c = new fftw.c2c.fft1d(n);
+  //   const H = fftc2c.forward(h);
+  //   const magnitudes = H.map(x => x.abs());
+  //   console.log(H);
+  // };
+
+  /**
+   * Called immediately after a recording is captured. Used to process the resulting signal 
+   * whether by sending the result to a server or by computing a result locally
+   */
   #afterRecord = () => {
     if (this.#download) {
       this.downloadData();
     }
-    this.#sendToServerForProcessing();
+    this.sendToServerForProcessing();
   };
 
-  #sendToServerForProcessing = () => {
+  /**
+   * Sends the recorded signal, or a given csv string of a signal, to the back end server for processing
+   * @param {<array>String} signalCsv - Optional csv string of a previously recorded signal, if given, this signal will be processed 
+   */
+  sendToServerForProcessing = signalCsv => {
     console.log('Sending data to server');
     this.pyServer
       .getImpulseResponse({
-        sampleRate: this.sourceSamplingRate,
-        payload: this.getLastRecordedSignal(),
+        sampleRate: this.sourceSamplingRate || 96000,
+        payload: signalCsv ? csvToArray(signalCsv) : this.getLastRecordedSignal(),
       })
       .then(res => {
         if (this.invertedImpulseResponse === null) {
           this.invertedImpulseResponse = res;
+          console.log(this.invertedImpulseResponse);
         }
       })
       .catch(err => {
-        console.warn(err);
+        console.error(err);
       });
   };
 
@@ -89,6 +149,7 @@ class ImpulseResponse extends AudioCalibrator {
    * @param {Array} dataBufferArray - Array of data buffers
    */
   #setCalibrationNodesFromBuffer = (dataBufferArray = [this.#mlsBufferView]) => {
+    this.#P = dataBufferArray[0].length;
     if (dataBufferArray.length === 1) {
       while (this.calibrationNodes.length < this.numCalibrationNodes) {
         this.#createCalibrationNodeFromBuffer(dataBufferArray[0]);
@@ -147,7 +208,7 @@ class ImpulseResponse extends AudioCalibrator {
       ]);
     } while (this.invertedImpulseResponse === null);
 
-    return this.invertedImpulseResponse
+    return this.invertedImpulseResponse;
   };
 }
 

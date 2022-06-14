@@ -34,7 +34,7 @@ class MLSGen {
   float *recordedSignal;
   float *perm;
   float *resp;
-
+  
   // Async Clock Adjustment Data
   float estimatedDiff;
 
