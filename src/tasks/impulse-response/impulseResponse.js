@@ -206,7 +206,7 @@ class ImpulseResponse extends AudioCalibrator {
         this.#setCalibrationNodesFromBuffer,
         this.#afterRecord,
       ]);
-    } while (this.invertedImpulseResponse === null && this.numCalibratingRoundsCompleted < this.numCalibratingRounds);
+    } while (this.invertedImpulseResponse === null || this.numCalibratingRoundsCompleted < this.numCalibratingRounds);
 
     return this.invertedImpulseResponse;
   };
