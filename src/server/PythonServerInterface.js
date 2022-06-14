@@ -11,11 +11,7 @@ class PythonServerInterface {
    *
    * @param {string} url
    */
-  constructor(
-    url = process.env.PY_SERVER_DEBUG
-      ? PythonServerInterface.TEST_SERVER_URL
-      : PythonServerInterface.PYTHON_SERVER_URL
-  ) {
+  constructor(url = PythonServerInterface.PYTHON_SERVER_URL) {
     // 'http://localhost:3001/'
     this.socket = io(url, {
       reconnection: true,
@@ -81,7 +77,7 @@ class PythonServerInterface {
       this.socket.on('error', error => {
         reject(error);
       });
-      setTimeout(reject, 60000);
+      setTimeout(reject, 90000);
     });
 }
 
