@@ -8,6 +8,8 @@
 #include <emscripten/val.h>
 #endif
 
+#include "kiss_fft.h"
+
 /**
  * @brief Exposes methods for generating an MLS signal, and calculating the
  * impulse response of a recording. This class is compiled to webassembly using
@@ -17,8 +19,9 @@
 class MLSGen {
  private:
   // MLS parameters
-  long N;
-  long P;
+  long N; // mls factor
+  long P; // len of mls
+  long C; // len of recorded signals
 
   // Async Clock Adjustment Parameters
   long srcSR;
@@ -31,12 +34,11 @@ class MLSGen {
   float *generatedSignal;  // MLS signal at +- 1
 
   // IR data
-  float *recordedSignal;
-  float *perm;
-  float *resp;
-  
-  // Async Clock Adjustment Data
-  float estimatedDiff;
+  float *recordedSignal; // isolated mls signal
+  float *recordedSignals; // full capture
+  float *perm; // permutation of recorded signals
+  float *resp; // impulse response of recorded signals
+ 
 
   // Internals
   void GenerateSignal();
@@ -47,10 +49,12 @@ class MLSGen {
   void generateTagL();
   void generateTagS();
   void estimateDiff();
+  void computeCorrelation();
+  void computeFilter();
 
  public:
   /**
-   * @brief Construct a new MLSGen object with the given number of bits and
+   * @brief Construct a new MLSGen object with the given factor and
    * sampling frequencies.
    *
    * @param N - number of bits
@@ -83,12 +87,14 @@ class MLSGen {
   emscripten::val getMLS();
 
   /**
-   * @brief Get the Recorded Signal Memory View object. This memory view can
+   * @brief Get the Recorded Signals Memory View object. This memory view can
    * then be set in the javascript code.
    *
    * @return emscripten::val
    */
-  emscripten::val getRecordedSignalMemoryView();
+  emscripten::val setRecordedSignalsMemoryView(long sizeRecordedSignals);
+
+  emscripten::val getRecordedSignalsMemoryView();
 
   /**
    * @brief Get the Impulse Response. Returns a memory view of the impulse
@@ -235,6 +241,64 @@ void MLSGen::generateTagS() {
   }
 }
 
-void MLSGen::estimateDiff() { estimatedDiff = (-1 * srcSR) + (P * sinkSR); }
+  // #compute_correlation = (recorded, generated, P) => {
+
+  //   // cross correlate to find the best match
+  //   size = len(v) * len(generated);
+  //   const fftr2r_x = new fftw.r2r.fft1d(size);
+  //   const xCorr = fftr2r_x.backward(
+  //     fftr2r_x.forward(v - v_avg) * fftr2r_x.forward(g_reversed - g_avg)
+  //   );
+  //   fftr2r_x.dispose(); // manual garbage collection
+  //   const lag = this.#argMax(xCorr) - Math.floor(v.length / 2);
+
+  //   // auto correlate to find the sampling difference
+  //   size = len(v) * len(v);
+  //   const fftr2r_auto = new fftw.r2r.fft1d(size);
+  //   const autoCorr_full = fftr2r_auto.backward(
+  //     fftr2r_auto.forward(v) * fftr2r_auto.forward(v_reversed)
+  //   );
+  //   const autoCorr = autoCorr_full.slice(len(autoCorr_full) - len(v), len(autoCorr_full));
+  //   const inflection = this.#npdiff(Math.sign(this.#npdiff(autoCorr)));
+  //   const peaks = inflection.map((x, i) => (x < 0 ? 1 : 0));
+  // };
+
+void MLSGen::computeCorrelation() {
+  // inverse FFT of size C
+  kiss_fft_cfg xcor_cfg = kiss_fft_alloc(C,1,0,0 );
+  kiss_fft_cpx *xcor_in = new kiss_fft_cpx[C];
+  kiss_fft_cpx *xcor_out = new kiss_fft_cpx[C];
+
+  // set up input and output arrays
+  for(int i = 0; i < C; i++) {
+    xcor_in[i].r = recordedSignals[i];
+    xcor_in[i].i = 0;
+  }
+
+  // compute iFFT
+  kiss_fft( xcor_cfg , xcor_in , xcor_out );
+  // free memory
+  kiss_fft_free(xcor_cfg);
+
+  // find max index
+  int max_index = 0;
+  double max_value = 0;
+  for(int i = 0; i < C; i++) {
+    if(xcor_out[i].r > max_value) {
+      max_index = i;
+      max_value = xcor_out[i].r;
+    }
+  }
+
+  // use max index to compute lag
+  int lag = max_index - C/2;
+
+
+}
+
+void MLSGen::computeFilter() {
+
+}
+
 
 #endif  // SPEAKER_CALIBRATION_SRC_TASKS_IMPULSE_RESPOMSE_MLSGEN_MLSGEN_HPP_

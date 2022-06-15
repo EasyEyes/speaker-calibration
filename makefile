@@ -54,12 +54,14 @@ MEMORY_CHECKS = -s ASSERTIONS=1 -fsanitize=address -g2
 # gcc compiler options
 GCC = gcc # gcc compiler front end
 
-# build a standard C++ binary
+# KISSFFT Library
+KISS_LIB= /Users/hugo/Desktop/dev/easyeyes/speaker-calibration/src/tasks/impulse-response/kissfft/libkissfft-float.a
+KISS_H= -I /Users/hugo/Desktop/dev/easyeyes/speaker-calibration/src/tasks/impulse-response/kissfft/
 
 # build the WASM + JS glue module, linked with embind
 $(PROJECT_NAME)_bind: # $(OBJ_FILE)
 	@mkdir -p $(@D)
-	@$(call run_and_test, $(EMCC) $(STD) $(BIND) $(SRC_FILE) -o $(OUTPUT_WASM_JS) $(MODULARIZE) $(OPTIMIZE) $(ENV) $(MEMORY_CHECKS))
+	@$(call run_and_test, $(EMCC) $(STD) $(BIND) $(SRC_FILE) -o $(OUTPUT_WASM_JS) $(MODULARIZE) $(OPTIMIZE) $(ENV) $(MEMORY_CHECKS) $(KISS_H) $(KISS_LIB))
 
 # clean the WASM + JS files
 .PHONY: clean

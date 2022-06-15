@@ -97,12 +97,10 @@ class Volume extends AudioCalibrator {
 
   startCalibration = async stream => {
     do {
-      await this.calibrationSteps(
+      await this.calibrationSteps([
         stream,
-        this.#playCalibrationAudio,
-        this.#createCalibrationNode,
-        this.#sendToServerForProcessing
-      );
+        [this.#playCalibrationAudio, this.#createCalibrationNode, this.#sendToServerForProcessing],
+      ]);
     } while (this.soundGainDBSPL === null);
 
     return this.soundGainDBSPL;

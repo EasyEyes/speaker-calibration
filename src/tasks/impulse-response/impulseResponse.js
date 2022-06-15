@@ -1,6 +1,5 @@
 import AudioCalibrator from '../audioCalibrator';
 import MlsGenInterface from './mlsGen/mlsGenInterface';
-// import fftw from 'fftw-js';
 
 import {sleep, csvToArray} from '../../utils';
 
@@ -29,81 +28,66 @@ class ImpulseResponse extends AudioCalibrator {
   invertedImpulseResponse = null;
 
   /** @private */
-  #recordedSignal;
+  // recordedSignals = [];
 
   /** @private */
   #P;
 
-  // #argMax = array => {
-  //   return [].reduce.call(array, (m, c, i, arr) => (c > arr[m] ? i : m), 0);
-  // };
+  #average = signals => {
+    let smallest = signals[0].length;
 
-  // #arrayAverage = array => array.reduce((a, b) => a + b) / array.length;
+    // find smallest
+    for (let i = 0; i < signals.length; i += 1) {
+      smallest = signals[0].length < signals[i].length ? signals[0].length : signals[i].length;
+    }
 
-  // #npdiff = arr1 => arr1.map((x, i) => arr1[i + 1] - x);
+    // truncate to smallest
+    for (let i = 0; i < signals.length; i += 1) {
+      signals[i] = signals[i].slice(0, smallest);
+    }
 
-  // #compute_correlation = (recorded, generated, P) => {
-  //   let size;
-  //   const v = generated.slice(len(recorded) - 2 * P, len(recorded)); // take the last 2P samples of the recorded signal
-  //   const g_reversed = generated.reverse();
-  //   const g_avg = this.#arrayAverage(g_reversed);
-  //   const v_reversed = v.reverse();
-  //   const v_avg = this.#arrayAverage(v);
+    // average
+    // for each index in array 0
+    for (let i = 0; i < signals[0].length; i += 1) {
+      let sum = 0;
+      // sum all values in other arrays
+      for (let j = 0; j < signals.length; j += 1) {
+        sum += signals[j][i];
+      }
+      // divide by number of arrays
+      signals[0][i] = sum / signals.length;
+    }
 
-  //   // cross correlate to find the best match
-  //   size = len(v) * len(generated);
-  //   const fftr2r_x = new fftw.r2r.fft1d(size);
-  //   const xCorr = fftr2r_x.backward(
-  //     fftr2r_x.forward(v - v_avg) * fftr2r_x.forward(g_reversed - g_avg)
-  //   );
-  //   fftr2r_x.dispose(); // manual garbage collection
-  //   const lag = this.#argMax(xCorr) - Math.floor(v.length / 2);
-
-  //   // auto correlate to find the sampling difference
-  //   size = len(v) * len(v);
-  //   const fftr2r_auto = new fftw.r2r.fft1d(size);
-  //   const autoCorr_full = fftr2r_auto.backward(
-  //     fftr2r_auto.forward(v) * fftr2r_auto.forward(v_reversed)
-  //   );
-  //   const autoCorr = autoCorr_full.slice(len(autoCorr_full) - len(v), len(autoCorr_full));
-  //   const inflection = this.#npdiff(Math.sign(this.#npdiff(autoCorr)));
-  //   const peaks = inflection.map((x, i) => (x < 0 ? 1 : 0));
-  // };
-
-  // #compute_inverse_impulse_response = h => {
-  //   const n = len(h);
-  //   const fftc2c = new fftw.c2c.fft1d(n);
-  //   const H = fftc2c.forward(h);
-  //   const magnitudes = H.map(x => x.abs());
-  //   console.log(H);
-  // };
+    return signals[0];
+  };
 
   /**
-   * Called immediately after a recording is captured. Used to process the resulting signal 
+   * Called immediately after a recording is captured. Used to process the resulting signal
    * whether by sending the result to a server or by computing a result locally
    */
   #afterRecord = () => {
     if (this.#download) {
       this.downloadData();
     }
-    this.sendToServerForProcessing();
   };
 
   /**
    * Sends the recorded signal, or a given csv string of a signal, to the back end server for processing
-   * @param {<array>String} signalCsv - Optional csv string of a previously recorded signal, if given, this signal will be processed 
+   * @param {<array>String} signalCsv - Optional csv string of a previously recorded signal, if given, this signal will be processed
    */
-  sendToServerForProcessing = signalCsv => {
+  sendToServerForProcessing = async signalCsv => {
     console.log('Sending data to server');
-    this.pyServer
+    return this.pyServer
       .getImpulseResponse({
         sampleRate: this.sourceSamplingRate || 96000,
-        payload: signalCsv ? csvToArray(signalCsv) : this.getLastRecordedSignal(),
+        payload:
+          signalCsv && signalCsv.length > 0
+            ? csvToArray(signalCsv)
+            : this.#average(this.getAllRecordedSignals()),
       })
       .then(res => {
         if (this.invertedImpulseResponse == null) {
           this.invertedImpulseResponse = res;
-          console.log(this.invertedImpulseResponse);
         }
       })
       .catch(err => {
@@ -198,16 +182,23 @@ class ImpulseResponse extends AudioCalibrator {
       }
     );
 
-    do {
-      // after intializating, start the calibration steps with garbage collection
-      await this.#mlsGenInterface.withGarbageCollection(this.calibrationSteps, [
-        stream,
-        this.#playCalibrationAudio,
-        this.#setCalibrationNodesFromBuffer,
-        this.#afterRecord,
+    // after intializating, start the calibration steps with garbage collection
+    while (this.numCalibratingRoundsCompleted < this.numCalibratingRounds) {
+      await this.#mlsGenInterface.withGarbageCollection([
+        [
+          this.calibrationSteps,
+          [
+            stream,
+            this.#playCalibrationAudio,
+            this.#setCalibrationNodesFromBuffer,
+            this.#afterRecord,
+          ],
+        ],
       ]);
-    } while (this.invertedImpulseResponse === null || this.numCalibratingRoundsCompleted < this.numCalibratingRounds);
+    }
 
+    // await the server response
+    await this.sendToServerForProcessing();
     return this.invertedImpulseResponse;
   };
 }

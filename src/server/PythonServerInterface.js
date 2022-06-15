@@ -5,6 +5,7 @@ import {io} from 'socket.io-client';
  */
 class PythonServerInterface {
   static PYTHON_SERVER_URL = 'https://easyeyes-python-server.herokuapp.com';
+
   static TEST_SERVER_URL = 'http://localhost:3001';
 
   /**
