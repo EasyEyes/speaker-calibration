@@ -1,5 +1,4 @@
 #include "mlsGen.hpp"
-
 #include <sanitizer/lsan_interface.h>
 
 #ifdef __cplusplus
@@ -57,8 +56,14 @@ emscripten::val MLSGen::getMLS() {
   return emscripten::val(typed_memory_view(P, generatedSignal));
 }
 
-emscripten::val MLSGen::getRecordedSignalMemoryView() {
-  return emscripten::val(typed_memory_view(P, recordedSignal));
+emscripten::val MLSGen::setRecordedSignalsMemoryView(long sizeRecordedSignals) {
+  C = sizeRecordedSignals;
+  recordedSignals = new float[C];
+  return emscripten::val(typed_memory_view(C, recordedSignals));
+}
+
+emscripten::val MLSGen::getRecordedSignalsMemoryView() {
+  return emscripten::val(typed_memory_view(C, recordedSignals));
 }
 
 emscripten::val MLSGen::getImpulseResponse() {
@@ -77,8 +82,10 @@ EMSCRIPTEN_BINDINGS(mls_gen_module) {
       .constructor<long, long, long>()
       .function("Destruct", &MLSGen::Destruct)
       .function("getMLS", &MLSGen::getMLS)
-      .function("getRecordedSignalMemoryView",
-                &MLSGen::getRecordedSignalMemoryView)
+      .function("getRecordedSignalsMemoryView",
+                &MLSGen::getRecordedSignalsMemoryView)
+      .function("setRecordedSignalsMemoryView",
+                &MLSGen::setRecordedSignalsMemoryView)
       .function("getImpulseResponse", &MLSGen::getImpulseResponse);
   function("doLeakCheck", &__lsan_do_recoverable_leak_check);
 };

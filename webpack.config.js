@@ -22,6 +22,12 @@ const config = {
     ],
   },
   plugins: [],
+  resolve: {
+    fallback: {
+      path: require.resolve('path-browserify'),
+      fs: false,
+    },
+  },
 };
 
 if (process.env.WEBPACK_ANALYZE === 'true') {

@@ -1326,22 +1326,22 @@ var tempDouble;
 var tempI64;
 
 var ASM_CONSTS = {
- 9944129: function() {
+ 9944289: function() {
   return withBuiltinMalloc(function() {
    return allocateUTF8(Module["ASAN_OPTIONS"] || 0);
   });
  },
- 9944226: function() {
+ 9944386: function() {
   return withBuiltinMalloc(function() {
    return allocateUTF8(Module["LSAN_OPTIONS"] || 0);
   });
  },
- 9944323: function() {
+ 9944483: function() {
   return withBuiltinMalloc(function() {
    return allocateUTF8(Module["UBSAN_OPTIONS"] || 0);
   });
  },
- 9944421: function() {
+ 9944581: function() {
   var setting = Module["printWithColors"];
   if (setting != null) {
    return setting;

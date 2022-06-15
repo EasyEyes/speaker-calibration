@@ -2,6 +2,9 @@
 .*
 ~*
 
+# ignore tests
+**/__tests__/**
+
 # ignore node/grunt dependency directories
 node_modules/
 

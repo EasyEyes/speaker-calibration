@@ -59,6 +59,10 @@ Thumbs.db
 # ingnore CSV files
 *.csv
 
+# ignore library files
+kfr-master
+kissfft
+
 # --------------------------------------------------------
 # BEGIN Explictly Allowed Files (i.e. do NOT ignore these)
 # --------------------------------------------------------

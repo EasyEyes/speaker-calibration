@@ -1,6 +1,11 @@
 import QRCode from 'qrcode';
 import AudioPeer from './audioPeer';
 import {sleep} from '../utils';
+import {
+  UnsupportedDeviceError,
+  MissingSpeakerIdError,
+  CalibrationTimedOutError,
+} from './peerErrors';
 
 /**
  * @class Handles the speaker's side of the connection. Responsible for initiating the connection,
@@ -13,11 +18,11 @@ class Speaker extends AudioPeer {
    * @param {initParameters} params - see type definition for initParameters
    * @param {AudioCalibrator} Calibrator - An instance of the AudioCalibrator class, should not use AudioCalibrator directly, instead use an extended class available in /tasks/
    */
-  constructor(params, Calibrator) {
+  constructor(params, Calibrator, calibratorParams) {
     super(params);
 
     this.siteUrl += '/listener?';
-    this.ac = new Calibrator();
+    this.ac = new Calibrator(calibratorParams);
     this.result = null;
 
     /* Set up callbacks that handle any events related to our peer object. */
@@ -35,9 +40,10 @@ class Speaker extends AudioPeer {
    * @param {Number} timeOut - The amount of time to wait before timing out the connection (in milliseconds)
    * @public
    */
-  static startCalibration = async (params, Calibrator, timeOut = 60000) => {
-    window.speaker = new Speaker(params, Calibrator);
+  static startCalibration = async (params, Calibrator, calibratorParams, timeOut = 120000) => {
+    window.speaker = new Speaker(params, Calibrator, calibratorParams);
     const {speaker} = window;
+
     // wrap the calibration process in a promise so we can await it
     return new Promise((resolve, reject) => {
       // when a call is received
@@ -57,11 +63,18 @@ class Speaker extends AudioPeer {
             await sleep(1);
           }
           // resolve when we have a result
-          resolve((speaker.result = await speaker.ac.startCalibration(stream)));
+          speaker.result = await speaker.ac.startCalibration(stream);
+          resolve(speaker.result);
         });
         // if we do not receive a result within the timeout, reject
         setTimeout(() => {
-          reject(new Error(`Request timed out after ${timeOut / 1000} seconds. Please try again.`));
+          reject(
+            new CalibrationTimedOutError(
+              `Calibration failed to produce a result after ${
+                timeOut / 1000
+              } seconds. Please try again.`
+            )
+          );
         }, timeOut);
       });
     });
@@ -80,6 +93,11 @@ class Speaker extends AudioPeer {
     const queryString = this.queryStringFromObject(queryStringParameters);
     const uri = this.siteUrl + queryString;
 
+    const linkTag = document.createElement('a');
+    linkTag.setAttribute('href', uri);
+    linkTag.innerHTML = "Click here to connect to the speaker's microphone";
+    linkTag.target = '_blank';
+
     // Display QR code for the participant to scan
     const qrCanvas = document.createElement('canvas');
     qrCanvas.setAttribute('id', 'qrCanvas');
@@ -90,6 +108,7 @@ class Speaker extends AudioPeer {
 
     // If specified HTML Id is available, show QR code there
     if (document.getElementById(this.targetElement)) {
+      document.getElementById(this.targetElement).appendChild(linkTag);
       document.getElementById(this.targetElement).appendChild(qrCanvas);
     } else {
       // or just print it to console
@@ -131,7 +150,7 @@ class Speaker extends AudioPeer {
     // Allow only a single connection
     if (this.conn && this.conn.open) {
       connection.on('open', () => {
-        connection.send('Al#ready connected to another client');
+        connection.send('Already connected to another client');
         setTimeout(() => {
           connection.close();
         }, 500);
@@ -192,9 +211,19 @@ class Speaker extends AudioPeer {
       console.error('Received malformed data: ', data);
       return;
     }
-    // handle sampling rate sent from Listener
-    if (data.name === 'samplingRate') {
-      this.ac.setSamplingRates(data.payload);
+
+    console.log(data);
+
+    switch (data.name) {
+      case 'samplingRate':
+        this.ac.setSamplingRates(data.payload);
+        break;
+      case UnsupportedDeviceError.name:
+      case MissingSpeakerIdError.name:
+        throw data.payload;
+        break;
+      default:
+        break;
     }
   };
 

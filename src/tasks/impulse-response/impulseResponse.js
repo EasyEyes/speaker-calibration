@@ -1,7 +1,7 @@
 import AudioCalibrator from '../audioCalibrator';
 import MlsGenInterface from './mlsGen/mlsGenInterface';
 
-import {sleep} from '../../utils';
+import {sleep, csvToArray} from '../../utils';
 
 /**
  *
@@ -10,15 +10,90 @@ class ImpulseResponse extends AudioCalibrator {
   /**
    *
    */
-  constructor(numCalibrationRounds = 2, numCalibrationNodes = 2) {
+  constructor({download = false, numCalibrationRounds = 2, numCalibrationNodes = 3}) {
     super(numCalibrationRounds, numCalibrationNodes);
+    this.#download = download;
   }
+
+  /** @private */
+  #download;
 
   /** @private */
   #mlsGenInterface;
 
   /** @private */
   #mlsBufferView;
+
+  /** @private */
+  invertedImpulseResponse = null;
+
+  /** @private */
+  // recordedSignals = [];
+
+  /** @private */
+  #P;
+
+  #average = signals => {
+    let smallest = signals[0].length;
+
+    // find smallest
+    for (let i = 0; i < signals.length; i += 1) {
+      smallest = signals[0].length < signals[i].length ? signals[0].length : signals[i].length;
+    }
+
+    // truncate to smallest
+    for (let i = 0; i < signals.length; i += 1) {
+      signals[i] = signals[i].slice(0, smallest);
+    }
+
+    // average
+    // for each index in array 0
+    for (let i = 0; i < signals[0].length; i += 1) {
+      let sum = 0;
+      // sum all values in other arrays
+      for (let j = 0; j < signals.length; j += 1) {
+        sum += signals[j][i];
+      }
+      // divide by number of arrays
+      signals[0][i] = sum / signals.length;
+    }
+
+    return signals[0];
+  };
+
+  /**
+   * Called immediately after a recording is captured. Used to process the resulting signal
+   * whether by sending the result to a server or by computing a result locally
+   */
+  #afterRecord = () => {
+    if (this.#download) {
+      this.downloadData();
+    }
+  };
+
+  /**
+   * Sends the recorded signal, or a given csv string of a signal, to the back end server for processing
+   * @param {<array>String} signalCsv - Optional csv string of a previously recorded signal, if given, this signal will be processed
+   */
+  sendToServerForProcessing = async signalCsv => {
+    console.log('Sending data to server');
+    return this.pyServer
+      .getImpulseResponse({
+        sampleRate: this.sourceSamplingRate || 96000,
+        payload:
+          signalCsv && signalCsv.length > 0
+            ? csvToArray(signalCsv)
+            : this.#average(this.getAllRecordedSignals()),
+      })
+      .then(res => {
+        if (this.invertedImpulseResponse == null) {
+          this.invertedImpulseResponse = res;
+        }
+      })
+      .catch(err => {
+        console.error(err);
+      });
+  };
 
   /**
    * Construct a Calibration Node with the calibration parameters.
@@ -58,6 +133,7 @@ class ImpulseResponse extends AudioCalibrator {
    * @param {Array} dataBufferArray - Array of data buffers
    */
   #setCalibrationNodesFromBuffer = (dataBufferArray = [this.#mlsBufferView]) => {
+    this.#P = dataBufferArray[0].length;
     if (dataBufferArray.length === 1) {
       while (this.calibrationNodes.length < this.numCalibrationNodes) {
         this.#createCalibrationNodeFromBuffer(dataBufferArray[0]);
@@ -107,11 +183,23 @@ class ImpulseResponse extends AudioCalibrator {
     );
 
     // after intializating, start the calibration steps with garbage collection
-    await this.#mlsGenInterface.withGarbageCollection(this.calibrationSteps, [
-      stream,
-      this.#playCalibrationAudio,
-      this.#setCalibrationNodesFromBuffer,
-    ]);
+    while (this.numCalibratingRoundsCompleted < this.numCalibratingRounds) {
+      await this.#mlsGenInterface.withGarbageCollection([
+        [
+          this.calibrationSteps,
+          [
+            stream,
+            this.#playCalibrationAudio,
+            this.#setCalibrationNodesFromBuffer,
+            this.#afterRecord,
+          ],
+        ],
+      ]);
+    }
+
+    // await the server response
+    await this.sendToServerForProcessing();
+    return this.invertedImpulseResponse;
   };
 }
 

@@ -3,7 +3,8 @@
 ~*
 
 # ignore dist files
-dist/
+dist/*
+!dist/example/
 
 # ignore node/grunt dependency directories
 node_modules/

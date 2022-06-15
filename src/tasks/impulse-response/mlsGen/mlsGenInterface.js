@@ -55,9 +55,13 @@ class MlsGenInterface {
    * @param {function} func
    * @param {array} args
    */
-  withGarbageCollection = async (func, params) => {
+  withGarbageCollection = async funcsWithParams => {
     try {
-      await func(...params);
+      for (let i = 0; i < funcsWithParams.length; i += 1) {
+        const [func, params] = funcsWithParams[i];
+        await func(...params);
+      }
+      // await func(...params);
     } catch (error) {
       console.error(error);
     } finally {
@@ -80,27 +84,21 @@ class MlsGenInterface {
    * Calculate and return the Impulse Response of the recorded signal.
    * @returns
    */
-  getImpulseResponse = () => {
-    const result = this.#MLSGenInstance['getImpulseResponse']();
-    return result.slice(0, 10);
-  };
+  getImpulseResponse = () => this.#MLSGenInstance['getImpulseResponse']();
 
   /**
    * Given a recorded MLS signal, this function sets the recordedSignal property of the MLSGen object.
-   * @param {Float32Array} signal
+   * @param {Float32Array} signals
    */
-  setRecordedSignal = signal => {
+  setRecordedSignals = signals => {
     // get memory view
-    const recordedSignalMemoryView = this.#MLSGenInstance['getRecordedSignalMemoryView']();
-    console.log('length of recorded signal memory view: ', recordedSignalMemoryView.length);
-    console.log('length of recorded signal: ', signal.length);
-    // iterate and set
-    for (let i = 0; i < recordedSignalMemoryView.length; i += 1) {
-      // set to 0 if undefined
-      recordedSignalMemoryView[i] = i < signal.length ? signal[i] : 0;
+    const averagedSignals = this.average(signals);
+    const recordedSignalsMemoryView = this.#MLSGenInstance['setRecordedSignalsMemoryView'](
+      averagedSignals.byteLength
+    );
+    for (let i = 0; i < averagedSignals.length; i++) {
+      recordedSignalsMemoryView[i] = averagedSignals[i];
     }
-
-    return [...recordedSignalMemoryView];
   };
 
   /**

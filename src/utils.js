@@ -28,4 +28,13 @@ const saveToCSV = (data, filename = 'recordedMLSignal.csv') => {
   link.click();
 };
 
-export {sleep, saveToCSV};
+/**
+ * Utility function to create a buffer from a CSV file
+ * @param {*} csvString 
+ * @param {*} delimiter 
+ * @returns 
+ */
+const csvToArray = (csvString, delimiter = ',') =>
+  csvString.split('\n').map(row => row.split(delimiter)[1]);
+
+export {sleep, saveToCSV, csvToArray};

@@ -16,22 +16,22 @@ class AudioRecorder {
   #audioContext;
 
   /** @private */
-  #arrayBuffer;
-
-  /** @private */
   #recordedSignals = [];
 
   /** @private */
   sinkSamplingRate;
 
+  /**
+   * Decode the audio data from the recorded audio blob.
+   * @private
+   */
   #saveRecording = async () => {
-    this.#arrayBuffer = await this.#audioBlob.arrayBuffer();
+    const arrayBuffer = await this.#audioBlob.arrayBuffer();
+    const audioBuffer = await this.#audioContext.decodeAudioData(arrayBuffer);
+    const data = audioBuffer.getChannelData(0);
 
-    // Convert array buffer into audio buffer
-    await this.#audioContext.decodeAudioData(this.#arrayBuffer, audioBuffer => {
-      const data = audioBuffer.getChannelData(0);
-      this.#recordedSignals.push(data);
-    });
+    console.log(`Decoded audio buffer with ${data.length} samples`);
+    this.#recordedSignals.push(data);
   };
 
   /**
@@ -69,11 +69,13 @@ class AudioRecorder {
    * @param {MediaStream} stream - The stream of audio from the Listener.
    */
   startRecording = async stream => {
-    // Set up media recorder if needed
-    // await this.#applyTrackContraints(stream);
+    // Create a fresh audio context
     this.#setAudioContext();
+    // Set up media recorder if needed
     if (!this.#mediaRecorder) this.#setMediaRecorder(stream);
+    // clear recorded chunks
     this.#recordedChunks = [];
+    // start recording
     this.#mediaRecorder.start();
   };
 
@@ -98,10 +100,22 @@ class AudioRecorder {
     await this.#saveRecording();
   };
 
+  /**
+   * Public method to get the last recorded audio signal
+   * @returns
+   */
   getLastRecordedSignal = () => this.#recordedSignals[this.#recordedSignals.length - 1];
 
+  /**
+   * Public method to get all the recorded audio signals
+   * @returns
+   */
   getAllRecordedSignals = () => this.#recordedSignals;
 
+  /**
+   * Public method to set the sampling rate used by the capture device
+   * @param {Number} sinkSamplingRate - The sampling rate of the capture device
+   */
   setSinkSamplingRate = sinkSamplingRate => {
     this.sinkSamplingRate = sinkSamplingRate;
   };
