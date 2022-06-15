@@ -25,6 +25,16 @@ class Volume extends AudioCalibrator {
   /** @private */
   soundGainDBSPL = null;
 
+
+  handleIncomingData = data => {
+    console.log('Received data: ', data);
+    if (data.type === 'soundGainDBSPL') {
+      this.soundGainDBSPL = data.value;
+    } else {
+      throw new Error(`Unknown data type: ${data.type}`);
+    }
+  };
+
   #getTruncatedSignal = (left = 3.5, right = 4.5) => {
     const start = Math.floor(left * this.sourceSamplingRate);
     const end = Math.floor(right * this.sourceSamplingRate);
