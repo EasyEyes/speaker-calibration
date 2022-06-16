@@ -9,7 +9,7 @@ class Volume extends AudioCalibrator {
   /**
    *
    */
-  constructor(numCalibrationRounds = 1, numCalibrationNodes = 1) {
+  constructor({download = false, numCalibrationRounds = 1, numCalibrationNodes = 1}) {
     super(numCalibrationRounds, numCalibrationNodes);
   }
 
@@ -24,7 +24,6 @@ class Volume extends AudioCalibrator {
 
   /** @private */
   soundGainDBSPL = null;
-
 
   handleIncomingData = data => {
     console.log('Received data: ', data);
@@ -107,10 +106,12 @@ class Volume extends AudioCalibrator {
 
   startCalibration = async stream => {
     do {
-      await this.calibrationSteps([
+      await this.calibrationSteps(
         stream,
-        [this.#playCalibrationAudio, this.#createCalibrationNode, this.#sendToServerForProcessing],
-      ]);
+        this.#playCalibrationAudio,
+        this.#createCalibrationNode,
+        this.#sendToServerForProcessing
+      );
     } while (this.soundGainDBSPL === null);
 
     return this.soundGainDBSPL;
