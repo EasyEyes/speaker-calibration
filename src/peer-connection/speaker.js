@@ -93,11 +93,6 @@ class Speaker extends AudioPeer {
     const queryString = this.queryStringFromObject(queryStringParameters);
     const uri = this.siteUrl + queryString;
 
-    const linkTag = document.createElement('a');
-    linkTag.setAttribute('href', uri);
-    linkTag.innerHTML = "Click here to connect to the speaker's microphone";
-    linkTag.target = '_blank';
-
     // Display QR code for the participant to scan
     const qrCanvas = document.createElement('canvas');
     qrCanvas.setAttribute('id', 'qrCanvas');
@@ -108,7 +103,15 @@ class Speaker extends AudioPeer {
 
     // If specified HTML Id is available, show QR code there
     if (document.getElementById(this.targetElement)) {
-      document.getElementById(this.targetElement).appendChild(linkTag);
+      if (document.getElementById(this.targetElement)) {
+        if (process.env.NODE_ENV === 'development') {
+          const linkTag = document.createElement('a');
+          linkTag.setAttribute('href', uri);
+          linkTag.innerHTML = "Click here to connect to the speaker's microphone";
+          linkTag.target = '_blank';
+          document.getElementById(this.targetElement).appendChild(linkTag);
+        }
+      }
       document.getElementById(this.targetElement).appendChild(qrCanvas);
     } else {
       // or just print it to console
