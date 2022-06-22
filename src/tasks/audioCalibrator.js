@@ -1,6 +1,6 @@
 /* eslint-disable no-await-in-loop */
 import AudioRecorder from './audioRecorder';
-import PythonServerInterface from '../server/PythonServerInterface';
+import PythonServerAPI from '../server/PythonServerAPI';
 import {sleep, saveToCSV} from '../utils';
 
 /**
@@ -15,7 +15,7 @@ class AudioCalibrator extends AudioRecorder {
     super();
     this.numCalibratingRounds = numCalibrationRounds;
     this.numCalibrationNodes = numCalibrationNodes;
-    this.pyServer = new PythonServerInterface();
+    this.pyServerAPI = new PythonServerAPI();
   }
 
   /** @private */
@@ -134,7 +134,7 @@ class AudioCalibrator extends AudioRecorder {
    */
   downloadData = () => {
     const recordings = this.getAllRecordedSignals();
-    const i = recordings.length-1;
+    const i = recordings.length - 1;
     saveToCSV(recordings[i], `recordedMLSignal_${i}.csv`);
   };
 }

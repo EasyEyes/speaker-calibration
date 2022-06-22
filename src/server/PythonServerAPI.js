@@ -1,26 +1,11 @@
-import {io} from 'socket.io-client';
-
+import axios from 'axios';
 /**
  *
  */
-class PythonServerInterface {
-  static PYTHON_SERVER_URL = 'https://easyeyes-python-server.herokuapp.com';
+class PythonServerAPI {
+  static PYTHON_SERVER_URL = 'https://easyeyes-python-flask-server.herokuapp.com';
 
-  static TEST_SERVER_URL = 'http://localhost:3001';
-
-  /**
-   *
-   * @param {string} url
-   */
-  constructor(url = PythonServerInterface.PYTHON_SERVER_URL) {
-    // 'http://localhost:3001/'
-    this.socket = io(url, {
-      reconnection: true,
-      reconnectionDelay: 1000,
-      reconnectionDelayMax: 5000,
-      reconnectionAttempts: 99999,
-    });
-  }
+  static TEST_SERVER_URL = 'http://127.0.0.1:5000';
 
   /**
    * @param {array} data
@@ -28,26 +13,33 @@ class PythonServerInterface {
    * reponse, they cancel out.
    * @returns {Float<array>}
    */
-  getImpulseResponse = async data => {
+  getImpulseResponse = async ({payload, sampleRate, P}) => {
     let res = null;
 
-    try {
-      const serverResponse = await this.asyncEmit('data', {
-        task: 'impulse-response',
-        data,
+    const data = JSON.stringify({
+      task: 'impulse-response',
+      payload,
+      'sample-rate': sampleRate,
+      P,
+    });
+
+    await axios({
+      method: 'post',
+      baseURL: PythonServerAPI.PYTHON_SERVER_URL,
+      url: '/task/impulse-response',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      data,
+    })
+      .then(function (response) {
+        res = response;
+      })
+      .catch(function (error) {
+        throw error;
       });
 
-      const g = serverResponse.data
-        .trim()
-        .split(',')
-        .map(value => parseFloat(value));
-
-      res = g;
-    } catch (error) {
-      console.error(error);
-    }
-
-    return res;
+    return res.data['inverted-impulse-response'];
   };
 
   getVolumeCalibration = async data => {
@@ -82,4 +74,4 @@ class PythonServerInterface {
     });
 }
 
-export default PythonServerInterface;
+export default PythonServerAPI;

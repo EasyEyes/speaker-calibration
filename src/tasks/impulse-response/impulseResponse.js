@@ -10,7 +10,7 @@ class ImpulseResponse extends AudioCalibrator {
   /**
    *
    */
-  constructor({download = false, numCalibrationRounds = 2, numCalibrationNodes = 3}) {
+  constructor({download = false, numCalibrationRounds = 5, numCalibrationNodes = 4}) {
     super(numCalibrationRounds, numCalibrationNodes);
     this.#download = download;
   }
@@ -28,38 +28,7 @@ class ImpulseResponse extends AudioCalibrator {
   invertedImpulseResponse = null;
 
   /** @private */
-  // recordedSignals = [];
-
-  /** @private */
-  #P;
-
-  #average = signals => {
-    let smallest = signals[0].length;
-
-    // find smallest
-    for (let i = 0; i < signals.length; i += 1) {
-      smallest = signals[0].length < signals[i].length ? signals[0].length : signals[i].length;
-    }
-
-    // truncate to smallest
-    for (let i = 0; i < signals.length; i += 1) {
-      signals[i] = signals[i].slice(0, smallest);
-    }
-
-    // average
-    // for each index in array 0
-    for (let i = 0; i < signals[0].length; i += 1) {
-      let sum = 0;
-      // sum all values in other arrays
-      for (let j = 0; j < signals.length; j += 1) {
-        sum += signals[j][i];
-      }
-      // divide by number of arrays
-      signals[0][i] = sum / signals.length;
-    }
-
-    return signals[0];
-  };
+  #P = Math.pow(2, 18) - 1;
 
   /**
    * Called immediately after a recording is captured. Used to process the resulting signal
@@ -77,13 +46,14 @@ class ImpulseResponse extends AudioCalibrator {
    */
   sendToServerForProcessing = async signalCsv => {
     console.log('Sending data to server');
-    return this.pyServer
+    return this.pyServerAPI
       .getImpulseResponse({
         sampleRate: this.sourceSamplingRate || 96000,
         payload:
           signalCsv && signalCsv.length > 0
-            ? csvToArray(signalCsv)
-            : this.#average(this.getAllRecordedSignals()),
+            ? [csvToArray(signalCsv)]
+            : this.getAllRecordedSignals(),
+        P: this.#P,
       })
       .then(res => {
         if (this.invertedImpulseResponse == null) {

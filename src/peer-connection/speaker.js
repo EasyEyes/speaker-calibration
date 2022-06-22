@@ -50,6 +50,8 @@ class Speaker extends AudioPeer {
       speaker.peer.on('call', async call => {
         // Answer the call (one way)
         call.answer();
+        speaker.#removeUIElems();
+        speaker.#showSpinner();
         speaker.ac.createLocalAudio(document.getElementById(speaker.targetElement));
         // when we start receiving audio
         call.on('stream', async stream => {
@@ -64,6 +66,7 @@ class Speaker extends AudioPeer {
           }
           // resolve when we have a result
           speaker.result = await speaker.ac.startCalibration(stream);
+          speaker.#removeUIElems();
           resolve(speaker.result);
         });
         // if we do not receive a result within the timeout, reject
@@ -119,6 +122,21 @@ class Speaker extends AudioPeer {
     }
   };
 
+  #showSpinner = () => {
+    const spinner = document.createElement('div');
+    spinner.className = 'spinner-border ml-auto';
+    spinner.role = 'status';
+    spinner.ariaHidden = 'true';
+    document.getElementById(this.targetElement).appendChild(spinner);
+  };
+
+  #removeUIElems = () => {
+    const parent = document.getElementById(this.targetElement);
+    while (parent.firstChild) {
+      parent.firstChild.remove();
+    }
+  };
+
   /**
    * Called when the peer connection is opened.
    * Saves the peer id and calls the QR code generator.
@@ -148,7 +166,6 @@ class Speaker extends AudioPeer {
    * @private
    */
   #onPeerConnection = connection => {
-    console.log('Speaker - #onPeerConnection');
 
     // Allow only a single connection
     if (this.conn && this.conn.open) {
@@ -214,8 +231,6 @@ class Speaker extends AudioPeer {
       console.error('Received malformed data: ', data);
       return;
     }
-
-    console.log(data);
 
     switch (data.name) {
       case 'samplingRate':

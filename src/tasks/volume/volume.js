@@ -89,7 +89,7 @@ class Volume extends AudioCalibrator {
 
   #sendToServerForProcessing = () => {
     console.log('Sending data to server');
-    this.pyServer
+    this.pyServerAPI
       .getVolumeCalibration({
         sampleRate: this.sourceSamplingRate,
         payload: this.#getTruncatedSignal(),
