@@ -31,7 +31,7 @@ class AudioRecorder {
     const data = audioBuffer.getChannelData(0);
 
     console.log(`Decoded audio buffer with ${data.length} samples`);
-    this.#recordedSignals.push(data);
+    this.#recordedSignals.push(Array.from(data));
   };
 
   /**

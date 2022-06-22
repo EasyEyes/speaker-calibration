@@ -16,6 +16,8 @@ class PythonServerAPI {
   getImpulseResponse = async ({payload, sampleRate, P}) => {
     let res = null;
 
+    console.log({payload});
+
     const data = JSON.stringify({
       task: 'impulse-response',
       payload,
