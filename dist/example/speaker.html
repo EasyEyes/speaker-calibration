@@ -12,7 +12,6 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet"
     integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous" />
   <script src="../main.js"></script>
-  <script type="text/javascript" src="../example/cache.js"></script>
   <link rel="icon"
     href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔈</text></svg>" />
   <!--<script src="https://www.unpkg.com/sound-check"></script>-->
@@ -118,7 +117,7 @@
             //invertedIRNorm = [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,]
             const AudioContext = window.AudioContext || window.webkitAudioContext;
             const audioCtx = new AudioContext();
-            const audioFile = fetch("./example/Queen-Bohemian_Rhapsody.wav")
+            const audioFile = fetch("./Queen-Bohemian_Rhapsody.wav")
               .then(response => response.arrayBuffer())
               .then(buffer => audioCtx.decodeAudioData(buffer))
               .then(async buffer => {
