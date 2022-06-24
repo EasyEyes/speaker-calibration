@@ -28,7 +28,51 @@ class ImpulseResponse extends AudioCalibrator {
   invertedImpulseResponse = null;
 
   /** @private */
+  impulseResponses = [];
+
+  /** @private */
   #P = Math.pow(2, 18) - 1;
+
+  sendImpulseResponsesToServerForProcessing = async () => {
+    const computedIRs = await Promise.all(this.impulseResponses);
+    console.log({computedIRs});
+    return this.pyServerAPI
+      .getInverseImpulseResponse({
+        payload: computedIRs,
+      })
+      .then(res => {
+        this.invertedImpulseResponse = res;
+        console.log({res});
+      })
+      .catch(err => {
+        console.error(err);
+      });
+  };
+
+  /**
+   * Sends the recorded signal, or a given csv string of a signal, to the back end server for processing
+   * @param {<array>String} signalCsv - Optional csv string of a previously recorded signal, if given, this signal will be processed
+   */
+  sendRecordingToServerForProcessing = signalCsv => {
+    console.log('Sending recording to server');
+    this.impulseResponses.push(
+      this.pyServerAPI
+        .getImpulseResponse({
+          sampleRate: this.sourceSamplingRate || 96000,
+          payload:
+            signalCsv && signalCsv.length > 0
+              ? csvToArray(signalCsv)
+              : this.getLastRecordedSignal(),
+          P: this.#P,
+        })
+        .then(res => {
+          return res;
+        })
+        .catch(err => {
+          console.error(err);
+        })
+    );
+  };
 
   /**
    * Called immediately after a recording is captured. Used to process the resulting signal
@@ -38,31 +82,7 @@ class ImpulseResponse extends AudioCalibrator {
     if (this.#download) {
       this.downloadData();
     }
-  };
-
-  /**
-   * Sends the recorded signal, or a given csv string of a signal, to the back end server for processing
-   * @param {<array>String} signalCsv - Optional csv string of a previously recorded signal, if given, this signal will be processed
-   */
-  sendToServerForProcessing = async signalCsv => {
-    console.log('Sending data to server');
-    return this.pyServerAPI
-      .getImpulseResponse({
-        sampleRate: this.sourceSamplingRate || 96000,
-        payload:
-          signalCsv && signalCsv.length > 0
-            ? [csvToArray(signalCsv)]
-            : this.getAllRecordedSignals(),
-        P: this.#P,
-      })
-      .then(res => {
-        if (this.invertedImpulseResponse == null) {
-          this.invertedImpulseResponse = res;
-        }
-      })
-      .catch(err => {
-        console.error(err);
-      });
+    this.sendRecordingToServerForProcessing();
   };
 
   /**
@@ -168,7 +188,7 @@ class ImpulseResponse extends AudioCalibrator {
     }
 
     // await the server response
-    await this.sendToServerForProcessing();
+    await this.sendImpulseResponsesToServerForProcessing();
     return this.invertedImpulseResponse;
   };
 }

@@ -14,12 +14,13 @@ class PythonServerAPI {
    * @returns {Float<array>}
    */
   getImpulseResponse = async ({payload, sampleRate, P}) => {
+    const task = 'impulse-response';
     let res = null;
 
     console.log({payload});
 
     const data = JSON.stringify({
-      task: 'impulse-response',
+      task,
       payload,
       'sample-rate': sampleRate,
       P,
@@ -28,7 +29,7 @@ class PythonServerAPI {
     await axios({
       method: 'post',
       baseURL: PythonServerAPI.PYTHON_SERVER_URL,
-      url: '/task/impulse-response',
+      url: `/task/${task}`,
       headers: {
         'Content-Type': 'application/json',
       },
@@ -41,7 +42,37 @@ class PythonServerAPI {
         throw error;
       });
 
-    return res.data['inverted-impulse-response'];
+    return res.data[task];
+  };
+
+  getInverseImpulseResponse = async ({payload}) => {
+    const task = 'inverse-impulse-response';
+    let res = null;
+
+    console.log({payload});
+
+    const data = JSON.stringify({
+      task,
+      payload,
+    });
+
+    await axios({
+      method: 'post',
+      baseURL: PythonServerAPI.PYTHON_SERVER_URL,
+      url: `/task/${task}`,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      data,
+    })
+      .then(function (response) {
+        res = response;
+      })
+      .catch(function (error) {
+        throw error;
+      });
+
+    return res.data[task];
   };
 
   getVolumeCalibration = async data => {
@@ -62,18 +93,6 @@ class PythonServerAPI {
     }
     return res;
   };
-
-  asyncEmit = (eventName, data) =>
-    new Promise((resolve, reject) => {
-      this.socket.emit(eventName, data);
-      this.socket.on(eventName, result => {
-        resolve(result);
-      });
-      this.socket.on('error', error => {
-        reject(error);
-      });
-      setTimeout(reject, 90000);
-    });
 }
 
 export default PythonServerAPI;
