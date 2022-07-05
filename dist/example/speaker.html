@@ -118,7 +118,7 @@
             // invertedIRNorm = invertedIR
             invertedIRNorm = invertedIR.slice(0, invertedIR.length / audioCtx.sampleRate) // invertedIR.map(normalize(-1, 1))
             console.log({ invertedIRNorm })
-            const audioFile = fetch("../example/Queen-Bohemian_Rhapsody.wav")
+            const audioFile = fetch("./Queen-Bohemian_Rhapsody.wav")
               .then(response => response.arrayBuffer())
               .then(buffer => audioCtx.decodeAudioData(buffer))
               .then(async buffer => {
