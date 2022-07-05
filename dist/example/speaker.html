@@ -49,12 +49,12 @@
           </div>
         </div>
         <div class="row">
-          <input type="number" id="numCalibrationRoundsInput" class="form-control" value="1" />
-          <label class="form-label" for="numCalibrationRoundsInput">Calibration Rounds</label>
+          <input type="number" id="numCapturesInput" class="form-control" value="1" />
+          <label class="form-label" for="numCapturesInput">Number of Captures</label>
         </div>
         <div class="row">
-          <input type="number" id="numCalibrationNodesInput" class="form-control" value="1" />
-          <label class="form-label" for="numCalibrationNodesInput">Calibration Nodes</label>
+          <input type="number" id="numMLSPerCaptureInput" class="form-control" value="1" />
+          <label class="form-label" for="numMLSPerCaptureInput">Number of MLS burts per capture</label>
         </div>
         <div class="row">
           <button id="calibrationBeginButton" type="button" class="btn btn-primary">
@@ -111,13 +111,14 @@
           }
 
           const useIRResult = async (invertedIR) => {
-            // invertedIRNorm = invertedIR
-            invertedIRNorm = invertedIR // invertedIR.map(normalize(-1, 1))
-            console.log({ invertedIRNorm })
+
             //invertedIRNorm = [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,]
             const AudioContext = window.AudioContext || window.webkitAudioContext;
             const audioCtx = new AudioContext();
-            const audioFile = fetch("./Queen-Bohemian_Rhapsody.wav")
+            // invertedIRNorm = invertedIR
+            invertedIRNorm = invertedIR.slice(0, invertedIR.length / audioCtx.sampleRate) // invertedIR.map(normalize(-1, 1))
+            console.log({ invertedIRNorm })
+            const audioFile = fetch("../example/Queen-Bohemian_Rhapsody.wav")
               .then(response => response.arrayBuffer())
               .then(buffer => audioCtx.decodeAudioData(buffer))
               .then(async buffer => {
@@ -161,8 +162,8 @@
 
           const handleFileUpload = (e) => {
             const calibratorParams = {
-              numCalibrationRounds: 0,
-              numCalibrationNodes: 0,
+              numCaptures: 0,
+              numMLSPerCapture: 0,
               download: false,
             };
 
@@ -207,8 +208,8 @@
             };
 
             const calibratorParams = {
-              numCalibrationRounds: document.getElementById('numCalibrationRoundsInput').value,
-              numCalibrationNodes: document.getElementById('numCalibrationNodesInput').value,
+              numCaptures: document.getElementById('numCapturesInput').value,
+              numMLSPerCapture: document.getElementById('numMLSPerCaptureInput').value,
               download: document.getElementById('flexSwitchCheckDownload').checked,
             };
 

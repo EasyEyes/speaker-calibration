@@ -11,10 +11,10 @@ class AudioCalibrator extends AudioRecorder {
   /**
    *
    */
-  constructor(numCalibrationRounds = 1, numCalibrationNodes = 1) {
+  constructor(numCaptures = 1, numMLSPerCapture = 1) {
     super();
-    this.numCalibratingRounds = numCalibrationRounds;
-    this.numCalibrationNodes = numCalibrationNodes;
+    this.numCaptures = numCaptures;
+    this.numMLSPerCapture = numMLSPerCapture;
     this.pyServerAPI = new PythonServerAPI();
   }
 
@@ -22,19 +22,16 @@ class AudioCalibrator extends AudioRecorder {
   #isCalibrating = false;
 
   /** @private */
-  #sourceAudioContext;
+  sourceAudioContext;
 
   /** @protected */
   numCalibratingRounds;
 
   /** @protected */
-  numCalibratingRoundsCompleted = 0;
+  numCaptured = 0;
 
   /** @private */
   sourceSamplingRate;
-
-  /** @protected */
-  numCalibrationNodes;
 
   /** @protected */
   calibrationNodes = [];
@@ -56,41 +53,52 @@ class AudioCalibrator extends AudioRecorder {
    *
    * @param {MediaStream} stream
    * @param {Function} playCalibrationAudio - (async) function that plays the calibration audio
+   * @param {*} beforePlay - (async) function that is called before playing the audio
    * @param {*} beforeRecord - (async) function that is called before recording
+   * @param {*} duringRecord - (async) function that is called while recording
    * @param {*} afterRecord  - (async) function that is called after recording
    */
   calibrationSteps = async (
     stream,
     playCalibrationAudio,
-    beforeRecord = () => {},
-    afterRecord = () => {}
+    beforePlay = async () => {},
+    beforeRecord = async () => {},
+    duringRecord = async () => {},
+    afterRecord = async () => {}
   ) => {
-    this.numCalibratingRoundsCompleted = 0;
+    this.numCaptured = 0;
+
+    // do something before playing such as using the MLS to fill the buffers
+    await beforePlay();
+
+    // play calibration audio
+    playCalibrationAudio();
+
+    // do something before recording such as awaiting a certain amount of time
+    await beforeRecord();
 
     // calibration loop
-    while (!this.#isCalibrating && this.numCalibratingRoundsCompleted < this.numCalibratingRounds) {
-      // before recording
-      await beforeRecord();
+    while (!this.#isCalibrating && this.numCaptured < this.numCaptures) {
+      console.log(`Calibration Round ${this.numCaptured}`);
 
       // start recording
       await this.startRecording(stream);
 
-      // play calibration audio
-      console.log(`Calibration Round ${this.numCalibratingRoundsCompleted}`);
-      await playCalibrationAudio();
+      // do something during the recording such as sleep n amount of time
+      await duringRecord();
 
       // when done, stop recording
       console.log('Calibration Round Complete');
       await this.stopRecording();
 
-      // after recording
+      // do something after recording such as start processing values
       await afterRecord();
 
-      this.calibrationNodes = [];
+      // this.calibrationNodes = [];
 
       // eslint-disable-next-line no-await-in-loop
-      await sleep(2);
-      this.numCalibratingRoundsCompleted += 1;
+      await sleep(1);
+      this.numCaptured += 1;
     }
   };
 
@@ -122,11 +130,11 @@ class AudioCalibrator extends AudioRecorder {
       sampleRate: this.sourceSamplingRate,
     };
 
-    this.#sourceAudioContext = new (window.AudioContext ||
+    this.sourceAudioContext = new (window.AudioContext ||
       window.webkitAudioContext ||
       window.audioContext)(options);
 
-    return this.#sourceAudioContext;
+    return this.sourceAudioContext;
   };
 
   /**

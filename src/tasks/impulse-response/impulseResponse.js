@@ -10,8 +10,8 @@ class ImpulseResponse extends AudioCalibrator {
   /**
    *
    */
-  constructor({download = false, numCalibrationRounds = 5, numCalibrationNodes = 4}) {
-    super(numCalibrationRounds, numCalibrationNodes);
+  constructor({download = false, numCaptures = 5, numMLSPerCapture = 4}) {
+    super(numCaptures, numMLSPerCapture);
     this.#download = download;
   }
 
@@ -33,6 +33,16 @@ class ImpulseResponse extends AudioCalibrator {
   /** @private */
   #P = Math.pow(2, 18) - 1;
 
+  /** @private */
+  TAPER_SECS = 5;
+
+  /** @private */
+  offsetGainNode;
+
+  /**
+   * Sends all the computed impulse responses to the backend server for processing
+   * @returns sets the resulting inverted impulse response to the class property
+   */
   sendImpulseResponsesToServerForProcessing = async () => {
     const computedIRs = await Promise.all(this.impulseResponses);
     console.log({computedIRs});
@@ -75,6 +85,23 @@ class ImpulseResponse extends AudioCalibrator {
   };
 
   /**
+   * Passed to the calibration steps function, awaits the desired amount of seconds to capture the desired number
+   * of MLS periods defined in the constructor
+   */
+  #awaitDesiredMLSLength = async () => {
+    // seconds per MLS = P / SR
+    // await N * P / SR
+    await sleep((this.#P / this.sourceSamplingRate) * this.numMLSPerCapture);
+  };
+
+  /**
+   * Passed to the calibration steps function, awaits the onset of the signal to ensure a steady state
+   */
+  #awaitSignalOnset = async () => {
+    await sleep(this.TAPER_SECS);
+  };
+
+  /**
    * Called immediately after a recording is captured. Used to process the resulting signal
    * whether by sending the result to a server or by computing a result locally
    */
@@ -86,6 +113,34 @@ class ImpulseResponse extends AudioCalibrator {
   };
 
   /**
+   * Created an S Curver Buffer to taper the signal onset
+   * @param {*} length
+   * @param {*} phase
+   * @returns
+   */
+  createSCurveBuffer = (length, phase) => {
+    const curve = new Float32Array(length);
+    let i;
+    for (i = 0; i < length; ++i) {
+      //scale the curve to be between 0-1
+      curve[i] = Math.sin((Math.PI * i) / length - phase) / 2 + 0.5;
+    }
+    return curve;
+  };
+
+  createInverseSCurveBuffer = (length, phase) => {
+    const curve = new Float32Array(length);
+    let i;
+    let j = length - 1;
+    for (i = 0; i < length; ++i) {
+      //scale the curve to be between 0-1
+      curve[i] = Math.sin((Math.PI * j) / length - phase) / 2 + 0.5;
+      --j;
+    }
+    return curve;
+  };
+
+  /**
    * Construct a Calibration Node with the calibration parameters.
    * @private
    */
@@ -93,7 +148,7 @@ class ImpulseResponse extends AudioCalibrator {
     const audioContext = this.makeNewSourceAudioContext();
     const buffer = audioContext.createBuffer(
       1, // number of channels
-      dataBuffer.length, // length
+      dataBuffer.length,
       audioContext.sampleRate // sample rate
     );
 
@@ -101,41 +156,38 @@ class ImpulseResponse extends AudioCalibrator {
     // fill the buffer with our data
     try {
       for (let i = 0; i < dataBuffer.length; i += 1) {
-        // fill the array with the MLS buffer
         data[i] = dataBuffer[i];
       }
     } catch (error) {
       console.error(error);
     }
 
+    const onsetGainNode = audioContext.createGain();
+    this.offsetGainNode = audioContext.createGain();
     const source = audioContext.createBufferSource();
+
     source.buffer = buffer;
-    source.connect(audioContext.destination);
+    source.loop = true;
+    source.connect(onsetGainNode);
+    onsetGainNode.connect(this.offsetGainNode);
+    this.offsetGainNode.connect(audioContext.destination);
+
+    const onsetCurve = this.createSCurveBuffer(this.sourceSamplingRate, Math.PI / 2);
+    onsetGainNode.gain.setValueCurveAtTime(onsetCurve, 0, this.TAPER_SECS);
 
     this.addCalibrationNode(source);
   };
 
   /**
-   * Given an array of data buffers, create a calibration node for each buffer.
-   * this.numCalibrationNodes will be created with the data buffers.
-   * If the length of the buffer is 1, then all the nodes will be the same.
-   * If the length of the buffer is greater than 1, and not euqal to this.numCalibrationNodes, an error will be thrown.
-   * @param {Array} dataBufferArray - Array of data buffers
+   * Given a data buffer, creates the required calibration node
+   * @param {*} dataBufferArray
    */
   #setCalibrationNodesFromBuffer = (dataBufferArray = [this.#mlsBufferView]) => {
-    this.#P = dataBufferArray[0].length;
+    // this.#P = dataBufferArray[0].length;
     if (dataBufferArray.length === 1) {
-      while (this.calibrationNodes.length < this.numCalibrationNodes) {
-        this.#createCalibrationNodeFromBuffer(dataBufferArray[0]);
-      }
-    } else if (dataBufferArray.length === this.numCalibrationNodes) {
-      dataBufferArray.forEach(dataBuffer => {
-        this.#createCalibrationNodeFromBuffer(dataBuffer);
-      });
+      this.#createCalibrationNodeFromBuffer(dataBufferArray[0]);
     } else {
-      throw new Error(
-        'The length of the data buffer array must be 1 or equal to this.numCalibrationNodes'
-      );
+      throw new Error('The length of the data buffer array must be 1');
     }
   };
 
@@ -144,16 +196,22 @@ class ImpulseResponse extends AudioCalibrator {
    * @private
    * @returns {Promise} - Resolves when the audio is done playing.
    */
-  #playCalibrationAudio = async () => {
+  #playCalibrationAudio = () => {
     const {duration} = this.calibrationNodes[0].buffer;
-    const actualDuration = duration * this.numCalibrationNodes;
-    const totalDuration = actualDuration * 1.2;
-    for (let i = 0; i < this.calibrationNodes.length; i += 1) {
-      this.calibrationNodes[i].start(i * duration);
-    }
-    console.log(`Playing a buffer of ${actualDuration} seconds of audio`);
-    console.log(`Waiting a total of ${totalDuration} seconds`);
-    await sleep(totalDuration);
+    this.calibrationNodes[0].start(0);
+    console.log(`Playing a buffer of ${duration} seconds of audio`);
+  };
+
+  /**
+   * Stops the audio with tapered offset
+   */
+  #stopCalibrationAudio = () => {
+    this.offsetGainNode.gain.setValueAtTime(
+      this.offsetGainNode.gain.value,
+      this.sourceAudioContext.currentTime
+    );
+
+    this.offsetGainNode.gain.setTargetAtTime(0, this.sourceAudioContext.currentTime, 0.5);
   };
 
   /**
@@ -173,19 +231,21 @@ class ImpulseResponse extends AudioCalibrator {
     );
 
     // after intializating, start the calibration steps with garbage collection
-    while (this.numCalibratingRoundsCompleted < this.numCalibratingRounds) {
-      await this.#mlsGenInterface.withGarbageCollection([
+    await this.#mlsGenInterface.withGarbageCollection([
+      [
+        this.calibrationSteps,
         [
-          this.calibrationSteps,
-          [
-            stream,
-            this.#playCalibrationAudio,
-            this.#setCalibrationNodesFromBuffer,
-            this.#afterRecord,
-          ],
+          stream,
+          this.#playCalibrationAudio, // play audio func (required)
+          this.#setCalibrationNodesFromBuffer, // before play func
+          this.#awaitSignalOnset, // before record
+          this.#awaitDesiredMLSLength, // during record
+          this.#afterRecord, // after record
         ],
-      ]);
-    }
+      ],
+    ]);
+
+    this.#stopCalibrationAudio();
 
     // await the server response
     await this.sendImpulseResponsesToServerForProcessing();
