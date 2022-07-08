@@ -7,9 +7,6 @@ import {sleep, csvToArray} from '../../utils';
  *
  */
 class ImpulseResponse extends AudioCalibrator {
-  /**
-   *
-   */
   constructor({download = false, numCaptures = 5, numMLSPerCapture = 4}) {
     super(numCaptures, numMLSPerCapture);
     this.#download = download;
@@ -45,16 +42,17 @@ class ImpulseResponse extends AudioCalibrator {
    */
   sendImpulseResponsesToServerForProcessing = async () => {
     const computedIRs = await Promise.all(this.impulseResponses);
-    console.log({computedIRs});
+    this.emit('update', {message: `computing the IIR...`});
     return this.pyServerAPI
       .getInverseImpulseResponse({
         payload: computedIRs,
       })
       .then(res => {
+        this.emit('update', {message: `done computing the IIR...`});
         this.invertedImpulseResponse = res;
-        console.log({res});
       })
       .catch(err => {
+        // this.emit('InvertedImpulseResponse', {res: false});
         console.error(err);
       });
   };
@@ -64,18 +62,26 @@ class ImpulseResponse extends AudioCalibrator {
    * @param {<array>String} signalCsv - Optional csv string of a previously recorded signal, if given, this signal will be processed
    */
   sendRecordingToServerForProcessing = signalCsv => {
-    console.log('Sending recording to server');
+    const allSignals = this.getAllRecordedSignals();
+    const numSignals = allSignals.length;
+    const payload =
+      signalCsv && signalCsv.length > 0 ? csvToArray(signalCsv) : allSignals[numSignals - 1];
+
+    this.emit('update', {message: `computing the IR of the last recording...`});
     this.impulseResponses.push(
       this.pyServerAPI
         .getImpulseResponse({
           sampleRate: this.sourceSamplingRate || 96000,
-          payload:
-            signalCsv && signalCsv.length > 0
-              ? csvToArray(signalCsv)
-              : this.getLastRecordedSignal(),
+          payload,
           P: this.#P,
         })
         .then(res => {
+          if (this.numSuccessfulCaptured < this.numCaptures) {
+            this.numSuccessfulCaptured += 1;
+            this.emit('update', {
+              message: `${this.numSuccessfulCaptured}/${this.numCaptures} IRs computed...`,
+            });
+          }
           return res;
         })
         .catch(err => {
@@ -91,6 +97,9 @@ class ImpulseResponse extends AudioCalibrator {
   #awaitDesiredMLSLength = async () => {
     // seconds per MLS = P / SR
     // await N * P / SR
+    this.emit('update', {
+      message: `sampling the calibration signal...`,
+    });
     await sleep((this.#P / this.sourceSamplingRate) * this.numMLSPerCapture);
   };
 
@@ -98,6 +107,9 @@ class ImpulseResponse extends AudioCalibrator {
    * Passed to the calibration steps function, awaits the onset of the signal to ensure a steady state
    */
   #awaitSignalOnset = async () => {
+    this.emit('update', {
+      message: `waiting for the signal to stabalize...`,
+    });
     await sleep(this.TAPER_SECS);
   };
 
@@ -199,7 +211,7 @@ class ImpulseResponse extends AudioCalibrator {
   #playCalibrationAudio = () => {
     const {duration} = this.calibrationNodes[0].buffer;
     this.calibrationNodes[0].start(0);
-    console.log(`Playing a buffer of ${duration} seconds of audio`);
+    this.emit('update', {message: 'playing the calibration tone...'});
   };
 
   /**
@@ -212,6 +224,7 @@ class ImpulseResponse extends AudioCalibrator {
     );
 
     this.offsetGainNode.gain.setTargetAtTime(0, this.sourceAudioContext.currentTime, 0.5);
+    this.emit('update', {message: 'stopping the calibration tone...'});
   };
 
   /**

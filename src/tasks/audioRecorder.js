@@ -1,8 +1,10 @@
+import MyEventEmitter from '../myEventEmitter';
+
 /**
  * @class provides a simple interface for recording audio from a microphone
  * using the Media Recorder API.
  */
-class AudioRecorder {
+class AudioRecorder extends MyEventEmitter {
   /** @private */
   #mediaRecorder;
 

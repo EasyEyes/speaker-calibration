@@ -28,7 +28,7 @@ class AudioCalibrator extends AudioRecorder {
   numCalibratingRounds;
 
   /** @protected */
-  numCaptured = 0;
+  numSuccessfulCaptured = 0;
 
   /** @private */
   sourceSamplingRate;
@@ -66,21 +66,20 @@ class AudioCalibrator extends AudioRecorder {
     duringRecord = async () => {},
     afterRecord = async () => {}
   ) => {
-    this.numCaptured = 0;
+    this.numSuccessfulCaptured = 0;
 
     // do something before playing such as using the MLS to fill the buffers
     await beforePlay();
 
     // play calibration audio
+
     playCalibrationAudio();
 
     // do something before recording such as awaiting a certain amount of time
     await beforeRecord();
 
     // calibration loop
-    while (!this.#isCalibrating && this.numCaptured < this.numCaptures) {
-      console.log(`Calibration Round ${this.numCaptured}`);
-
+    while (this.numSuccessfulCaptured < this.numCaptures) {
       // start recording
       await this.startRecording(stream);
 
@@ -88,17 +87,13 @@ class AudioCalibrator extends AudioRecorder {
       await duringRecord();
 
       // when done, stop recording
-      console.log('Calibration Round Complete');
       await this.stopRecording();
 
       // do something after recording such as start processing values
       await afterRecord();
 
-      // this.calibrationNodes = [];
-
       // eslint-disable-next-line no-await-in-loop
       await sleep(1);
-      this.numCaptured += 1;
     }
   };
 
@@ -116,7 +111,7 @@ class AudioCalibrator extends AudioRecorder {
   setSamplingRates = samplingRate => {
     this.sinkSamplingRate = samplingRate;
     this.sourceSamplingRate = samplingRate;
-    console.log('sampling rate', samplingRate);
+    this.emit('update', {message: `sampling at ${samplingRate}Hz...`});
   };
 
   sampleRatesSet = () => this.sourceSamplingRate && this.sinkSamplingRate;

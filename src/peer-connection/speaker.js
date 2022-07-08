@@ -18,11 +18,11 @@ class Speaker extends AudioPeer {
    * @param {initParameters} params - see type definition for initParameters
    * @param {AudioCalibrator} Calibrator - An instance of the AudioCalibrator class, should not use AudioCalibrator directly, instead use an extended class available in /tasks/
    */
-  constructor(params, Calibrator, calibratorParams) {
+  constructor(params, CalibratorInstance) {
     super(params);
 
     this.siteUrl += '/listener?';
-    this.ac = new Calibrator(calibratorParams);
+    this.ac = CalibratorInstance;
     this.result = null;
 
     /* Set up callbacks that handle any events related to our peer object. */
@@ -40,8 +40,8 @@ class Speaker extends AudioPeer {
    * @param {Number} timeOut - The amount of time to wait before timing out the connection (in milliseconds)
    * @public
    */
-  static startCalibration = async (params, Calibrator, calibratorParams, timeOut = 120000) => {
-    window.speaker = new Speaker(params, Calibrator, calibratorParams);
+  static startCalibration = async (params, CalibratorInstance, timeOut = 120000) => {
+    window.speaker = new Speaker(params, CalibratorInstance);
     const {speaker} = window;
 
     // wrap the calibration process in a promise so we can await it
@@ -166,7 +166,6 @@ class Speaker extends AudioPeer {
    * @private
    */
   #onPeerConnection = connection => {
-
     // Allow only a single connection
     if (this.conn && this.conn.open) {
       connection.on('open', () => {
