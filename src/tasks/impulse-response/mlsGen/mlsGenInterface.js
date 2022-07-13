@@ -8,7 +8,7 @@ const createMLSGenModule = require('../../../../dist/mlsGen.js');
  */
 class MlsGenInterface {
   /** @private */
-  static N = 18; // set based on async clock needs
+  #mlsOrder;
 
   /** @private */
   #WASMInstance; // the WASM module instance
@@ -20,11 +20,13 @@ class MlsGenInterface {
    * Creates an instance of MlsGenInterface.
    * Makes a call to the WASM glue code to load the WASM module.
    */
-  constructor(WASMInstance, sourceSamplingRate, sinkSamplingRate) {
+  constructor(WASMInstance, mlsOrder, sourceSamplingRate, sinkSamplingRate) {
+    this.#mlsOrder = mlsOrder;
     this.#WASMInstance = WASMInstance;
+
     console.warn('initializing MLSGen, need to manually garbage collect');
     this.#MLSGenInstance = new this.#WASMInstance['MLSGen'](
-      MlsGenInterface.N,
+      mlsOrder,
       sourceSamplingRate,
       sinkSamplingRate
     );
@@ -37,13 +39,13 @@ class MlsGenInterface {
    * @param {number} sinkSamplingRate - The sampling rate of the sink audio.
    * @returns {MlsGenInterface} mlsGenInterface
    */
-  static factory = async (sourceSamplingRate, sinkSamplingRate) => {
+  static factory = async (mlsOrder, sourceSamplingRate, sinkSamplingRate) => {
     if (sourceSamplingRate === undefined || sinkSamplingRate === undefined) {
       throw new Error('sourceSamplingRate and sinkSamplingRate must be defined');
     }
-    console.log(`sourceSamplingRate: ${sourceSamplingRate} sinkSamplingRate: ${sinkSamplingRate}`);
     return new MlsGenInterface(
       await createMLSGenModule().then(instance => instance),
+      mlsOrder,
       sourceSamplingRate,
       sinkSamplingRate
     );

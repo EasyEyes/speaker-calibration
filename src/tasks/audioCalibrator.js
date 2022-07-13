@@ -68,20 +68,19 @@ class AudioCalibrator extends AudioRecorder {
   ) => {
     this.numSuccessfulCaptured = 0;
 
-    // do something before playing such as using the MLS to fill the buffers
-    await beforePlay();
-
-    // play calibration audio
-
-    playCalibrationAudio();
-
     // do something before recording such as awaiting a certain amount of time
-    await beforeRecord();
+    // await beforeRecord();
 
     // calibration loop
     while (this.numSuccessfulCaptured < this.numCaptures) {
+      // do something before playing such as using the MLS to fill the buffers
+      await beforePlay();
+
       // start recording
       await this.startRecording(stream);
+
+      // play calibration audio
+      playCalibrationAudio();
 
       // do something during the recording such as sleep n amount of time
       await duringRecord();
@@ -93,7 +92,8 @@ class AudioCalibrator extends AudioRecorder {
       await afterRecord();
 
       // eslint-disable-next-line no-await-in-loop
-      await sleep(1);
+      this.calibrationNodes = [];
+      await sleep(2);
     }
   };
 

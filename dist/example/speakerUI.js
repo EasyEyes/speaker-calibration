@@ -18,7 +18,7 @@ window.onload = () => {
     const AudioContext = window.AudioContext || window.webkitAudioContext;
     const audioCtx = new AudioContext();
     // invertedIRNorm = invertedIR
-    invertedIRNorm = invertedIR.slice(0, invertedIR.length / audioCtx.sampleRate); // invertedIR.map(normalize(-1, 1))
+    invertedIRNorm = invertedIR.slice(0, invertedIR.length / 2); // invertedIR.map(normalize(-1, 1))
     console.log({invertedIRNorm});
     const audioFile = fetch('./Queen-Bohemian_Rhapsody.wav')
       .then(response => response.arrayBuffer())

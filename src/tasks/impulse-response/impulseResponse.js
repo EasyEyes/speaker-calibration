@@ -7,8 +7,10 @@ import {sleep, csvToArray} from '../../utils';
  *
  */
 class ImpulseResponse extends AudioCalibrator {
-  constructor({download = false, numCaptures = 5, numMLSPerCapture = 4}) {
+  constructor({download = false, mlsOrder = 18, numCaptures = 5, numMLSPerCapture = 4}) {
     super(numCaptures, numMLSPerCapture);
+    this.#mlsOrder = parseInt(mlsOrder);
+    this.#P = Math.pow(2, mlsOrder) - 1;
     this.#download = download;
   }
 
@@ -28,7 +30,9 @@ class ImpulseResponse extends AudioCalibrator {
   impulseResponses = [];
 
   /** @private */
-  #P = Math.pow(2, 18) - 1;
+  #mlsOrder;
+
+  #P;
 
   /** @private */
   TAPER_SECS = 5;
@@ -121,6 +125,7 @@ class ImpulseResponse extends AudioCalibrator {
     if (this.#download) {
       this.downloadData();
     }
+    this.#stopCalibrationAudio();
     this.sendRecordingToServerForProcessing();
   };
 
@@ -174,18 +179,18 @@ class ImpulseResponse extends AudioCalibrator {
       console.error(error);
     }
 
-    const onsetGainNode = audioContext.createGain();
-    this.offsetGainNode = audioContext.createGain();
+    // const onsetGainNode = audioContext.createGain();
+    // this.offsetGainNode = audioContext.createGain();
     const source = audioContext.createBufferSource();
 
     source.buffer = buffer;
     source.loop = true;
-    source.connect(onsetGainNode);
-    onsetGainNode.connect(this.offsetGainNode);
-    this.offsetGainNode.connect(audioContext.destination);
+    source.connect(audioContext.destination);
+    // onsetGainNode.connect(this.offsetGainNode);
+    // this.offsetGainNode.connect(audioContext.destination);
 
-    const onsetCurve = this.createSCurveBuffer(this.sourceSamplingRate, Math.PI / 2);
-    onsetGainNode.gain.setValueCurveAtTime(onsetCurve, 0, this.TAPER_SECS);
+    // const onsetCurve = this.createSCurveBuffer(this.sourceSamplingRate, Math.PI / 2);
+    // onsetGainNode.gain.setValueCurveAtTime(onsetCurve, 0, this.TAPER_SECS);
 
     this.addCalibrationNode(source);
   };
@@ -195,7 +200,6 @@ class ImpulseResponse extends AudioCalibrator {
    * @param {*} dataBufferArray
    */
   #setCalibrationNodesFromBuffer = (dataBufferArray = [this.#mlsBufferView]) => {
-    // this.#P = dataBufferArray[0].length;
     if (dataBufferArray.length === 1) {
       this.#createCalibrationNodeFromBuffer(dataBufferArray[0]);
     } else {
@@ -218,12 +222,13 @@ class ImpulseResponse extends AudioCalibrator {
    * Stops the audio with tapered offset
    */
   #stopCalibrationAudio = () => {
-    this.offsetGainNode.gain.setValueAtTime(
-      this.offsetGainNode.gain.value,
-      this.sourceAudioContext.currentTime
-    );
+    this.calibrationNodes[0].stop();
+    // this.offsetGainNode.gain.setValueAtTime(
+    //   this.offsetGainNode.gain.value,
+    //   this.sourceAudioContext.currentTime
+    // );
 
-    this.offsetGainNode.gain.setTargetAtTime(0, this.sourceAudioContext.currentTime, 0.5);
+    // this.offsetGainNode.gain.setTargetAtTime(0, this.sourceAudioContext.currentTime, 0.5);
     this.emit('update', {message: 'stopping the calibration tone...'});
   };
 
@@ -236,12 +241,14 @@ class ImpulseResponse extends AudioCalibrator {
    */
   startCalibration = async stream => {
     // initialize the MLSGenInterface object with it's factory method
-    await MlsGenInterface.factory(this.sinkSamplingRate, this.sourceSamplingRate).then(
-      mlsGenInterface => {
-        this.#mlsGenInterface = mlsGenInterface;
-        this.#mlsBufferView = this.#mlsGenInterface.getMLS();
-      }
-    );
+    await MlsGenInterface.factory(
+      this.#mlsOrder,
+      this.sinkSamplingRate,
+      this.sourceSamplingRate
+    ).then(mlsGenInterface => {
+      this.#mlsGenInterface = mlsGenInterface;
+      this.#mlsBufferView = this.#mlsGenInterface.getMLS();
+    });
 
     // after intializating, start the calibration steps with garbage collection
     await this.#mlsGenInterface.withGarbageCollection([
@@ -257,8 +264,6 @@ class ImpulseResponse extends AudioCalibrator {
         ],
       ],
     ]);
-
-    this.#stopCalibrationAudio();
 
     // await the server response
     await this.sendImpulseResponsesToServerForProcessing();
