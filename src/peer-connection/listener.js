@@ -139,15 +139,16 @@ class Listener extends AudioPeer {
       `Listener Track Capabilities - ${JSON.stringify(capabilities, undefined, 2)}`
     );
 
-    const supportsHQ = capabilities.sampleRate.max >= 96000;
     const contraints = {
-      sampleRate: supportsHQ ? 96000 : 48000,
-      sampleSize: supportsHQ ? 24 : 16,
+      sampleRate: {ideal: 96000},
+      sampleSize: {ideal: 24},
     };
 
     if (capabilities.echoCancellation) {
-      Object.assign(capabilities, {echoCancellation: {exact: false}});
+      Object.assign(contraints, {echoCancellation: false});
     }
+
+    this.displayUpdate(`Listener Track Constraints - ${JSON.stringify(contraints, undefined, 2)}`);
 
     // await the promise
     try {
@@ -159,6 +160,34 @@ class Listener extends AudioPeer {
     const settings = track.getSettings();
     this.displayUpdate(`Listener Track Settings - ${JSON.stringify(settings, undefined, 2)}`);
     return track.getSettings().sampleRate;
+  };
+
+  getMediaDevicesAudioContraints = () => {
+    const availableConstraints = navigator.mediaDevices.getSupportedConstraints();
+
+    this.displayUpdate(
+      `Listener MediaDevices Available Contraints  - ${JSON.stringify(
+        availableConstraints,
+        undefined,
+        2
+      )}`
+    );
+
+    let contraints = {
+      sampleRate: {ideal: 96000},
+      channelCount: 1,
+      sampleSize: {ideal: 24},
+    };
+
+    if (availableConstraints.echoCancellation) {
+      Object.assign(contraints, {echoCancellation: {exact: false}});
+    }
+
+    this.displayUpdate(
+      `Listener MediaDevices Contraints - ${JSON.stringify(contraints, undefined, 2)}`
+    );
+
+    return contraints;
   };
 
   openAudioStream = async () => {
@@ -173,24 +202,9 @@ class Listener extends AudioPeer {
       return;
     }
 
-    const availableConstraints = navigator.mediaDevices.getSupportedConstraints();
-    this.displayUpdate(
-      `Listener MediaDevices Contraints  - ${JSON.stringify(availableConstraints, undefined, 2)}`
-    );
-
-    const contraints = {
-      sampleRate: 96000,
-      channelCount: 1,
-      sampleSize: 24,
-    };
-
-    if (availableConstraints.echoCancellation) {
-      Object.assign(contraints, {echoCancellation: {exact: false}});
-    }
-
     navigator.mediaDevices
       .getUserMedia({
-        audio: contraints,
+        audio: this.getMediaDevicesAudioContraints(),
         video: false,
       })
       .then(stream => {
@@ -202,12 +216,16 @@ class Listener extends AudioPeer {
           })
           .catch(err => {
             console.log(err);
-            this.displayUpdate(`Error in applying track contraints ${err}`);
+            this.displayUpdate(
+              `Listener - Error in applyHQTrackConstraints - ${JSON.stringify(err, undefined, 2)}`
+            );
           });
       })
       .catch(err => {
-        console.log(err);
-        this.displayUpdate(`Error in opening audio stream ${err}`);
+        console.error(err);
+        this.displayUpdate(
+          `Listener - Error in getUserMedia - ${JSON.stringify(err, undefined, 2)}`
+        );
       });
   };
 }
