@@ -172,9 +172,9 @@ class Listener extends AudioPeer {
     );
 
     const contraints = {
-      ...(availableConstraints.echoCancellation && availableConstraints.echoCancellation == true
-        ? {echoCancellation: {exact: false}}
-        : {}),
+      // ...(availableConstraints.echoCancellation && availableConstraints.echoCancellation == true
+      //   ? {echoCancellation: {exact: false}}
+      //   : {}),
       ...(availableConstraints.sampleRate && availableConstraints.sampleRate == true
         ? {sampleRate: {ideal: 96000}}
         : {}),
