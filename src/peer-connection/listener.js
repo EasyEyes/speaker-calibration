@@ -140,13 +140,11 @@ class Listener extends AudioPeer {
     );
 
     const contraints = {
-      sampleRate: {ideal: 96000},
-      sampleSize: {ideal: 24},
+      ...(capabilities.echoCancellation ? {echoCancellation: {exact: false}} : {}),
+      ...(capabilities.sampleRate ? {sampleRate: {ideal: 96000}} : {}),
+      ...(capabilities.sampleSize ? {sampleSize: {ideal: 24}} : {}),
+      ...(capabilities.channelCount ? {channelCount: {exact: 1}} : {}),
     };
-
-    if (capabilities.echoCancellation) {
-      Object.assign(contraints, {echoCancellation: false});
-    }
 
     this.displayUpdate(`Listener Track Constraints - ${JSON.stringify(contraints, undefined, 2)}`);
 
@@ -173,15 +171,20 @@ class Listener extends AudioPeer {
       )}`
     );
 
-    let contraints = {
-      sampleRate: {ideal: 96000},
-      channelCount: 1,
-      sampleSize: {ideal: 24},
+    const contraints = {
+      ...(availableConstraints.echoCancellation && availableConstraints.echoCancellation == true
+        ? {echoCancellation: {exact: false}}
+        : {}),
+      ...(availableConstraints.sampleRate && availableConstraints.sampleRate == true
+        ? {sampleRate: {ideal: 96000}}
+        : {}),
+      ...(availableConstraints.sampleSize && availableConstraints.sampleSize == true
+        ? {sampleSize: {ideal: 24}}
+        : {}),
+      ...(availableConstraints.channelCount && availableConstraints.channelCount == true
+        ? {channelCount: {exact: 1}}
+        : {}),
     };
-
-    if (availableConstraints.echoCancellation) {
-      Object.assign(contraints, {echoCancellation: {exact: false}});
-    }
 
     this.displayUpdate(
       `Listener MediaDevices Contraints - ${JSON.stringify(contraints, undefined, 2)}`

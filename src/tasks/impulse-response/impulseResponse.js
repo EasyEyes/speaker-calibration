@@ -10,7 +10,7 @@ class ImpulseResponse extends AudioCalibrator {
   constructor({download = false, mlsOrder = 18, numCaptures = 5, numMLSPerCapture = 4}) {
     super(numCaptures, numMLSPerCapture);
     this.#mlsOrder = parseInt(mlsOrder);
-    this.#P = Math.pow(2, mlsOrder) - 1;
+    this.#P = 2 ** mlsOrder - 1;
     this.#download = download;
   }
 
@@ -139,7 +139,7 @@ class ImpulseResponse extends AudioCalibrator {
     const curve = new Float32Array(length);
     let i;
     for (i = 0; i < length; ++i) {
-      //scale the curve to be between 0-1
+      // scale the curve to be between 0-1
       curve[i] = Math.sin((Math.PI * i) / length - phase) / 2 + 0.5;
     }
     return curve;
@@ -150,7 +150,7 @@ class ImpulseResponse extends AudioCalibrator {
     let i;
     let j = length - 1;
     for (i = 0; i < length; ++i) {
-      //scale the curve to be between 0-1
+      // scale the curve to be between 0-1
       curve[i] = Math.sin((Math.PI * j) / length - phase) / 2 + 0.5;
       --j;
     }

@@ -35,10 +35,10 @@ class PythonServerAPI {
       },
       data,
     })
-      .then(function (response) {
+      .then(response => {
         res = response;
       })
-      .catch(function (error) {
+      .catch(error => {
         throw error;
       });
 
@@ -65,10 +65,10 @@ class PythonServerAPI {
       },
       data,
     })
-      .then(function (response) {
+      .then(response => {
         res = response;
       })
-      .catch(function (error) {
+      .catch(error => {
         throw error;
       });
 
