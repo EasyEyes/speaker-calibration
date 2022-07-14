@@ -135,29 +135,42 @@ class Listener extends AudioPeer {
     // Contraint the incoming audio to the sampling rate we want
     const track = stream.getAudioTracks()[0];
     const capabilities = track.getCapabilities();
+
     this.displayUpdate(
       `Listener Track Capabilities - ${JSON.stringify(capabilities, undefined, 2)}`
     );
 
-    const contraints = {
-      ...(capabilities.echoCancellation ? {echoCancellation: {exact: false}} : {}),
-      ...(capabilities.sampleRate ? {sampleRate: {ideal: 96000}} : {}),
-      ...(capabilities.sampleSize ? {sampleSize: {ideal: 24}} : {}),
-      ...(capabilities.channelCount ? {channelCount: {exact: 1}} : {}),
-    };
+    const constraints = track.getConstraints();
 
-    this.displayUpdate(`Listener Track Constraints - ${JSON.stringify(contraints, undefined, 2)}`);
+    if (capabilities.echoCancellation) {
+      constraints.echoCancellation = false;
+    }
+
+    if (capabilities.sampleRate) {
+      constraints.sampleRate = 96000;
+    }
+
+    if (capabilities.sampleSize) {
+      constraints.sampleSize = 24;
+    }
+
+    if (capabilities.channelCount) {
+      constraints.channelCount = 1;
+    }
+
+    this.displayUpdate(`Listener Track Constraints - ${JSON.stringify(constraints, undefined, 2)}`);
 
     // await the promise
     try {
-      await track.applyConstraints(contraints);
+      await track.applyConstraints(constraints);
     } catch (err) {
-      console.warn(err);
-      this.displayUpdate(`Error applying contraints to track: ${err}`);
+      console.error(err);
+      this.displayUpdate(`Error applying constraints to track: ${err}`);
     }
+
     const settings = track.getSettings();
     this.displayUpdate(`Listener Track Settings - ${JSON.stringify(settings, undefined, 2)}`);
-    return track.getSettings().sampleRate;
+    return settings.sampleRate;
   };
 
   getMediaDevicesAudioContraints = () => {
