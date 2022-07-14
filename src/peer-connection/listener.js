@@ -148,6 +148,8 @@ class Listener extends AudioPeer {
       console.warn(err);
       this.displayUpdate(`Error applying contraints to track: ${err}`);
     }
+    const settings = track.getSettings();
+    this.displayUpdate(`Listener - ${JSON.stringify(settings, undefined, 2)}`);
     return track.getSettings().sampleRate;
   };
 
@@ -162,11 +164,14 @@ class Listener extends AudioPeer {
       });
       return;
     }
+
     const contraints = {
       sampleRate: 96000,
       channelCount: 1,
       sampleSize: 24,
+      echoCancellation: {exact: false},
     };
+
     navigator.mediaDevices
       .getUserMedia({
         audio: contraints,
