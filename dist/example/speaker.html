@@ -27,16 +27,21 @@
 
   <body>
     <div class="container-fluid background">
-      <div class="container popup shadow p-3 mb-5 bg-white rounded">
-        <h1>Speaker Page</h1>
-        <p class="lead">
-          Lorem ipsum dolor sit amet, consectetur adipisicing elit. Officia maxime sapiente
-          repudiandae est, magnam ex sint iure quo porro ullam debitis inventore at temporibus quod
-          ducimus nesciunt dolorem laboriosam. Eius!
-        </p>
-
+      <div class="container bg-light popup shadow p-3 mb-5 rounded">
         <div class="row">
-          <div class="col-md-6 options-panel">
+          <h1>Speaker Page</h1>
+          <p class="lead">
+            Lorem ipsum dolor sit amet, consectetur adipisicing elit. Officia maxime sapiente
+            repudiandae est, magnam ex sint iure quo porro ullam debitis inventore at temporibus quod
+            ducimus nesciunt dolorem laboriosam. Eius!
+          </p>
+        </div>
+        <div class="row justify-content-around">
+          <div class="col-md-3 options-panel shadow p-3 mb-5 bg-white rounded">
+            <h3>New Capture</h3>
+            <p class="lead">
+              Run a new calibration from end-to-end
+            </p>
             <div class="row">
               <div class="form-check form-switch">
                 <input class="form-check-input" type="checkbox" id="flexSwitchCheckVolume" />
@@ -74,14 +79,28 @@
                 Calibrate
               </button>
             </div>
-            <div class="row">
-              <input id="csv-file" type="file" />
+          </div>
+          <!-- <div class="col-md-1"></div> -->
+          <div class="col-md-3 shadow p-3 mb-5 bg-white rounded">
+            <h3>Previous Captures</h3>
+            <p class="lead">
+              Upload a specific portion of the calibration to test it
+            </p>
+            <div class="mb-3">
+              <label for="previous-capture-csv" class="form-label">Recorded MLS</label>
+              <input class="form-control" type="file" id="previous-capture-csv" />
+            </div>
+            <div class="mb-3">
+              <label for="iir-csv" class="form-label">Inverted Impulse Response</label>
+              <input class="form-control" type="file" id="iir-csv" />
             </div>
           </div>
-
-          <div class="col-md-6">
+          <!-- <div class="col-md-1"></div> -->
+          <div class="col-md-3 shadow p-3 mb-5 bg-white rounded">
+            <h3>Results</h3>
             <div class="row">
-              <div id="display"></div>
+              <div id="display" class="border">
+              </div>
               <span id="updates"></span>
             </div>
           </div>

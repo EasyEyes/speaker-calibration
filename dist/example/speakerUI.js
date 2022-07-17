@@ -1,7 +1,8 @@
 window.onload = () => {
   const flexSwitchCheckIR = document.getElementById('flexSwitchCheckIR');
   const flexSwitchCheckVolume = document.getElementById('flexSwitchCheckVolume');
-  const csvUpload = document.getElementById('csv-file');
+  const previousCaptureCSV = document.getElementById('previous-capture-csv');
+  const iirCSV = document.getElementById('iir-csv');
   const sendToServerButton = document.getElementById('sendToServerButton');
 
   const {Speaker, VolumeCalibration, ImpulseResponseCalibration} = speakerCalibrator;
@@ -14,13 +15,15 @@ window.onload = () => {
   };
 
   const useIRResult = async invertedIR => {
-    //invertedIRNorm = [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,]
+    // invertedIRNorm = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1];
     const AudioContext = window.AudioContext || window.webkitAudioContext;
     const audioCtx = new AudioContext();
-    // invertedIRNorm = invertedIR
-    invertedIRNorm = invertedIR.slice(0, invertedIR.length / 2); // invertedIR.map(normalize(-1, 1))
-    console.log({invertedIRNorm});
-    const audioFile = fetch('./Queen-Bohemian_Rhapsody.wav')
+    const invertedIRNorm = invertedIR;
+    const audioFileName = 'Queen-Bohemian_Rhapsody.wav';
+    const audioFileURL = window.location.hostname.includes('localhost')
+      ? '../example/' + audioFileName
+      : './' + audioFileName;
+    const audioFile = fetch(audioFileURL)
       .then(response => response.arrayBuffer())
       .then(buffer => audioCtx.decodeAudioData(buffer))
       .then(async buffer => {
@@ -30,10 +33,7 @@ window.onload = () => {
         track.buffer = buffer;
         track.channelCount = 1;
 
-        console.log({buffer});
         const myArrayBuffer = audioCtx.createBuffer(1, invertedIRNorm.length, audioCtx.sampleRate);
-        console.log(invertedIRNorm.length / audioCtx.sampleRate);
-        console.log({myArrayBuffer});
 
         // Fill the buffer with white noise;
         // just random values between -1.0 and 1.0
@@ -44,25 +44,19 @@ window.onload = () => {
           // audio needs to be in [-1.0; 1.0]
           nowBuffering[i] = invertedIRNorm[i];
         }
-        //convolver.normalize = false
-        //convolver.buffer = myArrayBuffer;
+
         const convolver = audioCtx.createConvolver();
         convolver.normalize = false;
         convolver.channelCount = 1;
         convolver.buffer = myArrayBuffer;
 
-        console.log({convolver});
-        console.log({track});
-        //convolver.connect(track)
         track.connect(convolver);
         convolver.connect(audioCtx.destination);
-        //track.connect(audioCtx.destination)
-        console.log('Starting Audio');
         track.start();
       });
   };
 
-  const handleFileUpload = e => {
+  const handlePreviousCaptureUpload = e => {
     const calibratorParams = {
       numCaptures: 0,
       numMLSPerCapture: 0,
@@ -102,7 +96,25 @@ window.onload = () => {
     }
   };
 
-  csvUpload.addEventListener('change', handleFileUpload);
+  const handleIIRUplaod = e => {
+    const f = e.target.files[0];
+    if (f) {
+      e.preventDefault();
+      const reader = new FileReader();
+
+      reader.onload = async e => {
+        const g_string = e.target.result;
+        const g = g_string.split('\n').map(val => parseFloat(val));
+        console.log({g});
+        useIRResult(g);
+      };
+
+      reader.readAsText(f);
+    }
+  };
+
+  previousCaptureCSV.addEventListener('change', handlePreviousCaptureUpload);
+  iirCSV.addEventListener('change', handleIIRUplaod);
 
   flexSwitchCheckIR.onchange = () => {
     flexSwitchCheckVolume.checked = !flexSwitchCheckIR.checked;
@@ -110,37 +122,6 @@ window.onload = () => {
 
   flexSwitchCheckVolume.onchange = () => {
     flexSwitchCheckIR.checked = !flexSwitchCheckVolume.checked;
-  };
-
-  const buildIRTable = numCaptures => {
-    const tableBody = document.getElementById('IRtableBody');
-    const getTableRow = index =>
-      `<tr id=${'irtr_' + index}>
-        <th scope="row">${index}</th>
-        <td><span class="circle-todo"></span></td>
-        <td>${'Queued'}</td>
-      </tr>`;
-    const range = document.createRange();
-    range.selectNodeContents(tableBody);
-    const allRows = [];
-    for (let i = 0; i < numCaptures; i++) {
-      const node = range.createContextualFragment(getTableRow(i));
-      tableBody.append(node);
-    }
-  };
-
-  const buildIIRTable = () => {
-    const tableBody = document.getElementById('IIRtableBody');
-    const getTableRow = index =>
-      `<tr id=${'iirtr_' + index}>
-      <th scope="row">${index}</th>
-      <td><span class="circle-todo"></span></td>
-      <td>${'Queued'}</td>
-    </tr>`;
-    const range = document.createRange();
-    range.selectNodeContents(tableBody);
-    const node = range.createContextualFragment(getTableRow(0));
-    tableBody.append(node);
   };
 
   document.getElementById('calibrationBeginButton').onclick = async () => {

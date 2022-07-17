@@ -179,18 +179,11 @@ class ImpulseResponse extends AudioCalibrator {
       console.error(error);
     }
 
-    // const onsetGainNode = audioContext.createGain();
-    // this.offsetGainNode = audioContext.createGain();
     const source = audioContext.createBufferSource();
 
     source.buffer = buffer;
     source.loop = true;
     source.connect(audioContext.destination);
-    // onsetGainNode.connect(this.offsetGainNode);
-    // this.offsetGainNode.connect(audioContext.destination);
-
-    // const onsetCurve = this.createSCurveBuffer(this.sourceSamplingRate, Math.PI / 2);
-    // onsetGainNode.gain.setValueCurveAtTime(onsetCurve, 0, this.TAPER_SECS);
 
     this.addCalibrationNode(source);
   };
@@ -205,6 +198,61 @@ class ImpulseResponse extends AudioCalibrator {
     } else {
       throw new Error('The length of the data buffer array must be 1');
     }
+  };
+
+  #createImpulseResponseFilterGraph = (
+    dataBufferArray = [this.#mlsBufferView],
+    invertedImpulseResponseBuffer
+  ) => {
+    const audioCtx = this.makeNewSourceAudioContext();
+
+    // -------------------------------------------------------- IIR
+    const myArrayBuffer = audioCtx.createBuffer(
+      1,
+      // TODO: quality check this
+      invertedImpulseResponseBuffer.length,
+      audioCtx.sampleRate
+    );
+
+    // Fill the buffer with the inverted impulse response
+    const nowBuffering = myArrayBuffer.getChannelData(0);
+    for (let i = 0; i < myArrayBuffer.length; i++) {
+      // audio needs to be in [-1.0; 1.0]
+      nowBuffering[i] = invertedImpulseResponseBuffer[i];
+    }
+
+    const convolver = audioCtx.createConvolver();
+
+    convolver.normalize = false;
+    convolver.channelCount = 1;
+    convolver.buffer = myArrayBuffer;
+
+    // ------------------------------------------------------ MLS
+    const buffer = audioCtx.createBuffer(
+      1, // number of channels
+      dataBuffer.length,
+      audioCtx.sampleRate // sample rate
+    );
+
+    const data = buffer.getChannelData(0); // get data
+    // fill the buffer with our data
+    try {
+      for (let i = 0; i < dataBuffer.length; i += 1) {
+        data[i] = dataBuffer[i];
+      }
+    } catch (error) {
+      console.error(error);
+    }
+
+    const source = audioCtx.createBufferSource();
+
+    source.buffer = buffer;
+    source.loop = true;
+    source.connect(convolver);
+
+    convolver.connect(audioCtx.destination);
+
+    this.addCalibrationNode(source);
   };
 
   /**
@@ -223,12 +271,6 @@ class ImpulseResponse extends AudioCalibrator {
    */
   #stopCalibrationAudio = () => {
     this.calibrationNodes[0].stop();
-    // this.offsetGainNode.gain.setValueAtTime(
-    //   this.offsetGainNode.gain.value,
-    //   this.sourceAudioContext.currentTime
-    // );
-
-    // this.offsetGainNode.gain.setTargetAtTime(0, this.sourceAudioContext.currentTime, 0.5);
     this.emit('update', {message: 'stopping the calibration tone...'});
   };
 
@@ -258,15 +300,32 @@ class ImpulseResponse extends AudioCalibrator {
           stream,
           this.#playCalibrationAudio, // play audio func (required)
           this.#setCalibrationNodesFromBuffer, // before play func
-          this.#awaitSignalOnset, // before record
+          null, // before record
           this.#awaitDesiredMLSLength, // during record
           this.#afterRecord, // after record
+        ],
+      ],
+      [
+        this.calibrationSteps,
+        [
+          stream,
+          this.#playCalibrationAudio, // play audio func (required)
+          this.#createImpulseResponseFilterGraph, // before play func
+          null, // before record
+          this.#awaitDesiredMLSLength, // during record
+          this.#stopCalibrationAudio(), // after record
         ],
       ],
     ]);
 
     // await the server response
     await this.sendImpulseResponsesToServerForProcessing();
+
+    // create node graph = mls -> convolver node
+    // play node graph
+    // record
+    // download
+
     return this.invertedImpulseResponse;
   };
 }
