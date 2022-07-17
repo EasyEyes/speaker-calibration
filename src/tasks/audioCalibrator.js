@@ -93,7 +93,7 @@ class AudioCalibrator extends AudioRecorder {
 
       // eslint-disable-next-line no-await-in-loop
       this.calibrationNodes = [];
-      await sleep(2);
+      await sleep(3);
     }
   };
 
