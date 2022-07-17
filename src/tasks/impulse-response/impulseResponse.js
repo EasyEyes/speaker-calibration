@@ -305,17 +305,6 @@ class ImpulseResponse extends AudioCalibrator {
           this.#afterRecord, // after record
         ],
       ],
-      [
-        this.calibrationSteps,
-        [
-          stream,
-          this.#playCalibrationAudio, // play audio func (required)
-          this.#createImpulseResponseFilterGraph, // before play func
-          null, // before record
-          this.#awaitDesiredMLSLength, // during record
-          this.#stopCalibrationAudio(), // after record
-        ],
-      ],
     ]);
 
     // await the server response
