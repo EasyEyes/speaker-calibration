@@ -121,12 +121,19 @@ class ImpulseResponse extends AudioCalibrator {
    * Called immediately after a recording is captured. Used to process the resulting signal
    * whether by sending the result to a server or by computing a result locally
    */
-  #afterRecord = () => {
+  #afterMLSRecord = () => {
     if (this.#download) {
       this.downloadData();
     }
     this.#stopCalibrationAudio();
     this.sendRecordingToServerForProcessing();
+  };
+
+  #afterMLSwIIRRecord = () => {
+    if (this.#download) {
+      this.downloadData();
+    }
+    this.#stopCalibrationAudio();
   };
 
   /**
@@ -201,58 +208,60 @@ class ImpulseResponse extends AudioCalibrator {
   };
 
   #createImpulseResponseFilterGraph = (
-    dataBufferArray = [this.#mlsBufferView],
-    invertedImpulseResponseBuffer
+    mls = [this.#mlsBufferView][0],
+    iir = this.invertedImpulseResponse
   ) => {
     const audioCtx = this.makeNewSourceAudioContext();
 
     // -------------------------------------------------------- IIR
-    const myArrayBuffer = audioCtx.createBuffer(
+    const iirBuffer = audioCtx.createBuffer(
       1,
       // TODO: quality check this
-      invertedImpulseResponseBuffer.length,
+      iir.length - 1,
       audioCtx.sampleRate
     );
 
     // Fill the buffer with the inverted impulse response
-    const nowBuffering = myArrayBuffer.getChannelData(0);
-    for (let i = 0; i < myArrayBuffer.length; i++) {
+    const iirChannelZeroBuffer = iirBuffer.getChannelData(0);
+    for (let i = 0; i < iirBuffer.length; i++) {
       // audio needs to be in [-1.0; 1.0]
-      nowBuffering[i] = invertedImpulseResponseBuffer[i];
+      iirChannelZeroBuffer[i] = iir[i];
     }
 
-    const convolver = audioCtx.createConvolver();
+    const convolverNode = audioCtx.createConvolver();
 
-    convolver.normalize = false;
-    convolver.channelCount = 1;
-    convolver.buffer = myArrayBuffer;
+    convolverNode.normalize = false;
+    convolverNode.channelCount = 1;
+    convolverNode.buffer = iirBuffer;
 
     // ------------------------------------------------------ MLS
-    const buffer = audioCtx.createBuffer(
+    const mlsBuffer = audioCtx.createBuffer(
       1, // number of channels
-      dataBuffer.length,
+      mls.length,
       audioCtx.sampleRate // sample rate
     );
 
-    const data = buffer.getChannelData(0); // get data
+    const mlsChannelZeroBuffer = mlsBuffer.getChannelData(0); // get data
     // fill the buffer with our data
     try {
-      for (let i = 0; i < dataBuffer.length; i += 1) {
-        data[i] = dataBuffer[i];
+      for (let i = 0; i < mls.length; i += 1) {
+        mlsChannelZeroBuffer[i] = mls[i];
       }
     } catch (error) {
       console.error(error);
     }
 
-    const source = audioCtx.createBufferSource();
+    const sourceNode = audioCtx.createBufferSource();
 
-    source.buffer = buffer;
-    source.loop = true;
-    source.connect(convolver);
+    sourceNode.buffer = mlsBuffer;
+    sourceNode.loop = true;
+    sourceNode.connect(convolverNode);
 
-    convolver.connect(audioCtx.destination);
+    convolverNode.connect(audioCtx.destination);
 
-    this.addCalibrationNode(source);
+    console.log({convolverNode, sourceNode});
+
+    this.addCalibrationNode(sourceNode);
   };
 
   /**
@@ -272,6 +281,34 @@ class ImpulseResponse extends AudioCalibrator {
   #stopCalibrationAudio = () => {
     this.calibrationNodes[0].stop();
     this.emit('update', {message: 'stopping the calibration tone...'});
+  };
+
+  playMLSwithIIR = async (stream, iir) => {
+    this.invertedImpulseResponse = iir;
+    // initialize the MLSGenInterface object with it's factory method
+    await MlsGenInterface.factory(
+      this.#mlsOrder,
+      this.sinkSamplingRate,
+      this.sourceSamplingRate
+    ).then(mlsGenInterface => {
+      this.#mlsGenInterface = mlsGenInterface;
+      this.#mlsBufferView = this.#mlsGenInterface.getMLS();
+    });
+
+    // after intializating, start the calibration steps with garbage collection
+    await this.#mlsGenInterface.withGarbageCollection([
+      [
+        this.calibrationSteps,
+        [
+          stream,
+          this.#playCalibrationAudio, // play audio func (required)
+          this.#createImpulseResponseFilterGraph, // before play func
+          null, // before record
+          this.#awaitDesiredMLSLength, // during record
+          this.#afterMLSwIIRRecord, // after record
+        ],
+      ],
+    ]);
   };
 
   /**
@@ -302,18 +339,14 @@ class ImpulseResponse extends AudioCalibrator {
           this.#setCalibrationNodesFromBuffer, // before play func
           null, // before record
           this.#awaitDesiredMLSLength, // during record
-          this.#afterRecord, // after record
+          this.#afterMLSRecord, // after record
         ],
       ],
     ]);
 
     // await the server response
     await this.sendImpulseResponsesToServerForProcessing();
-
-    // create node graph = mls -> convolver node
-    // play node graph
-    // record
-    // download
+    await this.playMLSwithIIR(stream, this.invertedImpulseResponse);
 
     return this.invertedImpulseResponse;
   };

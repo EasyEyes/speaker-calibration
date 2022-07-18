@@ -3,6 +3,7 @@ window.onload = () => {
   const flexSwitchCheckVolume = document.getElementById('flexSwitchCheckVolume');
   const previousCaptureCSV = document.getElementById('previous-capture-csv');
   const iirCSV = document.getElementById('iir-csv');
+  const playAndRecord = document.getElementById('flexSwitchPlayAndRecord');
   const sendToServerButton = document.getElementById('sendToServerButton');
 
   const {Speaker, VolumeCalibration, ImpulseResponseCalibration} = speakerCalibrator;
@@ -29,17 +30,22 @@ window.onload = () => {
       .then(async buffer => {
         buffer.channelCount = 1;
         buffer.numberOfChannels = 1;
+
         const track = audioCtx.createBufferSource(1, buffer.length, audioCtx.sampleRate);
         track.buffer = buffer;
         track.channelCount = 1;
 
-        const myArrayBuffer = audioCtx.createBuffer(1, invertedIRNorm.length, audioCtx.sampleRate);
+        const convolverBuffer = audioCtx.createBuffer(
+          1,
+          invertedIR.length - 1,
+          audioCtx.sampleRate
+        );
 
         // Fill the buffer with white noise;
         // just random values between -1.0 and 1.0
         // This gives us the actual ArrayBuffer that contains the data
-        const nowBuffering = myArrayBuffer.getChannelData(0);
-        for (let i = 0; i < myArrayBuffer.length; i++) {
+        const nowBuffering = convolverBuffer.getChannelData(0);
+        for (let i = 0; i < convolverBuffer.length; i++) {
           // Math.random() is in [0; 1.0]
           // audio needs to be in [-1.0; 1.0]
           nowBuffering[i] = invertedIRNorm[i];
@@ -48,11 +54,14 @@ window.onload = () => {
         const convolver = audioCtx.createConvolver();
         convolver.normalize = false;
         convolver.channelCount = 1;
-        convolver.buffer = myArrayBuffer;
+        convolver.buffer = convolverBuffer;
+
+        console.log({convolver});
+        console.log({track});
 
         track.connect(convolver);
         convolver.connect(audioCtx.destination);
-        track.start();
+        track.start(0);
       });
   };
 
@@ -106,7 +115,13 @@ window.onload = () => {
         const g_string = e.target.result;
         const g = g_string.split('\n').map(val => parseFloat(val));
         console.log({g});
-        useIRResult(g);
+
+        if (playAndRecord.checked) {
+          // call SC
+          useSpeakerCalibrator(1, g);
+        } else {
+          useIRResult(g);
+        }
       };
 
       reader.readAsText(f);
@@ -124,7 +139,7 @@ window.onload = () => {
     flexSwitchCheckIR.checked = !flexSwitchCheckVolume.checked;
   };
 
-  document.getElementById('calibrationBeginButton').onclick = async () => {
+  const useSpeakerCalibrator = async (calibrationLevel = 0, iir) => {
     let invertedIR;
     const spinner = document.getElementById('spinner');
     const calibrationResult = document.getElementById('calibrationResult');
@@ -148,34 +163,22 @@ window.onload = () => {
       updateTarget.innerHTML = message;
     });
 
-    const runVolumeCalibration = async () => {
-      try {
-        const dbSPL = await Speaker.startCalibration(
-          speakerParameters,
-          VolumeCalibration,
-          calibratorParams
-        );
-        calibrationResult.innerText = `Sound Gain ${dbSPL.toFixed(3)} dB SPL`;
-        calibrationResult.classList.remove('d-none');
-      } catch (err) {
-        calibrationResult.innerText = `${err.name}: ${err.message}`;
-      }
-    };
-
     const runImpulseResponseCalibration = async () => {
       try {
-        invertedIR = await Speaker.startCalibration(speakerParameters, calibrator);
-        console.log({invertedIR});
-        await useIRResult(invertedIR);
+        if (calibrationLevel == 0) {
+          invertedIR = await Speaker.startCalibration(speakerParameters, calibrator);
+          console.log({invertedIR});
+          await useIRResult(invertedIR);
+        } else {
+          await Speaker.testIIR(speakerParameters, calibrator, iir);
+        }
       } catch (err) {
         calibrationResult.innerText = `${err.name}: ${err.message}`;
       }
     };
 
-    if (flexSwitchCheckIR.checked) {
-      runImpulseResponseCalibration();
-    } else {
-      runVolumeCalibration();
-    }
+    runImpulseResponseCalibration();
   };
+
+  document.getElementById('calibrationBeginButton').onclick = useSpeakerCalibrator;
 };

@@ -83,6 +83,49 @@ class Speaker extends AudioPeer {
     });
   };
 
+  static testIIR = async (params, CalibratorInstance, IIR, timeOut = 180000) => {
+    window.speaker = new Speaker(params, CalibratorInstance);
+    const {speaker} = window;
+
+    // wrap the calibration process in a promise so we can await it
+    return new Promise((resolve, reject) => {
+      // when a call is received
+      speaker.peer.on('call', async call => {
+        // Answer the call (one way)
+        call.answer();
+        speaker.#removeUIElems();
+        speaker.#showSpinner();
+        speaker.ac.createLocalAudio(document.getElementById(speaker.targetElement));
+        // when we start receiving audio
+        call.on('stream', async stream => {
+          window.localStream = stream;
+          window.localAudio.srcObject = stream;
+          window.localAudio.autoplay = false;
+
+          // if the sinkSamplingRate is not set sleep
+          while (!speaker.ac.sampleRatesSet()) {
+            console.log('SinkSamplingRate is undefined, sleeping');
+            await sleep(1);
+          }
+          // resolve when we have a result
+          speaker.result = await speaker.ac.playMLSwithIIR(stream, IIR);
+          speaker.#removeUIElems();
+          resolve(speaker.result);
+        });
+        // if we do not receive a result within the timeout, reject
+        setTimeout(() => {
+          reject(
+            new CalibrationTimedOutError(
+              `Calibration failed to produce a result after ${
+                timeOut / 1000
+              } seconds. Please try again.`
+            )
+          );
+        }, timeOut);
+      });
+    });
+  };
+
   /**
    * Called after the peer conncection has been opened.
    * Generates a QR code for the connection and displays it.
