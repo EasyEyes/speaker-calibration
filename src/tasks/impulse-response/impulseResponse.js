@@ -168,6 +168,25 @@ class ImpulseResponse extends AudioCalibrator {
    * Construct a Calibration Node with the calibration parameters.
    * @private
    */
+  #createPureTonenNode = CALIBRATION_TONE_FREQUENCY => {
+    const audioContext = this.makeNewSourceAudioContext();
+    const oscilator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+
+    oscilator.frequency.value = CALIBRATION_TONE_FREQUENCY;
+    oscilator.type = 'sine';
+    gainNode.gain.value = 0.04;
+
+    oscilator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+
+    this.addCalibrationNode(oscilator);
+  };
+
+  /**
+   * Construct a Calibration Node with the calibration parameters.
+   * @private
+   */
   #createCalibrationNodeFromBuffer = dataBuffer => {
     const audioContext = this.makeNewSourceAudioContext();
     const buffer = audioContext.createBuffer(
@@ -207,10 +226,7 @@ class ImpulseResponse extends AudioCalibrator {
     }
   };
 
-  #createImpulseResponseFilterGraph = (
-    mls = [this.#mlsBufferView][0],
-    iir = this.invertedImpulseResponse
-  ) => {
+  #createImpulseResponseFilterGraph = (calibrationSignal, iir) => {
     const audioCtx = this.makeNewSourceAudioContext();
 
     // -------------------------------------------------------- IIR
@@ -235,17 +251,17 @@ class ImpulseResponse extends AudioCalibrator {
     convolverNode.buffer = iirBuffer;
 
     // ------------------------------------------------------ MLS
-    const mlsBuffer = audioCtx.createBuffer(
+    const calibrationSignalBuffer = audioCtx.createBuffer(
       1, // number of channels
-      mls.length,
+      calibrationSignal.length,
       audioCtx.sampleRate // sample rate
     );
 
-    const mlsChannelZeroBuffer = mlsBuffer.getChannelData(0); // get data
+    const mlsChannelZeroBuffer = calibrationSignalBuffer.getChannelData(0); // get data
     // fill the buffer with our data
     try {
-      for (let i = 0; i < mls.length; i += 1) {
-        mlsChannelZeroBuffer[i] = mls[i];
+      for (let i = 0; i < calibrationSignal.length; i += 1) {
+        mlsChannelZeroBuffer[i] = calibrationSignal[i];
       }
     } catch (error) {
       console.error(error);
@@ -253,7 +269,7 @@ class ImpulseResponse extends AudioCalibrator {
 
     const sourceNode = audioCtx.createBufferSource();
 
-    sourceNode.buffer = mlsBuffer;
+    sourceNode.buffer = calibrationSignalBuffer;
     sourceNode.loop = true;
     sourceNode.connect(convolverNode);
 
@@ -262,6 +278,12 @@ class ImpulseResponse extends AudioCalibrator {
     console.log({convolverNode, sourceNode});
 
     this.addCalibrationNode(sourceNode);
+  };
+
+  #createIIRwToneGraph = () => {};
+
+  #createIIRwMLSGraph = () => {
+    this.#createImpulseResponseFilterGraph(this.impulseResponses, [this.#mlsBufferView][0]);
   };
 
   /**

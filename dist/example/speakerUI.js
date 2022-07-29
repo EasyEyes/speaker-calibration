@@ -5,6 +5,7 @@ window.onload = () => {
   const iirCSV = document.getElementById('iir-csv');
   const playAndRecord = document.getElementById('flexSwitchPlayAndRecord');
   const sendToServerButton = document.getElementById('sendToServerButton');
+  const wavFile = document.getElementById('wav-file');
 
   const {Speaker, VolumeCalibration, ImpulseResponseCalibration} = speakerCalibrator;
 
@@ -128,8 +129,21 @@ window.onload = () => {
     }
   };
 
+  const handleWavFileUpload = e => {
+    var sound = document.getElementById('sound');
+    sound.src = URL.createObjectURL(e.target.files[0]);
+    // not really needed in this exact case, but since it is really important in other cases,
+    // don't forget to revoke the blobURI when you don't need it
+    sound.onend = e => {
+      URL.revokeObjectURL(e.tartget.src);
+    };
+  };
+
   previousCaptureCSV.addEventListener('change', handlePreviousCaptureUpload);
+
   iirCSV.addEventListener('change', handleIIRUplaod);
+
+  wavFile.addEventListener('change', handleWavFileUpload);
 
   flexSwitchCheckIR.onchange = () => {
     flexSwitchCheckVolume.checked = !flexSwitchCheckIR.checked;
