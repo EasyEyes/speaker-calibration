@@ -48,6 +48,7 @@
     "eslint-config-prettier": "^8.4.0",
     "eslint-plugin-compat": "^4.0.2",
     "eslint-plugin-import": "^2.25.4",
+    "eslint-plugin-jsdoc": "^39.3.4",
     "eslint-plugin-no-floating-promise": "^1.0.2",
     "express": "^4.17.1",
     "jest": "^27.5.1",

@@ -4,14 +4,14 @@
     "es2021": true
   },
   "extends": ["airbnb-base", "prettier", "plugin:compat/recommended"],
-  "plugins": ["no-floating-promise"],
+  "plugins": ["no-floating-promise", "jsdoc"],
   "parserOptions": {
     "ecmaVersion": "latest",
     "sourceType": "module"
   },
   "rules": {
-    "no-console": 0, //TODO: set to 1 in final submission
-    "class-methods-use-this": 0, //TODO: set to 1 in final submission
+    "no-console": 1, //TODO: set to 1 in final submission
+    "class-methods-use-this": 1, //TODO: set to 1 in final submission
     "require-jsdoc": [
       "error",
       {

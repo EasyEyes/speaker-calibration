@@ -1,22 +1,36 @@
-/* eslint-disable no-await-in-loop */
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>JSDoc: Source: tasks/audioCalibrator.js</title>
+
+    <script src="scripts/prettify/prettify.js"></script>
+    <script src="scripts/prettify/lang-css.js"></script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css" />
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css" />
+  </head>
+
+  <body>
+    <div id="main">
+      <h1 class="page-title">Source: tasks/audioCalibrator.js</h1>
+
+      <section>
+        <article>
+          <pre class="prettyprint source linenums"><code>/* eslint-disable no-await-in-loop */
 import AudioRecorder from './audioRecorder';
 import PythonServerAPI from '../server/PythonServerAPI';
 import {sleep, saveToCSV} from '../utils';
 
 /**
- * .
- * .
- * .
  * Provides methods for calibrating the user's speakers
- *
  * @extends AudioRecorder
  */
 class AudioCalibrator extends AudioRecorder {
   /**
    *
-   * @param numCaptures
-   * @param numMLSPerCapture
-   * @example
    */
   constructor(numCaptures = 1, numMLSPerCapture = 1) {
     super();
@@ -32,7 +46,7 @@ class AudioCalibrator extends AudioRecorder {
   sourceAudioContext;
 
   /** @protected */
-  numCalibratingRounds = 1;
+  numCalibratingRounds;
 
   /** @protected */
   numSuccessfulCaptured = 0;
@@ -49,9 +63,6 @@ class AudioCalibrator extends AudioRecorder {
   /**
    * Called when a call is received.
    * Creates a local audio DOM element and attaches it to the page.
-   *
-   * @param targetElement
-   * @example
    */
   createLocalAudio = targetElement => {
     this.localAudio = document.createElement('audio');
@@ -67,113 +78,56 @@ class AudioCalibrator extends AudioRecorder {
    * @param {*} beforeRecord - (async) function that is called before recording
    * @param {*} duringRecord - (async) function that is called while recording
    * @param {*} afterRecord  - (async) function that is called after recording
-   * @example
    */
   calibrationSteps = async (
     stream,
     playCalibrationAudio,
     beforePlay = async () => {},
     beforeRecord = async () => {},
-    loopCondition = () => false,
     duringRecord = async () => {},
     afterRecord = async () => {}
   ) => {
     this.numSuccessfulCaptured = 0;
 
-    // do something before playing such as using the MLS to fill the buffers
-    console.warn('beforePlay');
-    await beforePlay();
-
-    // play calibration audio
-    console.warn('playCalibrationAudio');
-    playCalibrationAudio();
-
     // do something before recording such as awaiting a certain amount of time
-    console.warn('beforeRecord');
     await beforeRecord();
 
     // calibration loop
-    while (loopCondition()) {
-      // start recording
-      console.warn('startRecording');
-      await this.startRecording(stream);
-
-      // do something during the recording such as sleep n amount of time
-      console.warn('duringRecord');
-      await duringRecord();
-
-      // when done, stop recording
-      console.warn('stopRecording');
-      await this.stopRecording();
-
-      // do something after recording such as start processing values
-      console.warn('afterRecord');
-      await afterRecord();
-
-      // eslint-disable-next-line no-await-in-loop
-      await sleep(1);
-    }
-  };
-
-  /**
-   *
-   * @param {MediaStream} stream
-   * @param {Function} playCalibrationAudio - (async) function that plays the calibration audio
-   * @param {*} beforeRecord - (async) function that is called before recording
-   * @param {*} afterRecord  - (async) function that is called after recording
-   */
-  volumeCalibrationSteps = async (
-    stream,
-    playCalibrationAudio,
-    beforeRecord = () => {},
-    afterRecord = () => {}
-  ) => {
-    this.numCalibratingRoundsCompleted = 0;
-
-    // calibration loop
-    while (!this.#isCalibrating && this.numCalibratingRoundsCompleted < this.numCalibratingRounds) {
-      // before recording
-      await beforeRecord();
+    while (this.numSuccessfulCaptured &lt; this.numCaptures) {
+      // do something before playing such as using the MLS to fill the buffers
+      await beforePlay();
 
       // start recording
       await this.startRecording(stream);
 
       // play calibration audio
-      console.log(`Calibration Round ${this.numCalibratingRoundsCompleted}`);
-      await playCalibrationAudio();
+      playCalibrationAudio();
+
+      // do something during the recording such as sleep n amount of time
+      await duringRecord();
 
       // when done, stop recording
-      console.log('Calibration Round Complete');
       await this.stopRecording();
 
-      // after recording
+      // do something after recording such as start processing values
       await afterRecord();
 
-      this.calibrationNodes = [];
-
       // eslint-disable-next-line no-await-in-loop
-      await sleep(2);
-      this.numCalibratingRoundsCompleted += 1;
+      this.calibrationNodes = [];
+      await sleep(3);
     }
   };
 
   /**
    * Getter for the isCalibrating property.
-   *
    * @public
-   * @returns - True if the audio is being calibrated, false otherwise.
-   * @example
+   * @returns {Boolean} - True if the audio is being calibrated, false otherwise.
    */
   getCalibrationStatus = () => this.#isCalibrating;
 
-  /** .
-   * .
-   * .
+  /**
    * Set the sampling rate to the value received from the listener
-   *
    * @param {*} sinkSamplingRate
-   * @param samplingRate
-   * @example
    */
   setSamplingRates = samplingRate => {
     this.sinkSamplingRate = samplingRate;
@@ -181,7 +135,7 @@ class AudioCalibrator extends AudioRecorder {
     this.emit('update', {message: `sampling at ${samplingRate}Hz...`});
   };
 
-  sampleRatesSet = () => this.sourceSamplingRate && this.sinkSamplingRate;
+  sampleRatesSet = () => this.sourceSamplingRate &amp;&amp; this.sinkSamplingRate;
 
   addCalibrationNode = node => {
     this.calibrationNodes.push(node);
@@ -199,12 +153,8 @@ class AudioCalibrator extends AudioRecorder {
     return this.sourceAudioContext;
   };
 
-  /** .
-   * .
-   * .
+  /**
    * Download the result of the calibration roudns
-   *
-   * @example
    */
   downloadData = () => {
     const recordings = this.getAllRecordedSignals();
@@ -214,3 +164,44 @@ class AudioCalibrator extends AudioRecorder {
 }
 
 export default AudioCalibrator;
+</code></pre>
+        </article>
+      </section>
+    </div>
+
+    <nav>
+      <h2><a href="index.html">Home</a></h2>
+      <h3>Classes</h3>
+      <ul>
+        <li><a href="AudioCalibrator.html">AudioCalibrator</a></li>
+        <li><a href="AudioPeer.html">AudioPeer</a></li>
+        <li><a href="AudioRecorder.html">AudioRecorder</a></li>
+        <li><a href="ImpulseResponse.html">ImpulseResponse</a></li>
+        <li><a href="Listener.html">Listener</a></li>
+        <li><a href="MlsGenInterface.html">MlsGenInterface</a></li>
+        <li><a href="MyEventEmitter.html">MyEventEmitter</a></li>
+        <li><a href="PythonServerAPI.html">PythonServerAPI</a></li>
+        <li><a href="Speaker.html">Speaker</a></li>
+        <li><a href="Volume.html">Volume</a></li>
+      </ul>
+      <h3>Global</h3>
+      <ul>
+        <li><a href="global.html#csvToArray">csvToArray</a></li>
+        <li><a href="global.html#saveToCSV">saveToCSV</a></li>
+        <li><a href="global.html#sleep">sleep</a></li>
+      </ul>
+    </nav>
+
+    <br class="clear" />
+
+    <footer>
+      Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.10</a> on Fri
+      Jul 29 2022 15:09:48 GMT-0400 (Eastern Daylight Time)
+    </footer>
+
+    <script>
+      prettyPrint();
+    </script>
+    <script src="scripts/linenumber.js"></script>
+  </body>
+</html>

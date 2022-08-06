@@ -51,13 +51,139 @@
               <dd class="tag-source">
                 <ul class="dummy">
                   <li>
-                    <a href="mlsGen_mlsGenInterface.js.html">mlsGen/mlsGenInterface.js</a>,
-                    <a href="mlsGen_mlsGenInterface.js.html#line7">line 7</a>
+                    <a href="tasks_impulse-response_mlsGen_mlsGenInterface.js.html"
+                      >tasks/impulse-response/mlsGen/mlsGenInterface.js</a
+                    >,
+                    <a href="tasks_impulse-response_mlsGen_mlsGenInterface.js.html#line9">line 9</a>
                   </li>
                 </ul>
               </dd>
             </dl>
           </div>
+
+          <h3 class="subsection-title">Members</h3>
+
+          <h4 class="name" id="factory">
+            <span class="type-signature"></span>factory<span class="type-signature"></span>
+          </h4>
+
+          <div class="description">
+            Factory function that provide an asynchronous function that fetches the WASM module and
+            returns a promise that resolves when the module is loaded.
+          </div>
+
+          <dl class="details">
+            <dt class="tag-source">Source:</dt>
+            <dd class="tag-source">
+              <ul class="dummy">
+                <li>
+                  <a href="tasks_impulse-response_mlsGen_mlsGenInterface.js.html"
+                    >tasks/impulse-response/mlsGen/mlsGenInterface.js</a
+                  >,
+                  <a href="tasks_impulse-response_mlsGen_mlsGenInterface.js.html#line42">line 42</a>
+                </li>
+              </ul>
+            </dd>
+          </dl>
+
+          <h4 class="name" id="getImpulseResponse">
+            <span class="type-signature"></span>getImpulseResponse<span
+              class="type-signature"
+            ></span>
+          </h4>
+
+          <div class="description">
+            Calculate and return the Impulse Response of the recorded signal.
+          </div>
+
+          <dl class="details">
+            <dt class="tag-source">Source:</dt>
+            <dd class="tag-source">
+              <ul class="dummy">
+                <li>
+                  <a href="tasks_impulse-response_mlsGen_mlsGenInterface.js.html"
+                    >tasks/impulse-response/mlsGen/mlsGenInterface.js</a
+                  >,
+                  <a href="tasks_impulse-response_mlsGen_mlsGenInterface.js.html#line89">line 89</a>
+                </li>
+              </ul>
+            </dd>
+          </dl>
+
+          <h4 class="name" id="getMLS">
+            <span class="type-signature"></span>getMLS<span class="type-signature"></span>
+          </h4>
+
+          <div class="description">
+            Calculate the Maximum Length Sequence (MLS) with period P = 2^N - 1 using the MLSGen
+            WASM module.
+          </div>
+
+          <dl class="details">
+            <dt class="tag-source">Source:</dt>
+            <dd class="tag-source">
+              <ul class="dummy">
+                <li>
+                  <a href="tasks_impulse-response_mlsGen_mlsGenInterface.js.html"
+                    >tasks/impulse-response/mlsGen/mlsGenInterface.js</a
+                  >,
+                  <a href="tasks_impulse-response_mlsGen_mlsGenInterface.js.html#line110"
+                    >line 110</a
+                  >
+                </li>
+              </ul>
+            </dd>
+          </dl>
+
+          <h4 class="name" id="setRecordedSignals">
+            <span class="type-signature"></span>setRecordedSignals<span
+              class="type-signature"
+            ></span>
+          </h4>
+
+          <div class="description">
+            Given a recorded MLS signal, this function sets the recordedSignal property of the
+            MLSGen object.
+          </div>
+
+          <dl class="details">
+            <dt class="tag-source">Source:</dt>
+            <dd class="tag-source">
+              <ul class="dummy">
+                <li>
+                  <a href="tasks_impulse-response_mlsGen_mlsGenInterface.js.html"
+                    >tasks/impulse-response/mlsGen/mlsGenInterface.js</a
+                  >,
+                  <a href="tasks_impulse-response_mlsGen_mlsGenInterface.js.html#line95">line 95</a>
+                </li>
+              </ul>
+            </dd>
+          </dl>
+
+          <h4 class="name" id="withGarbageCollection">
+            <span class="type-signature"></span>withGarbageCollection<span
+              class="type-signature"
+            ></span>
+          </h4>
+
+          <div class="description">
+            A Higher-Order function that takes an async callback function that access the MLSGen
+            object, providing safe garbage collection.
+          </div>
+
+          <dl class="details">
+            <dt class="tag-source">Source:</dt>
+            <dd class="tag-source">
+              <ul class="dummy">
+                <li>
+                  <a href="tasks_impulse-response_mlsGen_mlsGenInterface.js.html"
+                    >tasks/impulse-response/mlsGen/mlsGenInterface.js</a
+                  >,
+                  <a href="tasks_impulse-response_mlsGen_mlsGenInterface.js.html#line60">line 60</a>
+                </li>
+              </ul>
+            </dd>
+          </dl>
         </article>
       </section>
     </div>
@@ -69,18 +195,27 @@
         <li><a href="AudioCalibrator.html">AudioCalibrator</a></li>
         <li><a href="AudioPeer.html">AudioPeer</a></li>
         <li><a href="AudioRecorder.html">AudioRecorder</a></li>
+        <li><a href="ImpulseResponse.html">ImpulseResponse</a></li>
         <li><a href="Listener.html">Listener</a></li>
         <li><a href="MlsGenInterface.html">MlsGenInterface</a></li>
+        <li><a href="MyEventEmitter.html">MyEventEmitter</a></li>
+        <li><a href="PythonServerAPI.html">PythonServerAPI</a></li>
         <li><a href="Speaker.html">Speaker</a></li>
+        <li><a href="Volume.html">Volume</a></li>
       </ul>
-      <h3><a href="global.html">Global</a></h3>
+      <h3>Global</h3>
+      <ul>
+        <li><a href="global.html#csvToArray">csvToArray</a></li>
+        <li><a href="global.html#saveToCSV">saveToCSV</a></li>
+        <li><a href="global.html#sleep">sleep</a></li>
+      </ul>
     </nav>
 
     <br class="clear" />
 
     <footer>
-      Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.10</a> on Tue
-      Mar 01 2022 12:39:42 GMT-0500 (Eastern Standard Time)
+      Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.10</a> on Fri
+      Jul 29 2022 15:09:48 GMT-0400 (Eastern Daylight Time)
     </footer>
 
     <script>

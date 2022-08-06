@@ -1,4 +1,25 @@
-import QRCode from 'qrcode';
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>JSDoc: Source: peer-connection/speaker.js</title>
+
+    <script src="scripts/prettify/prettify.js"></script>
+    <script src="scripts/prettify/lang-css.js"></script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css" />
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css" />
+  </head>
+
+  <body>
+    <div id="main">
+      <h1 class="page-title">Source: peer-connection/speaker.js</h1>
+
+      <section>
+        <article>
+          <pre class="prettyprint source linenums"><code>import QRCode from 'qrcode';
 import AudioPeer from './audioPeer';
 import {sleep} from '../utils';
 import {
@@ -10,16 +31,13 @@ import {
 /**
  * @class Handles the speaker's side of the connection. Responsible for initiating the connection,
  * rendering the QRCode, and answering the call.
- * @augments AudioPeer
+ * @extends AudioPeer
  */
 class Speaker extends AudioPeer {
   /**
    * Takes the url of the current site and a target element where html elements will be appended.
-   *
-   * @param params - See type definition for initParameters.
-   * @param Calibrator - An instance of the AudioCalibrator class, should not use AudioCalibrator directly, instead use an extended class available in /tasks/.
-   * @param CalibratorInstance
-   * @example
+   * @param {initParameters} params - see type definition for initParameters
+   * @param {AudioCalibrator} Calibrator - An instance of the AudioCalibrator class, should not use AudioCalibrator directly, instead use an extended class available in /tasks/
    */
   constructor(params, CalibratorInstance) {
     super(params);
@@ -38,13 +56,10 @@ class Speaker extends AudioPeer {
 
   /**
    * Async factory method that creates the Speaker object, and returns a promise that resolves to the result of the calibration.
-   *
-   * @param params - The parameters to be passed to the peer object.
-   * @param Calibrator - The class that defines the calibration process.
-   * @param CalibratorInstance
-   * @param timeOut - The amount of time to wait before timing out the connection (in milliseconds).
+   * @param {*} params - The parameters to be passed to the peer object.
+   * @param {*} Calibrator - The class that defines the calibration process
+   * @param {Number} timeOut - The amount of time to wait before timing out the connection (in milliseconds)
    * @public
-   * @example
    */
   static startCalibration = async (params, CalibratorInstance, timeOut = 180000) => {
     window.speaker = new Speaker(params, CalibratorInstance);
@@ -135,9 +150,7 @@ class Speaker extends AudioPeer {
   /**
    * Called after the peer conncection has been opened.
    * Generates a QR code for the connection and displays it.
-   *
    * @private
-   * @example
    */
   #showQRCode = () => {
     // Get query string, the URL parameters to specify a Listener
@@ -191,11 +204,8 @@ class Speaker extends AudioPeer {
   /**
    * Called when the peer connection is opened.
    * Saves the peer id and calls the QR code generator.
-   *
-   * @param peerId - The peer id of the peer connection.
-   * @param id
+   * @param {object} peerId - The peer id of the peer connection
    * @private
-   * @example
    */
   #onPeerOpen = id => {
     // Workaround for peer.reconnect deleting previous id
@@ -216,14 +226,12 @@ class Speaker extends AudioPeer {
   /**
    * Called when the peer connection is established.
    * Enforces a single connection.
-   *
-   * @param connection - The connection object.
+   * @param {*} connection - The connection object
    * @private
-   * @example
    */
   #onPeerConnection = connection => {
     // Allow only a single connection
-    if (this.conn && this.conn.open) {
+    if (this.conn &amp;&amp; this.conn.open) {
       connection.on('open', () => {
         connection.send('Already connected to another client');
         setTimeout(() => {
@@ -240,9 +248,7 @@ class Speaker extends AudioPeer {
 
   /**
    * Called when the peer connection is closed.
-   *
    * @private
-   * @example
    */
   #onPeerClose = () => {
     this.conn = null;
@@ -252,9 +258,7 @@ class Speaker extends AudioPeer {
   /**
    * Called when the peer connection is disconnected.
    * Attempts to reconnect.
-   *
    * @private
-   * @example
    */
   #onPeerDisconnected = () => {
     console.log('Connection lost. Please reconnect');
@@ -268,10 +272,8 @@ class Speaker extends AudioPeer {
 
   /**
    * Called when the peer connection encounters an error.
-   *
-   * @param error
+   * @param {*} error
    * @private
-   * @example
    */
   #onPeerError = error => {
     // TODO: check if this function is needed or not
@@ -280,10 +282,8 @@ class Speaker extends AudioPeer {
 
   /**
    * Called when data is received from the peer connection.
-   *
-   * @param data
+   * @param {*} data
    * @private
-   * @example
    */
   #onIncomingData = data => {
     // enforce object type
@@ -310,26 +310,20 @@ class Speaker extends AudioPeer {
 
   /**
    * Called when the peer connection is #ready.
-   *
    * @private
-   * @example
    */
   #ready = () => {
     // Perform callback with data
     this.conn.on('data', this.#onIncomingData);
     this.conn.on('close', () => {
-      console.log('Connection reset<br>Awaiting connection...');
+      console.log('Connection reset&lt;br>Awaiting connection...');
       this.conn = null;
     });
   };
 
-  /** .
-   * .
-   * .
+  /**
    * Debug method for downloading the recorded audio
-   *
    * @public
-   * @example
    */
   downloadData = () => {
     this.ac.downloadData();
@@ -344,3 +338,44 @@ https://stackoverflow.com/questions/879152/how-do-i-make-javascript-beep [3]
 */
 
 export default Speaker;
+</code></pre>
+        </article>
+      </section>
+    </div>
+
+    <nav>
+      <h2><a href="index.html">Home</a></h2>
+      <h3>Classes</h3>
+      <ul>
+        <li><a href="AudioCalibrator.html">AudioCalibrator</a></li>
+        <li><a href="AudioPeer.html">AudioPeer</a></li>
+        <li><a href="AudioRecorder.html">AudioRecorder</a></li>
+        <li><a href="ImpulseResponse.html">ImpulseResponse</a></li>
+        <li><a href="Listener.html">Listener</a></li>
+        <li><a href="MlsGenInterface.html">MlsGenInterface</a></li>
+        <li><a href="MyEventEmitter.html">MyEventEmitter</a></li>
+        <li><a href="PythonServerAPI.html">PythonServerAPI</a></li>
+        <li><a href="Speaker.html">Speaker</a></li>
+        <li><a href="Volume.html">Volume</a></li>
+      </ul>
+      <h3>Global</h3>
+      <ul>
+        <li><a href="global.html#csvToArray">csvToArray</a></li>
+        <li><a href="global.html#saveToCSV">saveToCSV</a></li>
+        <li><a href="global.html#sleep">sleep</a></li>
+      </ul>
+    </nav>
+
+    <br class="clear" />
+
+    <footer>
+      Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.10</a> on Fri
+      Jul 29 2022 15:09:48 GMT-0400 (Eastern Daylight Time)
+    </footer>
+
+    <script>
+      prettyPrint();
+    </script>
+    <script src="scripts/linenumber.js"></script>
+  </body>
+</html>

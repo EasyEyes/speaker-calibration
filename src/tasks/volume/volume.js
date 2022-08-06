@@ -8,10 +8,12 @@ import {sleep} from '../../utils';
 class Volume extends AudioCalibrator {
   /**
    *
+   * @param root0
+   * @param root0.download
+   * @param root0.numCalibrationRounds
+   * @param root0.numCalibrationNodes
+   * @example
    */
-  constructor({download = false, numCalibrationRounds = 1, numCalibrationNodes = 1}) {
-    super(numCalibrationRounds, numCalibrationNodes);
-  }
 
   /** @private */
   #CALIBRATION_TONE_FREQUENCY = 1000; // Hz
@@ -38,6 +40,11 @@ class Volume extends AudioCalibrator {
     const start = Math.floor(left * this.sourceSamplingRate);
     const end = Math.floor(right * this.sourceSamplingRate);
     const result = Array.from(this.getLastRecordedSignal().slice(start, end));
+
+    /**
+     * function to check that capture was properly made
+     * @param {*} list
+     */
     const checkResult = list => {
       const setItem = new Set(list);
       if (setItem.size === 1 && setItem.has(0)) {
@@ -56,7 +63,9 @@ class Volume extends AudioCalibrator {
 
   /**
    * Construct a Calibration Node with the calibration parameters.
+   *
    * @private
+   * @example
    */
   #createCalibrationNode = () => {
     const audioContext = this.makeNewSourceAudioContext();
@@ -74,15 +83,11 @@ class Volume extends AudioCalibrator {
   };
 
   #playCalibrationAudio = async () => {
-    const actualDuration = this.#CALIBRATION_TONE_DURATION * this.numCalibrationNodes;
-    const totalDuration = actualDuration * 1.2;
-    for (let i = 0; i < this.calibrationNodes.length; i += 1) {
-      this.calibrationNodes[i].start(i * this.#CALIBRATION_TONE_DURATION);
-      this.calibrationNodes[i].stop(
-        i * this.#CALIBRATION_TONE_DURATION + this.#CALIBRATION_TONE_DURATION
-      );
-    }
-    console.log(`Playing a buffer of ${actualDuration} seconds of audio`);
+    const totalDuration = this.#CALIBRATION_TONE_DURATION * 1.2;
+
+    this.calibrationNodes[0].start(0);
+    this.calibrationNodes[0].stop(totalDuration);
+    console.log(`Playing a buffer of ${this.#CALIBRATION_TONE_DURATION} seconds of audio`);
     console.log(`Waiting a total of ${totalDuration} seconds`);
     await sleep(totalDuration);
   };
@@ -106,7 +111,8 @@ class Volume extends AudioCalibrator {
 
   startCalibration = async stream => {
     do {
-      await this.calibrationSteps(
+      // eslint-disable-next-line no-await-in-loop
+      await this.volumeCalibrationSteps(
         stream,
         this.#playCalibrationAudio,
         this.#createCalibrationNode,

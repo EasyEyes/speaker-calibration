@@ -1,4 +1,25 @@
-import Peer from 'peerjs';
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>JSDoc: Source: peer-connection/audioPeer.js</title>
+
+    <script src="scripts/prettify/prettify.js"></script>
+    <script src="scripts/prettify/lang-css.js"></script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css" />
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css" />
+  </head>
+
+  <body>
+    <div id="main">
+      <h1 class="page-title">Source: peer-connection/audioPeer.js</h1>
+
+      <section>
+        <article>
+          <pre class="prettyprint source linenums"><code>import Peer from 'peerjs';
 
 // TODO: this was already here before, but appears to be unused
 const pressFeedbackURI =
@@ -7,8 +28,8 @@ const pressFeedbackURI =
 /**
  * @typedef initParameters - Parameters for initializing the AudioPeer
  * @type {object}
- * @property {string} targetElementId - Target element where new elements will be appended.
- * @property {string} siteUrl: The url of the current site.
+ * @property {string} targetElementId - target element where new elements will be appended
+ * @property {string} siteUrl: the url of the current site
  */
 const initParameters = {
   targetElementId: null,
@@ -24,10 +45,7 @@ class AudioPeer {
   /**
    * Creates an instance of AudioPeer
    * Takes the url of the current site and a target element where html elements will be appended.
-   *
-   * @param params - See type definition for initParameters.
-   * @param param
-   * @example
+   * @param {initParameters} params - see type definition for initParameters
    */
   constructor(param = initParameters) {
     // PeerJS
@@ -54,14 +72,10 @@ class AudioPeer {
       window.audioContext)();
   }
 
-  /** .
-   * .
-   * .
+  /**
    * Helper method to display information to DOM element
-   *
    * @param {string} message
    * @param {boolean} append
-   * @example
    */
   displayUpdate = (message, append = true) => {
     // If the specified elem exists, update that elem
@@ -79,9 +93,7 @@ class AudioPeer {
 
   /**
    * Callback method for when a peer connection is lost
-   * saves the last peer id, last server id, and attempts to reconnect.
-   *
-   * @example
+   * saves the last peer id, last server id, and attempts to reconnect
    */
   onPeerDisconnected = () => {
     this.displayUpdate('Connection lost. Please reconnect');
@@ -93,59 +105,84 @@ class AudioPeer {
     this.peer.reconnect();
   };
 
-  /** .
-   * .
-   * .
+  /**
    * Callback method that cleans up after peer connection is closed
-   *
-   * @example
    */
   onPeerClose = () => {
     this.displayUpdate('Connection closed');
     this.conn = null;
   };
 
-  /** .
-   * .
-   * .
+  /**
    * Helper method for when an error occurs
-   *
    * @param {*} err
-   * @example
    */
   onPeerError = err => {
     this.displayUpdate(err);
     console.log(`${err}`);
   };
 
-  /** .
-   * .
-   * .
+  /**
    * Helper method that converts url paramters to an object
-   *
    * @returns {object}
-   * @example
    */
   parseURLSearchParams = () =>
     // SOURCE: chickens, https://stackoverflow.com/questions/8648892/how-to-convert-url-parameters-to-a-javascript-object
     // eslint-disable-next-line no-restricted-globals
     Object.fromEntries(new URLSearchParams(location.search));
 
-  /** .
-   * .
-   * .
+  /**
    * Helper method that converts an object to a query string
-   *
    * @param {object} params
    * @returns {string}
-   * @example
    */
   queryStringFromObject = params =>
     Object.keys(params)
       .map(key => `${key}=${params[key]}`)
-      .join('&');
+      .join('&amp;');
 
   static keypressFeedbackSound = pressFeedbackURI;
 }
 
 export default AudioPeer;
+</code></pre>
+        </article>
+      </section>
+    </div>
+
+    <nav>
+      <h2><a href="index.html">Home</a></h2>
+      <h3>Classes</h3>
+      <ul>
+        <li><a href="AudioCalibrator.html">AudioCalibrator</a></li>
+        <li><a href="AudioPeer.html">AudioPeer</a></li>
+        <li><a href="AudioRecorder.html">AudioRecorder</a></li>
+        <li><a href="ImpulseResponse.html">ImpulseResponse</a></li>
+        <li><a href="Listener.html">Listener</a></li>
+        <li><a href="MlsGenInterface.html">MlsGenInterface</a></li>
+        <li><a href="MyEventEmitter.html">MyEventEmitter</a></li>
+        <li><a href="PythonServerAPI.html">PythonServerAPI</a></li>
+        <li><a href="Speaker.html">Speaker</a></li>
+        <li><a href="Volume.html">Volume</a></li>
+      </ul>
+      <h3>Global</h3>
+      <ul>
+        <li><a href="global.html#csvToArray">csvToArray</a></li>
+        <li><a href="global.html#saveToCSV">saveToCSV</a></li>
+        <li><a href="global.html#sleep">sleep</a></li>
+      </ul>
+    </nav>
+
+    <br class="clear" />
+
+    <footer>
+      Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.10</a> on Fri
+      Jul 29 2022 15:09:48 GMT-0400 (Eastern Daylight Time)
+    </footer>
+
+    <script>
+      prettyPrint();
+    </script>
+    <script src="scripts/linenumber.js"></script>
+  </body>
+</html>

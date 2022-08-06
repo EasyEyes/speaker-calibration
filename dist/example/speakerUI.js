@@ -153,7 +153,7 @@ window.onload = () => {
     flexSwitchCheckIR.checked = !flexSwitchCheckVolume.checked;
   };
 
-  const useSpeakerCalibrator = async (calibrationLevel = 0, iir) => {
+  const useSpeakerCalibrator = async (calibrationLevel = 0, iir = null) => {
     let invertedIR;
     const spinner = document.getElementById('spinner');
     const calibrationResult = document.getElementById('calibrationResult');
@@ -164,20 +164,20 @@ window.onload = () => {
       targetElementId: 'display',
     };
 
-    const calibratorParams = {
-      numCaptures: document.getElementById('numCapturesInput').value,
-      numMLSPerCapture: document.getElementById('numMLSPerCaptureInput').value,
-      mlsOrder: document.getElementById('mlsOrder').value,
-      download: document.getElementById('flexSwitchCheckDownload').checked,
-    };
+    const runImpulseResponseCalibration = async calibrationLevel => {
+      const calibratorParams = {
+        numCaptures: document.getElementById('numCapturesInput').value,
+        numMLSPerCapture: document.getElementById('numMLSPerCaptureInput').value,
+        mlsOrder: document.getElementById('mlsOrder').value,
+        download: document.getElementById('flexSwitchCheckDownload').checked,
+      };
 
-    const calibrator = new ImpulseResponseCalibration(calibratorParams);
+      const calibrator = new ImpulseResponseCalibration(calibratorParams);
 
-    calibrator.on('update', ({message, ...rest}) => {
-      updateTarget.innerHTML = message;
-    });
+      calibrator.on('update', ({message, ...rest}) => {
+        updateTarget.innerHTML = message;
+      });
 
-    const runImpulseResponseCalibration = async () => {
       try {
         if (calibrationLevel == 0) {
           invertedIR = await Speaker.startCalibration(speakerParameters, calibrator);
@@ -191,8 +191,27 @@ window.onload = () => {
       }
     };
 
-    runImpulseResponseCalibration();
+    const runVolumeCalibration = async () => {
+      const calibrator = new VolumeCalibration({});
+
+      calibrator.on('update', ({message, ...rest}) => {
+        updateTarget.innerHTML = message;
+      });
+
+      try {
+        soundGainDBSPL = await Speaker.startCalibration(speakerParameters, calibrator);
+        updateTarget.innerText = `${soundGainDBSPL} DBSPL`;
+      } catch (err) {
+        updateTarget.innerText = `${err.name}: ${err.message}`;
+      }
+    };
+
+    if (flexSwitchCheckIR.checked) {
+      runImpulseResponseCalibration(calibrationLevel);
+    } else {
+      runVolumeCalibration();
+    }
   };
 
-  document.getElementById('calibrationBeginButton').onclick = useSpeakerCalibrator;
+  document.getElementById('calibrationBeginButton').onclick = () => useSpeakerCalibrator();
 };

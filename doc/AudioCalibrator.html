@@ -39,18 +39,13 @@
               ><span class="type-signature"></span>
             </h4>
 
-            <div class="description">
-              Creates an instance of AudioCalibrator Makes a call to the super constructor, and
-              initializes MLSGenInterface
-            </div>
-
             <dl class="details">
               <dt class="tag-source">Source:</dt>
               <dd class="tag-source">
                 <ul class="dummy">
                   <li>
-                    <a href="audioCalibrator.js.html">audioCalibrator.js</a>,
-                    <a href="audioCalibrator.js.html#line9">line 9</a>
+                    <a href="tasks_audioCalibrator.js.html">tasks/audioCalibrator.js</a>,
+                    <a href="tasks_audioCalibrator.js.html#line10">line 10</a>
                   </li>
                 </ul>
               </dd>
@@ -64,6 +59,40 @@
           </ul>
 
           <h3 class="subsection-title">Members</h3>
+
+          <h4 class="name" id="calibrationNodes">
+            <span class="type-signature">(protected) </span>calibrationNodes<span
+              class="type-signature"
+            ></span>
+          </h4>
+
+          <dl class="details">
+            <dt class="tag-source">Source:</dt>
+            <dd class="tag-source">
+              <ul class="dummy">
+                <li>
+                  <a href="tasks_audioCalibrator.js.html">tasks/audioCalibrator.js</a>,
+                  <a href="tasks_audioCalibrator.js.html#line37">line 37</a>
+                </li>
+              </ul>
+            </dd>
+          </dl>
+
+          <h4 class="name" id="calibrationSteps">
+            <span class="type-signature"></span>calibrationSteps<span class="type-signature"></span>
+          </h4>
+
+          <dl class="details">
+            <dt class="tag-source">Source:</dt>
+            <dd class="tag-source">
+              <ul class="dummy">
+                <li>
+                  <a href="tasks_audioCalibrator.js.html">tasks/audioCalibrator.js</a>,
+                  <a href="tasks_audioCalibrator.js.html#line61">line 61</a>
+                </li>
+              </ul>
+            </dd>
+          </dl>
 
           <h4 class="name" id="createLocalAudio">
             <span class="type-signature"></span>createLocalAudio<span class="type-signature"></span>
@@ -79,8 +108,57 @@
             <dd class="tag-source">
               <ul class="dummy">
                 <li>
-                  <a href="audioCalibrator.js.html">audioCalibrator.js</a>,
-                  <a href="audioCalibrator.js.html#line44">line 44</a>
+                  <a href="tasks_audioCalibrator.js.html">tasks/audioCalibrator.js</a>,
+                  <a href="tasks_audioCalibrator.js.html#line46">line 46</a>
+                </li>
+              </ul>
+            </dd>
+          </dl>
+
+          <h4 class="name" id="downloadData">
+            <span class="type-signature"></span>downloadData<span class="type-signature"></span>
+          </h4>
+
+          <div class="description">Download the result of the calibration roudns</div>
+
+          <dl class="details">
+            <dt class="tag-source">Source:</dt>
+            <dd class="tag-source">
+              <ul class="dummy">
+                <li>
+                  <a href="tasks_audioCalibrator.js.html">tasks/audioCalibrator.js</a>,
+                  <a href="tasks_audioCalibrator.js.html#line138">line 138</a>
+                </li>
+              </ul>
+            </dd>
+          </dl>
+
+          <h4 class="name" id="getAllRecordedSignals">
+            <span class="type-signature"></span>getAllRecordedSignals<span
+              class="type-signature"
+            ></span>
+          </h4>
+
+          <div class="description">Public method to get all the recorded audio signals</div>
+
+          <dl class="details">
+            <dt class="tag-overrides">Overrides:</dt>
+            <dd class="tag-overrides">
+              <ul class="dummy">
+                <li>
+                  <a href="AudioRecorder.html#getAllRecordedSignals"
+                    >AudioRecorder#getAllRecordedSignals</a
+                  >
+                </li>
+              </ul>
+            </dd>
+
+            <dt class="tag-source">Source:</dt>
+            <dd class="tag-source">
+              <ul class="dummy">
+                <li>
+                  <a href="tasks_audioRecorder.js.html">tasks/audioRecorder.js</a>,
+                  <a href="tasks_audioRecorder.js.html#line115">line 115</a>
                 </li>
               </ul>
             </dd>
@@ -99,26 +177,146 @@
             <dd class="tag-source">
               <ul class="dummy">
                 <li>
-                  <a href="audioCalibrator.js.html">audioCalibrator.js</a>,
-                  <a href="audioCalibrator.js.html#line89">line 89</a>
+                  <a href="tasks_audioCalibrator.js.html">tasks/audioCalibrator.js</a>,
+                  <a href="tasks_audioCalibrator.js.html#line105">line 105</a>
                 </li>
               </ul>
             </dd>
           </dl>
 
-          <h4 class="name" id="startCalibration">
-            <span class="type-signature"></span>startCalibration<span class="type-signature"></span>
+          <h4 class="name" id="getLastRecordedSignal">
+            <span class="type-signature"></span>getLastRecordedSignal<span
+              class="type-signature"
+            ></span>
           </h4>
 
-          <div class="description">Method to start the calibration process.</div>
+          <div class="description">Public method to get the last recorded audio signal</div>
+
+          <dl class="details">
+            <dt class="tag-overrides">Overrides:</dt>
+            <dd class="tag-overrides">
+              <ul class="dummy">
+                <li>
+                  <a href="AudioRecorder.html#getLastRecordedSignal"
+                    >AudioRecorder#getLastRecordedSignal</a
+                  >
+                </li>
+              </ul>
+            </dd>
+
+            <dt class="tag-source">Source:</dt>
+            <dd class="tag-source">
+              <ul class="dummy">
+                <li>
+                  <a href="tasks_audioRecorder.js.html">tasks/audioRecorder.js</a>,
+                  <a href="tasks_audioRecorder.js.html#line109">line 109</a>
+                </li>
+              </ul>
+            </dd>
+          </dl>
+
+          <h4 class="name" id="localAudio">
+            <span class="type-signature">(protected) </span>localAudio<span
+              class="type-signature"
+            ></span>
+          </h4>
 
           <dl class="details">
             <dt class="tag-source">Source:</dt>
             <dd class="tag-source">
               <ul class="dummy">
                 <li>
-                  <a href="audioCalibrator.js.html">audioCalibrator.js</a>,
-                  <a href="audioCalibrator.js.html#line104">line 104</a>
+                  <a href="tasks_audioCalibrator.js.html">tasks/audioCalibrator.js</a>,
+                  <a href="tasks_audioCalibrator.js.html#line40">line 40</a>
+                </li>
+              </ul>
+            </dd>
+          </dl>
+
+          <h4 class="name" id="numCalibratingRounds">
+            <span class="type-signature">(protected) </span>numCalibratingRounds<span
+              class="type-signature"
+            ></span>
+          </h4>
+
+          <dl class="details">
+            <dt class="tag-source">Source:</dt>
+            <dd class="tag-source">
+              <ul class="dummy">
+                <li>
+                  <a href="tasks_audioCalibrator.js.html">tasks/audioCalibrator.js</a>,
+                  <a href="tasks_audioCalibrator.js.html#line28">line 28</a>
+                </li>
+              </ul>
+            </dd>
+          </dl>
+
+          <h4 class="name" id="numSuccessfulCaptured">
+            <span class="type-signature">(protected) </span>numSuccessfulCaptured<span
+              class="type-signature"
+            ></span>
+          </h4>
+
+          <dl class="details">
+            <dt class="tag-source">Source:</dt>
+            <dd class="tag-source">
+              <ul class="dummy">
+                <li>
+                  <a href="tasks_audioCalibrator.js.html">tasks/audioCalibrator.js</a>,
+                  <a href="tasks_audioCalibrator.js.html#line31">line 31</a>
+                </li>
+              </ul>
+            </dd>
+          </dl>
+
+          <h4 class="name" id="setSamplingRates">
+            <span class="type-signature"></span>setSamplingRates<span class="type-signature"></span>
+          </h4>
+
+          <div class="description">
+            Set the sampling rate to the value received from the listener
+          </div>
+
+          <dl class="details">
+            <dt class="tag-source">Source:</dt>
+            <dd class="tag-source">
+              <ul class="dummy">
+                <li>
+                  <a href="tasks_audioCalibrator.js.html">tasks/audioCalibrator.js</a>,
+                  <a href="tasks_audioCalibrator.js.html#line111">line 111</a>
+                </li>
+              </ul>
+            </dd>
+          </dl>
+
+          <h4 class="name" id="setSinkSamplingRate">
+            <span class="type-signature"></span>setSinkSamplingRate<span
+              class="type-signature"
+            ></span>
+          </h4>
+
+          <div class="description">
+            Public method to set the sampling rate used by the capture device
+          </div>
+
+          <dl class="details">
+            <dt class="tag-overrides">Overrides:</dt>
+            <dd class="tag-overrides">
+              <ul class="dummy">
+                <li>
+                  <a href="AudioRecorder.html#setSinkSamplingRate"
+                    >AudioRecorder#setSinkSamplingRate</a
+                  >
+                </li>
+              </ul>
+            </dd>
+
+            <dt class="tag-source">Source:</dt>
+            <dd class="tag-source">
+              <ul class="dummy">
+                <li>
+                  <a href="tasks_audioRecorder.js.html">tasks/audioRecorder.js</a>,
+                  <a href="tasks_audioRecorder.js.html#line121">line 121</a>
                 </li>
               </ul>
             </dd>
@@ -144,8 +342,8 @@
             <dd class="tag-source">
               <ul class="dummy">
                 <li>
-                  <a href="audioRecorder.js.html">audioRecorder.js</a>,
-                  <a href="audioRecorder.js.html#line95">line 95</a>
+                  <a href="tasks_audioRecorder.js.html">tasks/audioRecorder.js</a>,
+                  <a href="tasks_audioRecorder.js.html#line73">line 73</a>
                 </li>
               </ul>
             </dd>
@@ -171,8 +369,8 @@
             <dd class="tag-source">
               <ul class="dummy">
                 <li>
-                  <a href="audioRecorder.js.html">audioRecorder.js</a>,
-                  <a href="audioRecorder.js.html#line105">line 105</a>
+                  <a href="tasks_audioRecorder.js.html">tasks/audioRecorder.js</a>,
+                  <a href="tasks_audioRecorder.js.html#line88">line 88</a>
                 </li>
               </ul>
             </dd>
@@ -188,18 +386,27 @@
         <li><a href="AudioCalibrator.html">AudioCalibrator</a></li>
         <li><a href="AudioPeer.html">AudioPeer</a></li>
         <li><a href="AudioRecorder.html">AudioRecorder</a></li>
+        <li><a href="ImpulseResponse.html">ImpulseResponse</a></li>
         <li><a href="Listener.html">Listener</a></li>
         <li><a href="MlsGenInterface.html">MlsGenInterface</a></li>
+        <li><a href="MyEventEmitter.html">MyEventEmitter</a></li>
+        <li><a href="PythonServerAPI.html">PythonServerAPI</a></li>
         <li><a href="Speaker.html">Speaker</a></li>
+        <li><a href="Volume.html">Volume</a></li>
       </ul>
-      <h3><a href="global.html">Global</a></h3>
+      <h3>Global</h3>
+      <ul>
+        <li><a href="global.html#csvToArray">csvToArray</a></li>
+        <li><a href="global.html#saveToCSV">saveToCSV</a></li>
+        <li><a href="global.html#sleep">sleep</a></li>
+      </ul>
     </nav>
 
     <br class="clear" />
 
     <footer>
-      Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.10</a> on Tue
-      Mar 01 2022 12:39:42 GMT-0500 (Eastern Standard Time)
+      Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.10</a> on Fri
+      Jul 29 2022 15:09:48 GMT-0400 (Eastern Daylight Time)
     </footer>
 
     <script>

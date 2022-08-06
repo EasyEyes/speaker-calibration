@@ -1,4 +1,25 @@
-/* eslint-disable prefer-destructuring */
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>JSDoc: Source: tasks/impulse-response/mlsGen/mlsGenInterface.js</title>
+
+    <script src="scripts/prettify/prettify.js"></script>
+    <script src="scripts/prettify/lang-css.js"></script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css" />
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css" />
+  </head>
+
+  <body>
+    <div id="main">
+      <h1 class="page-title">Source: tasks/impulse-response/mlsGen/mlsGenInterface.js</h1>
+
+      <section>
+        <article>
+          <pre class="prettyprint source linenums"><code>/* eslint-disable prefer-destructuring */
 /* eslint-disable dot-notation */
 // eslint-disable-next-line import/extensions
 const createMLSGenModule = require('../../../../dist/mlsGen.js');
@@ -19,12 +40,6 @@ class MlsGenInterface {
   /**
    * Creates an instance of MlsGenInterface.
    * Makes a call to the WASM glue code to load the WASM module.
-   *
-   * @param WASMInstance
-   * @param mlsOrder
-   * @param sourceSamplingRate
-   * @param sinkSamplingRate
-   * @example
    */
   constructor(WASMInstance, mlsOrder, sourceSamplingRate, sinkSamplingRate) {
     this.#mlsOrder = mlsOrder;
@@ -41,12 +56,9 @@ class MlsGenInterface {
   /**
    * Factory function that provide an asynchronous function that fetches the WASM module
    * and returns a promise that resolves when the module is loaded.
-   *
-   * @param mlsOrder
-   * @param sourceSamplingRate - The sampling rate of the source audio.
-   * @param sinkSamplingRate - The sampling rate of the sink audio.
-   * @returns MlsGenInterface.
-   * @example
+   * @param {number} sourceSamplingRate - The sampling rate of the source audio.
+   * @param {number} sinkSamplingRate - The sampling rate of the sink audio.
+   * @returns {MlsGenInterface} mlsGenInterface
    */
   static factory = async (mlsOrder, sourceSamplingRate, sinkSamplingRate) => {
     if (sourceSamplingRate === undefined || sinkSamplingRate === undefined) {
@@ -63,27 +75,24 @@ class MlsGenInterface {
   /**
    * A Higher-Order function that takes an async callback function that access the MLSGen object,
    * providing safe garbage collection.
-   *
-   * @param func
-   * @param args
-   * @param funcsWithParams
-   * @example
+   * @param {function} func
+   * @param {array} args
    */
   withGarbageCollection = async funcsWithParams => {
     try {
-      for (let i = 0; i < funcsWithParams.length; i += 1) {
-        const funcWithParams = funcsWithParams[i];
-        // eslint-disable-next-line no-await-in-loop
-        await funcWithParams();
+      for (let i = 0; i &lt; funcsWithParams.length; i += 1) {
+        const [func, params] = funcsWithParams[i];
+        await func(...params);
       }
+      // await func(...params);
     } catch (error) {
       console.error(error);
     } finally {
       // garbage collect
       if (
-        this !== undefined &&
-        this !== null &&
-        this.#MLSGenInstance !== undefined &&
+        this !== undefined &amp;&amp;
+        this !== null &amp;&amp;
+        this.#MLSGenInstance !== undefined &amp;&amp;
         this.#MLSGenInstance !== null
       ) {
         this.#MLSGenInstance['Destruct'](); // Call the destructor
@@ -96,17 +105,13 @@ class MlsGenInterface {
 
   /**
    * Calculate and return the Impulse Response of the recorded signal.
-   *
    * @returns
-   * @example
    */
   getImpulseResponse = () => this.#MLSGenInstance['getImpulseResponse']();
 
   /**
    * Given a recorded MLS signal, this function sets the recordedSignal property of the MLSGen object.
-   *
-   * @param signals
-   * @example
+   * @param {Float32Array} signals
    */
   setRecordedSignals = signals => {
     // get memory view
@@ -114,7 +119,7 @@ class MlsGenInterface {
     const recordedSignalsMemoryView = this.#MLSGenInstance['setRecordedSignalsMemoryView'](
       averagedSignals.byteLength
     );
-    for (let i = 0; i < averagedSignals.length; i += 1) {
+    for (let i = 0; i &lt; averagedSignals.length; i++) {
       recordedSignalsMemoryView[i] = averagedSignals[i];
     }
   };
@@ -122,10 +127,49 @@ class MlsGenInterface {
   /**
    * Calculate the Maximum Length Sequence (MLS) with period P = 2^N - 1
    * using the MLSGen WASM module.
-   *
-   * @example
    */
   getMLS = () => this.#MLSGenInstance['getMLS']();
 }
 
 export default MlsGenInterface;
+</code></pre>
+        </article>
+      </section>
+    </div>
+
+    <nav>
+      <h2><a href="index.html">Home</a></h2>
+      <h3>Classes</h3>
+      <ul>
+        <li><a href="AudioCalibrator.html">AudioCalibrator</a></li>
+        <li><a href="AudioPeer.html">AudioPeer</a></li>
+        <li><a href="AudioRecorder.html">AudioRecorder</a></li>
+        <li><a href="ImpulseResponse.html">ImpulseResponse</a></li>
+        <li><a href="Listener.html">Listener</a></li>
+        <li><a href="MlsGenInterface.html">MlsGenInterface</a></li>
+        <li><a href="MyEventEmitter.html">MyEventEmitter</a></li>
+        <li><a href="PythonServerAPI.html">PythonServerAPI</a></li>
+        <li><a href="Speaker.html">Speaker</a></li>
+        <li><a href="Volume.html">Volume</a></li>
+      </ul>
+      <h3>Global</h3>
+      <ul>
+        <li><a href="global.html#csvToArray">csvToArray</a></li>
+        <li><a href="global.html#saveToCSV">saveToCSV</a></li>
+        <li><a href="global.html#sleep">sleep</a></li>
+      </ul>
+    </nav>
+
+    <br class="clear" />
+
+    <footer>
+      Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.10</a> on Fri
+      Jul 29 2022 15:09:48 GMT-0400 (Eastern Daylight Time)
+    </footer>
+
+    <script>
+      prettyPrint();
+    </script>
+    <script src="scripts/linenumber.js"></script>
+  </body>
+</html>

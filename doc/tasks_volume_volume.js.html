@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>JSDoc: Source: tasks/volume/volume.js</title>
+
+    <script src="scripts/prettify/prettify.js"></script>
+    <script src="scripts/prettify/lang-css.js"></script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css" />
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css" />
+  </head>
+
+  <body>
+    <div id="main">
+      <h1 class="page-title">Source: tasks/volume/volume.js</h1>
+
+      <section>
+        <article>
+          <pre
+            class="prettyprint source linenums"
+          ><code>import AudioCalibrator from '../audioCalibrator';
+
+import {sleep} from '../../utils';
+
+/**
+ *
+ */
+class Volume extends AudioCalibrator {
+  /**
+   *
+   */
+  constructor({download = false, numCalibrationRounds = 1, numCalibrationNodes = 1}) {
+    super(numCalibrationRounds, numCalibrationNodes);
+  }
+
+  /** @private */
+  #CALIBRATION_TONE_FREQUENCY = 1000; // Hz
+
+  /** @private */
+  #CALIBRATION_TONE_TYPE = 'sine';
+
+  /** @private */
+  #CALIBRATION_TONE_DURATION = 5; // seconds
+
+  /** @private */
+  soundGainDBSPL = null;
+
+  handleIncomingData = data => {
+    console.log('Received data: ', data);
+    if (data.type === 'soundGainDBSPL') {
+      this.soundGainDBSPL = data.value;
+    } else {
+      throw new Error(`Unknown data type: ${data.type}`);
+    }
+  };
+
+  #getTruncatedSignal = (left = 3.5, right = 4.5) => {
+    const start = Math.floor(left * this.sourceSamplingRate);
+    const end = Math.floor(right * this.sourceSamplingRate);
+    const result = Array.from(this.getLastRecordedSignal().slice(start, end));
+    const checkResult = list => {
+      const setItem = new Set(list);
+      if (setItem.size === 1 &amp;&amp; setItem.has(0)) {
+        console.warn(
+          'The last capture failed, all recorded signal is zero',
+          this.getAllRecordedSignals()
+        );
+      }
+      if (setItem.size === 0) {
+        console.warn('The last capture failed, no recorded signal');
+      }
+    };
+    checkResult(result);
+    return result;
+  };
+
+  /**
+   * Construct a Calibration Node with the calibration parameters.
+   * @private
+   */
+  #createCalibrationNode = () => {
+    const audioContext = this.makeNewSourceAudioContext();
+    const oscilator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+
+    oscilator.frequency.value = this.#CALIBRATION_TONE_FREQUENCY;
+    oscilator.type = this.#CALIBRATION_TONE_TYPE;
+    gainNode.gain.value = 0.04;
+
+    oscilator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+
+    this.addCalibrationNode(oscilator);
+  };
+
+  #playCalibrationAudio = async () => {
+    const actualDuration = this.#CALIBRATION_TONE_DURATION * this.numCalibrationNodes;
+    const totalDuration = actualDuration * 1.2;
+    for (let i = 0; i &lt; this.calibrationNodes.length; i += 1) {
+      this.calibrationNodes[i].start(i * this.#CALIBRATION_TONE_DURATION);
+      this.calibrationNodes[i].stop(
+        i * this.#CALIBRATION_TONE_DURATION + this.#CALIBRATION_TONE_DURATION
+      );
+    }
+    console.log(`Playing a buffer of ${actualDuration} seconds of audio`);
+    console.log(`Waiting a total of ${totalDuration} seconds`);
+    await sleep(totalDuration);
+  };
+
+  #sendToServerForProcessing = () => {
+    console.log('Sending data to server');
+    this.pyServerAPI
+      .getVolumeCalibration({
+        sampleRate: this.sourceSamplingRate,
+        payload: this.#getTruncatedSignal(),
+      })
+      .then(res => {
+        if (this.soundGainDBSPL === null) {
+          this.soundGainDBSPL = res;
+        }
+      })
+      .catch(err => {
+        console.warn(err);
+      });
+  };
+
+  startCalibration = async stream => {
+    do {
+      await this.calibrationSteps(
+        stream,
+        this.#playCalibrationAudio,
+        this.#createCalibrationNode,
+        this.#sendToServerForProcessing
+      );
+    } while (this.soundGainDBSPL === null);
+
+    return this.soundGainDBSPL;
+  };
+}
+
+export default Volume;
+</code></pre>
+        </article>
+      </section>
+    </div>
+
+    <nav>
+      <h2><a href="index.html">Home</a></h2>
+      <h3>Classes</h3>
+      <ul>
+        <li><a href="AudioCalibrator.html">AudioCalibrator</a></li>
+        <li><a href="AudioPeer.html">AudioPeer</a></li>
+        <li><a href="AudioRecorder.html">AudioRecorder</a></li>
+        <li><a href="ImpulseResponse.html">ImpulseResponse</a></li>
+        <li><a href="Listener.html">Listener</a></li>
+        <li><a href="MlsGenInterface.html">MlsGenInterface</a></li>
+        <li><a href="MyEventEmitter.html">MyEventEmitter</a></li>
+        <li><a href="PythonServerAPI.html">PythonServerAPI</a></li>
+        <li><a href="Speaker.html">Speaker</a></li>
+        <li><a href="Volume.html">Volume</a></li>
+      </ul>
+      <h3>Global</h3>
+      <ul>
+        <li><a href="global.html#csvToArray">csvToArray</a></li>
+        <li><a href="global.html#saveToCSV">saveToCSV</a></li>
+        <li><a href="global.html#sleep">sleep</a></li>
+      </ul>
+    </nav>
+
+    <br class="clear" />
+
+    <footer>
+      Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.10</a> on Fri
+      Jul 29 2022 15:09:48 GMT-0400 (Eastern Daylight Time)
+    </footer>
+
+    <script>
+      prettyPrint();
+    </script>
+    <script src="scripts/linenumber.js"></script>
+  </body>
+</html>

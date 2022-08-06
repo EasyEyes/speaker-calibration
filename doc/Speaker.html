@@ -22,7 +22,7 @@
           <h2>
             <span class="attribs"><span class="type-signature"></span></span>Speaker<span
               class="signature"
-              >(params)</span
+              >(params, Calibrator)</span
             ><span class="type-signature"></span>
           </h2>
 
@@ -37,7 +37,8 @@
             <h2>Constructor</h2>
 
             <h4 class="name" id="Speaker">
-              <span class="type-signature"></span>new Speaker<span class="signature">(params)</span
+              <span class="type-signature"></span>new Speaker<span class="signature"
+                >(params, Calibrator)</span
               ><span class="type-signature"></span>
             </h4>
 
@@ -71,6 +72,21 @@
 
                   <td class="description last">see type definition for initParameters</td>
                 </tr>
+
+                <tr>
+                  <td class="name"><code>Calibrator</code></td>
+
+                  <td class="type">
+                    <span class="param-type"
+                      ><a href="AudioCalibrator.html">AudioCalibrator</a></span
+                    >
+                  </td>
+
+                  <td class="description last">
+                    An instance of the AudioCalibrator class, should not use AudioCalibrator
+                    directly, instead use an extended class available in /tasks/
+                  </td>
+                </tr>
               </tbody>
             </table>
 
@@ -79,8 +95,8 @@
               <dd class="tag-source">
                 <ul class="dummy">
                   <li>
-                    <a href="speaker.js.html">speaker.js</a>,
-                    <a href="speaker.js.html#line13">line 13</a>
+                    <a href="peer-connection_speaker.js.html">peer-connection/speaker.js</a>,
+                    <a href="peer-connection_speaker.js.html#line15">line 15</a>
                   </li>
                 </ul>
               </dd>
@@ -115,194 +131,26 @@
             <dd class="tag-source">
               <ul class="dummy">
                 <li>
-                  <a href="audioPeer.js.html">audioPeer.js</a>,
-                  <a href="audioPeer.js.html#line55">line 55</a>
+                  <a href="peer-connection_audioPeer.js.html">peer-connection/audioPeer.js</a>,
+                  <a href="peer-connection_audioPeer.js.html#line59">line 59</a>
                 </li>
               </ul>
             </dd>
           </dl>
 
-          <h4 class="name" id="onIncomingData">
-            <span class="type-signature"></span>onIncomingData<span class="type-signature"></span>
+          <h4 class="name" id="downloadData">
+            <span class="type-signature"></span>downloadData<span class="type-signature"></span>
           </h4>
 
-          <div class="description">Called when data is received from the peer connection.</div>
+          <div class="description">Debug method for downloading the recorded audio</div>
 
           <dl class="details">
             <dt class="tag-source">Source:</dt>
             <dd class="tag-source">
               <ul class="dummy">
                 <li>
-                  <a href="speaker.js.html">speaker.js</a>,
-                  <a href="speaker.js.html#line170">line 170</a>
-                </li>
-              </ul>
-            </dd>
-          </dl>
-
-          <h4 class="name" id="onPeerCall">
-            <span class="type-signature"></span>onPeerCall<span class="type-signature"></span>
-          </h4>
-
-          <div class="description">
-            Called when a call is made by the Listener. Answers the call in a one-way manner, and
-            sets up a stream listener.
-          </div>
-
-          <dl class="details">
-            <dt class="tag-source">Source:</dt>
-            <dd class="tag-source">
-              <ul class="dummy">
-                <li>
-                  <a href="speaker.js.html">speaker.js</a>,
-                  <a href="speaker.js.html#line129">line 129</a>
-                </li>
-              </ul>
-            </dd>
-          </dl>
-
-          <h4 class="name" id="onPeerClose">
-            <span class="type-signature"></span>onPeerClose<span class="type-signature"></span>
-          </h4>
-
-          <div class="description">Called when the peer connection is closed.</div>
-
-          <dl class="details">
-            <dt class="tag-overrides">Overrides:</dt>
-            <dd class="tag-overrides">
-              <ul class="dummy">
-                <li>
-                  <a href="AudioPeer.html#onPeerClose">AudioPeer#onPeerClose</a>
-                </li>
-              </ul>
-            </dd>
-
-            <dt class="tag-source">Source:</dt>
-            <dd class="tag-source">
-              <ul class="dummy">
-                <li>
-                  <a href="speaker.js.html">speaker.js</a>,
-                  <a href="speaker.js.html#line138">line 138</a>
-                </li>
-              </ul>
-            </dd>
-          </dl>
-
-          <h4 class="name" id="onPeerConnection">
-            <span class="type-signature"></span>onPeerConnection<span class="type-signature"></span>
-          </h4>
-
-          <div class="description">
-            Called when the peer connection is established. Enforces a single connection.
-          </div>
-
-          <dl class="details">
-            <dt class="tag-source">Source:</dt>
-            <dd class="tag-source">
-              <ul class="dummy">
-                <li>
-                  <a href="speaker.js.html">speaker.js</a>,
-                  <a href="speaker.js.html#line89">line 89</a>
-                </li>
-              </ul>
-            </dd>
-          </dl>
-
-          <h4 class="name" id="onPeerDisconnected">
-            <span class="type-signature"></span>onPeerDisconnected<span
-              class="type-signature"
-            ></span>
-          </h4>
-
-          <div class="description">
-            Called when the peer connection is disconnected. Attempts to reconnect.
-          </div>
-
-          <dl class="details">
-            <dt class="tag-overrides">Overrides:</dt>
-            <dd class="tag-overrides">
-              <ul class="dummy">
-                <li>
-                  <a href="AudioPeer.html#onPeerDisconnected">AudioPeer#onPeerDisconnected</a>
-                </li>
-              </ul>
-            </dd>
-
-            <dt class="tag-source">Source:</dt>
-            <dd class="tag-source">
-              <ul class="dummy">
-                <li>
-                  <a href="speaker.js.html">speaker.js</a>,
-                  <a href="speaker.js.html#line147">line 147</a>
-                </li>
-              </ul>
-            </dd>
-          </dl>
-
-          <h4 class="name" id="onPeerError">
-            <span class="type-signature"></span>onPeerError<span class="type-signature"></span>
-          </h4>
-
-          <div class="description">Called when the peer connection encounters an error.</div>
-
-          <dl class="details">
-            <dt class="tag-overrides">Overrides:</dt>
-            <dd class="tag-overrides">
-              <ul class="dummy">
-                <li>
-                  <a href="AudioPeer.html#onPeerError">AudioPeer#onPeerError</a>
-                </li>
-              </ul>
-            </dd>
-
-            <dt class="tag-source">Source:</dt>
-            <dd class="tag-source">
-              <ul class="dummy">
-                <li>
-                  <a href="speaker.js.html">speaker.js</a>,
-                  <a href="speaker.js.html#line161">line 161</a>
-                </li>
-              </ul>
-            </dd>
-          </dl>
-
-          <h4 class="name" id="onPeerOpen">
-            <span class="type-signature"></span>onPeerOpen<span class="type-signature"></span>
-          </h4>
-
-          <div class="description">
-            Called when the peer connection is opened. Saves the peer id and calls the QR code
-            generator.
-          </div>
-
-          <dl class="details">
-            <dt class="tag-source">Source:</dt>
-            <dd class="tag-source">
-              <ul class="dummy">
-                <li>
-                  <a href="speaker.js.html">speaker.js</a>,
-                  <a href="speaker.js.html#line68">line 68</a>
-                </li>
-              </ul>
-            </dd>
-          </dl>
-
-          <h4 class="name" id="onReceiveStream">
-            <span class="type-signature"></span>onReceiveStream<span class="type-signature"></span>
-          </h4>
-
-          <div class="description">
-            Called after a call is established and data is flowing. Sets up the local audio stream
-            and starts the calibration process.
-          </div>
-
-          <dl class="details">
-            <dt class="tag-source">Source:</dt>
-            <dd class="tag-source">
-              <ul class="dummy">
-                <li>
-                  <a href="speaker.js.html">speaker.js</a>,
-                  <a href="speaker.js.html#line113">line 113</a>
+                  <a href="peer-connection_speaker.js.html">peer-connection/speaker.js</a>,
+                  <a href="peer-connection_speaker.js.html#line307">line 307</a>
                 </li>
               </ul>
             </dd>
@@ -330,8 +178,8 @@
             <dd class="tag-source">
               <ul class="dummy">
                 <li>
-                  <a href="audioPeer.js.html">audioPeer.js</a>,
-                  <a href="audioPeer.js.html#line104">line 104</a>
+                  <a href="peer-connection_audioPeer.js.html">peer-connection/audioPeer.js</a>,
+                  <a href="peer-connection_audioPeer.js.html#line108">line 108</a>
                 </li>
               </ul>
             </dd>
@@ -359,38 +207,20 @@
             <dd class="tag-source">
               <ul class="dummy">
                 <li>
-                  <a href="audioPeer.js.html">audioPeer.js</a>,
-                  <a href="audioPeer.js.html#line114">line 114</a>
+                  <a href="peer-connection_audioPeer.js.html">peer-connection/audioPeer.js</a>,
+                  <a href="peer-connection_audioPeer.js.html#line118">line 118</a>
                 </li>
               </ul>
             </dd>
           </dl>
 
-          <h4 class="name" id="ready">
-            <span class="type-signature"></span>ready<span class="type-signature"></span>
-          </h4>
-
-          <div class="description">Called when the peer connection is ready.</div>
-
-          <dl class="details">
-            <dt class="tag-source">Source:</dt>
-            <dd class="tag-source">
-              <ul class="dummy">
-                <li>
-                  <a href="speaker.js.html">speaker.js</a>,
-                  <a href="speaker.js.html#line178">line 178</a>
-                </li>
-              </ul>
-            </dd>
-          </dl>
-
-          <h4 class="name" id="showQRCode">
-            <span class="type-signature"></span>showQRCode<span class="type-signature"></span>
+          <h4 class="name" id="startCalibration">
+            <span class="type-signature"></span>startCalibration<span class="type-signature"></span>
           </h4>
 
           <div class="description">
-            Called after the peer conncection has been opened. Generates a QR code for the
-            connection and displays it.
+            Async factory method that creates the Speaker object, and returns a promise that
+            resolves to the result of the calibration.
           </div>
 
           <dl class="details">
@@ -398,8 +228,8 @@
             <dd class="tag-source">
               <ul class="dummy">
                 <li>
-                  <a href="speaker.js.html">speaker.js</a>,
-                  <a href="speaker.js.html#line37">line 37</a>
+                  <a href="peer-connection_speaker.js.html">peer-connection/speaker.js</a>,
+                  <a href="peer-connection_speaker.js.html#line43">line 43</a>
                 </li>
               </ul>
             </dd>
@@ -415,18 +245,27 @@
         <li><a href="AudioCalibrator.html">AudioCalibrator</a></li>
         <li><a href="AudioPeer.html">AudioPeer</a></li>
         <li><a href="AudioRecorder.html">AudioRecorder</a></li>
+        <li><a href="ImpulseResponse.html">ImpulseResponse</a></li>
         <li><a href="Listener.html">Listener</a></li>
         <li><a href="MlsGenInterface.html">MlsGenInterface</a></li>
+        <li><a href="MyEventEmitter.html">MyEventEmitter</a></li>
+        <li><a href="PythonServerAPI.html">PythonServerAPI</a></li>
         <li><a href="Speaker.html">Speaker</a></li>
+        <li><a href="Volume.html">Volume</a></li>
       </ul>
-      <h3><a href="global.html">Global</a></h3>
+      <h3>Global</h3>
+      <ul>
+        <li><a href="global.html#csvToArray">csvToArray</a></li>
+        <li><a href="global.html#saveToCSV">saveToCSV</a></li>
+        <li><a href="global.html#sleep">sleep</a></li>
+      </ul>
     </nav>
 
     <br class="clear" />
 
     <footer>
-      Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.10</a> on Tue
-      Mar 01 2022 12:39:42 GMT-0500 (Eastern Standard Time)
+      Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.10</a> on Fri
+      Jul 29 2022 15:09:48 GMT-0400 (Eastern Daylight Time)
     </footer>
 
     <script>

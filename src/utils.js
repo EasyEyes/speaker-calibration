@@ -1,17 +1,25 @@
-/**
+/** .
+ * .
+ * .
  * Utlity function to pause execution for a given time
+ *
  * @param {number} seconds
  * @returns {Promise}
+ * @example
  */
 const sleep = seconds =>
   new Promise(resolve => {
     setTimeout(resolve, seconds * 1000);
   });
 
-/**
+/** .
+ * .
+ * .
  * Uiltity function to create and save a CSV file from a buffer
+ *
  * @param {*} data
  * @param {*} filename
+ * @example
  */
 const saveToCSV = (data, filename = 'recordedMLSignal.csv') => {
   // console.log(data)
@@ -28,11 +36,15 @@ const saveToCSV = (data, filename = 'recordedMLSignal.csv') => {
   link.click();
 };
 
-/**
+/** .
+ * .
+ * .
  * Utility function to create a buffer from a CSV file
+ *
  * @param {*} csvString
  * @param {*} delimiter
  * @returns
+ * @example
  */
 const csvToArray = (csvString, delimiter = ',') =>
   csvString

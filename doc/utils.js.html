@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <title>JSDoc: Home</title>
+    <title>JSDoc: Source: utils.js</title>
 
     <script src="scripts/prettify/prettify.js"></script>
     <script src="scripts/prettify/lang-css.js"></script>
@@ -15,9 +15,56 @@
 
   <body>
     <div id="main">
-      <h1 class="page-title">Home</h1>
+      <h1 class="page-title">Source: utils.js</h1>
 
-      <h3></h3>
+      <section>
+        <article>
+          <pre class="prettyprint source linenums"><code>/**
+ * Utlity function to pause execution for a given time
+ * @param {number} seconds
+ * @returns {Promise}
+ */
+const sleep = seconds =>
+  new Promise(resolve => {
+    setTimeout(resolve, seconds * 1000);
+  });
+
+/**
+ * Uiltity function to create and save a CSV file from a buffer
+ * @param {*} data
+ * @param {*} filename
+ */
+const saveToCSV = (data, filename = 'recordedMLSignal.csv') => {
+  // console.log(data)
+  let csvContent = 'data:text/csv;charset=utf-8,';
+
+  data.forEach((val, idx) => {
+    csvContent += `${idx},${val}\r\n`;
+  });
+  const encodedUri = encodeURI(csvContent);
+  const link = document.createElement('a');
+  link.setAttribute('href', encodedUri);
+  link.setAttribute('download', filename);
+  document.body.appendChild(link);
+  link.click();
+};
+
+/**
+ * Utility function to create a buffer from a CSV file
+ * @param {*} csvString
+ * @param {*} delimiter
+ * @returns
+ */
+const csvToArray = (csvString, delimiter = ',') =>
+  csvString
+    .trim()
+    .split('\n')
+    .map(row => parseFloat(row.trim().split(delimiter)[1]));
+
+export {sleep, saveToCSV, csvToArray};
+</code></pre>
+        </article>
+      </section>
     </div>
 
     <nav>

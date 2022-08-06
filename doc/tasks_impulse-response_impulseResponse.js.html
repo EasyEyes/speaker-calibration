@@ -1,4 +1,27 @@
-import AudioCalibrator from '../audioCalibrator';
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>JSDoc: Source: tasks/impulse-response/impulseResponse.js</title>
+
+    <script src="scripts/prettify/prettify.js"></script>
+    <script src="scripts/prettify/lang-css.js"></script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css" />
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css" />
+  </head>
+
+  <body>
+    <div id="main">
+      <h1 class="page-title">Source: tasks/impulse-response/impulseResponse.js</h1>
+
+      <section>
+        <article>
+          <pre
+            class="prettyprint source linenums"
+          ><code>import AudioCalibrator from '../audioCalibrator';
 import MlsGenInterface from './mlsGen/mlsGenInterface';
 
 import {sleep, csvToArray} from '../../utils';
@@ -9,14 +32,9 @@ import {sleep, csvToArray} from '../../utils';
 class ImpulseResponse extends AudioCalibrator {
   /**
    * Default constructor. Creates an instance with any number of paramters passed or the default parameters defined here.
-   *
-   * @param {Object<boolean, number, number, number>} calibratorParams  - paramter object
-   * @param {boolean} [calibratorParams.download = false]  - boolean flag to download captures
-   * @param {number} [calibratorParams.mlsOrder = 18] - order of the MLS to be generated
-   * @param {number} [calibratorParams.numCaptures = 5] - number of captures to perform
-   * @param {number} [calibratorParams.numMLSPerCapture = 4] - number of bursts of MLS per capture
+   * @param {*} param0
    */
-  constructor({download = false, mlsOrder = 18, numCaptures = 5, numMLSPerCapture = 3}) {
+  constructor({download = false, mlsOrder = 18, numCaptures = 5, numMLSPerCapture = 4}) {
     super(numCaptures, numMLSPerCapture);
     this.#mlsOrder = parseInt(mlsOrder, 10);
     this.#P = 2 ** mlsOrder - 1;
@@ -41,7 +59,6 @@ class ImpulseResponse extends AudioCalibrator {
   /** @private */
   #mlsOrder;
 
-  /** @private */
   #P;
 
   /** @private */
@@ -50,13 +67,9 @@ class ImpulseResponse extends AudioCalibrator {
   /** @private */
   offsetGainNode;
 
-  /** .
-   * .
-   * .
+  /**
    * Sends all the computed impulse responses to the backend server for processing
-   *
    * @returns sets the resulting inverted impulse response to the class property
-   * @example
    */
   sendImpulseResponsesToServerForProcessing = async () => {
     const computedIRs = await Promise.all(this.impulseResponses);
@@ -75,19 +88,15 @@ class ImpulseResponse extends AudioCalibrator {
       });
   };
 
-  /** .
-   * .
-   * .
+  /**
    * Sends the recorded signal, or a given csv string of a signal, to the back end server for processing
-   *
-   * @param {<array>String} signalCsv - Optional csv string of a previously recorded signal, if given, this signal will be processed
-   * @example
+   * @param {&lt;array>String} signalCsv - Optional csv string of a previously recorded signal, if given, this signal will be processed
    */
   sendRecordingToServerForProcessing = signalCsv => {
     const allSignals = this.getAllRecordedSignals();
     const numSignals = allSignals.length;
     const payload =
-      signalCsv && signalCsv.length > 0 ? csvToArray(signalCsv) : allSignals[numSignals - 1];
+      signalCsv &amp;&amp; signalCsv.length > 0 ? csvToArray(signalCsv) : allSignals[numSignals - 1];
 
     this.emit('update', {message: `computing the IR of the last recording...`});
     this.impulseResponses.push(
@@ -98,7 +107,7 @@ class ImpulseResponse extends AudioCalibrator {
           P: this.#P,
         })
         .then(res => {
-          if (this.numSuccessfulCaptured < this.numCaptures) {
+          if (this.numSuccessfulCaptured &lt; this.numCaptures) {
             this.numSuccessfulCaptured += 1;
             this.emit('update', {
               message: `${this.numSuccessfulCaptured}/${this.numCaptures} IRs computed...`,
@@ -114,9 +123,7 @@ class ImpulseResponse extends AudioCalibrator {
 
   /**
    * Passed to the calibration steps function, awaits the desired amount of seconds to capture the desired number
-   * of MLS periods defined in the constructor.
-   *
-   * @example
+   * of MLS periods defined in the constructor
    */
   #awaitDesiredMLSLength = async () => {
     // seconds per MLS = P / SR
@@ -127,12 +134,8 @@ class ImpulseResponse extends AudioCalibrator {
     await sleep((this.#P / this.sourceSamplingRate) * this.numMLSPerCapture);
   };
 
-  /** .
-   * .
-   * .
+  /**
    * Passed to the calibration steps function, awaits the onset of the signal to ensure a steady state
-   *
-   * @example
    */
   #awaitSignalOnset = async () => {
     this.emit('update', {
@@ -143,14 +146,13 @@ class ImpulseResponse extends AudioCalibrator {
 
   /**
    * Called immediately after a recording is captured. Used to process the resulting signal
-   * whether by sending the result to a server or by computing a result locally.
-   *
-   * @example
+   * whether by sending the result to a server or by computing a result locally
    */
   #afterMLSRecord = () => {
     if (this.#download) {
       this.downloadData();
     }
+    this.#stopCalibrationAudio();
     this.sendRecordingToServerForProcessing();
   };
 
@@ -161,20 +163,16 @@ class ImpulseResponse extends AudioCalibrator {
     this.#stopCalibrationAudio();
   };
 
-  /** .
-   * .
-   * .
+  /**
    * Created an S Curver Buffer to taper the signal onset
-   *
    * @param {*} length
    * @param {*} phase
    * @returns
-   * @example
    */
   static createSCurveBuffer = (length, phase) => {
     const curve = new Float32Array(length);
     let i;
-    for (i = 0; i < length; i += 1) {
+    for (i = 0; i &lt; length; i += 1) {
       // scale the curve to be between 0-1
       curve[i] = Math.sin((Math.PI * i) / length - phase) / 2 + 0.5;
     }
@@ -185,7 +183,7 @@ class ImpulseResponse extends AudioCalibrator {
     const curve = new Float32Array(length);
     let i;
     let j = length - 1;
-    for (i = 0; i < length; i += 1) {
+    for (i = 0; i &lt; length; i += 1) {
       // scale the curve to be between 0-1
       curve[i] = Math.sin((Math.PI * j) / length - phase) / 2 + 0.5;
       j -= 1;
@@ -195,10 +193,7 @@ class ImpulseResponse extends AudioCalibrator {
 
   /**
    * Construct a Calibration Node with the calibration parameters.
-   *
-   * @param CALIBRATION_TONE_FREQUENCY
    * @private
-   * @example
    */
   #createPureTonenNode = CALIBRATION_TONE_FREQUENCY => {
     const audioContext = this.makeNewSourceAudioContext();
@@ -217,10 +212,7 @@ class ImpulseResponse extends AudioCalibrator {
 
   /**
    * Construct a Calibration Node with the calibration parameters.
-   *
-   * @param dataBuffer
    * @private
-   * @example
    */
   #createCalibrationNodeFromBuffer = dataBuffer => {
     const audioContext = this.makeNewSourceAudioContext();
@@ -233,34 +225,25 @@ class ImpulseResponse extends AudioCalibrator {
     const data = buffer.getChannelData(0); // get data
     // fill the buffer with our data
     try {
-      for (let i = 0; i < dataBuffer.length; i += 1) {
+      for (let i = 0; i &lt; dataBuffer.length; i += 1) {
         data[i] = dataBuffer[i];
       }
     } catch (error) {
       console.error(error);
     }
 
-    const onsetGainNode = audioContext.createGain();
-    this.offsetGainNode = audioContext.createGain();
     const source = audioContext.createBufferSource();
 
     source.buffer = buffer;
     source.loop = true;
-    source.connect(onsetGainNode);
-    onsetGainNode.connect(this.offsetGainNode);
-    this.offsetGainNode.connect(audioContext.destination);
-
-    const onsetCurve = ImpulseResponse.createSCurveBuffer(this.sourceSamplingRate, Math.PI / 2);
-    onsetGainNode.gain.setValueCurveAtTime(onsetCurve, 0, this.TAPER_SECS);
+    source.connect(audioContext.destination);
 
     this.addCalibrationNode(source);
   };
 
   /**
    * Given a data buffer, creates the required calibration node
-   *
    * @param {*} dataBufferArray
-   * @example
    */
   #setCalibrationNodesFromBuffer = (dataBufferArray = [this.#mlsBufferView]) => {
     if (dataBufferArray.length === 1) {
@@ -283,7 +266,7 @@ class ImpulseResponse extends AudioCalibrator {
 
     // Fill the buffer with the inverted impulse response
     const iirChannelZeroBuffer = iirBuffer.getChannelData(0);
-    for (let i = 0; i < iirBuffer.length; i += 1) {
+    for (let i = 0; i &lt; iirBuffer.length; i++) {
       // audio needs to be in [-1.0; 1.0]
       iirChannelZeroBuffer[i] = iir[i];
     }
@@ -304,7 +287,7 @@ class ImpulseResponse extends AudioCalibrator {
     const mlsChannelZeroBuffer = calibrationSignalBuffer.getChannelData(0); // get data
     // fill the buffer with our data
     try {
-      for (let i = 0; i < calibrationSignal.length; i += 1) {
+      for (let i = 0; i &lt; calibrationSignal.length; i += 1) {
         mlsChannelZeroBuffer[i] = calibrationSignal[i];
       }
     } catch (error) {
@@ -330,30 +313,19 @@ class ImpulseResponse extends AudioCalibrator {
 
   /**
    * Creates an audio context and plays it for a few seconds.
-   *
    * @private
-   * @returns - Resolves when the audio is done playing.
-   * @example
+   * @returns {Promise} - Resolves when the audio is done playing.
    */
   #playCalibrationAudio = () => {
     this.calibrationNodes[0].start(0);
     this.emit('update', {message: 'playing the calibration tone...'});
   };
 
-  /** .
-   * .
-   * .
+  /**
    * Stops the audio with tapered offset
-   *
-   * @example
    */
   #stopCalibrationAudio = () => {
-    this.offsetGainNode.gain.setValueAtTime(
-      this.offsetGainNode.gain.value,
-      this.sourceAudioContext.currentTime
-    );
-
-    this.offsetGainNode.gain.setTargetAtTime(0, this.sourceAudioContext.currentTime, 0.5);
+    this.calibrationNodes[0].stop();
     this.emit('update', {message: 'stopping the calibration tone...'});
   };
 
@@ -389,10 +361,8 @@ class ImpulseResponse extends AudioCalibrator {
    * Public method to start the calibration process. Objects intialized from webassembly allocate new memory
    * and must be manually freed. This function is responsible for intializing the MlsGenInterface,
    * and wrapping the calibration steps with a garbage collection safe gaurd.
-   *
    * @public
-   * @param stream - The stream of audio from the Listener.
-   * @example
+   * @param {MediaStream} stream - The stream of audio from the Listener.
    */
   startCalibration = async stream => {
     // initialize the MLSGenInterface object with it's factory method
@@ -407,30 +377,66 @@ class ImpulseResponse extends AudioCalibrator {
 
     // after intializating, start the calibration steps with garbage collection
     await this.#mlsGenInterface.withGarbageCollection([
-      () =>
-        this.calibrationSteps(
+      [
+        this.calibrationSteps,
+        [
           stream,
           this.#playCalibrationAudio, // play audio func (required)
           this.#setCalibrationNodesFromBuffer, // before play func
-          this.#awaitSignalOnset, // before record
-          () => this.numSuccessfulCaptured < this.numCaptures, // loop while true
+          null, // before record
           this.#awaitDesiredMLSLength, // during record
-          this.#afterMLSRecord // after record
-        ),
+          this.#afterMLSRecord, // after record
+        ],
+      ],
     ]);
 
-    this.#stopCalibrationAudio();
-
-    // at this stage we've captured all the required signals,
-    // and have received IRs for each one
-    // so let's send all the IRs to the server to be converted to a single IIR
+    // await the server response
     await this.sendImpulseResponsesToServerForProcessing();
-
-    // debugging function, use to test the result of the IIR
-    // await this.playMLSwithIIR(stream, this.invertedImpulseResponse);
+    await this.playMLSwithIIR(stream, this.invertedImpulseResponse);
 
     return this.invertedImpulseResponse;
   };
 }
 
 export default ImpulseResponse;
+</code></pre>
+        </article>
+      </section>
+    </div>
+
+    <nav>
+      <h2><a href="index.html">Home</a></h2>
+      <h3>Classes</h3>
+      <ul>
+        <li><a href="AudioCalibrator.html">AudioCalibrator</a></li>
+        <li><a href="AudioPeer.html">AudioPeer</a></li>
+        <li><a href="AudioRecorder.html">AudioRecorder</a></li>
+        <li><a href="ImpulseResponse.html">ImpulseResponse</a></li>
+        <li><a href="Listener.html">Listener</a></li>
+        <li><a href="MlsGenInterface.html">MlsGenInterface</a></li>
+        <li><a href="MyEventEmitter.html">MyEventEmitter</a></li>
+        <li><a href="PythonServerAPI.html">PythonServerAPI</a></li>
+        <li><a href="Speaker.html">Speaker</a></li>
+        <li><a href="Volume.html">Volume</a></li>
+      </ul>
+      <h3>Global</h3>
+      <ul>
+        <li><a href="global.html#csvToArray">csvToArray</a></li>
+        <li><a href="global.html#saveToCSV">saveToCSV</a></li>
+        <li><a href="global.html#sleep">sleep</a></li>
+      </ul>
+    </nav>
+
+    <br class="clear" />
+
+    <footer>
+      Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.10</a> on Fri
+      Jul 29 2022 15:09:48 GMT-0400 (Eastern Daylight Time)
+    </footer>
+
+    <script>
+      prettyPrint();
+    </script>
+    <script src="scripts/linenumber.js"></script>
+  </body>
+</html>
