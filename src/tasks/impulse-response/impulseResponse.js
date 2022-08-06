@@ -59,11 +59,11 @@ class ImpulseResponse extends AudioCalibrator {
    * @example
    */
   sendImpulseResponsesToServerForProcessing = async () => {
-    const computedIRs = await Promise.all(this.impulseResponses.slice(0, this.numCaptures));
+    const computedIRs = await Promise.all(this.impulseResponses);
     this.emit('update', {message: `computing the IIR...`});
     return this.pyServerAPI
       .getInverseImpulseResponse({
-        payload: computedIRs,
+        payload: computedIRs.slice(0, this.numCaptures),
       })
       .then(res => {
         this.emit('update', {message: `done computing the IIR...`});
