@@ -162,6 +162,7 @@ window.onload = () => {
     const speakerParameters = {
       siteUrl: window.location.href.substring(0, location.href.lastIndexOf('/')),
       targetElementId: 'display',
+      gainValues: [0.1, 0.5, 0.9], // example gain values
     };
 
     const runImpulseResponseCalibration = async calibrationLevel => {
@@ -193,7 +194,6 @@ window.onload = () => {
 
     const runVolumeCalibration = async () => {
       const calibrator = new VolumeCalibration({});
-
       calibrator.on('update', ({message, ...rest}) => {
         updateTarget.innerHTML = message;
       });

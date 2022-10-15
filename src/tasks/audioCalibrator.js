@@ -121,19 +121,21 @@ class AudioCalibrator extends AudioRecorder {
    * @param {Function} playCalibrationAudio - (async) function that plays the calibration audio
    * @param {*} beforeRecord - (async) function that is called before recording
    * @param {*} afterRecord  - (async) function that is called after recording
+   * @param {Number} gainValue - the gain value to set the gain node to
    */
   volumeCalibrationSteps = async (
     stream,
     playCalibrationAudio,
     beforeRecord = () => {},
-    afterRecord = () => {}
+    afterRecord = () => {},
+    gainValue
   ) => {
     this.numCalibratingRoundsCompleted = 0;
 
     // calibration loop
     while (!this.#isCalibrating && this.numCalibratingRoundsCompleted < this.numCalibratingRounds) {
       // before recording
-      await beforeRecord();
+      await beforeRecord(gainValue);
 
       // start recording
       await this.startRecording(stream);

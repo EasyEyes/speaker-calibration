@@ -61,6 +61,27 @@ class Volume extends AudioCalibrator {
     return result;
   };
 
+  /** 
+   * 
+   * 
+    Construct a calibration Node with the calibration parameters and given gain value
+   * @param {*} gainValue
+   * */
+  #createCalibrationToneWithGainValue = gainValue => {
+    const audioContext = this.makeNewSourceAudioContext();
+    const oscilator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+
+    oscilator.frequency.value = this.#CALIBRATION_TONE_FREQUENCY;
+    oscilator.type = this.#CALIBRATION_TONE_TYPE;
+    gainNode.gain.value = gainValue;
+
+    oscilator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+
+    this.addCalibrationNode(oscilator);
+  };
+
   /**
    * Construct a Calibration Node with the calibration parameters.
    *
@@ -109,18 +130,27 @@ class Volume extends AudioCalibrator {
       });
   };
 
-  startCalibration = async stream => {
-    do {
-      // eslint-disable-next-line no-await-in-loop
-      await this.volumeCalibrationSteps(
-        stream,
-        this.#playCalibrationAudio,
-        this.#createCalibrationNode,
-        this.#sendToServerForProcessing
-      );
-    } while (this.soundGainDBSPL === null);
-
-    return this.soundGainDBSPL;
+  startCalibration = async (stream, gainValues) => {
+    const trialIterations = gainValues.length;
+    const soundGainDBSPLValues = [];
+    // run the calibration at different gain values provided by the user
+    for (let i = 0; i < trialIterations; i++) {
+      do {
+        // console.log('Processing gain value: ', gainValues[i]);
+        // eslint-disable-next-line no-await-in-loop
+        await this.volumeCalibrationSteps(
+          stream,
+          this.#playCalibrationAudio,
+          this.#createCalibrationToneWithGainValue,
+          this.#sendToServerForProcessing,
+          gainValues[i]
+        );
+      } while (this.soundGainDBSPL === null);
+      soundGainDBSPLValues.push(this.soundGainDBSPL);
+      this.soundGainDBSPL = null;
+    }
+    // return this.soundGainDBSPL;
+    return soundGainDBSPLValues;
   };
 }
 

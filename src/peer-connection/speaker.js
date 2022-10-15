@@ -71,7 +71,7 @@ class Speaker extends AudioPeer {
             await sleep(1);
           }
           // resolve when we have a result
-          speaker.result = await speaker.ac.startCalibration(stream);
+          speaker.result = await speaker.ac.startCalibration(stream, params.gainValues);
           speaker.#removeUIElems();
           resolve(speaker.result);
         });
