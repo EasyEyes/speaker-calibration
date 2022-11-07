@@ -1,5 +1,5 @@
 import AudioCalibrator from '../audioCalibrator';
-
+import axios from 'axios';
 import {sleep} from '../../utils';
 
 /**
@@ -26,6 +26,7 @@ class Volume extends AudioCalibrator {
 
   /** @private */
   soundGainDBSPL = null;
+  outDBSPL = null;
 
   handleIncomingData = data => {
     console.log('Received data: ', data);
@@ -121,8 +122,8 @@ class Volume extends AudioCalibrator {
         payload: this.#getTruncatedSignal(),
       })
       .then(res => {
-        if (this.soundGainDBSPL === null) {
-          this.soundGainDBSPL = res;
+        if (this.outDBSPL === null) {
+          this.outDBSPL = res;
         }
       })
       .catch(err => {
@@ -133,10 +134,17 @@ class Volume extends AudioCalibrator {
   startCalibration = async (stream, gainValues) => {
     const trialIterations = gainValues.length;
     const soundGainDBSPLValues = [];
+    const inDBValues = [];
+    let inDB = 0;
+    const outDBSPLValues = [];
+
     // run the calibration at different gain values provided by the user
     for (let i = 0; i < trialIterations; i++) {
+      //convert gain to DB and add to inDB
+      inDB = Math.log10(gainValues[i]) * 20;
+      inDBValues.push(inDB);
+
       do {
-        // console.log('Processing gain value: ', gainValues[i]);
         // eslint-disable-next-line no-await-in-loop
         await this.volumeCalibrationSteps(
           stream,
@@ -145,12 +153,21 @@ class Volume extends AudioCalibrator {
           this.#sendToServerForProcessing,
           gainValues[i]
         );
-      } while (this.soundGainDBSPL === null);
-      soundGainDBSPLValues.push(this.soundGainDBSPL);
-      this.soundGainDBSPL = null;
+      } while (this.outDBSPL === null);
+      outDBSPLValues.push(this.outDBSPL);
+      this.outDBSPL = null;
     }
-    // return this.soundGainDBSPL;
-    return soundGainDBSPLValues;
+
+    // get the volume calibration parameters from the server
+    const parameters = await this.pyServerAPI
+      .getVolumeCalibrationParameters({inDBValues: inDBValues, outDBSPLValues: outDBSPLValues})
+      .then(res => {
+        // console.log(res);
+        return res;
+      });
+    // console.log('Parameters: ', parameters);
+    // return soundGainDBSPLValues;
+    return parameters;
   };
 }
 
