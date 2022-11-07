@@ -123,7 +123,8 @@ class Volume extends AudioCalibrator {
       })
       .then(res => {
         if (this.outDBSPL === null) {
-          this.outDBSPL = res;
+          this.outDBSPL = res['outDbSPL'];
+          this.soundGainDBSPL = res['soundGainDbSPL'];
         }
       })
       .catch(err => {
@@ -155,7 +156,9 @@ class Volume extends AudioCalibrator {
         );
       } while (this.outDBSPL === null);
       outDBSPLValues.push(this.outDBSPL);
+      soundGainDBSPLValues.push(this.soundGainDBSPL);
       this.outDBSPL = null;
+      this.soundGainDBSPL = null;
     }
 
     // get the volume calibration parameters from the server
@@ -167,7 +170,14 @@ class Volume extends AudioCalibrator {
       });
     // console.log('Parameters: ', parameters);
     // return soundGainDBSPLValues;
-    return parameters;
+    const result = {
+      parameters: parameters,
+      inDBValues: inDBValues,
+      outDBSPLValues: outDBSPLValues,
+      soundGainDBSPLValues: soundGainDBSPLValues,
+    };
+    // console.log('Result: ', result);
+    return result;
   };
 }
 
