@@ -112,6 +112,44 @@ class PythonServerAPI {
 
     return res.data[task];
   };
+
+  getVolumeCalibrationParameters = async ({inDBValues, outDBSPLValues}) => {
+    const task = 'volume-parameters';
+    let res = null;
+
+    const data = JSON.stringify({
+      task,
+      inDBValues,
+      outDBSPLValues,
+    });
+
+    await axios({
+      method: 'post',
+      baseURL: PythonServerAPI.TEST_SERVER_URL, //server
+      url: `/task/${task}`,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      data,
+    })
+      .then(response => {
+        res = response;
+      })
+      .catch(error => {
+        throw error;
+      });
+
+    // console.log(res.data[task]);
+    //below is an example of res.data[task]
+    //{
+    //  R: 16.56981076554259,
+    //  T: -47.79799120884434,
+    //  W: 61.0485247483732,
+    //  backgroundDBSPL: 43.88233142069752,
+    //  gainDBSPL: -128.24742161208985
+    //}
+    return res.data[task];
+  };
 }
 
 export default PythonServerAPI;

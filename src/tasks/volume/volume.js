@@ -141,11 +141,10 @@ class Volume extends AudioCalibrator {
     // run the calibration at different gain values provided by the user
     for (let i = 0; i < trialIterations; i++) {
       //convert gain to DB and add to inDB
-      inDB = Math.log10(gainValues[i])*20;
+      inDB = Math.log10(gainValues[i]) * 20;
       inDBValues.push(inDB);
 
       do {
-
         // eslint-disable-next-line no-await-in-loop
         await this.volumeCalibrationSteps(
           stream,
@@ -159,43 +158,16 @@ class Volume extends AudioCalibrator {
       this.outDBSPL = null;
     }
 
-    const task = 'volume-parameters';
-    let res = null;
-
-
-    const data = JSON.stringify({
-      task,
-      inDBValues,
-      outDBSPLValues
-    });
-
-    await axios({
-      method: 'post',
-      baseURL: 'http://127.0.0.1:5000',//server
-      url: `/task/${task}`,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      data,
-    })
-      .then(response => {
-        res = response;
-      })
-      .catch(error => {
-        throw error;
+    // get the volume calibration parameters from the server
+    const parameters = await this.pyServerAPI
+      .getVolumeCalibrationParameters({inDBValues: inDBValues, outDBSPLValues: outDBSPLValues})
+      .then(res => {
+        // console.log(res);
+        return res;
       });
-
-      console.log(res.data[task])
-      //below is an example of res.data[task]
-      //{
-      //  R: 16.56981076554259, 
-      //  T: -47.79799120884434, 
-      //  W: 61.0485247483732, 
-      //  backgroundDBSPL: 43.88233142069752, 
-      //  gainDBSPL: -128.24742161208985
-      //}
-
-    return soundGainDBSPLValues;
+    console.log('Parameters: ', parameters);
+    // return soundGainDBSPLValues;
+    return parameters;
   };
 }
 
