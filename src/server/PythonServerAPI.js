@@ -125,7 +125,7 @@ class PythonServerAPI {
 
     await axios({
       method: 'post',
-      baseURL: PythonServerAPI.TEST_SERVER_URL, //server
+      baseURL: PythonServerAPI.PYTHON_SERVER_URL, //server
       url: `/task/${task}`,
       headers: {
         'Content-Type': 'application/json',

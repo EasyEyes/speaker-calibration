@@ -165,7 +165,7 @@ class Volume extends AudioCalibrator {
         // console.log(res);
         return res;
       });
-    console.log('Parameters: ', parameters);
+    // console.log('Parameters: ', parameters);
     // return soundGainDBSPLValues;
     return parameters;
   };
