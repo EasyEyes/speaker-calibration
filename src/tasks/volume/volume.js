@@ -32,6 +32,7 @@ class Volume extends AudioCalibrator {
   RMS = null;
   THD = null;
   outDBSPL1000 = null;
+  soundGainDBSPL1000 = null;
 
   handleIncomingData = data => {
     console.log('Received data: ', data);
@@ -135,6 +136,7 @@ class Volume extends AudioCalibrator {
           this.power1000 = res['power1000']
           this.THD = res['thd']
           this.RMS = res['rms']
+          this.soundGainDBSPL1000 = res['soundGainDbSPL1000'];
         }
       })
       .catch(err => {
@@ -145,6 +147,7 @@ class Volume extends AudioCalibrator {
   startCalibration = async (stream, gainValues) => {
     const trialIterations = gainValues.length;
     const soundGainDBSPLValues = [];
+    const soundGainDBSPL1000Values = [];
     const power1000Values = [];
     const powerValues = [];
     const rmsValues = [];
@@ -177,6 +180,7 @@ class Volume extends AudioCalibrator {
       thdValues.push(this.THD);
       outDBSPLValues.push(this.outDBSPL);
       soundGainDBSPLValues.push(this.soundGainDBSPL);
+      soundGainDBSPL1000Values.push(this.soundGainDBSPL1000);
 
       this.outDBSPL = null;
       this.soundGainDBSPL = null;
@@ -185,6 +189,7 @@ class Volume extends AudioCalibrator {
       this.outDBSPL1000 = null;
       this.RMS = null;
       this.THD = null;
+      this.soundGainDBSPL1000=null;
     }
 
     // get the volume calibration parameters from the server
@@ -202,7 +207,8 @@ class Volume extends AudioCalibrator {
       power1000Values: power1000Values,
       outDBSPL1000Values: outDBSPL1000Values,
       rmsValues: rmsValues,
-      thdValues: thdValues
+      thdValues: thdValues,
+      soundGainDBSPL1000Values: soundGainDBSPL1000Values
     };
 
     return result;
