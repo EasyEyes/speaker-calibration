@@ -25,14 +25,9 @@ class Volume extends AudioCalibrator {
   #CALIBRATION_TONE_DURATION = 5; // seconds
 
   /** @private */
-  soundGainDBSPL = null;
   outDBSPL = null;
-  power = null;
-  power1000 = null;
-  RMS = null;
   THD = null;
   outDBSPL1000 = null;
-  soundGainDBSPL1000 = null;
 
   handleIncomingData = data => {
     console.log('Received data: ', data);
@@ -130,13 +125,8 @@ class Volume extends AudioCalibrator {
       .then(res => {
         if (this.outDBSPL === null) {
           this.outDBSPL = res['outDbSPL'];
-          this.soundGainDBSPL = res['soundGainDbSPL'];
           this.outDBSPL1000 = res['outDbSPL1000'];
-          this.power = res['power']
-          this.power1000 = res['power1000']
           this.THD = res['thd']
-          this.RMS = res['rms']
-          this.soundGainDBSPL1000 = res['soundGainDbSPL1000'];
         }
       })
       .catch(err => {
@@ -146,11 +136,6 @@ class Volume extends AudioCalibrator {
 
   startCalibration = async (stream, gainValues) => {
     const trialIterations = gainValues.length;
-    const soundGainDBSPLValues = [];
-    const soundGainDBSPL1000Values = [];
-    const power1000Values = [];
-    const powerValues = [];
-    const rmsValues = [];
     const thdValues = [];
     const inDBValues = [];
     let inDB = 0;
@@ -174,22 +159,12 @@ class Volume extends AudioCalibrator {
         );
       } while (this.outDBSPL === null);
       outDBSPL1000Values.push(this.outDBSPL1000);
-      power1000Values.push(this.power1000);
-      powerValues.push(this.power);
-      rmsValues.push(this.RMS);
       thdValues.push(this.THD);
       outDBSPLValues.push(this.outDBSPL);
-      soundGainDBSPLValues.push(this.soundGainDBSPL);
-      soundGainDBSPL1000Values.push(this.soundGainDBSPL1000);
 
       this.outDBSPL = null;
-      this.soundGainDBSPL = null;
-      this.power1000 = null;
-      this.power = null;
       this.outDBSPL1000 = null;
-      this.RMS = null;
       this.THD = null;
-      this.soundGainDBSPL1000=null;
     }
 
     // get the volume calibration parameters from the server
@@ -202,13 +177,8 @@ class Volume extends AudioCalibrator {
       parameters: parameters,
       inDBValues: inDBValues,
       outDBSPLValues: outDBSPLValues,
-      soundGainDBSPLValues: soundGainDBSPLValues,
-      powerValues: powerValues,
-      power1000Values: power1000Values,
       outDBSPL1000Values: outDBSPL1000Values,
-      rmsValues: rmsValues,
       thdValues: thdValues,
-      soundGainDBSPL1000Values: soundGainDBSPL1000Values
     };
 
     return result;

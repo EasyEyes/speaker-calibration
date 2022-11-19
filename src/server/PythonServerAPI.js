@@ -143,6 +143,7 @@ class PythonServerAPI {
     //below is an example of res.data[task]
     //{
     //  R: 16.56981076554259,
+    //  RMSError: 1.9289162528535229
     //  T: -47.79799120884434,
     //  W: 61.0485247483732,
     //  backgroundDBSPL: 43.88233142069752,
