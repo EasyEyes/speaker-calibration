@@ -163,6 +163,8 @@ window.onload = () => {
       siteUrl: window.location.href.substring(0, location.href.lastIndexOf('/')),
       targetElementId: 'display',
       gainValues: [0.1, 0.5, 0.9], // example gain values
+      debug: true,
+      ICalib: 31,
     };
 
     const runImpulseResponseCalibration = async calibrationLevel => {

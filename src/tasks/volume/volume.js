@@ -115,18 +115,19 @@ class Volume extends AudioCalibrator {
     await sleep(totalDuration);
   };
 
-  #sendToServerForProcessing = () => {
+  #sendToServerForProcessing = (lCalib = 104.92978421490648) => {
     console.log('Sending data to server');
     this.pyServerAPI
       .getVolumeCalibration({
         sampleRate: this.sourceSamplingRate,
         payload: this.#getTruncatedSignal(),
+        lCalib: lCalib,
       })
       .then(res => {
         if (this.outDBSPL === null) {
           this.outDBSPL = res['outDbSPL'];
           this.outDBSPL1000 = res['outDbSPL1000'];
-          this.THD = res['thd']
+          this.THD = res['thd'];
         }
       })
       .catch(err => {
@@ -134,14 +135,13 @@ class Volume extends AudioCalibrator {
       });
   };
 
-  startCalibration = async (stream, gainValues) => {
+  startCalibration = async (stream, gainValues, lCalib = 104.92978421490648) => {
     const trialIterations = gainValues.length;
     const thdValues = [];
     const inDBValues = [];
     let inDB = 0;
     const outDBSPLValues = [];
     const outDBSPL1000Values = [];
-
     // run the calibration at different gain values provided by the user
     for (let i = 0; i < trialIterations; i++) {
       //convert gain to DB and add to inDB
@@ -155,7 +155,8 @@ class Volume extends AudioCalibrator {
           this.#playCalibrationAudio,
           this.#createCalibrationToneWithGainValue,
           this.#sendToServerForProcessing,
-          gainValues[i]
+          gainValues[i],
+          lCalib //todo make this a class parameter
         );
       } while (this.outDBSPL === null);
       outDBSPL1000Values.push(this.outDBSPL1000);
@@ -169,7 +170,11 @@ class Volume extends AudioCalibrator {
 
     // get the volume calibration parameters from the server
     const parameters = await this.pyServerAPI
-      .getVolumeCalibrationParameters({inDBValues: inDBValues, outDBSPLValues: outDBSPL1000Values})
+      .getVolumeCalibrationParameters({
+        inDBValues: inDBValues,
+        outDBSPLValues: outDBSPL1000Values,
+        lCalib: lCalib,
+      })
       .then(res => {
         return res;
       });

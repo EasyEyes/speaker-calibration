@@ -44,7 +44,7 @@ class AudioPeer {
     this.targetElement = param.targetElementId;
 
     this.siteUrl = param.siteUrl;
-
+    this.debug = false;
     // Store for all incoming data
     this.dataStore = [];
 

@@ -82,7 +82,7 @@ class PythonServerAPI {
     return res.data[task];
   };
 
-  getVolumeCalibration = async ({payload, sampleRate}) => {
+  getVolumeCalibration = async ({payload, sampleRate, lCalib}) => {
     const task = 'volume';
     let res = null;
 
@@ -92,6 +92,7 @@ class PythonServerAPI {
       task,
       payload,
       'sample-rate': sampleRate,
+      lCalib,
     });
 
     await axios({
@@ -113,7 +114,7 @@ class PythonServerAPI {
     return res.data[task];
   };
 
-  getVolumeCalibrationParameters = async ({inDBValues, outDBSPLValues}) => {
+  getVolumeCalibrationParameters = async ({inDBValues, outDBSPLValues, lCalib}) => {
     const task = 'volume-parameters';
     let res = null;
 
@@ -121,6 +122,7 @@ class PythonServerAPI {
       task,
       inDBValues,
       outDBSPLValues,
+      lCalib,
     });
 
     await axios({

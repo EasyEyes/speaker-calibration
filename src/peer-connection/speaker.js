@@ -23,10 +23,10 @@ class Speaker extends AudioPeer {
    */
   constructor(params, CalibratorInstance) {
     super(params);
-
     this.siteUrl += '/listener?';
     this.ac = CalibratorInstance;
     this.result = null;
+    this.debug = params?.debug ?? false;
 
     /* Set up callbacks that handle any events related to our peer object. */
     this.peer.on('open', this.#onPeerOpen);
@@ -71,7 +71,11 @@ class Speaker extends AudioPeer {
             await sleep(1);
           }
           // resolve when we have a result
-          speaker.result = await speaker.ac.startCalibration(stream, params.gainValues);
+          speaker.result = await speaker.ac.startCalibration(
+            stream,
+            params.gainValues,
+            params.ICalib
+          );
           speaker.#removeUIElems();
           resolve(speaker.result);
         });
@@ -158,7 +162,7 @@ class Speaker extends AudioPeer {
     // If specified HTML Id is available, show QR code there
     if (document.getElementById(this.targetElement)) {
       if (document.getElementById(this.targetElement)) {
-        if (process.env.NODE_ENV === 'development') {
+        if (this.debug) {
           const linkTag = document.createElement('a');
           linkTag.setAttribute('href', uri);
           linkTag.innerHTML = "Click here to connect to the speaker's microphone";

@@ -128,7 +128,8 @@ class AudioCalibrator extends AudioRecorder {
     playCalibrationAudio,
     beforeRecord = () => {},
     afterRecord = () => {},
-    gainValue
+    gainValue,
+    lCalib = 104.92978421490648
   ) => {
     this.numCalibratingRoundsCompleted = 0;
 
@@ -149,7 +150,7 @@ class AudioCalibrator extends AudioRecorder {
       await this.stopRecording();
 
       // after recording
-      await afterRecord();
+      await afterRecord(lCalib);
 
       this.calibrationNodes = [];
 
