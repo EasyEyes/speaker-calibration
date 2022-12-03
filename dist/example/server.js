@@ -43,7 +43,9 @@ app.use((req, res) => {
   });
 });
 
-if (!module.parent) {
-  app.listen(port);
-  console.log(`Express started on port ${port}`);
-}
+// if (!module.parent) {
+//   app.listen(port);
+//   console.log(`Express started`);
+// }
+
+app.listen(process.env.PORT || port);
