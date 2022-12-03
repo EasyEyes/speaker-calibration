@@ -29,46 +29,19 @@
         <a href="http://browsehappy.com/">upgrade your browser</a> to improve your experience.
       </p>
     <![endif]-->
-    <div class="container-fluid background">
-      <div class="container popup shadow p-3 mb-5 bg-white rounded">
-        <h1>Listener Page</h1>
-        <p class="lead">
-          Lorem ipsum dolor sit amet, consectetur adipisicing elit. Officia maxime sapiente
-          repudiandae est, magnam ex sint iure quo porro ullam debitis inventore at temporibus quod
-          ducimus nesciunt dolorem laboriosam. Eius!
-        </p>
-        <div class="row justify-content-center">
-          <div class="d-flex col-10 justify-content-center">
-            <button id="calibrationBeginButton" type="button" class="btn btn-primary">
-              Calibrate Speakers
-            </button>
-          </div>
+    <div class="container">
+      <h1>Sound Calibration</h1>
+      <p class="lead" id="message">
+        For accurate sound calibration, please make sure nothing occludes the microphone at the
+        bottom edge of this phone. Please remove any protective case. Then hold the phone in front
+        of your face, and press Ok to continue.
+      </p>
+      <div>
+        <div class="col-6">
+          <button id="calibrationBeginButton" type="button" class="btn btn-primary">Ok</button>
         </div>
-        <div class="row justify-content-center">
-          <div class="d-flex col-10 justify-content-center">
-            <button
-              id="viewLogButton"
-              type="button"
-              class="btn btn-primary"
-              data-bs-toggle="collapse"
-              data-bs-target="#logs"
-              aria-expanded="false"
-              aria-controls="logs"
-            >
-              Open Logs
-            </button>
-          </div>
-        </div>
-        <div class="row justify-content-center">
-          <div class="d-flex col-10 justify-content-center">
-            <div class="collapse" id="logs" style="width: 100%">
-              <div
-                class="card card-body overflow-auto"
-                id="display"
-                style="font-size: clamp(16px, 3vw, 22px); height: 40vh"
-              ></div>
-            </div>
-          </div>
+        <div class="col-6">
+          <div id="display"></div>
         </div>
       </div>
     </div>
@@ -78,6 +51,10 @@
       };
       document.getElementById('calibrationBeginButton').onclick = () => {
         window.listener = new speakerCalibrator.Listener(listenerParameters);
+        console.log(window.listener);
+        document.querySelector('#calibrationBeginButton').style.display = 'none';
+        document.querySelector('#message').innerText =
+          'Calibration in progress, please hold your phone steady.';
       };
     </script>
     <script

@@ -2,6 +2,10 @@
 *
 !/**/
 !*.*
+# dont ignore bin/compile bin/detect and bin/release
+!bin/compile
+!bin/detect
+!bin/release
 
 # ignore all files starting with . or ~
 .*
