@@ -1,0 +1,18 @@
+{
+  "name": "easy-eyes-listener",
+  "version": "1.0.0",
+  "description": "",
+  "main": "example/server.js",
+  "directories": {
+    "example": "example"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}
