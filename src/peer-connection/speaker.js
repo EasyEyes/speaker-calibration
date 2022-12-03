@@ -165,7 +165,7 @@ class Speaker extends AudioPeer {
         if (this.debug) {
           const linkTag = document.createElement('a');
           linkTag.setAttribute('href', uri);
-          linkTag.innerHTML = "Click here to connect to the speaker's microphone";
+          linkTag.innerHTML = "Use computer's microphone to calibrate?";
           linkTag.target = '_blank';
           document.getElementById(this.targetElement).appendChild(linkTag);
         }
