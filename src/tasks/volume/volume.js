@@ -142,12 +142,36 @@ class Volume extends AudioCalibrator {
     let inDB = 0;
     const outDBSPLValues = [];
     const outDBSPL1000Values = [];
+
+    // do one calibration that will be discarded
+    const soundLevelToDiscard = -80;
+    const gainToDiscard = Math.pow(10, soundLevelToDiscard / 20);
+    this.emit('update', {message: `Sound Level: ${soundLevelToDiscard} dB`});
+    do {
+      // eslint-disable-next-line no-await-in-loop
+      await this.volumeCalibrationSteps(
+        stream,
+        this.#playCalibrationAudio,
+        this.#createCalibrationNode,
+        this.#sendToServerForProcessing,
+        gainToDiscard,
+        lCalib //todo make this a class parameter
+      );
+    } while (this.outDBSPL === null);
+    //reset the values
+    this.outDBSPL = null;
+    this.outDBSPL = null;
+    this.outDBSPL1000 = null;
+    this.THD = null;
+
     // run the calibration at different gain values provided by the user
     for (let i = 0; i < trialIterations; i++) {
       //convert gain to DB and add to inDB
       inDB = Math.log10(gainValues[i]) * 20;
+      // precision to 1 decimal place
+      inDB = Math.round(inDB * 10) / 10;
       inDBValues.push(inDB);
-
+      this.emit('update', {message: `Sound Level: ${inDB} dB`});
       do {
         // eslint-disable-next-line no-await-in-loop
         await this.volumeCalibrationSteps(
