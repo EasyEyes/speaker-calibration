@@ -144,7 +144,7 @@ class Volume extends AudioCalibrator {
     const outDBSPL1000Values = [];
 
     // do one calibration that will be discarded
-    const soundLevelToDiscard = -80;
+    const soundLevelToDiscard = -60;
     const gainToDiscard = Math.pow(10, soundLevelToDiscard / 20);
     this.emit('update', {message: `Sound Level: ${soundLevelToDiscard} dB`});
     do {
@@ -152,7 +152,7 @@ class Volume extends AudioCalibrator {
       await this.volumeCalibrationSteps(
         stream,
         this.#playCalibrationAudio,
-        this.#createCalibrationNode,
+        this.#createCalibrationToneWithGainValue,
         this.#sendToServerForProcessing,
         gainToDiscard,
         lCalib //todo make this a class parameter
