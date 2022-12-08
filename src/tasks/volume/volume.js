@@ -29,6 +29,9 @@ class Volume extends AudioCalibrator {
   THD = null;
   outDBSPL1000 = null;
 
+  /** @private */
+  TAPER_SECS = 0.010; // seconds
+
   handleIncomingData = data => {
     console.log('Received data: ', data);
     if (data.type === 'soundGainDBSPL') {
@@ -36,6 +39,21 @@ class Volume extends AudioCalibrator {
     } else {
       throw new Error(`Unknown data type: ${data.type}`);
     }
+  };
+
+  createSCurveBuffer = (onSetBool=true) => {
+
+    const curve = new Float32Array(this.TAPER_SECS*this.sourceSamplingRate+1);
+    const frequency = 1 / (4 * this.TAPER_SECS);
+    let j = 0;
+    for (let i = 0; i < this.TAPER_SECS*this.sourceSamplingRate+1; i += 1) {
+      const phase = 2 * Math.PI * frequency * j;
+      const onsetTaper = Math.pow(Math.sin(phase) , 2);
+      const offsetTaper = Math.pow(Math.cos(phase) , 2);
+      curve[i] = onSetBool? onsetTaper : offsetTaper;
+      j += (1 / this.sourceSamplingRate);
+    } 
+    return curve;
   };
 
   #getTruncatedSignal = (left = 3.5, right = 4.5) => {
@@ -73,13 +91,22 @@ class Volume extends AudioCalibrator {
     const audioContext = this.makeNewSourceAudioContext();
     const oscilator = audioContext.createOscillator();
     const gainNode = audioContext.createGain();
+    const taperGainNode = audioContext.createGain();
+    const offsetGainNode = audioContext.createGain();
+    const totalDuration = this.#CALIBRATION_TONE_DURATION * 1.2;
 
     oscilator.frequency.value = this.#CALIBRATION_TONE_FREQUENCY;
     oscilator.type = this.#CALIBRATION_TONE_TYPE;
     gainNode.gain.value = gainValue;
 
     oscilator.connect(gainNode);
-    gainNode.connect(audioContext.destination);
+    gainNode.connect(taperGainNode);
+    const onsetCurve = this.createSCurveBuffer();
+    taperGainNode.gain.setValueCurveAtTime(onsetCurve, 0, this.TAPER_SECS);
+    taperGainNode.connect(offsetGainNode);
+    const offsetCurve = this.createSCurveBuffer(false);
+    offsetGainNode.gain.setValueCurveAtTime(offsetCurve, (totalDuration-this.TAPER_SECS), this.TAPER_SECS);
+    offsetGainNode.connect(audioContext.destination);
 
     this.addCalibrationNode(oscilator);
   };
