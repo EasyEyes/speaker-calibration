@@ -178,6 +178,7 @@ class AudioCalibrator extends AudioRecorder {
    * @example
    */
   setSamplingRates = samplingRate => {
+    samplingRate = 96000;
     this.sinkSamplingRate = samplingRate;
     this.sourceSamplingRate = samplingRate;
     this.emit('update', {message: `sampling at ${samplingRate}Hz...`});
@@ -191,9 +192,10 @@ class AudioCalibrator extends AudioRecorder {
 
   makeNewSourceAudioContext = () => {
     const options = {
-      sampleRate: this.sourceSamplingRate,
+      //sampleRate: this.sourceSamplingRate,
+      sampleRate: 96000,
     };
-
+    
     this.sourceAudioContext = new (window.AudioContext ||
       window.webkitAudioContext ||
       window.audioContext)(options);
@@ -211,7 +213,7 @@ class AudioCalibrator extends AudioRecorder {
   downloadData = () => {
     const recordings = this.getAllRecordedSignals();
     const i = recordings.length - 1;
-    saveToCSV(recordings[i], `recordedMLSignal_${i}.csv`);
+    saveToCSV(recordings[i], `recordedMLSignal_${i}_iphone_neg_32.csv`);
   };
 }
 

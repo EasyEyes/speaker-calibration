@@ -67,7 +67,8 @@ class MyEventEmitter {
     if (!this.#events[name]) {
       throw new Error(`Can't emit an event. Event "${name}" doesn't exits.`);
     }
-
+    
+    console.log(this.#events[name])
     /**
      *
      * @param {*} callback

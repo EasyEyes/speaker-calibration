@@ -59,6 +59,7 @@ class AudioRecorder extends MyEventEmitter {
   #setMediaRecorder = stream => {
     // Create a new MediaRecorder object
     this.#mediaRecorder = new MediaRecorder(stream);
+    console.log("set media recorder");
 
     // Add event listeners
     this.#mediaRecorder.ondataavailable = e => this.#onRecorderDataAvailable(e);
@@ -80,6 +81,7 @@ class AudioRecorder extends MyEventEmitter {
    */
   startRecording = async stream => {
     // Create a fresh audio context
+    console.log("start rec");
     this.#setAudioContext();
     // Set up media recorder if needed
     if (!this.#mediaRecorder) this.#setMediaRecorder(stream);
@@ -87,6 +89,8 @@ class AudioRecorder extends MyEventEmitter {
     this.#recordedChunks = [];
     // start recording
     this.#mediaRecorder.start();
+    const t_start_rec = performance.now();
+    console.log(t_start_rec);
   };
 
   /**

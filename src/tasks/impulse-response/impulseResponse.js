@@ -1,7 +1,7 @@
 import AudioCalibrator from '../audioCalibrator';
 import MlsGenInterface from './mlsGen/mlsGenInterface';
 
-import {sleep, csvToArray} from '../../utils';
+import {sleep, csvToArray, saveToCSV} from '../../utils';
 
 /**
  *
@@ -16,10 +16,10 @@ class ImpulseResponse extends AudioCalibrator {
    * @param {number} [calibratorParams.numCaptures = 5] - number of captures to perform
    * @param {number} [calibratorParams.numMLSPerCapture = 4] - number of bursts of MLS per capture
    */
-  constructor({download = false, mlsOrder = 18, numCaptures = 3, numMLSPerCapture = 3}) {
+  constructor({download = false, mlsOrder = 18, numCaptures = 5, numMLSPerCapture = 1}) {
     super(numCaptures, numMLSPerCapture);
     this.#mlsOrder = parseInt(mlsOrder, 10);
-    this.#P = 2 ** mlsOrder - 1;
+    this.#P = 2 ** mlsOrder - 1; // 2 ** mlsOrder - 1
     this.#download = download;
   }
 
@@ -45,10 +45,12 @@ class ImpulseResponse extends AudioCalibrator {
   #P;
 
   /** @private */
-  TAPER_SECS = 5;
+  TAPER_SECS = 0; // was 5
 
   /** @private */
   offsetGainNode;
+
+  MLS;
 
   /** .
    * .
@@ -60,6 +62,16 @@ class ImpulseResponse extends AudioCalibrator {
    */
   sendImpulseResponsesToServerForProcessing = async () => {
     const computedIRs = await Promise.all(this.impulseResponses);
+    //computedIRs = this.getAllRecordedSignals();
+    //console.log("computed IRs");
+    //console.log(computedIRs)
+    //JSON_IRs = JSON.parse(computedIRs);
+    //console.log(JSON_IRs)
+    //++saveToCSV(computedIRs, `computedIRs_0.csv`);
+    //for (let i = 0; i < computedIRs.length; i++){
+      
+    //  saveToCSV(computedIRs[i], `computedIRs_${i}.csv`);
+    //}
     this.emit('update', {message: `computing the IIR...`});
     return this.pyServerAPI
       .getInverseImpulseResponse({
@@ -96,6 +108,7 @@ class ImpulseResponse extends AudioCalibrator {
           sampleRate: this.sourceSamplingRate || 96000,
           payload,
           P: this.#P,
+          MLS: this.MLS,
         })
         .then(res => {
           if (this.numSuccessfulCaptured < this.numCaptures) {
@@ -124,7 +137,18 @@ class ImpulseResponse extends AudioCalibrator {
     this.emit('update', {
       message: `sampling the calibration signal...`,
     });
+    console.log("await lenght...sample rate: " + this.sourceSamplingRate)
+    console.log("what is P: " + this.#P);
+    const t_0 = performance.now();
+
+    console.log("time start");
+    console.log(t_0);
+
     await sleep((this.#P / this.sourceSamplingRate) * this.numMLSPerCapture);
+    const t_1 = performance.now();
+    console.log("time for recording");
+    console.log(t_1);
+    console.log(t_1-t_0);
   };
 
   /** .
@@ -224,6 +248,8 @@ class ImpulseResponse extends AudioCalibrator {
    */
   #createCalibrationNodeFromBuffer = dataBuffer => {
     const audioContext = this.makeNewSourceAudioContext();
+    console.log("sample rate");
+    console.log(audioContext.sampleRate);
     const buffer = audioContext.createBuffer(
       1, // number of channels
       dataBuffer.length,
@@ -231,15 +257,43 @@ class ImpulseResponse extends AudioCalibrator {
     );
 
     const data = buffer.getChannelData(0); // get data
+    //const fs = 512;
+    //const dt = 1/fs;
+    //const F = 60;
     // fill the buffer with our data
+    const A = 1;
+    let fs = 48000;
+    let f0 = 0;
+    let f1 = 20000;
+    let T_sweep = 5.5; // 5.5
+    let phi = 0;
+    let f = f0;
+    let delta = 2* Math.PI * f/fs;
+    let f_delta = (f1-f0)/(fs*T_sweep);
+    let cos = [];
+    const freqs = [];
     try {
       for (let i = 0; i < dataBuffer.length; i += 1) {
+        //data[i] = dataBuffer[i]*.025;
         data[i] = dataBuffer[i];
+
+
+        //data[i] = A*Math.sin(phi);
+        //cos.push(A*Math.cos(phi))
+        //phi = phi + delta;
+        //f = f + f_delta;
+        //delta = 2*Math.PI*f/fs;
+      
+        //  console.log("final freq + " + f);
+        //freqs.push(f);
+        //data[i] = dataBuffer[i]*0;
+       // }
       }
     } catch (error) {
       console.error(error);
     }
-
+    //saveToCSV(cos,'sweep_cos.csv')
+    //saveToCSV(freqs, 'MLS_freqs.csv')
     const onsetGainNode = audioContext.createGain();
     this.offsetGainNode = audioContext.createGain();
     const source = audioContext.createBufferSource();
@@ -249,9 +303,12 @@ class ImpulseResponse extends AudioCalibrator {
     source.connect(onsetGainNode);
     onsetGainNode.connect(this.offsetGainNode);
     this.offsetGainNode.connect(audioContext.destination);
-
-    const onsetCurve = ImpulseResponse.createSCurveBuffer(this.sourceSamplingRate, Math.PI / 2);
-    onsetGainNode.gain.setValueCurveAtTime(onsetCurve, 0, this.TAPER_SECS);
+    console.log("other sampling rate");
+    console.log(this.sourceSamplingRate);
+    //const onsetCurve = ImpulseResponse.createSCurveBuffer(this.sourceSamplingRate, Math.PI / 2);
+    //onsetGainNode.gain.setValueCurveAtTime(onsetCurve, 0, this.TAPER_SECS);
+    console.log("source")
+    console.log(source)
 
     this.addCalibrationNode(source);
   };
@@ -325,6 +382,8 @@ class ImpulseResponse extends AudioCalibrator {
   };
 
   #createIIRwMLSGraph = () => {
+    console.log("buffer view");
+    console.log(this.#mlsBufferView[0]);
     this.#createImpulseResponseFilterGraph(this.impulseResponses, [this.#mlsBufferView][0]);
   };
 
@@ -337,6 +396,12 @@ class ImpulseResponse extends AudioCalibrator {
    */
   #playCalibrationAudio = () => {
     this.calibrationNodes[0].start(0);
+    console.log("calibration node?");
+    console.log(this.calibrationNodes[0].buffer)
+    //MLS SIGNAL
+    console.log(this.calibrationNodes[0].buffer.getChannelData(0))
+    saveToCSV(this.calibrationNodes[0].buffer.getChannelData(0), 'MLS_iphone_6_bursts_96k.csv')
+    this.MLS = this.calibrationNodes[0].buffer.getChannelData(0)
     this.emit('update', {message: 'playing the calibration tone...'});
   };
 
@@ -367,6 +432,7 @@ class ImpulseResponse extends AudioCalibrator {
     ).then(mlsGenInterface => {
       this.#mlsGenInterface = mlsGenInterface;
       this.#mlsBufferView = this.#mlsGenInterface.getMLS();
+      console.log(this.#mlsBufferView);
     });
 
     // after intializating, start the calibration steps with garbage collection
@@ -428,7 +494,8 @@ class ImpulseResponse extends AudioCalibrator {
 
     // debugging function, use to test the result of the IIR
     // await this.playMLSwithIIR(stream, this.invertedImpulseResponse);
-
+    console.log("inverse impulse");
+    saveToCSV(this.invertedImpulseResponse, `invertedImpulse_iphone_neg_32.csv`);
     return this.invertedImpulseResponse;
   };
 }

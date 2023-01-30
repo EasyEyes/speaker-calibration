@@ -20,7 +20,7 @@ class PythonServerAPI {
    * @returns
    * @example
    */
-  getImpulseResponse = async ({payload, sampleRate, P}) => {
+  getImpulseResponse = async ({payload, sampleRate, P, MLS}) => {
     const task = 'impulse-response';
     let res = null;
 
@@ -31,11 +31,12 @@ class PythonServerAPI {
       payload,
       'sample-rate': sampleRate,
       P,
+      MLS,
     });
 
     await axios({
       method: 'post',
-      baseURL: PythonServerAPI.PYTHON_SERVER_URL,
+      baseURL: PythonServerAPI.TEST_SERVER_URL,
       url: `/task/${task}`,
       headers: {
         'Content-Type': 'application/json',
@@ -65,7 +66,7 @@ class PythonServerAPI {
 
     await axios({
       method: 'post',
-      baseURL: PythonServerAPI.PYTHON_SERVER_URL,
+      baseURL: PythonServerAPI.TEST_SERVER_URL,
       url: `/task/${task}`,
       headers: {
         'Content-Type': 'application/json',

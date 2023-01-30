@@ -122,6 +122,7 @@ class Listener extends AudioPeer {
     ) {
       return 'iOS';
     }
+    console.log("get mobile");
     return 'Other';
   };
 
