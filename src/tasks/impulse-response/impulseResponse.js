@@ -21,6 +21,7 @@ class ImpulseResponse extends AudioCalibrator {
     this.#mlsOrder = parseInt(mlsOrder, 10);
     this.#P = 2 ** mlsOrder - 1;
     this.#download = download;
+    this.#mls = [];
   }
 
   /** @private */
@@ -40,6 +41,9 @@ class ImpulseResponse extends AudioCalibrator {
 
   /** @private */
   #mlsOrder;
+
+  /** @private */
+  #mls;
 
   /** @private */
   #P;
@@ -337,6 +341,7 @@ class ImpulseResponse extends AudioCalibrator {
    */
   #playCalibrationAudio = () => {
     this.calibrationNodes[0].start(0);
+    this.#mls = this.calibrationNodes[0].buffer.getChannelData(0);
     this.emit('update', {message: 'playing the calibration tone...'});
   };
 
