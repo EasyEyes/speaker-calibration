@@ -16,7 +16,7 @@ class ImpulseResponse extends AudioCalibrator {
    * @param {number} [calibratorParams.numCaptures = 5] - number of captures to perform
    * @param {number} [calibratorParams.numMLSPerCapture = 4] - number of bursts of MLS per capture
    */
-  constructor({download = false, mlsOrder = 18, numCaptures = 3, numMLSPerCapture = 3}) {
+  constructor({download = false, mlsOrder = 18, numCaptures = 3, numMLSPerCapture = 4}) {
     super(numCaptures, numMLSPerCapture);
     this.#mlsOrder = parseInt(mlsOrder, 10);
     this.#P = 2 ** mlsOrder - 1;
