@@ -90,6 +90,7 @@ class ImpulseResponse extends AudioCalibrator {
   sendRecordingToServerForProcessing = signalCsv => {
     const allSignals = this.getAllRecordedSignals();
     const numSignals = allSignals.length;
+    const mls = this.#mls;
     const payload =
       signalCsv && signalCsv.length > 0 ? csvToArray(signalCsv) : allSignals[numSignals - 1];
 
@@ -99,6 +100,7 @@ class ImpulseResponse extends AudioCalibrator {
         .getImpulseResponse({
           sampleRate: this.sourceSamplingRate || 96000,
           payload,
+          mls,
           P: this.#P,
         })
         .then(res => {
