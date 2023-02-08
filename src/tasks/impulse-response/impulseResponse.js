@@ -16,11 +16,12 @@ class ImpulseResponse extends AudioCalibrator {
    * @param {number} [calibratorParams.numCaptures = 5] - number of captures to perform
    * @param {number} [calibratorParams.numMLSPerCapture = 4] - number of bursts of MLS per capture
    */
-  constructor({download = false, mlsOrder = 18, numCaptures = 3, numMLSPerCapture = 3}) {
+  constructor({download = false, mlsOrder = 18, numCaptures = 3, numMLSPerCapture = 4}) {
     super(numCaptures, numMLSPerCapture);
     this.#mlsOrder = parseInt(mlsOrder, 10);
     this.#P = 2 ** mlsOrder - 1;
     this.#download = download;
+    this.#mls = [];
   }
 
   /** @private */
@@ -40,6 +41,9 @@ class ImpulseResponse extends AudioCalibrator {
 
   /** @private */
   #mlsOrder;
+
+  /** @private */
+  #mls;
 
   /** @private */
   #P;
@@ -86,6 +90,7 @@ class ImpulseResponse extends AudioCalibrator {
   sendRecordingToServerForProcessing = signalCsv => {
     const allSignals = this.getAllRecordedSignals();
     const numSignals = allSignals.length;
+    const mls = this.#mls;
     const payload =
       signalCsv && signalCsv.length > 0 ? csvToArray(signalCsv) : allSignals[numSignals - 1];
 
@@ -95,6 +100,7 @@ class ImpulseResponse extends AudioCalibrator {
         .getImpulseResponse({
           sampleRate: this.sourceSamplingRate || 96000,
           payload,
+          mls,
           P: this.#P,
         })
         .then(res => {
@@ -337,6 +343,7 @@ class ImpulseResponse extends AudioCalibrator {
    */
   #playCalibrationAudio = () => {
     this.calibrationNodes[0].start(0);
+    this.#mls = this.calibrationNodes[0].buffer.getChannelData(0);
     this.emit('update', {message: 'playing the calibration tone...'});
   };
 

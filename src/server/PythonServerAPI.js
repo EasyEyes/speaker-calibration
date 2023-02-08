@@ -20,7 +20,7 @@ class PythonServerAPI {
    * @returns
    * @example
    */
-  getImpulseResponse = async ({payload, sampleRate, P}) => {
+  getImpulseResponse = async ({mls, payload, sampleRate, P}) => {
     const task = 'impulse-response';
     let res = null;
 
@@ -30,6 +30,7 @@ class PythonServerAPI {
       task,
       payload,
       'sample-rate': sampleRate,
+      mls,
       P,
     });
 
@@ -48,7 +49,6 @@ class PythonServerAPI {
       .catch(error => {
         throw error;
       });
-
     return res.data[task];
   };
 
