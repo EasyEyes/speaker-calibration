@@ -69,6 +69,7 @@ class AudioRecorder extends MyEventEmitter {
       window.webkitAudioContext ||
       window.audioContext)({
       sampleRate: this.sinkSamplingRate,
+      //sampleRate: 96000
     });
   };
 

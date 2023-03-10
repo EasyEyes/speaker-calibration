@@ -57,6 +57,9 @@ class ImpulseResponse extends AudioCalibrator {
   /** @private */
   offsetGainNode;
 
+  /** @private */
+  convolution;
+
   /** .
    * .
    * .
@@ -67,14 +70,18 @@ class ImpulseResponse extends AudioCalibrator {
    */
   sendImpulseResponsesToServerForProcessing = async () => {
     const computedIRs = await Promise.all(this.impulseResponses);
+    const mls = this.#mls;
     this.emit('update', {message: `computing the IIR...`});
     return this.pyServerAPI
       .getInverseImpulseResponse({
         payload: computedIRs.slice(0, this.numCaptures),
+        mls
       })
       .then(res => {
+        console.log(res);
         this.emit('update', {message: `done computing the IIR...`});
-        this.invertedImpulseResponse = res;
+        this.invertedImpulseResponse = res["iir"];
+        this.convolution = res["convolution"];
       })
       .catch(err => {
         // this.emit('InvertedImpulseResponse', {res: false});
@@ -251,13 +258,13 @@ class ImpulseResponse extends AudioCalibrator {
     // fill the buffer with our data
     try {
       for (let i = 0; i < dataBuffer.length; i += 1) {
-        data[i] = dataBuffer[i];
+        data[i] = dataBuffer[i]*.5;
       }
     } catch (error) {
       console.error(error);
     }
     console.log("mls second, same?");
-    console.log(dataBuffer);
+    console.log(data);
     const onsetGainNode = audioContext.createGain();
     this.offsetGainNode = audioContext.createGain();
     const source = audioContext.createBufferSource();
@@ -270,7 +277,8 @@ class ImpulseResponse extends AudioCalibrator {
 
     const onsetCurve = ImpulseResponse.createSCurveBuffer(this.sourceSamplingRate, Math.PI / 2);
     onsetGainNode.gain.setValueCurveAtTime(onsetCurve, 0, this.TAPER_SECS);
-
+    console.log("first mls source node");
+    console.log(source);
     this.addCalibrationNode(source);
   };
 
@@ -282,12 +290,56 @@ class ImpulseResponse extends AudioCalibrator {
    */
   #setCalibrationNodesFromBuffer = (dataBufferArray = [this.#mlsBufferView]) => {
     if (dataBufferArray.length === 1) {
+      console.log('data buffer aray');
+      console.log(dataBufferArray);
       this.#createCalibrationNodeFromBuffer(dataBufferArray[0]);
     } else {
       throw new Error('The length of the data buffer array must be 1');
     }
+
+    
   };
 
+  #putInPythonConv = () => {
+    const audioCtx = this.makeNewSourceAudioContextConvolved();
+    const buffer = audioCtx.createBuffer(
+      1, // number of channels
+      this.convolution.length,
+      audioCtx.sampleRate // sample rate
+    );
+    //console.log("convolution");
+    //console.log(this.convolution);
+    console.log("convolution length");
+    console.log(this.convolution.length);
+    const data = buffer.getChannelData(0); // get data
+    // fill the buffer with our data
+    try {
+      for (let i = 0; i < this.convolution.length; i += 1) {
+        //data[i] = dataBuffer[i];
+        if (this.convolution[i] > 1){
+          console.log(this.convolution[i]);
+        }
+        data[i] = this.convolution[i];
+        //data[i] = this.#mls[i];
+      }
+    } catch (error) {
+      console.error(error);
+    }
+    console.log(buffer.getChannelData(0));
+    const source = audioCtx.createBufferSource();
+
+    source.buffer = buffer;
+    source.loop = true;
+    console.log("buffer");
+    console.log(source.buffer);
+    console.log("convolved");
+    console.log(this.convolution);
+    source.connect(audioCtx.destination);
+
+    this.addCalibrationNodeConvolved(source);
+
+
+  }
   #createImpulseResponseFilterGraph = () => {
     //console.log(calibrationSignal);
     const audioCtx = this.makeNewSourceAudioContextConvolved();
@@ -303,7 +355,7 @@ class ImpulseResponse extends AudioCalibrator {
     // Fill the buffer with the inverted impulse response
     const iirChannelZeroBuffer = iirBuffer.getChannelData(0);
     console.log("iir buffer lenght: " + iirBuffer.length);
-    for (let i = 0; i < iirBuffer.length; i += 1) {
+    for (let i = 0; i < iirBuffer.length; i++) {
       iirChannelZeroBuffer[i] = iir[i];
     }
     console.log("after irr buffer filled: " + iirBuffer.getChannelData(0));
@@ -312,6 +364,7 @@ class ImpulseResponse extends AudioCalibrator {
 
     convolverNode.normalize = false;
     convolverNode.channelCount = 1;
+    convolverNode.loop = true;
     convolverNode.buffer = iirBuffer;
 
     // ------------------------------------------------------ MLS
@@ -326,21 +379,30 @@ class ImpulseResponse extends AudioCalibrator {
     try {
       for (let i = 0; i < this.#mls.length; i += 1) {
         mlsChannelZeroBuffer[i] = this.#mls[i];
+        //if (i == 0){
+        //  mlsChannelZeroBuffer[i] = 1;
+        //}else{
+        //  mlsChannelZeroBuffer[i] = 0;
+       // }
       }
     } catch (error) {
       console.error(error);
     }
 
     const sourceNode = audioCtx.createBufferSource();
-
+    const sourceGain = audioCtx.createGain();
+    const convolverGain = audioCtx.createGain();
     sourceNode.buffer = calibrationSignalBuffer;
     sourceNode.loop = true;
+    convolverNode.connect(convolverGain);
+    sourceNode.connect(sourceGain);
     sourceNode.connect(convolverNode);
+
 
     convolverNode.connect(audioCtx.destination);
 
     console.log({convolverNode, sourceNode});
-
+    
     this.addCalibrationNodeConvolved(sourceNode);
   };
 
@@ -422,7 +484,7 @@ class ImpulseResponse extends AudioCalibrator {
         this.calibrationSteps(
           stream,
           this.#playCalibrationAudioConvolved, // play audio func (required)
-          this.#createImpulseResponseFilterGraph, // before play func
+          this.#putInPythonConv, // before play func
           this.#awaitSignalOnset, // before record
           () => this.numSuccessfulCaptured < this.numCaptures,
           this.#awaitDesiredMLSLength, // during record
@@ -452,7 +514,7 @@ class ImpulseResponse extends AudioCalibrator {
     });
 
     // after intializating, start the calibration steps with garbage collection
-    await this.#mlsGenInterface.withGarbageCoxrllection([
+    await this.#mlsGenInterface.withGarbageCollection([
       () =>
         this.calibrationSteps(
           stream,
@@ -471,14 +533,16 @@ class ImpulseResponse extends AudioCalibrator {
     // and have received IRs for each one
     // so let's send all the IRs to the server to be converted to a single IIR
     await this.sendImpulseResponsesToServerForProcessing();
-    saveToCSV(this.invertedImpulseResponse,'IIR.csv');
+    saveToCSV(this.invertedImpulseResponse,'IIR_dirac.csv');
     const computedIRagain = await Promise.all(this.impulseResponses)
       .then(res => {
         for (let i = 0; i < res.length; i++){
-          saveToCSV(res[i], `computed_IRs_${i}`);
+          saveToCSV(res[i], `computed_IRs_${i}_dirac`);
         }
       })
+    console.log('before mls');
     saveToCSV(this.#mls,"MLS.csv");
+    saveToCSV(this.convolution,'python_convolution_mls_iir.csv');
     this.numSuccessfulCaptured = 0;
     // debugging function, use to test the result of the IIR
     await this.playMLSwithIIR(stream, this.invertedImpulseResponse);
