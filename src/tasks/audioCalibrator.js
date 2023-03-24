@@ -31,6 +31,9 @@ class AudioCalibrator extends AudioRecorder {
   /** @private */
   sourceAudioContext;
 
+  /** @private */
+  sourceAudioContextConvolved;
+
   /** @protected */
   numCalibratingRounds = 1;
 
@@ -42,6 +45,9 @@ class AudioCalibrator extends AudioRecorder {
 
   /** @protected */
   calibrationNodes = [];
+
+  /** @protected */
+  calibrationNodesConvolved = [];
 
   /** @protected */
   localAudio;
@@ -181,6 +187,7 @@ class AudioCalibrator extends AudioRecorder {
   setSamplingRates = samplingRate => {
     this.sinkSamplingRate = samplingRate;
     this.sourceSamplingRate = samplingRate;
+
     // this.emit('update', {message: `sampling at ${samplingRate}Hz...`});
   };
 
@@ -189,6 +196,11 @@ class AudioCalibrator extends AudioRecorder {
   addCalibrationNode = node => {
     this.calibrationNodes.push(node);
   };
+
+  addCalibrationNodeConvolved = node => {
+    
+    this.calibrationNodesConvolved.push(node);
+  }
 
   makeNewSourceAudioContext = () => {
     const options = {
@@ -202,6 +214,20 @@ class AudioCalibrator extends AudioRecorder {
     return this.sourceAudioContext;
   };
 
+  makeNewSourceAudioContextConvolved = () => {
+    const options = {
+      sampleRate: this.sourceSamplingRate,
+    };
+
+    this.sourceAudioContextConvolved = new (window.AudioContext ||
+      window.webkitAudioContext ||
+      window.audioContext)(options);
+
+    return this.sourceAudioContextConvolved;
+  };
+
+
+
   /** .
    * .
    * .
@@ -212,7 +238,12 @@ class AudioCalibrator extends AudioRecorder {
   downloadData = () => {
     const recordings = this.getAllRecordedSignals();
     const i = recordings.length - 1;
-    saveToCSV(recordings[i], `recordedMLSignal_${i}.csv`);
+    saveToCSV(recordings[i], `recordedMLSignal_${i}_unconvolved.csv`);
+  };
+  downloadConvolvedData = () => {
+    const recordings = this.getAllRecordedSignals();
+    const i = recordings.length - 1;
+    saveToCSV(recordings[i], `recordedMLSignal_${i}_convolved.csv`);
   };
 }
 

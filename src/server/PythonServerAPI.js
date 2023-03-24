@@ -6,7 +6,6 @@ class PythonServerAPI {
   static PYTHON_SERVER_URL = 'https://easyeyes-python-flask-server.herokuapp.com';
 
   static TEST_SERVER_URL = 'http://127.0.0.1:5000';
-
   /**
    * @param data- -
    * g = inverted impulse response, when convolved with the impulse
@@ -52,7 +51,7 @@ class PythonServerAPI {
     return res.data[task];
   };
 
-  getInverseImpulseResponse = async ({payload}) => {
+  getInverseImpulseResponse = async ({payload,mls,lowHz,highHz}) => {
     const task = 'inverse-impulse-response';
     let res = null;
 
@@ -61,6 +60,9 @@ class PythonServerAPI {
     const data = JSON.stringify({
       task,
       payload,
+      mls,
+      lowHz,
+      highHz
     });
 
     await axios({
