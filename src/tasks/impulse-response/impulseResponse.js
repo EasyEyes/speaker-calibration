@@ -193,7 +193,6 @@ class ImpulseResponse extends AudioCalibrator {
         message: `${this.numSuccessfulCaptured}/${this.numCaptures} IRs computed...`,
       });
     }
-    
   };
 
   /** .
@@ -269,7 +268,7 @@ class ImpulseResponse extends AudioCalibrator {
     // fill the buffer with our data
     try {
       for (let i = 0; i < dataBuffer.length; i += 1) {
-        data[i] = dataBuffer[i]*.5;
+        data[i] = dataBuffer[i]*.1;
       }
     } catch (error) {
       console.error(error);
@@ -288,8 +287,6 @@ class ImpulseResponse extends AudioCalibrator {
 
     const onsetCurve = ImpulseResponse.createSCurveBuffer(this.sourceSamplingRate, Math.PI / 2);
     onsetGainNode.gain.setValueCurveAtTime(onsetCurve, 0, this.TAPER_SECS);
-    console.log("first mls source node");
-    console.log(source);
     this.addCalibrationNode(source);
   };
 
@@ -311,6 +308,10 @@ class ImpulseResponse extends AudioCalibrator {
     
   };
 
+  /**
+   * function to put MLS filtered IIR data obtained from
+   * python server into our audio buffer to be played aloud
+   */
   #putInPythonConv = () => {
     const audioCtx = this.makeNewSourceAudioContextConvolved();
     const buffer = audioCtx.createBuffer(
@@ -318,109 +319,26 @@ class ImpulseResponse extends AudioCalibrator {
       this.convolution.length,
       audioCtx.sampleRate // sample rate
     );
-    //console.log("convolution");
-    //console.log(this.convolution);
-    console.log("convolution length");
-    console.log(this.convolution.length);
+
     const data = buffer.getChannelData(0); // get data
     // fill the buffer with our data
     try {
       for (let i = 0; i < this.convolution.length; i += 1) {
-        //data[i] = dataBuffer[i];
-        if (this.convolution[i] > 1){
-          console.log(this.convolution[i]);
-        }
         data[i] = this.convolution[i];
-        //data[i] = this.#mls[i];
       }
     } catch (error) {
       console.error(error);
     }
-    console.log(buffer.getChannelData(0));
+
     const source = audioCtx.createBufferSource();
 
     source.buffer = buffer;
     source.loop = true;
-    console.log("buffer");
-    console.log(source.buffer);
-    console.log("convolved");
-    console.log(this.convolution);
     source.connect(audioCtx.destination);
 
     this.addCalibrationNodeConvolved(source);
-
-
   }
-  #createImpulseResponseFilterGraph = () => {
-    //console.log(calibrationSignal);
-    const audioCtx = this.makeNewSourceAudioContextConvolved();
-    const iir = this.invertedImpulseResponse;
-    // -------------------------------------------------------- IIR
-    const iirBuffer = audioCtx.createBuffer(
-      1,
-      iir.length,
-      audioCtx.sampleRate
-    );
-    console.log("iir before buffer: ");
-    console.log(iir);
-    // Fill the buffer with the inverted impulse response
-    const iirChannelZeroBuffer = iirBuffer.getChannelData(0);
-    console.log("iir buffer lenght: " + iirBuffer.length);
-    for (let i = 0; i < iirBuffer.length; i++) {
-      iirChannelZeroBuffer[i] = iir[i];
-    }
-    console.log("after irr buffer filled: " + iirBuffer.getChannelData(0));
-
-    const convolverNode = audioCtx.createConvolver();
-
-    convolverNode.normalize = false;
-    convolverNode.channelCount = 1;
-    convolverNode.loop = true;
-    convolverNode.buffer = iirBuffer;
-
-    // ------------------------------------------------------ MLS
-    const calibrationSignalBuffer = audioCtx.createBuffer(
-      1, // number of channels
-      this.#mls.length,
-      audioCtx.sampleRate // sample rate
-    );
-
-    const mlsChannelZeroBuffer = calibrationSignalBuffer.getChannelData(0); // get data
-    // fill the buffer with our data
-    try {
-      for (let i = 0; i < this.#mls.length; i += 1) {
-        mlsChannelZeroBuffer[i] = this.#mls[i];
-        //if (i == 0){
-        //  mlsChannelZeroBuffer[i] = 1;
-        //}else{
-        //  mlsChannelZeroBuffer[i] = 0;
-       // }
-      }
-    } catch (error) {
-      console.error(error);
-    }
-
-    const sourceNode = audioCtx.createBufferSource();
-    const sourceGain = audioCtx.createGain();
-    const convolverGain = audioCtx.createGain();
-    sourceNode.buffer = calibrationSignalBuffer;
-    sourceNode.loop = true;
-    convolverNode.connect(convolverGain);
-    sourceNode.connect(sourceGain);
-    sourceNode.connect(convolverNode);
-
-
-    convolverNode.connect(audioCtx.destination);
-
-    console.log({convolverNode, sourceNode});
-    
-    this.addCalibrationNodeConvolved(sourceNode);
-  };
-
-  #createIIRwMLSGraph = () => {
-    this.#createImpulseResponseFilterGraph(this.impulseResponses, [this.#mlsBufferView][0]);
-  };
-
+  
   /**
    * Creates an audio context and plays it for a few seconds.
    *
@@ -434,6 +352,7 @@ class ImpulseResponse extends AudioCalibrator {
     console.log(this.#mls);
     this.emit('update', {message: 'playing the calibration tone...'});
   }; 
+
 
   #playCalibrationAudioConvolved = () => {
     this.calibrationNodesConvolved[0].start(0);
@@ -491,7 +410,7 @@ class ImpulseResponse extends AudioCalibrator {
     console.log(this.#mls);
     // after intializating, start the calibration steps with garbage collection
     await this.#mlsGenInterface.withGarbageCollection([
-      () => 
+      () =>
         this.calibrationSteps(
           stream,
           this.#playCalibrationAudioConvolved, // play audio func (required)
@@ -544,16 +463,19 @@ class ImpulseResponse extends AudioCalibrator {
     // and have received IRs for each one
     // so let's send all the IRs to the server to be converted to a single IIR
     await this.sendImpulseResponsesToServerForProcessing();
-    saveToCSV(this.invertedImpulseResponse,'IIR_dirac.csv');
-    const computedIRagain = await Promise.all(this.impulseResponses)
-      .then(res => {
-        for (let i = 0; i < res.length; i++){
-          saveToCSV(res[i], `computed_IRs_${i}_dirac`);
-        }
-      })
-    console.log('before mls');
-    saveToCSV(this.#mls,"MLS.csv");
-    saveToCSV(this.convolution,'python_convolution_mls_iir.csv');
+
+    if (this.#download) {
+      saveToCSV(this.invertedImpulseResponse,'IIR.csv');
+      const computedIRagain = await Promise.all(this.impulseResponses)
+        .then(res => {
+          for (let i = 0; i < res.length; i++){
+            saveToCSV(res[i], `IR_${i}`);
+          }
+        })
+      saveToCSV(this.#mls,"MLS.csv");
+      saveToCSV(this.convolution,'python_convolution_mls_iir.csv');
+    }
+
     this.numSuccessfulCaptured = 0;
     // debugging function, use to test the result of the IIR
     await this.playMLSwithIIR(stream, this.invertedImpulseResponse);

@@ -33,7 +33,7 @@ class AudioCalibrator extends AudioRecorder {
 
   /** @private */
   sourceAudioContextConvolved;
-  
+
   /** @protected */
   numCalibratingRounds = 1;
 
@@ -187,8 +187,6 @@ class AudioCalibrator extends AudioRecorder {
   setSamplingRates = samplingRate => {
     this.sinkSamplingRate = samplingRate;
     this.sourceSamplingRate = samplingRate;
-    //this.sinkSamplingRate = 96000;
-    //this.sourceSamplingRate = 96000;
 
     // this.emit('update', {message: `sampling at ${samplingRate}Hz...`});
   };
