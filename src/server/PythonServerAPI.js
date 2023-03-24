@@ -52,7 +52,7 @@ class PythonServerAPI {
     return res.data[task];
   };
 
-  getInverseImpulseResponse = async ({payload,mls}) => {
+  getInverseImpulseResponse = async ({payload,mls,lowHz,highHz}) => {
     const task = 'inverse-impulse-response';
     let res = null;
 
@@ -61,7 +61,9 @@ class PythonServerAPI {
     const data = JSON.stringify({
       task,
       payload,
-      mls
+      mls,
+      lowHz,
+      highHz
     });
 
     await axios({

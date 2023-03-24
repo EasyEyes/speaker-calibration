@@ -16,12 +16,14 @@ class ImpulseResponse extends AudioCalibrator {
    * @param {number} [calibratorParams.numCaptures = 5] - number of captures to perform
    * @param {number} [calibratorParams.numMLSPerCapture = 4] - number of bursts of MLS per capture
    */
-  constructor({download = false, mlsOrder = 18, numCaptures = 3, numMLSPerCapture = 4}) {
+  constructor({download = false, mlsOrder = 18, numCaptures = 3, numMLSPerCapture = 4, lowHz = 20, highHz = 10000}) {
     super(numCaptures, numMLSPerCapture);
     this.#mlsOrder = parseInt(mlsOrder, 10);
     this.#P = 2 ** mlsOrder - 1;
     this.#download = download;
     this.#mls = [];
+    this.#lowHz = lowHz;
+    this.#highHz = highHz;
   }
 
   /** @private */
@@ -41,6 +43,12 @@ class ImpulseResponse extends AudioCalibrator {
 
   /** @private */
   #mlsOrder;
+
+  /** @private */
+  #lowHz;
+
+  /** @private */
+  #highHz;
 
   /** @private */
   #mls;
@@ -71,11 +79,15 @@ class ImpulseResponse extends AudioCalibrator {
   sendImpulseResponsesToServerForProcessing = async () => {
     const computedIRs = await Promise.all(this.impulseResponses);
     const mls = this.#mls;
+    const lowHz = this.#lowHz;
+    const highHz = this.#highHz;
     this.emit('update', {message: `computing the IIR...`});
     return this.pyServerAPI
       .getInverseImpulseResponse({
         payload: computedIRs.slice(0, this.numCaptures),
-        mls
+        mls,
+        lowHz,
+        highHz
       })
       .then(res => {
         console.log(res);
@@ -177,7 +189,6 @@ class ImpulseResponse extends AudioCalibrator {
     }
     if (this.numSuccessfulCaptured < this.numCaptures) {
       this.numSuccessfulCaptured += 1;
-      console.log("num succ capt: " + this.numSuccessfulCaptured);
       this.emit('update', {
         message: `${this.numSuccessfulCaptured}/${this.numCaptures} IRs computed...`,
       });
