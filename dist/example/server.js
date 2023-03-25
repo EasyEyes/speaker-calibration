@@ -29,7 +29,7 @@ app.get('/listener', checkParams, (req, res) => {
   res.sendFile(path.join(__dirname, 'listener.html'));
 });
 
-app.use((err, req, res) => {
+app.use((err, req, res, next) => {
   res.status(err.status || 500);
   res.send({
     error: err.message,
