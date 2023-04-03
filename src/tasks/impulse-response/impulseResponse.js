@@ -481,7 +481,31 @@ class ImpulseResponse extends AudioCalibrator {
     await this.playMLSwithIIR(stream, this.invertedImpulseResponse);
     this.#stopCalibrationAudioConvolved();
 
-    return this.invertedImpulseResponse;
+    let recs = this.getAllRecordedSignals();
+    let unconv_rec = recs[0];
+    let conv_rec = recs[4];
+
+    let results = await this.pyServerAPI
+        .getPSD({
+          unconv_rec,
+          conv_rec,
+        })
+        .then(res => {
+          return res;
+        })
+        .catch(err => {
+          console.error(err);
+        })
+
+    let iir_and_plots = {
+      "iir": this.invertedImpulseResponse,
+      "x_unconv": results["x_unconv"],
+      "y_unconv": results["y_unconv"],
+      "x_conv": results["x_conv"],
+      "y_conv": results["y_conv"]
+    }
+
+    return iir_and_plots;
   };
 }
 
