@@ -51,6 +51,34 @@ class PythonServerAPI {
     return res.data[task];
   };
 
+  getPSD = async ({unconv_rec, conv_rec}) => {
+    const task = 'psd';
+    let res = null;
+
+    const data = JSON.stringify({
+      task,
+      unconv_rec,
+      conv_rec,
+    });
+
+    await axios({
+      method: 'post',
+      baseURL: PythonServerAPI.PYTHON_SERVER_URL,
+      url: `/task/${task}`,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      data,
+    })
+      .then(response => {
+        res = response;
+      })
+      .catch(error => {
+        throw error;
+      });
+    return res.data[task];
+  };
+
   getInverseImpulseResponse = async ({payload,mls,lowHz,highHz}) => {
     const task = 'inverse-impulse-response';
     let res = null;
