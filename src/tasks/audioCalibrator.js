@@ -82,7 +82,8 @@ class AudioCalibrator extends AudioRecorder {
     beforeRecord = async () => {},
     loopCondition = () => false,
     duringRecord = async () => {},
-    afterRecord = async () => {}
+    afterRecord = async () => {},
+    mode
   ) => {
     this.numSuccessfulCaptured = 0;
 
@@ -110,7 +111,7 @@ class AudioCalibrator extends AudioRecorder {
 
       // when done, stop recording
       console.warn('stopRecording');
-      await this.stopRecording();
+      await this.stopRecording(mode);
 
       // do something after recording such as start processing values
       console.warn('afterRecord');

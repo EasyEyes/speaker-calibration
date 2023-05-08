@@ -436,6 +436,7 @@ class ImpulseResponse extends AudioCalibrator {
           () => this.numSuccessfulCaptured < this.numCaptures,
           this.#awaitDesiredMLSLength, // during record
           this.#afterMLSwIIRRecord, // after record
+          'filtered'
         ),
     ]);
   };
@@ -470,7 +471,8 @@ class ImpulseResponse extends AudioCalibrator {
           this.#awaitSignalOnset, // before record
           () => this.numSuccessfulCaptured < this.numCaptures, // loop while true
           this.#awaitDesiredMLSLength, // during record
-          this.#afterMLSRecord // after record
+          this.#afterMLSRecord, // after record
+          'unfiltered'
         ),
     ]);
 
