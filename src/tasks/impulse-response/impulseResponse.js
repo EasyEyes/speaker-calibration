@@ -483,8 +483,9 @@ class ImpulseResponse extends AudioCalibrator {
     this.#stopCalibrationAudioConvolved();
 
     let recs = this.getAllRecordedSignals();
+    let conv_recs = this.getAllFilteredRecordedSignals();
     let unconv_rec = recs[0];
-    let conv_rec = recs[4];
+    let conv_rec = conv_recs[0];
 
     let results = await this.pyServerAPI
         .getPSD({
