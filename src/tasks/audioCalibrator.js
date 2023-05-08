@@ -241,10 +241,27 @@ class AudioCalibrator extends AudioRecorder {
     const i = recordings.length - 1;
     saveToCSV(recordings[i], `recordedMLSignal_${i}_unconvolved.csv`);
   };
-  downloadConvolvedData = () => {
+  downloadSingleUnfilteredRecording = () => {
     const recordings = this.getAllRecordedSignals();
-    const i = recordings.length - 1;
-    saveToCSV(recordings[i], `recordedMLSignal_${i}_convolved.csv`);
+    saveToCSV(recordings[0], `recordedMLSignal_unconvolved.csv`);
+  }
+  downloadSingleFilteredRecording = () => {
+    const recordings = this.getAllFilteredRecordedSignals();
+    saveToCSV(recordings[0], `recordedMLSignal_convolved.csv`);
+  }
+  downloadUnfilteredRecordings = () => {
+    const recordings = this.getAllRecordedSignals();
+    console.log("unfilterd download?");
+    for (let i = 0; i < recordings.length; i++){
+      console.log(i);
+      saveToCSV(recordings[i], `recordedMLSignal_${i}_unconvolved.csv`);
+    }
+  };
+  downloadFilteredRecordings = () => {
+    const recordings = this.getAllFilteredRecordedSignals();
+    for (let i = 0; i < recordings.length; i++){
+      saveToCSV(recordings[i], `recordedMLSignal_${i}_convolved.csv`);
+    }
   };
 }
 
