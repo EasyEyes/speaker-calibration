@@ -189,17 +189,11 @@ class ImpulseResponse extends AudioCalibrator {
    * @example
    */
   #afterMLSRecord = () => {
-    if (this.#download) {
-      this.downloadData();
-    }
     console.log('after record');
     this.sendRecordingToServerForProcessing();
   };
 
   #afterMLSwIIRRecord = () => {
-    if (this.#download) {
-      this.downloadConvolvedData();
-    }
     if (this.numSuccessfulCaptured < this.numCaptures) {
       this.numSuccessfulCaptured += 1;
       this.stepNum += 1;
@@ -436,6 +430,7 @@ class ImpulseResponse extends AudioCalibrator {
           () => this.numSuccessfulCaptured < this.numCaptures,
           this.#awaitDesiredMLSLength, // during record
           this.#afterMLSwIIRRecord, // after record
+          'filtered'
         ),
     ]);
   };
@@ -470,7 +465,8 @@ class ImpulseResponse extends AudioCalibrator {
           this.#awaitSignalOnset, // before record
           () => this.numSuccessfulCaptured < this.numCaptures, // loop while true
           this.#awaitDesiredMLSLength, // during record
-          this.#afterMLSRecord // after record
+          this.#afterMLSRecord, // after record
+          'unfiltered'
         ),
     ]);
 
@@ -481,26 +477,15 @@ class ImpulseResponse extends AudioCalibrator {
     // so let's send all the IRs to the server to be converted to a single IIR
     await this.sendImpulseResponsesToServerForProcessing();
 
-    if (this.#download) {
-      saveToCSV(this.invertedImpulseResponse,'IIR.csv');
-      const computedIRagain = await Promise.all(this.impulseResponses)
-        .then(res => {
-          for (let i = 0; i < res.length; i++){
-            saveToCSV(res[i], `IR_${i}`);
-          }
-        })
-      saveToCSV(this.#mls,"MLS.csv");
-      saveToCSV(this.convolution,'python_convolution_mls_iir.csv');
-    }
-
     this.numSuccessfulCaptured = 0;
     // debugging function, use to test the result of the IIR
     await this.playMLSwithIIR(stream, this.invertedImpulseResponse);
     this.#stopCalibrationAudioConvolved();
 
     let recs = this.getAllRecordedSignals();
+    let conv_recs = this.getAllFilteredRecordedSignals();
     let unconv_rec = recs[0];
-    let conv_rec = recs[4];
+    let conv_rec = conv_recs[0];
 
     let results = await this.pyServerAPI
         .getPSD({
@@ -520,6 +505,19 @@ class ImpulseResponse extends AudioCalibrator {
       "y_unconv": results["y_unconv"],
       "x_conv": results["x_conv"],
       "y_conv": results["y_conv"]
+    }
+    if (this.#download) {
+      this.downloadSingleUnfilteredRecording();
+      this.downloadSingleFilteredRecording();
+      saveToCSV(this.#mls,"MLS.csv");
+      saveToCSV(this.convolution,'python_convolution_mls_iir.csv');
+      saveToCSV(this.invertedImpulseResponse,'IIR.csv');
+      const computedIRagain = await Promise.all(this.impulseResponses)
+        .then(res => {
+          for (let i = 0; i < res.length; i++){
+            saveToCSV(res[i], `IR_${i}`);
+          }
+        })
     }
 
     return iir_and_plots;

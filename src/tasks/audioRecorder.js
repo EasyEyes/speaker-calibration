@@ -21,6 +21,9 @@ class AudioRecorder extends MyEventEmitter {
   #recordedSignals = [];
 
   /** @private */
+  #filteredRecordings = [];
+
+  /** @private */
   sinkSamplingRate;
 
   /**
@@ -36,6 +39,15 @@ class AudioRecorder extends MyEventEmitter {
 
     console.log(`Decoded audio buffer with ${data.length} samples`);
     this.#recordedSignals.push(Array.from(data));
+  };
+
+  #saveFilteredRecording = async () => {
+    const arrayBuffer = await this.#audioBlob.arrayBuffer();
+    const audioBuffer = await this.#audioContext.decodeAudioData(arrayBuffer);
+    const data = audioBuffer.getChannelData(0);
+
+    console.log(`Decoded audio buffer with ${data.length} samples`);
+    this.#filteredRecordings.push(Array.from(data));
   };
 
   /**
@@ -96,7 +108,7 @@ class AudioRecorder extends MyEventEmitter {
    * @public
    * @example
    */
-  stopRecording = async () => {
+  stopRecording = async (mode) => {
     // Stop the media recorder, and wait for the data to be available
     await new Promise(resolve => {
       this.#mediaRecorder.onstop = () => {
@@ -110,7 +122,11 @@ class AudioRecorder extends MyEventEmitter {
       this.#mediaRecorder.stop();
     });
     // Now that we have data, save it
-    await this.#saveRecording();
+    if (mode === 'filtered'){
+      await this.#saveFilteredRecording();
+    }else{
+      await this.#saveRecording();
+    }
   };
 
   /** .
@@ -132,6 +148,16 @@ class AudioRecorder extends MyEventEmitter {
    * @example
    */
   getAllRecordedSignals = () => this.#recordedSignals;
+
+    /** .
+   * .
+   * .
+   * Public method to get all the recorded audio signals
+   *
+   * @returns
+   * @example
+   */
+  getAllFilteredRecordedSignals = () => this.#filteredRecordings;
 
   /** .
    * .
