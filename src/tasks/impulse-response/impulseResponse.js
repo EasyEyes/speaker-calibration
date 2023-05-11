@@ -84,6 +84,9 @@ class ImpulseResponse extends AudioCalibrator {
    */
   sendImpulseResponsesToServerForProcessing = async () => {
     const computedIRs = await Promise.all(this.impulseResponses);
+    const filteredComputedIRs = computedIRs.filter(element => {
+      return element != undefined;
+    });
     const mls = this.#mls;
     const lowHz = this.#lowHz;
     const highHz = this.#highHz;
@@ -91,7 +94,7 @@ class ImpulseResponse extends AudioCalibrator {
     this.emit('update', {message: `Step ${this.stepNum}/${this.totalSteps}: computing the IIR...`});
     return this.pyServerAPI
       .getInverseImpulseResponse({
-        payload: computedIRs.slice(0, this.numCaptures),
+        payload: filteredComputedIRs.slice(0, this.numCaptures),
         mls,
         lowHz,
         highHz
@@ -515,7 +518,9 @@ class ImpulseResponse extends AudioCalibrator {
       const computedIRagain = await Promise.all(this.impulseResponses)
         .then(res => {
           for (let i = 0; i < res.length; i++){
-            saveToCSV(res[i], `IR_${i}`);
+            if (res[i] != undefined){
+              saveToCSV(res[i], `IR_${i}`);
+            }
           }
         })
     }
