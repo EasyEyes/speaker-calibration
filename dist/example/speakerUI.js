@@ -1,13 +1,14 @@
 window.onload = () => {
   const flexSwitchCheckIR = document.getElementById('flexSwitchCheckIR');
   const flexSwitchCheckVolume = document.getElementById('flexSwitchCheckVolume');
+  const flexSwitchCheckCombo = document.getElementById('flexSwitchCheckCombo');
   const previousCaptureCSV = document.getElementById('previous-capture-csv');
   const iirCSV = document.getElementById('iir-csv');
   const playAndRecord = document.getElementById('flexSwitchPlayAndRecord');
   const sendToServerButton = document.getElementById('sendToServerButton');
   const wavFile = document.getElementById('wav-file');
 
-  const {Speaker, VolumeCalibration, ImpulseResponseCalibration} = speakerCalibrator;
+  const {Speaker, VolumeCalibration, ImpulseResponseCalibration, CombinationCalibration} = speakerCalibrator;
 
   const normalize = (min, max) => {
     var delta = max - min;
@@ -147,10 +148,17 @@ window.onload = () => {
 
   flexSwitchCheckIR.onchange = () => {
     flexSwitchCheckVolume.checked = !flexSwitchCheckIR.checked;
+    flexSwitchCheckCombo.checked = !flexSwitchCheckIR.checked
   };
 
   flexSwitchCheckVolume.onchange = () => {
     flexSwitchCheckIR.checked = !flexSwitchCheckVolume.checked;
+    flexSwitchCheckCombo.checked = !flexSwitchCheckVolume.checked;
+  };
+
+  flexSwitchCheckCombo.onchange = () => {
+    flexSwitchCheckIR.checked = !flexSwitchCheckCombo.checked;
+    flexSwitchCheckVolume.checked = !flexSwitchCheckCombo.checked;
   };
 
   const useSpeakerCalibrator = async (calibrationLevel = 0, iir = null) => {
@@ -202,6 +210,33 @@ window.onload = () => {
       }
     };
 
+    const runCombinationCalibration = async calibrationLevel => {
+      const calibratorParams = {
+        numCaptures: document.getElementById('numCapturesInput').value,
+        numMLSPerCapture: document.getElementById('numMLSPerCaptureInput').value,
+        mlsOrder: document.getElementById('mlsOrder').value,
+        download: document.getElementById('flexSwitchCheckDownload').checked,
+      };
+
+      const calibrator = new CombinationCalibration(calibratorParams);
+
+      calibrator.on('update', ({message, ...rest}) => {
+        updateTarget.innerHTML = message;
+      });
+
+      try {
+        if (calibrationLevel == 0) {
+          invertedIR = await Speaker.startCalibration(speakerParameters, calibrator);
+          console.log({invertedIR});
+          await useIRResult(invertedIR);
+        } else {
+          await Speaker.testIIR(speakerParameters, calibrator, iir);
+        }
+      } catch (err) {
+        calibrationResult.innerText = `${err.name}: ${err.message}`;
+      }
+    };
+
     const runVolumeCalibration = async () => {
       const calibrator = new VolumeCalibration({});
       calibrator.on('update', ({message, ...rest}) => {
@@ -218,8 +253,10 @@ window.onload = () => {
 
     if (flexSwitchCheckIR.checked) {
       runImpulseResponseCalibration(calibrationLevel);
-    } else {
+    } else if (flexSwitchCheckVolume.checked){
       runVolumeCalibration();
+    } else {
+      runCombinationCalibration(calibrationLevel);
     }
   };
 

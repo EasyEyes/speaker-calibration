@@ -3,6 +3,7 @@ import Speaker from './peer-connection/speaker';
 
 import VolumeCalibration from './tasks/volume/volume';
 import ImpulseResponseCalibration from './tasks/impulse-response/impulseResponse';
+import CombinationCalibration from './tasks/combination/combination';
 
 import {
   UnsupportedDeviceError,
@@ -18,4 +19,5 @@ export {
   UnsupportedDeviceError,
   MissingSpeakerIdError,
   CalibrationTimedOutError,
+  CombinationCalibration,
 };
