@@ -93,7 +93,7 @@ class ImpulseResponse extends AudioCalibrator {
     this.stepNum += 1;
     this.emit('update', {message: `Step ${this.stepNum}/${this.totalSteps}: computing the IIR...`});
     return this.pyServerAPI
-      .getInverseImpulseResponse({
+      .getInverseImpulseResponseWithRetry({
         payload: filteredComputedIRs.slice(0, this.numCaptures),
         mls,
         lowHz,
@@ -491,7 +491,7 @@ class ImpulseResponse extends AudioCalibrator {
     let conv_rec = conv_recs[0];
 
     let results = await this.pyServerAPI
-        .getPSD({
+        .getPSDWithRetry({
           unconv_rec,
           conv_rec,
         })

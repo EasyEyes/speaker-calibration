@@ -108,9 +108,10 @@ class Combination extends AudioCalibrator {
     const lowHz = this.#lowHz;
     const highHz = this.#highHz;
     this.stepNum += 1;
+    console.log('send impulse responses to server: ' + this.stepNum);
     this.emit('update', {message: `All Hz Calibration Step ${this.stepNum}/${this.totalSteps}: computing the IIR...`});
     return this.pyServerAPI
-      .getInverseImpulseResponse({
+      .getInverseImpulseResponseWithRetry({
         payload: filteredComputedIRs.slice(0, this.numCaptures),
         mls,
         lowHz,
@@ -119,6 +120,7 @@ class Combination extends AudioCalibrator {
       .then(res => {
         console.log(res);
         this.stepNum += 1;
+        console.log('got impulse response ' + this.stepNum);
         this.emit('update', {message: `All Hz Calibration Step ${this.stepNum}/${this.totalSteps}: done computing the IIR...`});
         this.invertedImpulseResponse = res["iir"];
         this.convolution = res["convolution"];
@@ -145,6 +147,7 @@ class Combination extends AudioCalibrator {
       signalCsv && signalCsv.length > 0 ? csvToArray(signalCsv) : allSignals[numSignals - 1];
     console.log('sending rec');
     this.stepNum += 1;
+    console.log('send rec ' + this.stepNum);
     this.emit('update', {message: `All Hz Calibration Step ${this.stepNum}/${this.totalSteps}: computing the IR of the last recording...`});
     this.impulseResponses.push(
       this.pyServerAPI
@@ -159,6 +162,7 @@ class Combination extends AudioCalibrator {
             this.numSuccessfulCaptured += 1;
             console.log("num succ capt: " + this.numSuccessfulCaptured);
             this.stepNum += 1;
+            console.log('got impulse response ' + this.stepNum);
             this.emit('update', {
               message: `All Hz Calibration Step ${this.stepNum}/${this.totalSteps}: ${this.numSuccessfulCaptured}/${this.numCaptures} IRs computed...`,
             });
@@ -181,6 +185,7 @@ class Combination extends AudioCalibrator {
     // seconds per MLS = P / SR
     // await N * P / SR
     this.stepNum += 1;
+    console.log('await desired length ' + this.stepNum);
     this.emit('update', {
       message: `All Hz Calibration Step ${this.stepNum}/${this.totalSteps}: sampling the calibration signal...`,
     });
@@ -196,6 +201,7 @@ class Combination extends AudioCalibrator {
    */
   #awaitSignalOnset = async () => {
     this.stepNum += 1;
+    console.log('await signal onset ' + this.stepNum);
     this.emit('update', {
       message: `All Hz Calibration Step ${this.stepNum}/${this.totalSteps}: waiting for the signal to stabilize...`,
     });
@@ -217,6 +223,7 @@ class Combination extends AudioCalibrator {
     if (this.numSuccessfulCaptured < this.numCaptures) {
       this.numSuccessfulCaptured += 1;
       this.stepNum += 1;
+      console.log('after mls w iir record for some reason add numSucc capt ' + this.stepNum);
       this.emit('update', {
         message: `All Hz Calibration Step ${this.stepNum}/${this.totalSteps}: ${this.numSuccessfulCaptured} recordings of convolved MLS captured`,
       });
@@ -378,6 +385,7 @@ class Combination extends AudioCalibrator {
     this.calibrationNodes[0].start(0);
     this.#mls = this.calibrationNodes[0].buffer.getChannelData(0);
     this.stepNum += 1;
+    console.log('play calibration audio ' + this.stepNum);
     this.emit('update', {message: `All Hz Calibration Step ${this.stepNum}/${this.totalSteps}: playing the calibration tone...`});
   }; 
 
@@ -385,6 +393,7 @@ class Combination extends AudioCalibrator {
   #playCalibrationAudioConvolved = () => {
     this.calibrationNodesConvolved[0].start(0);
     this.stepNum += 1;
+    console.log('play convolved audio ' + this.stepNum);
     this.emit('update',{message: `All Hz Calibration Step ${this.stepNum}/${this.totalSteps}: playing the convolved calibration tone...`})
   }
 
@@ -405,6 +414,7 @@ class Combination extends AudioCalibrator {
     this.calibrationNodes[0].stop(0);
     this.sourceAudioContext.close();
     this.stepNum += 1;
+    console.log('stop calibratoin audio ' + this.stepNum);
     this.emit('update', {message: `All Hz Calibration Step ${this.stepNum}/${this.totalSteps}: stopping the calibration tone...`});
   };
 
@@ -419,6 +429,7 @@ class Combination extends AudioCalibrator {
     console.log("right before closing volved audio context");
     this.sourceAudioContextConvolved.close();
     this.stepNum += 1;
+    console.log('stop convolved calibration audio ' + this.stepNum);
     this.emit('update', {message: `All Hz Calibration Step ${this.stepNum}/${this.totalSteps}: stopping the convolved calibration tone...`});
 
   }
@@ -508,7 +519,7 @@ class Combination extends AudioCalibrator {
     let conv_rec = conv_recs[0];
 
     let results = await this.pyServerAPI
-        .getPSD({
+        .getPSDWithRetry({
           unconv_rec,
           conv_rec,
         })
