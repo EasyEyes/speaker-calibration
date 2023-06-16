@@ -6,6 +6,11 @@ class PythonServerAPI {
   static PYTHON_SERVER_URL = 'https://easyeyes-python-flask-server.herokuapp.com';
 
   static TEST_SERVER_URL = 'http://127.0.0.1:5000';
+
+  /** @private */
+  MAX_RETRY_COUNT = 3;
+  /** @private */
+  RETRY_DELAY_MS = 1000;
   /**
    * @param data- -
    * g = inverted impulse response, when convolved with the impulse
@@ -78,6 +83,30 @@ class PythonServerAPI {
       });
     return res.data[task];
   };
+  
+  getPSDWithRetry = async ({ unconv_rec, conv_rec }) => {
+    let retryCount = 0;
+    let response = null;
+  
+    while (retryCount < this.MAX_RETRY_COUNT) {
+      try {
+        response = await this.getPSD({ unconv_rec, conv_rec });
+        // If the request is successful, break out of the loop
+        break;
+      } catch (error) {
+        console.error(`Error occurred. Retrying... (${retryCount + 1}/${this.MAX_RETRY_COUNT})`);
+        retryCount++;
+        await new Promise(resolve => setTimeout(resolve, this.RETRY_DELAY_MS));
+      }
+    }
+  
+    if (response) {
+      return response;
+    } else {
+      throw new Error(`Failed to get PSD after ${this.MAX_RETRY_COUNT} attempts.`);
+    }
+  };
+  
 
   getInverseImpulseResponse = async ({payload,mls,lowHz,highHz}) => {
     const task = 'inverse-impulse-response';
@@ -111,6 +140,30 @@ class PythonServerAPI {
 
     return res.data[task];
   };
+
+getInverseImpulseResponseWithRetry = async ({ payload, mls, lowHz, highHz }) => {
+  let retryCount = 0;
+  let response = null;
+
+  while (retryCount < this.MAX_RETRY_COUNT) {
+    try {
+      response = await this.getInverseImpulseResponse({ payload, mls, lowHz, highHz });
+      // If the request is successful, break out of the loop
+      break;
+    } catch (error) {
+      console.error(`Error occurred. Retrying... (${retryCount + 1}/${this.MAX_RETRY_COUNT})`);
+      retryCount++;
+      await new Promise(resolve => setTimeout(resolve, this.RETRY_DELAY_MS));
+    }
+  }
+
+  if (response) {
+    return response;
+  } else {
+    throw new Error(`Failed to get inverse impulse response after ${this.MAX_RETRY_COUNT} attempts.`);
+  }
+};
+
 
   getVolumeCalibration = async ({payload, sampleRate, lCalib}) => {
     const task = 'volume';
