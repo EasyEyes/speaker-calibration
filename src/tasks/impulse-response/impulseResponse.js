@@ -74,6 +74,34 @@ class ImpulseResponse extends AudioCalibrator {
   /** @private */
   convolution;
 
+  /** @private */
+  status_denominator = 6; 
+
+  /** @private */
+  status_numerator = 0; 
+
+  /** @private */
+  percent_complete = 0; 
+
+  /** @private */
+  status = ``;
+
+  /**generate string template that gets reevaluated as variable increases */
+  generateTemplate = () => {
+    if (this.percent_complete > 100){
+      this.percent_complete = 100;
+    }
+    const template = `<div style="display: flex; justify-content: center;"><div style="width: 200px; height: 20px; border: 2px solid #000; border-radius: 10px;"><div style="width: ${this.percent_complete}%; height: 100%; background-color: #00aaff; border-radius: 8px;"></div></div></div>`;
+    return template;
+  }
+
+  /** increment numerator and percent for status bar */
+  incrementStatusBar = () => {
+    this.status_numerator += 1;
+    this.percent_complete = (this.status_numerator/this.status_denominator)*100;
+  }
+
+
   /** .
    * .
    * .
@@ -91,9 +119,10 @@ class ImpulseResponse extends AudioCalibrator {
     const lowHz = this.#lowHz;
     const highHz = this.#highHz;
     this.stepNum += 1;
-    this.emit('update', {message: `Step ${this.stepNum}/${this.totalSteps}: computing the IIR...`});
+    this.status = `computing the IIR...`.toString() + this.generateTemplate().toString();
+    this.emit('update', {message: this.status});
     return this.pyServerAPI
-      .getInverseImpulseResponse({
+      .getInverseImpulseResponseWithRetry({
         payload: filteredComputedIRs.slice(0, this.numCaptures),
         mls,
         lowHz,
@@ -102,7 +131,9 @@ class ImpulseResponse extends AudioCalibrator {
       .then(res => {
         console.log(res);
         this.stepNum += 1;
-        this.emit('update', {message: `Step ${this.stepNum}/${this.totalSteps}: done computing the IIR...`});
+        this.incrementStatusBar();
+        this.status = `done computing the IIR...`.toString() + this.generateTemplate().toString();
+        this.emit('update', {message: this.status});
         this.invertedImpulseResponse = res["iir"];
         this.convolution = res["convolution"];
       })
@@ -128,7 +159,8 @@ class ImpulseResponse extends AudioCalibrator {
       signalCsv && signalCsv.length > 0 ? csvToArray(signalCsv) : allSignals[numSignals - 1];
     console.log('sending rec');
     this.stepNum += 1;
-    this.emit('update', {message: `Step: ${this.stepNum}/${this.totalSteps}: computing the IR of the last recording...`});
+    this.status = `computing the IR of the last recording...`.toString() + this.generateTemplate().toString();
+    this.emit('update', {message: this.status});
     this.impulseResponses.push(
       this.pyServerAPI
         .getImpulseResponse({
@@ -142,11 +174,11 @@ class ImpulseResponse extends AudioCalibrator {
             this.numSuccessfulCaptured += 1;
             console.log("num succ capt: " + this.numSuccessfulCaptured);
             this.stepNum += 1;
-            this.emit('update', {
-              message: `Step: ${this.stepNum}/${this.totalSteps}: ${this.numSuccessfulCaptured}/${this.numCaptures} IRs computed...`,
-            });
+            this.incrementStatusBar();
+            this.status = `${this.numSuccessfulCaptured}/${this.numCaptures} IRs computed...`.toString() + this.generateTemplate().toString();
+            this.emit('update', {message: this.status});
+            return res;
           }
-          return res;
         })
         .catch(err => {
           console.error(err);
@@ -164,9 +196,8 @@ class ImpulseResponse extends AudioCalibrator {
     // seconds per MLS = P / SR
     // await N * P / SR
     this.stepNum += 1;
-    this.emit('update', {
-      message: `Step ${this.stepNum}/${this.totalSteps}: sampling the calibration signal...`,
-    });
+    this.status = `sampling the calibration signal...`.toString() + this.generateTemplate().toString();
+    this.emit('update', {message: this.status});
     await sleep((this.#P / this.sourceSamplingRate) * this.numMLSPerCapture);
   };
 
@@ -179,9 +210,8 @@ class ImpulseResponse extends AudioCalibrator {
    */
   #awaitSignalOnset = async () => {
     this.stepNum += 1;
-    this.emit('update', {
-      message: `Step ${this.stepNum}/${this.totalSteps}: waiting for the signal to stabilize...`,
-    });
+    this.status = `waiting for the signal to stabilize...`.toString() + this.generateTemplate().toString();
+    this.emit('update', {message: this.status});
     await sleep(this.TAPER_SECS);
   };
 
@@ -197,12 +227,12 @@ class ImpulseResponse extends AudioCalibrator {
   };
 
   #afterMLSwIIRRecord = () => {
-    if (this.numSuccessfulCaptured < this.numCaptures) {
+    if (this.numSuccessfulCaptured < 1) {
       this.numSuccessfulCaptured += 1;
       this.stepNum += 1;
-      this.emit('update', {
-        message: `Step ${this.stepNum}/${this.totalSteps}: ${this.numSuccessfulCaptured} recordings of convolved MLS captured`,
-      });
+      this.incrementStatusBar();
+      this.status = `${this.numSuccessfulCaptured} recording of convolved MLS captured`.toString() + this.generateTemplate().toString();
+      this.emit('update', {message: this.status});
     }
   };
 
@@ -309,8 +339,6 @@ class ImpulseResponse extends AudioCalibrator {
    */
   #setCalibrationNodesFromBuffer = (dataBufferArray = [this.#mlsBufferView]) => {
     if (dataBufferArray.length === 1) {
-      console.log('data buffer aray');
-      console.log(dataBufferArray);
       this.#createCalibrationNodeFromBuffer(dataBufferArray[0]);
     } else {
       throw new Error('The length of the data buffer array must be 1');
@@ -361,14 +389,16 @@ class ImpulseResponse extends AudioCalibrator {
     this.calibrationNodes[0].start(0);
     this.#mls = this.calibrationNodes[0].buffer.getChannelData(0);
     this.stepNum += 1;
-    this.emit('update', {message: `Step: ${this.stepNum}/${this.totalSteps}: playing the calibration tone...`});
+    this.status = `playing the calibration tone...`.toString() + this.generateTemplate().toString();
+    this.emit('update', {message: this.status});
   }; 
 
 
   #playCalibrationAudioConvolved = () => {
     this.calibrationNodesConvolved[0].start(0);
     this.stepNum += 1;
-    this.emit('update',{message: `Step: ${this.stepNum}/${this.totalSteps}: playing the convolved calibration tone...`})
+    this.status = `playing the convolved calibration tone...`.toString() + this.generateTemplate().toString();
+    this.emit('update', {message: this.status});
   }
 
   /** .
@@ -388,7 +418,8 @@ class ImpulseResponse extends AudioCalibrator {
     this.calibrationNodes[0].stop(0);
     this.sourceAudioContext.close();
     this.stepNum += 1;
-    this.emit('update', {message: `Step ${this.stepNum}/${this.totalSteps}: stopping the calibration tone...`});
+    this.status = `stopping the calibration tone...`.toString() + this.generateTemplate().toString();
+    this.emit('update', {message: this.status});
   };
 
   #stopCalibrationAudioConvolved = () => {
@@ -398,16 +429,14 @@ class ImpulseResponse extends AudioCalibrator {
     );
 
     this.offsetGainNode.gain.setTargetAtTime(0, this.sourceAudioContextConvolved.currentTime, 0.5);
-    //this.calibrationNodesConvolved[0].stop(0);
-    console.log("right before closing volved audio context");
     this.sourceAudioContextConvolved.close();
     this.stepNum += 1;
-    this.emit('update', {message: `Step ${this.stepNum}/${this.totalSteps}: stopping the convolved calibration tone...`});
+    this.status = `stopping the convolved calibration tone...`.toString() + this.generateTemplate().toString();
+    this.emit('update', {message: this.status});
 
   }
 
   playMLSwithIIR = async (stream, iir) => {
-    console.log('play mls with iir');
     this.invertedImpulseResponse = iir;
     // initialize the MLSGenInterface object with it's factory method
     
@@ -420,8 +449,6 @@ class ImpulseResponse extends AudioCalibrator {
      this.#mlsBufferView = this.#mlsGenInterface.getMLS();
     });
 
-    console.log('after mls factory'); //works up to here.
-    console.log(this.#mls);
     // after intializating, start the calibration steps with garbage collection
     await this.#mlsGenInterface.withGarbageCollection([
       () =>
@@ -430,7 +457,7 @@ class ImpulseResponse extends AudioCalibrator {
           this.#playCalibrationAudioConvolved, // play audio func (required)
           this.#putInPythonConv, // before play func
           this.#awaitSignalOnset, // before record
-          () => this.numSuccessfulCaptured < this.numCaptures,
+          () => this.numSuccessfulCaptured < 1, // < this.numCaptures
           this.#awaitDesiredMLSLength, // during record
           this.#afterMLSwIIRRecord, // after record
           'filtered'
@@ -490,12 +517,18 @@ class ImpulseResponse extends AudioCalibrator {
     let unconv_rec = recs[0];
     let conv_rec = conv_recs[0];
 
+    this.status = `computing the PSD graphs...`.toString() + this.generateTemplate().toString();
+    this.emit('update', {message: this.status});
+
     let results = await this.pyServerAPI
-        .getPSD({
+        .getPSDWithRetry({
           unconv_rec,
           conv_rec,
         })
         .then(res => {
+          this.incrementStatusBar();
+          this.status = `done computing the PSD graphs`.toString() + this.generateTemplate().toString();
+          this.emit('update', {message: this.status});
           return res;
         })
         .catch(err => {
@@ -509,6 +542,7 @@ class ImpulseResponse extends AudioCalibrator {
       "x_conv": results["x_conv"],
       "y_conv": results["y_conv"]
     }
+
     if (this.#download) {
       this.downloadSingleUnfilteredRecording();
       this.downloadSingleFilteredRecording();
