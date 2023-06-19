@@ -32,6 +32,33 @@ class Volume extends AudioCalibrator {
   /** @private */
   TAPER_SECS = 0.010; // seconds
 
+  /** @private */
+  status_denominator = 2; 
+
+  /** @private */
+  status_numerator = 0; 
+
+  /** @private */
+  percent_complete = 0; 
+
+  /** @private */
+  status = ``;
+
+  /**generate string template that gets reevaluated as variable increases */
+  generateTemplate = () => {
+    if (this.percent_complete > 100){
+      this.percent_complete = 100;
+    }
+    const template = `<div style="display: flex; justify-content: center;"><div style="width: 200px; height: 20px; border: 2px solid #000; border-radius: 10px;"><div style="width: ${this.percent_complete}%; height: 100%; background-color: #00aaff; border-radius: 8px;"></div></div></div>`;
+    return template;
+  }
+
+  /** increment numerator and percent for status bar */
+  incrementStatusBar = () => {
+    this.status_numerator += 1;
+    this.percent_complete = (this.status_numerator/this.status_denominator)*100;
+  }
+
   handleIncomingData = data => {
     console.log('Received data: ', data);
     if (data.type === 'soundGainDBSPL') {
@@ -152,6 +179,7 @@ class Volume extends AudioCalibrator {
       })
       .then(res => {
         if (this.outDBSPL === null) {
+          this.incrementStatusBar();
           this.outDBSPL = res['outDbSPL'];
           this.outDBSPL1000 = res['outDbSPL1000'];
           this.THD = res['thd'];
@@ -164,6 +192,7 @@ class Volume extends AudioCalibrator {
 
   startCalibration = async (stream, gainValues, lCalib = 104.92978421490648) => {
     const trialIterations = gainValues.length;
+    this.status_denominator += trialIterations;
     const thdValues = [];
     const inDBValues = [];
     let inDB = 0;
@@ -173,7 +202,8 @@ class Volume extends AudioCalibrator {
     // do one calibration that will be discarded
     const soundLevelToDiscard = -60;
     const gainToDiscard = Math.pow(10, soundLevelToDiscard / 20);
-    this.emit('update', {message: `Sound Level: ${soundLevelToDiscard} dB`});
+    this.status = `Sound Level: ${soundLevelToDiscard} dB`.toString() + this.generateTemplate().toString();
+    this.emit('update', {message: this.status});
     do {
       // eslint-disable-next-line no-await-in-loop
       await this.volumeCalibrationSteps(
@@ -198,7 +228,8 @@ class Volume extends AudioCalibrator {
       // precision to 1 decimal place
       inDB = Math.round(inDB * 10) / 10;
       inDBValues.push(inDB);
-      this.emit('update', {message: `Sound Level: ${inDB} dB`});
+      this.status = `Sound Level: ${inDB} dB`.toString() + this.generateTemplate().toString();
+      this.emit('update', {message: this.status});
       do {
         // eslint-disable-next-line no-await-in-loop
         await this.volumeCalibrationSteps(
@@ -220,6 +251,7 @@ class Volume extends AudioCalibrator {
     }
 
     // get the volume calibration parameters from the server
+    
     const parameters = await this.pyServerAPI
       .getVolumeCalibrationParameters({
         inDBValues: inDBValues,
@@ -227,6 +259,9 @@ class Volume extends AudioCalibrator {
         lCalib: lCalib,
       })
       .then(res => {
+        this.incrementStatusBar();
+        this.status = `done with 1000 Hz calibration`.toString() + this.generateTemplate().toString();
+        this.emit('update', {message: this.status});
         return res;
       });
     const result = {

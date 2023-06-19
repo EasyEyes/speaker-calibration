@@ -91,6 +91,36 @@ class Combination extends AudioCalibrator {
   /** @private */
   TAPER_SECS = 0.010; // seconds
 
+  /** @private */
+  status_denominator = 8; 
+
+  /** @private */
+  status_numerator = 0; 
+
+  /** @private */
+  percent_complete = 0; 
+
+  /** @private */
+  status = ``;
+
+  /**@private */
+  status_literal = `<div style="display: flex; justify-content: center;"><div style="width: 200px; height: 20px; border: 2px solid #000; border-radius: 10px;"><div style="width: ${this.percent_complete}%; height: 100%; background-color: #00aaff; border-radius: 8px;"></div></div></div>`;
+
+  /**generate string template that gets reevaluated as variable increases */
+  generateTemplate = () => {
+    if (this.percent_complete > 100){
+      this.percent_complete = 100;
+    }
+    const template = `<div style="display: flex; justify-content: center;"><div style="width: 200px; height: 20px; border: 2px solid #000; border-radius: 10px;"><div style="width: ${this.percent_complete}%; height: 100%; background-color: #00aaff; border-radius: 8px;"></div></div></div>`;
+    return template;
+  }
+
+  /** increment numerator and percent for status bar */
+  incrementStatusBar = () => {
+    this.status_numerator += 1;
+    this.percent_complete = (this.status_numerator/this.status_denominator)*100;
+  }
+
   /** .
    * .
    * .
@@ -108,9 +138,11 @@ class Combination extends AudioCalibrator {
     const lowHz = this.#lowHz;
     const highHz = this.#highHz;
     this.stepNum += 1;
-    this.emit('update', {message: `All Hz Calibration Step ${this.stepNum}/${this.totalSteps}: computing the IIR...`});
+    console.log('send impulse responses to server: ' + this.stepNum);
+    this.status = `All Hz Calibration: computing the IIR...`.toString() + this.generateTemplate().toString();
+    this.emit('update', {message: this.status});
     return this.pyServerAPI
-      .getInverseImpulseResponse({
+      .getInverseImpulseResponseWithRetry({
         payload: filteredComputedIRs.slice(0, this.numCaptures),
         mls,
         lowHz,
@@ -119,7 +151,10 @@ class Combination extends AudioCalibrator {
       .then(res => {
         console.log(res);
         this.stepNum += 1;
-        this.emit('update', {message: `All Hz Calibration Step ${this.stepNum}/${this.totalSteps}: done computing the IIR...`});
+        console.log('got impulse response ' + this.stepNum);
+        this.incrementStatusBar();
+        this.status = `All Hz Calibration: done computing the IIR...`.toString() + this.generateTemplate().toString();
+        this.emit('update', {message: this.status});
         this.invertedImpulseResponse = res["iir"];
         this.convolution = res["convolution"];
       })
@@ -145,7 +180,9 @@ class Combination extends AudioCalibrator {
       signalCsv && signalCsv.length > 0 ? csvToArray(signalCsv) : allSignals[numSignals - 1];
     console.log('sending rec');
     this.stepNum += 1;
-    this.emit('update', {message: `All Hz Calibration Step ${this.stepNum}/${this.totalSteps}: computing the IR of the last recording...`});
+    console.log('send rec ' + this.stepNum);
+    this.status = `All Hz Calibration Step: computing the IR of the last recording...`.toString() + this.generateTemplate().toString();
+    this.emit('update', {message: this.status});
     this.impulseResponses.push(
       this.pyServerAPI
         .getImpulseResponse({
@@ -159,11 +196,15 @@ class Combination extends AudioCalibrator {
             this.numSuccessfulCaptured += 1;
             console.log("num succ capt: " + this.numSuccessfulCaptured);
             this.stepNum += 1;
+            console.log('got impulse response ' + this.stepNum);
+            this.incrementStatusBar();
+            this.status = `All Hz Calibration: ${this.numSuccessfulCaptured}/${this.numCaptures} IRs computed...`.toString() + this.generateTemplate().toString();
             this.emit('update', {
-              message: `All Hz Calibration Step ${this.stepNum}/${this.totalSteps}: ${this.numSuccessfulCaptured}/${this.numCaptures} IRs computed...`,
+              message: this.status,
             });
+            return res;
           }
-          return res;
+          
         })
         .catch(err => {
           console.error(err);
@@ -181,8 +222,10 @@ class Combination extends AudioCalibrator {
     // seconds per MLS = P / SR
     // await N * P / SR
     this.stepNum += 1;
+    console.log('await desired length ' + this.stepNum);
+    this.status = `All Hz Calibration: sampling the calibration signal...`.toString() + this.generateTemplate();
     this.emit('update', {
-      message: `All Hz Calibration Step ${this.stepNum}/${this.totalSteps}: sampling the calibration signal...`,
+      message: this.status,
     });
     await sleep((this.#P / this.sourceSamplingRate) * this.numMLSPerCapture);
   };
@@ -196,8 +239,10 @@ class Combination extends AudioCalibrator {
    */
   #awaitSignalOnset = async () => {
     this.stepNum += 1;
+    console.log('await signal onset ' + this.stepNum);
+    this.status = `All Hz Calibration: waiting for the signal to stabilize...`.toString() + this.generateTemplate();
     this.emit('update', {
-      message: `All Hz Calibration Step ${this.stepNum}/${this.totalSteps}: waiting for the signal to stabilize...`,
+      message: this.status,
     });
     await sleep(this.TAPER_SECS);
   };
@@ -214,11 +259,14 @@ class Combination extends AudioCalibrator {
   };
 
   #afterMLSwIIRRecord = () => {
-    if (this.numSuccessfulCaptured < this.numCaptures) {
+    if (this.numSuccessfulCaptured < 1) {
       this.numSuccessfulCaptured += 1;
       this.stepNum += 1;
+      this.incrementStatusBar();
+      console.log('after mls w iir record for some reason add numSucc capt ' + this.stepNum);
+      this.status = `All Hz Calibration: ${this.numSuccessfulCaptured} recording of convolved MLS captured`.toString() + this.generateTemplate().toString();
       this.emit('update', {
-        message: `All Hz Calibration Step ${this.stepNum}/${this.totalSteps}: ${this.numSuccessfulCaptured} recordings of convolved MLS captured`,
+        message: this.status,
       });
     }
   };
@@ -378,14 +426,18 @@ class Combination extends AudioCalibrator {
     this.calibrationNodes[0].start(0);
     this.#mls = this.calibrationNodes[0].buffer.getChannelData(0);
     this.stepNum += 1;
-    this.emit('update', {message: `All Hz Calibration Step ${this.stepNum}/${this.totalSteps}: playing the calibration tone...`});
+    console.log('play calibration audio ' + this.stepNum);
+    this.status = `All Hz Calibration: playing the calibration tone...`.toString() + this.generateTemplate().toString();
+    this.emit('update', {message: this.status});
   }; 
 
 
   #playCalibrationAudioConvolved = () => {
     this.calibrationNodesConvolved[0].start(0);
     this.stepNum += 1;
-    this.emit('update',{message: `All Hz Calibration Step ${this.stepNum}/${this.totalSteps}: playing the convolved calibration tone...`})
+    console.log('play convolved audio ' + this.stepNum);
+    this.status = `All Hz Calibration: playing the convolved calibration tone...`.toString() + this.generateTemplate().toString();
+    this.emit('update',{message: this.status})
   }
 
   /** .
@@ -405,7 +457,9 @@ class Combination extends AudioCalibrator {
     this.calibrationNodes[0].stop(0);
     this.sourceAudioContext.close();
     this.stepNum += 1;
-    this.emit('update', {message: `All Hz Calibration Step ${this.stepNum}/${this.totalSteps}: stopping the calibration tone...`});
+    console.log('stop calibratoin audio ' + this.stepNum);
+    this.status = `All Hz Calibration: stopping the calibration tone...`.toString() + this.generateTemplate().toString();
+    this.emit('update', {message: this.status});
   };
 
   #stopCalibrationAudioConvolved = () => {
@@ -419,7 +473,9 @@ class Combination extends AudioCalibrator {
     console.log("right before closing volved audio context");
     this.sourceAudioContextConvolved.close();
     this.stepNum += 1;
-    this.emit('update', {message: `All Hz Calibration Step ${this.stepNum}/${this.totalSteps}: stopping the convolved calibration tone...`});
+    console.log('stop convolved calibration audio ' + this.stepNum);
+    this.status = `All Hz Calibration: stopping the convolved calibration tone...`.toString() + this.generateTemplate().toString();
+    this.emit('update', {message: this.status});
 
   }
 
@@ -447,7 +503,7 @@ class Combination extends AudioCalibrator {
           this.#playCalibrationAudioConvolved, // play audio func (required)
           this.#putInPythonConv, // before play func
           this.#awaitSignalOnset, // before record
-          () => this.numSuccessfulCaptured < this.numCaptures,
+          () => this.numSuccessfulCaptured < 1,
           this.#awaitDesiredMLSLength, // during record
           this.#afterMLSwIIRRecord, // after record
           'filtered'
@@ -507,12 +563,18 @@ class Combination extends AudioCalibrator {
     let unconv_rec = recs[0];
     let conv_rec = conv_recs[0];
 
+    this.status = `All Hz Calibration: computing PSD graphs...`.toString() + this.generateTemplate().toString();
+    this.emit('update', {message: this.status});
+
     let results = await this.pyServerAPI
-        .getPSD({
+        .getPSDWithRetry({
           unconv_rec,
           conv_rec,
         })
         .then(res => {
+          this.incrementStatusBar();
+          this.status = `All Hz Calibration: done computing the PSD graphs...`.toString() + this.generateTemplate().toString();
+          this.emit('update', {message: this.status});
           return res;
         })
         .catch(err => {
@@ -667,6 +729,7 @@ class Combination extends AudioCalibrator {
       })
       .then(res => {
         if (this.outDBSPL === null) {
+          this.incrementStatusBar();
           this.outDBSPL = res['outDbSPL'];
           this.outDBSPL1000 = res['outDbSPL1000'];
           this.THD = res['thd'];
@@ -679,16 +742,20 @@ class Combination extends AudioCalibrator {
 
   startCalibrationVolume = async (stream, gainValues, lCalib = 104.92978421490648) => {
     const trialIterations = gainValues.length;
+    this.status_denominator += trialIterations;
     const thdValues = [];
     const inDBValues = [];
     let inDB = 0;
     const outDBSPLValues = [];
-    const outDBSPL1000Values = [];
+    const outDBSPL1000Values = [];  
 
     // do one calibration that will be discarded
     const soundLevelToDiscard = -60;
     const gainToDiscard = Math.pow(10, soundLevelToDiscard / 20);
-    this.emit('update', {message: `1000 Hz Calibration: Sound Level ${soundLevelToDiscard} dB`});
+    this.status = `1000 Hz Calibration: Sound Level ${soundLevelToDiscard} dB`.toString() + this.generateTemplate().toString();
+    //this.emit('update', {message: `1000 Hz Calibration: Sound Level ${soundLevelToDiscard} dB`});
+    this.emit('update', {message: this.status});
+    
     do {
       // eslint-disable-next-line no-await-in-loop
       await this.volumeCalibrationSteps(
@@ -701,6 +768,8 @@ class Combination extends AudioCalibrator {
       );
     } while (this.outDBSPL === null);
     //reset the values
+    //this.incrementStatusBar();
+
     this.outDBSPL = null;
     this.outDBSPL = null;
     this.outDBSPL1000 = null;
@@ -713,7 +782,9 @@ class Combination extends AudioCalibrator {
       // precision to 1 decimal place
       inDB = Math.round(inDB * 10) / 10;
       inDBValues.push(inDB);
-      this.emit('update', {message: `1000 Hz Calibration: Sound Level ${inDB} dB`});
+      console.log('next update');
+      this.status = `1000 Hz Calibration: Sound Level ${inDB} dB`.toString() + this.generateTemplate().toString();
+      this.emit('update', {message: this.status});
       do {
         // eslint-disable-next-line no-await-in-loop
         await this.volumeCalibrationSteps(
@@ -742,6 +813,7 @@ class Combination extends AudioCalibrator {
         lCalib: lCalib,
       })
       .then(res => {
+        this.incrementStatusBar();
         return res;
       });
     const result = {
@@ -751,6 +823,7 @@ class Combination extends AudioCalibrator {
       outDBSPL1000Values: outDBSPL1000Values,
       thdValues: thdValues,
     };
+    
 
     return result;
   };
