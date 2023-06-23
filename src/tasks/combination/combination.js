@@ -53,6 +53,10 @@ class Combination extends AudioCalibrator {
   /** @private */
   invertedImpulseResponse = null;
 
+  //averaged and subtracted ir returned from calibration used to calculated iir
+  /** @private */
+  ir = null;
+
   /** @private */
   impulseResponses = [];
 
@@ -115,6 +119,9 @@ class Combination extends AudioCalibrator {
   /**@private */
   status_literal = `<div style="display: flex; justify-content: center;"><div style="width: 200px; height: 20px; border: 2px solid #000; border-radius: 10px;"><div style="width: ${this.percent_complete}%; height: 100%; background-color: #00aaff; border-radius: 8px;"></div></div></div>`;
 
+  /**@private */
+  knownIR = null;
+
   /**generate string template that gets reevaluated as variable increases */
   generateTemplate = () => {
     if (this.percent_complete > 100) {
@@ -143,6 +150,8 @@ class Combination extends AudioCalibrator {
     const filteredComputedIRs = computedIRs.filter(element => {
       return element != undefined;
     });
+    const knownIRGains = this.knownIR["Gain"];
+    const knownIRFreqs = this.knownIR["Freq"];
     const mls = this.#mls;
     const lowHz = this.#lowHz;
     const highHz = this.#highHz;
@@ -157,6 +166,9 @@ class Combination extends AudioCalibrator {
         mls,
         lowHz,
         highHz,
+        knownIRGains,
+        knownIRFreqs,
+        sampleRate: this.sourceSamplingRate || 96000,
       })
       .then(res => {
         console.log(res);
@@ -168,6 +180,7 @@ class Combination extends AudioCalibrator {
           this.generateTemplate().toString();
         this.emit('update', {message: this.status});
         this.invertedImpulseResponse = res['iir'];
+        this.ir = res['ir'];
         this.convolution = res['convolution'];
       })
       .catch(err => {
@@ -608,12 +621,13 @@ class Combination extends AudioCalibrator {
         console.error(err);
       });
 
-    let iir_and_plots = {
+    let iir_ir_and_plots = {
       iir: this.invertedImpulseResponse,
       x_unconv: results['x_unconv'],
       y_unconv: results['y_unconv'],
       x_conv: results['x_conv'],
       y_conv: results['y_conv'],
+      ir: this.ir,
     };
     if (this.#download) {
       this.downloadSingleUnfilteredRecording();
@@ -630,7 +644,7 @@ class Combination extends AudioCalibrator {
       });
     }
 
-    return iir_and_plots;
+    return iir_ir_and_plots;
   };
 
   //////////////////////volume
@@ -887,15 +901,27 @@ class Combination extends AudioCalibrator {
   // readFrqGain('MiniDSPUMIK_1').then(data => console.log(data));
   // MiniDSPUMIK_1 is the speakerID with some Data in the database
 
-  startCalibration = async (stream, gainValues, lCalib = 104.92978421490648) => {
+  startCalibration = async (stream, gainValues, lCalib = 104.92978421490648,knownIR = null) => {
+    //check if a knownIR was given to the system, if it isn't check for the microphone. using dummy data here bc we need to
+    //check the db based on the microphone currently connected
+    if (knownIR == null){
+      this.knownIR = await this.readFrqGain('MiniDSPUMIK_1').then(data => {return data});
+    }else{
+      this.knownIR = knownIR;
+    }
+    //haven't changed 1000 hz calibration
     let volumeResults = await this.startCalibrationVolume(
       stream,
       gainValues,
       (lCalib = 104.92978421490648)
     );
+    //impulse response calibration has the infrastructure set up (sending microphone data, receiving ir) but the ir subtraction
+    //is not properly implemented
     let impulseResponseResults = await this.startCalibrationImpulseResponse(stream);
+
     console.log(volumeResults);
-    console.log(impulseResponseResults);
+    console.log(impulseResponseResults); //this result now contain the ir to be fed into next round along with
+    //what it already returned, not completed yet but can be used as if completed for now
     const total_results = {...volumeResults, ...impulseResponseResults};
     console.log('total');
     console.log(total_results);
