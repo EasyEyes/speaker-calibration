@@ -108,7 +108,7 @@ class PythonServerAPI {
   };
   
 
-  getInverseImpulseResponse = async ({payload,mls,lowHz,highHz}) => {
+  getInverseImpulseResponse = async ({payload,mls,lowHz,highHz,knownIRGains,knownIRFreqs,sampleRate}) => {
     const task = 'inverse-impulse-response';
     let res = null;
 
@@ -119,7 +119,10 @@ class PythonServerAPI {
       payload,
       mls,
       lowHz,
-      highHz
+      highHz,
+      knownIRGains,
+      knownIRFreqs,
+      sampleRate,
     });
 
     await axios({
@@ -141,13 +144,13 @@ class PythonServerAPI {
     return res.data[task];
   };
 
-getInverseImpulseResponseWithRetry = async ({ payload, mls, lowHz, highHz }) => {
+getInverseImpulseResponseWithRetry = async ({ payload, mls, lowHz, highHz,knownIRGains,knownIRFreqs, sampleRate}) => {
   let retryCount = 0;
   let response = null;
 
   while (retryCount < this.MAX_RETRY_COUNT) {
     try {
-      response = await this.getInverseImpulseResponse({ payload, mls, lowHz, highHz });
+      response = await this.getInverseImpulseResponse({ payload, mls, lowHz, highHz,knownIRGains,knownIRFreqs,sampleRate});
       // If the request is successful, break out of the loop
       break;
     } catch (error) {
