@@ -96,9 +96,8 @@ class Listener extends AudioPeer {
     });
 
     this.displayUpdate('Created connection');
-
+    this.getDeviceType();
     this.conn.on('open', async () => {
-      this.getDeviceType();
       this.displayUpdate('Listener - conn open');
       // this.sendSamplingRate();
       await this.openAudioStream();
