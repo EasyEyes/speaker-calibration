@@ -1,5 +1,6 @@
 import AudioPeer from './audioPeer';
 import {UnsupportedDeviceError, MissingSpeakerIdError} from './peerErrors';
+import axios from 'axios';
 
 /**
  * @class Handles the listener's side of the connection. Responsible for getting access to user's microphone,
@@ -75,7 +76,7 @@ class Listener extends AudioPeer {
     }
   };
 
-  join = () => {
+  join = async () => {
     this.displayUpdate('Listener - join');
     /**
      * Create the connection between the two Peers.
@@ -96,9 +97,9 @@ class Listener extends AudioPeer {
     });
 
     this.displayUpdate('Created connection');
-
     this.conn.on('open', async () => {
       this.displayUpdate('Listener - conn open');
+      // await this.getDeviceType();
       // this.sendSamplingRate();
       await this.openAudioStream();
     });
@@ -130,6 +131,25 @@ class Listener extends AudioPeer {
     this.conn.send({
       name: 'samplingRate',
       payload: sampleRate,
+    });
+  };
+
+  getDeviceType = async () => {
+    const deviceType = deviceAPI.deviceType;
+    var deviceName = deviceAPI.deviceName;
+
+    // if deviceName is a comma separated string, only send the first part
+    if (deviceName.includes(',')) {
+      deviceName = deviceName.split(',')[0];
+    }
+
+    this.conn.send({
+      name: 'deviceType',
+      payload: deviceType,
+    });
+    this.conn.send({
+      name: 'deviceName',
+      payload: deviceName,
     });
   };
 

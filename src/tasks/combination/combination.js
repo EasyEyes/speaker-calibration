@@ -122,6 +122,10 @@ class Combination extends AudioCalibrator {
   /**@private */
   componentIR = null;
 
+  deviceType = null;
+
+  deviceName = null;
+
   /**generate string template that gets reevaluated as variable increases */
   generateTemplate = () => {
     if (this.percent_complete > 100) {
@@ -135,6 +139,14 @@ class Combination extends AudioCalibrator {
   incrementStatusBar = () => {
     this.status_numerator += 1;
     this.percent_complete = (this.status_numerator / this.status_denominator) * 100;
+  };
+
+  setDeviceType = deviceType => {
+    this.deviceType = deviceType;
+  };
+
+  setDeviceName = deviceName => {
+    this.deviceName = deviceName;
   };
 
   /** .
@@ -885,7 +897,7 @@ class Combination extends AudioCalibrator {
       frq,
       gain,
     };
-    await set(ref(database, `${speakerID}/linear`), data);
+    await set(ref(database, `Microphone/${speakerID}/linear`), data);
   };
 
   // Function to Read frq and gain from firebase database given speakerID
@@ -893,7 +905,7 @@ class Combination extends AudioCalibrator {
 
   readFrqGain = async speakerID => {
     const dbRef = ref(database);
-    const snapshot = await get(child(dbRef, `${speakerID}/linear`));
+    const snapshot = await get(child(dbRef, `Microphone/${speakerID}/linear`));
     if (snapshot.exists()) {
       return snapshot.val();
     }
@@ -906,7 +918,7 @@ class Combination extends AudioCalibrator {
   // readFrqGain('MiniDSPUMIK_1').then(data => console.log(data));
   // MiniDSPUMIK_1 is the speakerID with some Data in the database
   //adding gainDBSPL
-  startCalibration = async (stream, gainValues, lCalib = 104.92978421490648, componentIR = null) => {
+  startCalibration = async (stream, gainValues, lCalib = 104.92978421490648, componentIR = null, microphoneName='MiniDSPUMIK_1') => {
     //check if a componentIR was given to the system, if it isn't check for the microphone. using dummy data here bc we need to
     //check the db based on the microphone currently connected
 
@@ -915,8 +927,14 @@ class Combination extends AudioCalibrator {
     //based on zeroing of 1000hz, search for "*1000Hz"
     if (componentIR == null){
       //global variable this.componentIR must be set
-      this.componentIR = await this.readFrqGain('MiniDSPUMIK_1').then(data => {return data});
+      this.componentIR = await this.readFrqGain(microphoneName).then(data => {return data});
       //TODO: if this call to database is unknown, cannot perform experiment => return false
+      if (this.componentIR == null) {
+        this.status =
+          `Microphone ${microphoneName} is not in the database. Please add it to the database.`.toString();
+        this.emit('update', {message: this.status});
+        return false;
+      }
     }else{
       this.componentIR = componentIR;
     }
