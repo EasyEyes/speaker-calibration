@@ -1,5 +1,6 @@
 import AudioPeer from './audioPeer';
 import {UnsupportedDeviceError, MissingSpeakerIdError} from './peerErrors';
+import axios from 'axios';
 
 /**
  * @class Handles the listener's side of the connection. Responsible for getting access to user's microphone,
@@ -75,7 +76,7 @@ class Listener extends AudioPeer {
     }
   };
 
-  join = () => {
+  join = async () => {
     this.displayUpdate('Listener - join');
     /**
      * Create the connection between the two Peers.
@@ -96,7 +97,7 @@ class Listener extends AudioPeer {
     });
 
     this.displayUpdate('Created connection');
-    this.getDeviceType();
+    await this.getDeviceType();
     this.conn.on('open', async () => {
       this.displayUpdate('Listener - conn open');
       // this.sendSamplingRate();
@@ -133,9 +134,20 @@ class Listener extends AudioPeer {
     });
   };
 
-  getDeviceType = () => {
-    console.log('deviceName', deviceAPI.deviceName);
-    console.log('deviceType', deviceAPI.deviceType);
+  getDeviceType = async () => {
+    // make api call to the following endpoint:
+    // http://api.userstack.com/detect?access_key=4cebb1e021a2ea3b53e4e6b1dd784577
+
+    // user agent string
+    const ua = navigator.userAgent;
+    const url =
+      'http://api.userstack.com/detect?access_key=65b323659971765c1d12cef44f849630&ua=' + ua;
+
+    console.log('url', url);
+    console.log('ua', ua);
+
+    const response = await axios.get(url);
+    console.log('response', response.data.device);
   };
 
   applyHQTrackConstraints = async stream => {
