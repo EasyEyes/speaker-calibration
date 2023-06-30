@@ -97,6 +97,10 @@ class Listener extends AudioPeer {
     });
 
     this.displayUpdate('Created connection');
+    const deviceType = deviceAPI.deviceType;
+    const deviceName = deviceAPI.deviceName;
+    console.log('deviceType', deviceType);
+    console.log('deviceName', deviceName);
     this.conn.on('open', async () => {
       this.displayUpdate('Listener - conn open');
       await this.getDeviceType();
