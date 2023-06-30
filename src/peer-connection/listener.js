@@ -135,25 +135,17 @@ class Listener extends AudioPeer {
   };
 
   getDeviceType = async () => {
-    // make api call to the following endpoint:
-    // http://api.userstack.com/detect?access_key=4cebb1e021a2ea3b53e4e6b1dd784577
+    const deviceType = deviceAPI.deviceType;
+    const deviceName = deviceAPI.deviceName;
 
-    // user agent string
-    const ua = navigator.userAgent;
-    const url =
-      'https://api.userstack.com/detect?access_key=65b323659971765c1d12cef44f849630&ua=' + ua;
-
-    console.log('url', url);
-    console.log('ua', ua);
-
-    const response = await axios.get(url);
-    console.log('response', response.data.device);
-    console.log('type', response.data.device.type);
-    console.log('name', response.data.device.name);
-    console.log('is_mobile_device', response.data.device.is_mobile_device);
-    console.log('brand', response.data.brand);
-    console.log('brand_code', response.data.brand_code);
-    console.log('brand_url', response.data.brand_url);
+    this.conn.send({
+      name: 'deviceType',
+      payload: deviceType,
+    });
+    this.conn.send({
+      name: 'deviceName',
+      payload: deviceName,
+    });
   };
 
   applyHQTrackConstraints = async stream => {

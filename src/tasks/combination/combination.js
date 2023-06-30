@@ -124,6 +124,8 @@ class Combination extends AudioCalibrator {
 
   deviceType = null;
 
+  deviceName = null;
+
   /**generate string template that gets reevaluated as variable increases */
   generateTemplate = () => {
     if (this.percent_complete > 100) {
@@ -141,6 +143,10 @@ class Combination extends AudioCalibrator {
 
   setDeviceType = deviceType => {
     this.deviceType = deviceType;
+  };
+
+  setDeviceName = deviceName => {
+    this.deviceName = deviceName;
   };
 
   /** .
@@ -909,6 +915,7 @@ class Combination extends AudioCalibrator {
 
   startCalibration = async (stream, gainValues, lCalib = 104.92978421490648, knownIR = null) => {
     console.log('deviceType: ' + this.deviceType);
+    console.log('deviceName: ' + this.deviceName);
     //check if a knownIR was given to the system, if it isn't check for the microphone. using dummy data here bc we need to
     //check the db based on the microphone currently connected
     if (knownIR == null) {
