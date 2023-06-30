@@ -87,6 +87,7 @@ class Speaker extends AudioPeer {
             stream,
             params.gainValues,
             params.ICalib,
+            params.knownIR,
             params.microphoneName
           );
           speaker.#removeUIElems();
