@@ -140,7 +140,12 @@ class Listener extends AudioPeer {
 
   getDeviceType = async () => {
     const deviceType = deviceAPI.deviceType;
-    const deviceName = deviceAPI.deviceName;
+    var deviceName = deviceAPI.deviceName;
+
+    // if deviceName is a comma separated string, only send the first part
+    if (deviceName.includes(',')) {
+      deviceName = deviceName.split(',')[0];
+    }
 
     this.conn.send({
       name: 'deviceType',
