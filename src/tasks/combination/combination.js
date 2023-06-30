@@ -980,6 +980,9 @@ class Combination extends AudioCalibrator {
       this.componentIR = await this.readFrqGain(microphoneName).then(data => {
         return data;
       });
+
+      lCalib = await this.readGainat1000Hz(microphoneName);
+      this.componentGainDBSPL = this.convertToDB(lCalib);
       //TODO: if this call to database is unknown, cannot perform experiment => return false
       if (this.componentIR == null) {
         this.status =
@@ -989,6 +992,9 @@ class Combination extends AudioCalibrator {
       }
     } else {
       this.componentIR = componentIR;
+      lCalib = this.findGainatFrequency(this.componentIR.Freq, this.componentIR.Gain, 1000);
+      this.componentGainDBSPL = this.convertToDB(lCalib);
+      await writeGainat1000Hz(microphoneName, lCalib);
     }
 
     //TODO:
@@ -1001,8 +1007,6 @@ class Combination extends AudioCalibrator {
     // lCalib = -37.4;
     // this.componentGainDBSPL = -30;
     // componentGainDBSPL = -30;
-    lCalib = await this.readGainat1000Hz(microphoneName);
-    this.componentGainDBSPL = this.convertToDB(lCalib);
 
     let volumeResults = await this.startCalibrationVolume(
       stream,
@@ -1015,14 +1019,8 @@ class Combination extends AudioCalibrator {
     //TODO: if needed, insert componentIR into db
 
     if (componentIR != null) {
-      //means we are calibrating microphone not speaker
-
       //insert Freq and Gain from this.componentIR into db
       await this.writeFrqGain(microphoneName, this.componentIR.Freq, this.componentIR.Gain);
-
-      //interpolate to find gain at 1000 hz of the microphone
-      const gain1000 = this.findGainatFrequency(this.componentIR.Freq, this.componentIR.Gain, 1000);
-      await this.writeGainat1000Hz(microphoneName, gain1000);
     }
 
     const total_results = {...volumeResults, ...impulseResponseResults};
