@@ -108,7 +108,7 @@ class PythonServerAPI {
   };
   
 
-  getInverseImpulseResponse = async ({payload,mls,lowHz,highHz,knownIRGains,knownIRFreqs,sampleRate}) => {
+  getInverseImpulseResponse = async ({payload,mls,lowHz,highHz,componentIRGains,componentIRFreqs,sampleRate}) => {
     const task = 'inverse-impulse-response';
     let res = null;
 
@@ -120,8 +120,8 @@ class PythonServerAPI {
       mls,
       lowHz,
       highHz,
-      knownIRGains,
-      knownIRFreqs,
+      componentIRGains,
+      componentIRFreqs,
       sampleRate,
     });
 
@@ -144,13 +144,13 @@ class PythonServerAPI {
     return res.data[task];
   };
 
-getInverseImpulseResponseWithRetry = async ({ payload, mls, lowHz, highHz,knownIRGains,knownIRFreqs, sampleRate}) => {
+getInverseImpulseResponseWithRetry = async ({ payload, mls, lowHz, highHz,componentIRGains,componentIRFreqs, sampleRate}) => {
   let retryCount = 0;
   let response = null;
 
   while (retryCount < this.MAX_RETRY_COUNT) {
     try {
-      response = await this.getInverseImpulseResponse({ payload, mls, lowHz, highHz,knownIRGains,knownIRFreqs,sampleRate});
+      response = await this.getInverseImpulseResponse({ payload, mls, lowHz, highHz,componentIRGains,componentIRFreqs,sampleRate});
       // If the request is successful, break out of the loop
       break;
     } catch (error) {
@@ -200,7 +200,7 @@ getInverseImpulseResponseWithRetry = async ({ payload, mls, lowHz, highHz,knownI
     return res.data[task];
   };
 
-  getVolumeCalibrationParameters = async ({inDBValues, outDBSPLValues, lCalib}) => {
+  getVolumeCalibrationParameters = async ({inDBValues, outDBSPLValues, lCalib, componentGainDBSPL}) => {
     const task = 'volume-parameters';
     let res = null;
 
@@ -209,6 +209,7 @@ getInverseImpulseResponseWithRetry = async ({ payload, mls, lowHz, highHz,knownI
       inDBValues,
       outDBSPLValues,
       lCalib,
+      componentGainDBSPL,
     });
 
     await axios({
@@ -222,10 +223,13 @@ getInverseImpulseResponseWithRetry = async ({ payload, mls, lowHz, highHz,knownI
     })
       .then(response => {
         res = response;
+        console.log(res.data[task]);
       })
       .catch(error => {
         throw error;
       });
+
+
 
     // console.log(res.data[task]);
     //below is an example of res.data[task]
