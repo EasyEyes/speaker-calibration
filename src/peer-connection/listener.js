@@ -135,7 +135,7 @@ class Listener extends AudioPeer {
 
   getDeviceType = () => {
     fod.complete(data => {
-      // console.log('deviceType: ', data.device['devicetype']);
+      console.log('deviceType: ', data.device['devicetype']);
       this.conn.send({
         name: 'deviceType',
         payload: data.device['devicetype'],
