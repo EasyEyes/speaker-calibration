@@ -120,7 +120,7 @@ class Combination extends AudioCalibrator {
   status_literal = `<div style="display: flex; justify-content: center;"><div style="width: 200px; height: 20px; border: 2px solid #000; border-radius: 10px;"><div style="width: ${this.percent_complete}%; height: 100%; background-color: #00aaff; border-radius: 8px;"></div></div></div>`;
 
   /**@private */
-  knownIR = null;
+  componentIR = null;
 
   /**generate string template that gets reevaluated as variable increases */
   generateTemplate = () => {
@@ -150,8 +150,8 @@ class Combination extends AudioCalibrator {
     const filteredComputedIRs = computedIRs.filter(element => {
       return element != undefined;
     });
-    const knownIRGains = this.knownIR["Gain"];
-    const knownIRFreqs = this.knownIR["Freq"];
+    const componentIRGains = this.componentIR["Gain"];
+    const componentIRFreqs = this.componentIR["Freq"];
     const mls = this.#mls;
     const lowHz = this.#lowHz;
     const highHz = this.#highHz;
@@ -166,8 +166,8 @@ class Combination extends AudioCalibrator {
         mls,
         lowHz,
         highHz,
-        knownIRGains,
-        knownIRFreqs,
+        componentIRGains,
+        componentIRFreqs,
         sampleRate: this.sourceSamplingRate || 96000,
       })
       .then(res => {
@@ -180,7 +180,8 @@ class Combination extends AudioCalibrator {
           this.generateTemplate().toString();
         this.emit('update', {message: this.status});
         this.invertedImpulseResponse = res['iir'];
-        this.ir = res['ir'];
+        this.componentIR["Gain"] = res['ir'];
+        this.componentIR["Freq"] = res['frequencies'];
         this.convolution = res['convolution'];
       })
       .catch(err => {
@@ -621,13 +622,16 @@ class Combination extends AudioCalibrator {
         console.error(err);
       });
 
+      //here after calibration we have the component calibration (either loudspeaker or microphone) in the same form as the componentIR
+      //that was used to calibrate
+
     let iir_ir_and_plots = {
       iir: this.invertedImpulseResponse,
       x_unconv: results['x_unconv'],
       y_unconv: results['y_unconv'],
       x_conv: results['x_conv'],
       y_conv: results['y_conv'],
-      ir: this.ir,
+      componentIR: this.componentIR
     };
     if (this.#download) {
       this.downloadSingleUnfilteredRecording();
@@ -900,28 +904,43 @@ class Combination extends AudioCalibrator {
   // Speaker1 is the speakerID  you want to write to in the database
   // readFrqGain('MiniDSPUMIK_1').then(data => console.log(data));
   // MiniDSPUMIK_1 is the speakerID with some Data in the database
-
-  startCalibration = async (stream, gainValues, lCalib = 104.92978421490648,knownIR = null) => {
-    //check if a knownIR was given to the system, if it isn't check for the microphone. using dummy data here bc we need to
+  //adding gainDBSPL
+  startCalibration = async (stream, gainValues, lCalib = 104.92978421490648, componentIR = null) => {
+    //check if a componentIR was given to the system, if it isn't check for the microphone. using dummy data here bc we need to
     //check the db based on the microphone currently connected
-    if (knownIR == null){
-      this.knownIR = await this.readFrqGain('MiniDSPUMIK_1').then(data => {return data});
+
+
+    //new lCalib found at top of calibration files *1000hz, make sure to correct
+    //based on zeroing of 1000hz, search for "*1000Hz"
+    if (componentIR == null){
+      //global variable this.componentIR must be set
+      this.componentIR = await this.readFrqGain('MiniDSPUMIK_1').then(data => {return data});
+      //TODO: if this call to database is unknown, cannot perform experiment => return false
     }else{
-      this.knownIR = knownIR;
+      this.componentIR = componentIR;
     }
-    //haven't changed 1000 hz calibration
+
+    //TODO:
+    //if *1000 is in, lcalib is that value and componentGainDBSPL is that value converted to dB
+    //this value (lcalib) is 1000 hz offset so it must be added to every gain
+    //if *1000 is not in, interpolate to get gain at 1000 hz (lcalib) and obtain componentGainDBSPL by converting lCalib to dB
+
+    //lCalib is gain at 1000 hz, componentGainDBSPL is gain at 1000 hz converted to db
+    //TODO: get this parameter from DB
+    lCalib = -37.4;
+    this.componentGainDBSPL = -30;
+    componentGainDBSPL = -30;
+
     let volumeResults = await this.startCalibrationVolume(
       stream,
       gainValues,
-      (lCalib = 104.92978421490648)
+      lCalib,
+      componentGainDBSPL
     );
-    //impulse response calibration has the infrastructure set up (sending microphone data, receiving ir) but the ir subtraction
-    //is not properly implemented
-    let impulseResponseResults = await this.startCalibrationImpulseResponse(stream);
 
-    console.log(volumeResults);
-    console.log(impulseResponseResults); //this result now contain the ir to be fed into next round along with
-    //what it already returned, not completed yet but can be used as if completed for now
+    let impulseResponseResults = await this.startCalibrationImpulseResponse(stream);
+    //TODO: if needed, insert componentIR into db
+
     const total_results = {...volumeResults, ...impulseResponseResults};
     console.log('total');
     console.log(total_results);
