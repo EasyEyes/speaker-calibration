@@ -913,11 +913,21 @@ class Combination extends AudioCalibrator {
   // readFrqGain('MiniDSPUMIK_1').then(data => console.log(data));
   // MiniDSPUMIK_1 is the speakerID with some Data in the database
 
+  getMicrophoneNamesFromDatabase = async () => {
+    const dbRef = ref(database);
+    const snapshot = await get(child(dbRef, ''));
+    if (snapshot.exists()) {
+      return Object.keys(snapshot.val());
+    }
+    return null;
+  };
+
   startCalibration = async (stream, gainValues, lCalib = 104.92978421490648, knownIR = null) => {
-    console.log('deviceType: ' + this.deviceType);
-    console.log('deviceName: ' + this.deviceName);
     //check if a knownIR was given to the system, if it isn't check for the microphone. using dummy data here bc we need to
     //check the db based on the microphone currently connected
+    getMicrophoneNamesFromDatabase().then(data => {
+      console.log('microphone names from database: ', data);
+    });
     if (knownIR == null) {
       this.knownIR = await this.readFrqGain('MiniDSPUMIK_1').then(data => {
         return data;
