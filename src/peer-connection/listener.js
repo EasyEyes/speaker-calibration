@@ -141,13 +141,19 @@ class Listener extends AudioPeer {
     // user agent string
     const ua = navigator.userAgent;
     const url =
-      'http://api.userstack.com/detect?access_key=65b323659971765c1d12cef44f849630&ua=' + ua;
+      'https://api.userstack.com/detect?access_key=65b323659971765c1d12cef44f849630&ua=' + ua;
 
     console.log('url', url);
     console.log('ua', ua);
 
     const response = await axios.get(url);
     console.log('response', response.data.device);
+    console.log('type', response.data.device.type);
+    console.log('name', response.data.device.name);
+    console.log('is_mobile_device', response.data.device.is_mobile_device);
+    console.log('brand', response.data.brand);
+    console.log('brand_code', response.data.brand_code);
+    console.log('brand_url', response.data.brand_url);
   };
 
   applyHQTrackConstraints = async stream => {
