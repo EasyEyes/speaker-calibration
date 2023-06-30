@@ -134,7 +134,7 @@ class Listener extends AudioPeer {
   };
 
   getDeviceType = () => {
-    console.log('Frubil:', FRUBIL.device);
+    console.log('Frubil:', FRUBIL.device.marketname);
   };
 
   applyHQTrackConstraints = async stream => {
