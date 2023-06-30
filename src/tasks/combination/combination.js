@@ -766,7 +766,7 @@ class Combination extends AudioCalibrator {
     await sleep(totalDuration);
   };
 
-  #sendToServerForProcessing = (lCalib = 104.92978421490648) => {
+  #sendToServerForProcessing = lCalib => {
     console.log('Sending data to server');
     this.pyServerAPI
       .getVolumeCalibration({
@@ -787,7 +787,7 @@ class Combination extends AudioCalibrator {
       });
   };
 
-  startCalibrationVolume = async (stream, gainValues, lCalib = 104.92978421490648) => {
+  startCalibrationVolume = async (stream, gainValues, lCalib, componentGainDBSPL) => {
     const trialIterations = gainValues.length;
     this.status_denominator += trialIterations;
     const thdValues = [];
@@ -862,6 +862,7 @@ class Combination extends AudioCalibrator {
         inDBValues: inDBValues,
         outDBSPLValues: outDBSPL1000Values,
         lCalib: lCalib,
+        componentGainDBSPL,
       })
       .then(res => {
         this.incrementStatusBar();
