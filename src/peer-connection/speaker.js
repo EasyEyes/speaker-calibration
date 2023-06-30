@@ -86,7 +86,8 @@ class Speaker extends AudioPeer {
           speaker.result = await speaker.ac.startCalibration(
             stream,
             params.gainValues,
-            params.ICalib
+            params.ICalib,
+            params.microphoneName
           );
           speaker.#removeUIElems();
           resolve(speaker.result);
