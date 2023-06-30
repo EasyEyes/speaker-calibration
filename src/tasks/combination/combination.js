@@ -893,10 +893,17 @@ class Combination extends AudioCalibrator {
 
   // function to write frq and gain to firebase database given speakerID
   writeFrqGain = async (speakerID, frq, gain) => {
-    const data = {
-      Freq: frq,
-      Gain: gain,
-    };
+    // freq and gain are too large to take samples 1 in every 100 samples
+
+    const sampledFrq = [];
+    const sampledGain = [];
+    for (let i = 0; i < frq.length; i += 100) {
+      sampledFrq.push(frq[i]);
+      sampledGain.push(gain[i]);
+    }
+
+    const data = {frq: sampledFrq, gain: sampledGain};
+
     await set(ref(database, `Microphone/${speakerID}/linear`), data);
   };
 
