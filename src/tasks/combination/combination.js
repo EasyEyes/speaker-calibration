@@ -1020,7 +1020,11 @@ class Combination extends AudioCalibrator {
 
     if (componentIR != null) {
       //insert Freq and Gain from this.componentIR into db
-      await this.writeFrqGain(microphoneName, this.componentIR.Freq, this.componentIR.Gain);
+      await this.writeFrqGain(
+        microphoneName,
+        impulseResponseResults.componentIR.Freq,
+        impulseResponseResults.componentIR.Gain
+      );
     }
 
     const total_results = {...volumeResults, ...impulseResponseResults};
