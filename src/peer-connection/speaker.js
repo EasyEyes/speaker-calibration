@@ -303,6 +303,9 @@ class Speaker extends AudioPeer {
       case 'samplingRate':
         this.ac.setSamplingRates(data.payload);
         break;
+      case 'deviceType':
+        this.ac.setDeviceType(data.payload);
+        break;
       case UnsupportedDeviceError.name:
       case MissingSpeakerIdError.name:
         throw data.payload;

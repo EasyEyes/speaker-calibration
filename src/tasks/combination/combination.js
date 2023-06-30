@@ -122,6 +122,8 @@ class Combination extends AudioCalibrator {
   /**@private */
   knownIR = null;
 
+  deviceType = null;
+
   /**generate string template that gets reevaluated as variable increases */
   generateTemplate = () => {
     if (this.percent_complete > 100) {
@@ -137,6 +139,10 @@ class Combination extends AudioCalibrator {
     this.percent_complete = (this.status_numerator / this.status_denominator) * 100;
   };
 
+  setDeviceType = deviceType => {
+    this.deviceType = deviceType;
+  };
+
   /** .
    * .
    * .
@@ -150,8 +156,8 @@ class Combination extends AudioCalibrator {
     const filteredComputedIRs = computedIRs.filter(element => {
       return element != undefined;
     });
-    const knownIRGains = this.knownIR["Gain"];
-    const knownIRFreqs = this.knownIR["Freq"];
+    const knownIRGains = this.knownIR['Gain'];
+    const knownIRFreqs = this.knownIR['Freq'];
     const mls = this.#mls;
     const lowHz = this.#lowHz;
     const highHz = this.#highHz;
@@ -901,12 +907,19 @@ class Combination extends AudioCalibrator {
   // readFrqGain('MiniDSPUMIK_1').then(data => console.log(data));
   // MiniDSPUMIK_1 is the speakerID with some Data in the database
 
-  startCalibration = async (stream, gainValues, lCalib = 104.92978421490648,knownIR = null) => {
+  startCalibration = async (stream, gainValues, lCalib = 104.92978421490648, knownIR = null) => {
+    console.log('deviceType: ' + this.deviceType);
     //check if a knownIR was given to the system, if it isn't check for the microphone. using dummy data here bc we need to
     //check the db based on the microphone currently connected
-    if (knownIR == null){
-      this.knownIR = await this.readFrqGain('MiniDSPUMIK_1').then(data => {return data});
-    }else{
+    if (knownIR == null) {
+      this.knownIR = await this.readFrqGain('MiniDSPUMIK_1').then(data => {
+        return data;
+      });
+      console.log(this.knownIR);
+
+      // Here, I think we should check if this.knownIR is null. Because that means that the microphone is not in the database
+      // so we need to return a message to end the experiment
+    } else {
       this.knownIR = knownIR;
     }
     //haven't changed 1000 hz calibration

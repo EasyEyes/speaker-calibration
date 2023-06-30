@@ -98,6 +98,7 @@ class Listener extends AudioPeer {
     this.displayUpdate('Created connection');
 
     this.conn.on('open', async () => {
+      this.getDeviceType();
       this.displayUpdate('Listener - conn open');
       // this.sendSamplingRate();
       await this.openAudioStream();
@@ -130,6 +131,16 @@ class Listener extends AudioPeer {
     this.conn.send({
       name: 'samplingRate',
       payload: sampleRate,
+    });
+  };
+
+  getDeviceType = () => {
+    fod.complete(data => {
+      // console.log('deviceType: ', data.device['devicetype']);
+      this.conn.send({
+        name: 'deviceType',
+        payload: data.device['devicetype'],
+      });
     });
   };
 
