@@ -8,7 +8,8 @@ window.onload = () => {
   const sendToServerButton = document.getElementById('sendToServerButton');
   const wavFile = document.getElementById('wav-file');
 
-  const {Speaker, VolumeCalibration, ImpulseResponseCalibration, CombinationCalibration} = speakerCalibrator;
+  const {Speaker, VolumeCalibration, ImpulseResponseCalibration, CombinationCalibration} =
+    speakerCalibrator;
 
   const normalize = (min, max) => {
     var delta = max - min;
@@ -148,7 +149,7 @@ window.onload = () => {
 
   flexSwitchCheckIR.onchange = () => {
     flexSwitchCheckVolume.checked = !flexSwitchCheckIR.checked;
-    flexSwitchCheckCombo.checked = !flexSwitchCheckIR.checked
+    flexSwitchCheckCombo.checked = !flexSwitchCheckIR.checked;
   };
 
   flexSwitchCheckVolume.onchange = () => {
@@ -226,6 +227,9 @@ window.onload = () => {
 
       try {
         if (calibrationLevel == 0) {
+          const trial = await Speaker.getMicrophoneNamesFromDatabase().then(microphoneList => {
+            console.log('microphoneList', microphoneList);
+          });
           invertedIR = await Speaker.startCalibration(speakerParameters, calibrator);
           console.log({invertedIR});
           await useIRResult(invertedIR);
@@ -253,7 +257,7 @@ window.onload = () => {
 
     if (flexSwitchCheckIR.checked) {
       runImpulseResponseCalibration(calibrationLevel);
-    } else if (flexSwitchCheckVolume.checked){
+    } else if (flexSwitchCheckVolume.checked) {
       runVolumeCalibration();
     } else {
       runCombinationCalibration(calibrationLevel);

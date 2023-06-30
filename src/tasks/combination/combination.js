@@ -892,7 +892,7 @@ class Combination extends AudioCalibrator {
       frq,
       gain,
     };
-    await set(ref(database, `${speakerID}/linear`), data);
+    await set(ref(database, `Microphone/${speakerID}/linear`), data);
   };
 
   // Function to Read frq and gain from firebase database given speakerID
@@ -900,7 +900,7 @@ class Combination extends AudioCalibrator {
 
   readFrqGain = async speakerID => {
     const dbRef = ref(database);
-    const snapshot = await get(child(dbRef, `${speakerID}/linear`));
+    const snapshot = await get(child(dbRef, `Microphone/${speakerID}/linear`));
     if (snapshot.exists()) {
       return snapshot.val();
     }
@@ -913,29 +913,29 @@ class Combination extends AudioCalibrator {
   // readFrqGain('MiniDSPUMIK_1').then(data => console.log(data));
   // MiniDSPUMIK_1 is the speakerID with some Data in the database
 
-  getMicrophoneNamesFromDatabase = async () => {
-    const dbRef = ref(database);
-    const snapshot = await get(child(dbRef, ''));
-    if (snapshot.exists()) {
-      return Object.keys(snapshot.val());
-    }
-    return null;
-  };
-
-  startCalibration = async (stream, gainValues, lCalib = 104.92978421490648, knownIR = null) => {
+  startCalibration = async (
+    stream,
+    gainValues,
+    lCalib = 104.92978421490648,
+    knownIR = null,
+    microphoneName = 'MiniDSPUMIK_1'
+  ) => {
     //check if a knownIR was given to the system, if it isn't check for the microphone. using dummy data here bc we need to
     //check the db based on the microphone currently connected
-    getMicrophoneNamesFromDatabase().then(data => {
-      console.log('microphone names from database: ', data);
-    });
     if (knownIR == null) {
-      this.knownIR = await this.readFrqGain('MiniDSPUMIK_1').then(data => {
+      this.knownIR = await this.readFrqGain(microphoneName).then(data => {
         return data;
       });
       console.log(this.knownIR);
 
       // Here, I think we should check if this.knownIR is null. Because that means that the microphone is not in the database
       // so we need to return a message to end the experiment
+      if (this.knownIR == null) {
+        this.status =
+          `Microphone ${microphoneName} is not in the database. Please add it to the database.`.toString();
+        this.emit('update', {message: this.status});
+        return false;
+      }
     } else {
       this.knownIR = knownIR;
     }

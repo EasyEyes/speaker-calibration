@@ -7,6 +7,9 @@ import {
   CalibrationTimedOutError,
 } from './peerErrors';
 
+import database from '../config/firebase';
+import {ref, set, get, child} from 'firebase/database';
+
 /**
  * @class Handles the speaker's side of the connection. Responsible for initiating the connection,
  * rendering the QRCode, and answering the call.
@@ -35,6 +38,15 @@ class Speaker extends AudioPeer {
     this.peer.on('disconnected', this.#onPeerDisconnected);
     this.peer.on('error', this.#onPeerError);
   }
+
+  static getMicrophoneNamesFromDatabase = async () => {
+    const dbRef = ref(database);
+    const snapshot = await get(child(dbRef, 'Microphone'));
+    if (snapshot.exists()) {
+      return Object.keys(snapshot.val());
+    }
+    return null;
+  };
 
   /**
    * Async factory method that creates the Speaker object, and returns a promise that resolves to the result of the calibration.
