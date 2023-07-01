@@ -902,7 +902,7 @@ class Combination extends AudioCalibrator {
       sampledGain.push(gain[i]);
     }
 
-    const data = {frq: sampledFrq, gain: sampledGain};
+    const data = {Freq: sampledFrq, Gain: sampledGain};
 
     await set(ref(database, `Microphone/${speakerID}/linear`), data);
   };
