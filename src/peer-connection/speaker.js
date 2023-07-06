@@ -175,6 +175,7 @@ class Speaker extends AudioPeer {
       QRCode.toCanvas(qrCanvas, uri, error => {
         if (error) console.error(error);
       });
+      document.getElementById(this.targetElement).appendChild(qrCanvas);
     } else {
       // show the link to the user
       // If specified HTML Id is available, show QR code there
@@ -184,7 +185,7 @@ class Speaker extends AudioPeer {
         linkTag.innerHTML = 'Click here to start calibration';
         linkTag.target = '_blank';
         document.getElementById(this.targetElement).appendChild(linkTag);
-        document.getElementById(this.targetElement).appendChild(qrCanvas);
+        // document.getElementById(this.targetElement).appendChild(qrCanvas);
       }
     }
     // or just print it to console
