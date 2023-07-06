@@ -184,7 +184,7 @@ class Speaker extends AudioPeer {
       if (document.getElementById(this.targetElement)) {
         const linkTag = document.createElement('a');
         linkTag.setAttribute('href', uri);
-        linkTag.innerHTML = 'Click here to start calibration';
+        linkTag.innerHTML = 'Click here to start the calibration';
         linkTag.target = '_blank';
         document.getElementById(this.targetElement).appendChild(linkTag);
         // document.getElementById(this.targetElement).appendChild(qrCanvas);
