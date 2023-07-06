@@ -203,7 +203,7 @@ class Combination extends AudioCalibrator {
           this.generateTemplate().toString();
         this.emit('update', {message: this.status});
         this.systemInvertedImpulseResponse = res['iir'];
-        this.systemIR = res['ir']
+        this.systemIR = res['ir'];
         //this.componentIR['Gain'] = res['ir'];
         //this.componentIR['Freq'] = res['frequencies'];
         this.systemConvolution = res['convolution'];
@@ -213,7 +213,6 @@ class Combination extends AudioCalibrator {
         console.error(err);
       });
   };
-
 
   /** .
    * .
@@ -502,7 +501,7 @@ class Combination extends AudioCalibrator {
     const audioCtx = this.makeNewSourceAudioContextConvolved();
 
     //depends on goal
-    if (this._calibrateSoundCheck != 'system'){
+    if (this._calibrateSoundCheck != 'system') {
       const buffer = audioCtx.createBuffer(
         1, // number of channels
         this.componentConvolution.length,
@@ -526,14 +525,14 @@ class Combination extends AudioCalibrator {
       source.connect(audioCtx.destination);
 
       this.addCalibrationNodeConvolved(source);
-    }else{
+    } else {
       const buffer = audioCtx.createBuffer(
         1, // number of channels
         this.systemConvolution.length,
         audioCtx.sampleRate // sample rate
       );
       const data = buffer.getChannelData(0); // get data
-        // fill the buffer with our data
+      // fill the buffer with our data
       try {
         for (let i = 0; i < this.systemConvolution.length; i += 1) {
           data[i] = this.systemConvolution[i];
@@ -550,9 +549,6 @@ class Combination extends AudioCalibrator {
 
       this.addCalibrationNodeConvolved(source);
     }
-   
-
-    
   };
 
   /**
@@ -703,9 +699,9 @@ class Combination extends AudioCalibrator {
     this.numSuccessfulCaptured = 0;
     // debugging function, use to test the result of the IIR
 
-    //if goal == loudspeaker etc, 
+    //if goal == loudspeaker etc,
     let iir_ir_and_plots;
-    if (this._calibrateSoundCheck != 'none'){
+    if (this._calibrateSoundCheck != 'none') {
       await this.playMLSwithIIR(stream, this.invertedImpulseResponse);
       this.#stopCalibrationAudioConvolved();
       let conv_recs = this.getAllFilteredRecordedSignals();
@@ -713,21 +709,21 @@ class Combination extends AudioCalibrator {
       let unconv_rec = recs[0];
       let conv_rec = conv_recs[0];
       let results = await this.pyServerAPI
-      .getPSDWithRetry({
-        unconv_rec,
-        conv_rec,
-      })
-      .then(res => {
-        this.incrementStatusBar();
-        this.status =
-          `All Hz Calibration: done computing the PSD graphs...`.toString() +
-          this.generateTemplate().toString();
-        this.emit('update', {message: this.status});
-        return res;
-      })
-      .catch(err => {
-        console.error(err);
-      });
+        .getPSDWithRetry({
+          unconv_rec,
+          conv_rec,
+        })
+        .then(res => {
+          this.incrementStatusBar();
+          this.status =
+            `All Hz Calibration: done computing the PSD graphs...`.toString() +
+            this.generateTemplate().toString();
+          this.emit('update', {message: this.status});
+          return res;
+        })
+        .catch(err => {
+          console.error(err);
+        });
       iir_ir_and_plots = {
         systemIIR: this.systemInvertedImpulseResponse,
         componentIIR: this.componentInvertedImpulseResponse,
@@ -743,7 +739,7 @@ class Combination extends AudioCalibrator {
         this.downloadSingleFilteredRecording();
         saveToCSV(this.#mls, 'MLS.csv');
         saveToCSV(this.componentConvolution, 'python_component_convolution_mls_iir.csv');
-        saveToCSV(this.systemConvolution,'python_system_convolution_mls_iir.csv');
+        saveToCSV(this.systemConvolution, 'python_system_convolution_mls_iir.csv');
         saveToCSV(this.componentInvertedImpulseResponse, 'componentIIR.csv');
         saveToCSV(this.systemInvertedImpulseResponse, 'systemIIR.csv');
         const computedIRagain = await Promise.all(this.impulseResponses).then(res => {
@@ -754,7 +750,7 @@ class Combination extends AudioCalibrator {
           }
         });
       }
-    }else{
+    } else {
       iir_ir_and_plots = {
         systemIIR: this.systemInvertedImpulseResponse,
         componentIIR: this.componentInvertedImpulseResponse,
@@ -768,7 +764,7 @@ class Combination extends AudioCalibrator {
       if (this.#download) {
         saveToCSV(this.#mls, 'MLS.csv');
         saveToCSV(this.componentConvolution, 'python_component_convolution_mls_iir.csv');
-        saveToCSV(this.systemConvolution,'python_system_convolution_mls_iir.csv');
+        saveToCSV(this.systemConvolution, 'python_system_convolution_mls_iir.csv');
         saveToCSV(this.componentInvertedImpulseResponse, 'componentIIR.csv');
         saveToCSV(this.systemInvertedImpulseResponse, 'systemIIR.csv');
         const computedIRagain = await Promise.all(this.impulseResponses).then(res => {
@@ -780,20 +776,14 @@ class Combination extends AudioCalibrator {
         });
       }
     }
-    
 
-   
     this.percent_complete = 100;
 
-    this.status =
-      `All Hz Calibration: Finished`.toString() + this.generateTemplate().toString();
+    this.status = `All Hz Calibration: Finished`.toString() + this.generateTemplate().toString();
     this.emit('update', {message: this.status});
-
-    
 
     //here after calibration we have the component calibration (either loudspeaker or microphone) in the same form as the componentIR
     //that was used to calibrate
-
 
     return iir_ir_and_plots;
   };
@@ -1099,6 +1089,11 @@ class Combination extends AudioCalibrator {
     }
   };
 
+  writeIsSmartPhone = async (speakerID, isSmartPhone) => {
+    const data = {isSmartPhone: isSmartPhone};
+    await set(ref(database, `Microphone/${speakerID}`), data);
+  };
+
   // Example of how to use the writeFrqGain and readFrqGain functions
   // writeFrqGain('speaker1', [1, 2, 3], [4, 5, 6]);
   // Speaker1 is the speakerID  you want to write to in the database
@@ -1111,20 +1106,19 @@ class Combination extends AudioCalibrator {
     lCalib = 104.92978421490648,
     componentIR = null,
     microphoneName = 'MiniDSPUMIK_1',
-    _calibrateSoundCheck = 'system'
+    _calibrateSoundCheck = 'system',
+    isSmartPhone = false
   ) => {
-
     //feed calibration goal here
     this._calibrateSoundCheck = _calibrateSoundCheck;
-
-
 
     //check if a componentIR was given to the system, if it isn't check for the microphone. using dummy data here bc we need to
     //check the db based on the microphone currently connected
 
     //new lCalib found at top of calibration files *1000hz, make sure to correct
     //based on zeroing of 1000hz, search for "*1000Hz"
-    if (componentIR == null) { //mode 'ir'
+    if (componentIR == null) {
+      //mode 'ir'
       //global variable this.componentIR must be set
       this.componentIR = await this.readFrqGain(microphoneName).then(data => {
         return data;
