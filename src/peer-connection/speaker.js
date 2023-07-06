@@ -164,6 +164,7 @@ class Speaker extends AudioPeer {
     // Get query string, the URL parameters to specify a Listener
     const queryStringParameters = {
       speakerPeerId: this.peer.id,
+      isSmartPhone: this.isSmartPhone,
     };
     const queryString = this.queryStringFromObject(queryStringParameters);
     const uri = this.siteUrl + queryString;
