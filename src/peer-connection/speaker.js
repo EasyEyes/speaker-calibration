@@ -30,6 +30,7 @@ class Speaker extends AudioPeer {
     this.ac = CalibratorInstance;
     this.result = null;
     this.debug = params?.debug ?? false;
+    this.isSmartPhone = params?.isSmartPhone ?? false;
 
     /* Set up callbacks that handle any events related to our peer object. */
     this.peer.on('open', this.#onPeerOpen);
@@ -88,7 +89,8 @@ class Speaker extends AudioPeer {
             params.gainValues,
             params.ICalib,
             params.knownIR,
-            params.microphoneName
+            params.microphoneName,
+            params.calibrateSoundCheck
           );
           speaker.#removeUIElems();
           resolve(speaker.result);
@@ -165,30 +167,28 @@ class Speaker extends AudioPeer {
     const queryString = this.queryStringFromObject(queryStringParameters);
     const uri = this.siteUrl + queryString;
 
-    // Display QR code for the participant to scan
-    const qrCanvas = document.createElement('canvas');
-    qrCanvas.setAttribute('id', 'qrCanvas');
-    console.log(uri);
-    QRCode.toCanvas(qrCanvas, uri, error => {
-      if (error) console.error(error);
-    });
-
-    // If specified HTML Id is available, show QR code there
-    if (document.getElementById(this.targetElement)) {
-      if (document.getElementById(this.targetElement)) {
-        if (this.debug) {
-          const linkTag = document.createElement('a');
-          linkTag.setAttribute('href', uri);
-          linkTag.innerHTML = "Use computer's microphone to calibrate?";
-          linkTag.target = '_blank';
-          document.getElementById(this.targetElement).appendChild(linkTag);
-        }
-      }
-      document.getElementById(this.targetElement).appendChild(qrCanvas);
+    if (this.isSmartPhone) {
+      // Display QR code for the participant to scan
+      const qrCanvas = document.createElement('canvas');
+      qrCanvas.setAttribute('id', 'qrCanvas');
+      console.log(uri);
+      QRCode.toCanvas(qrCanvas, uri, error => {
+        if (error) console.error(error);
+      });
     } else {
-      // or just print it to console
-      console.log('TEST: Peer reachable at: ', uri);
+      // show the link to the user
+      // If specified HTML Id is available, show QR code there
+      if (document.getElementById(this.targetElement)) {
+        const linkTag = document.createElement('a');
+        linkTag.setAttribute('href', uri);
+        linkTag.innerHTML = 'Click here to start calibration';
+        linkTag.target = '_blank';
+        document.getElementById(this.targetElement).appendChild(linkTag);
+        document.getElementById(this.targetElement).appendChild(qrCanvas);
+      }
     }
+    // or just print it to console
+    console.log('TEST: Peer reachable at: ', uri);
   };
 
   #showSpinner = () => {
