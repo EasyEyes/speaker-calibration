@@ -51,7 +51,7 @@
         console.log(window.listener);
         document.querySelector('#calibrationBeginButton').style.display = 'none';
         document.querySelector('#message').innerText =
-          'Calibration in progress, please hold your phone steady.';
+          'Quiet. Recording in progress. Do not disturb.';
       };
       // enter key press
       document.addEventListener('keydown', event => {
@@ -60,7 +60,7 @@
           console.log(window.listener);
           document.querySelector('#calibrationBeginButton').style.display = 'none';
           document.querySelector('#message').innerText =
-            'Calibration in progress, please hold your phone steady.';
+            'Quiet. Recording in progress. Do not disturb.';
         }
       });
     </script>
