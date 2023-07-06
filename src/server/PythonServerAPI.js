@@ -108,8 +108,8 @@ class PythonServerAPI {
   };
   
 
-  getInverseImpulseResponse = async ({payload,mls,lowHz,highHz,componentIRGains,componentIRFreqs,sampleRate}) => {
-    const task = 'inverse-impulse-response';
+  getComponentInverseImpulseResponse = async ({payload,mls,lowHz,highHz,componentIRGains,componentIRFreqs,sampleRate}) => {
+    const task = 'component-inverse-impulse-response';
     let res = null;
 
     console.log({payload});
@@ -143,14 +143,47 @@ class PythonServerAPI {
 
     return res.data[task];
   };
+  getSystemInverseImpulseResponse = async ({payload,mls,lowHz,highHz,sampleRate}) => {
+    const task = 'system-inverse-impulse-response';
+    let res = null;
 
-getInverseImpulseResponseWithRetry = async ({ payload, mls, lowHz, highHz,componentIRGains,componentIRFreqs, sampleRate}) => {
+    console.log({payload});
+
+    const data = JSON.stringify({
+      task,
+      payload,
+      mls,
+      lowHz,
+      highHz,
+      sampleRate,
+    });
+
+    await axios({
+      method: 'post',
+      baseURL: PythonServerAPI.PYTHON_SERVER_URL,
+      url: `/task/${task}`,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      data,
+    })
+      .then(response => {
+        res = response;
+      })
+      .catch(error => {
+        throw error;
+      });
+
+    return res.data[task];
+  };
+
+getComponentInverseImpulseResponseWithRetry = async ({ payload, mls, lowHz, highHz,componentIRGains,componentIRFreqs, sampleRate}) => {
   let retryCount = 0;
   let response = null;
 
   while (retryCount < this.MAX_RETRY_COUNT) {
     try {
-      response = await this.getInverseImpulseResponse({ payload, mls, lowHz, highHz,componentIRGains,componentIRFreqs,sampleRate});
+      response = await this.getComponentInverseImpulseResponse({ payload, mls, lowHz, highHz,componentIRGains,componentIRFreqs,sampleRate});
       // If the request is successful, break out of the loop
       break;
     } catch (error) {
@@ -166,6 +199,30 @@ getInverseImpulseResponseWithRetry = async ({ payload, mls, lowHz, highHz,compon
     throw new Error(`Failed to get inverse impulse response after ${this.MAX_RETRY_COUNT} attempts.`);
   }
 };
+
+getSystemInverseImpulseResponseWithRetry = async ({ payload, mls, lowHz, highHz, sampleRate}) => {
+  let retryCount = 0;
+  let response = null;
+
+  while (retryCount < this.MAX_RETRY_COUNT) {
+    try {
+      response = await this.getSystemInverseImpulseResponse({ payload, mls, lowHz, highHz,sampleRate});
+      // If the request is successful, break out of the loop
+      break;
+    } catch (error) {
+      console.error(`Error occurred. Retrying... (${retryCount + 1}/${this.MAX_RETRY_COUNT})`);
+      retryCount++;
+      await new Promise(resolve => setTimeout(resolve, this.RETRY_DELAY_MS));
+    }
+  }
+
+  if (response) {
+    return response;
+  } else {
+    throw new Error(`Failed to get inverse impulse response after ${this.MAX_RETRY_COUNT} attempts.`);
+  }
+};
+
 
 
   getVolumeCalibration = async ({payload, sampleRate, lCalib}) => {

@@ -51,7 +51,10 @@ class Combination extends AudioCalibrator {
   #mlsBufferView;
 
   /** @private */
-  invertedImpulseResponse = null;
+  componentInvertedImpulseResponse = null;
+
+  /** @private */
+  systemInvertedImpulseResponse = null;
 
   //averaged and subtracted ir returned from calibration used to calculated iir
   /** @private */
@@ -85,7 +88,11 @@ class Combination extends AudioCalibrator {
   offsetGainNode;
 
   /** @private */
-  convolution;
+  componentConvolution;
+
+  /** @private */
+  systemConvolution;
+
   ////////////////////////volume
   /** @private */
   #CALIBRATION_TONE_FREQUENCY = 1000; // Hz
@@ -122,6 +129,12 @@ class Combination extends AudioCalibrator {
   /**@private */
   componentIR = null;
 
+  /**@private */
+  systemIR = null;
+
+  /**@private */
+  _calibrateSoundCheck = '';
+
   deviceType = null;
 
   deviceName = null;
@@ -157,7 +170,60 @@ class Combination extends AudioCalibrator {
    * @returns sets the resulting inverted impulse response to the class property
    * @example
    */
-  sendImpulseResponsesToServerForProcessing = async () => {
+  sendSystemImpulseResponsesToServerForProcessing = async () => {
+    const computedIRs = await Promise.all(this.impulseResponses);
+    const filteredComputedIRs = computedIRs.filter(element => {
+      return element != undefined;
+    });
+    //const componentIRGains = this.componentIR['Gain'];
+    //const componentIRFreqs = this.componentIR['Freq'];
+    const mls = this.#mls;
+    const lowHz = this.#lowHz;
+    const highHz = this.#highHz;
+    this.stepNum += 1;
+    console.log('send impulse responses to server: ' + this.stepNum);
+    this.status =
+      `All Hz Calibration: computing the IIR...`.toString() + this.generateTemplate().toString();
+    this.emit('update', {message: this.status});
+    return this.pyServerAPI
+      .getSystemInverseImpulseResponseWithRetry({
+        payload: filteredComputedIRs.slice(0, this.numCaptures),
+        mls,
+        lowHz,
+        highHz,
+        sampleRate: this.sourceSamplingRate || 96000,
+      })
+      .then(res => {
+        console.log(res);
+        this.stepNum += 1;
+        console.log('got impulse response ' + this.stepNum);
+        this.incrementStatusBar();
+        this.status =
+          `All Hz Calibration: done computing the IIR...`.toString() +
+          this.generateTemplate().toString();
+        this.emit('update', {message: this.status});
+        this.systemInvertedImpulseResponse = res['iir'];
+        this.systemIR = res['ir']
+        //this.componentIR['Gain'] = res['ir'];
+        //this.componentIR['Freq'] = res['frequencies'];
+        this.systemConvolution = res['convolution'];
+      })
+      .catch(err => {
+        // this.emit('InvertedImpulseResponse', {res: false});
+        console.error(err);
+      });
+  };
+
+
+  /** .
+   * .
+   * .
+   * Sends all the computed impulse responses to the backend server for processing
+   *
+   * @returns sets the resulting inverted impulse response to the class property
+   * @example
+   */
+  sendComponentImpulseResponsesToServerForProcessing = async () => {
     const computedIRs = await Promise.all(this.impulseResponses);
     const filteredComputedIRs = computedIRs.filter(element => {
       return element != undefined;
@@ -173,7 +239,7 @@ class Combination extends AudioCalibrator {
       `All Hz Calibration: computing the IIR...`.toString() + this.generateTemplate().toString();
     this.emit('update', {message: this.status});
     return this.pyServerAPI
-      .getInverseImpulseResponseWithRetry({
+      .getComponentInverseImpulseResponseWithRetry({
         payload: filteredComputedIRs.slice(0, this.numCaptures),
         mls,
         lowHz,
@@ -191,10 +257,10 @@ class Combination extends AudioCalibrator {
           `All Hz Calibration: done computing the IIR...`.toString() +
           this.generateTemplate().toString();
         this.emit('update', {message: this.status});
-        this.invertedImpulseResponse = res['iir'];
+        this.componentInvertedImpulseResponse = res['iir'];
         this.componentIR['Gain'] = res['ir'];
         this.componentIR['Freq'] = res['frequencies'];
-        this.convolution = res['convolution'];
+        this.componentConvolution = res['convolution'];
       })
       .catch(err => {
         // this.emit('InvertedImpulseResponse', {res: false});
@@ -434,29 +500,59 @@ class Combination extends AudioCalibrator {
    */
   #putInPythonConv = () => {
     const audioCtx = this.makeNewSourceAudioContextConvolved();
-    const buffer = audioCtx.createBuffer(
-      1, // number of channels
-      this.convolution.length,
-      audioCtx.sampleRate // sample rate
-    );
 
-    const data = buffer.getChannelData(0); // get data
-    // fill the buffer with our data
-    try {
-      for (let i = 0; i < this.convolution.length; i += 1) {
-        data[i] = this.convolution[i];
+    //depends on goal
+    if (this._calibrateSoundCheck != 'system'){
+      const buffer = audioCtx.createBuffer(
+        1, // number of channels
+        this.componentConvolution.length,
+        audioCtx.sampleRate // sample rate
+      );
+
+      const data = buffer.getChannelData(0); // get data
+      // fill the buffer with our data
+      try {
+        for (let i = 0; i < this.componentConvolution.length; i += 1) {
+          data[i] = this.componentConvolution[i];
+        }
+      } catch (error) {
+        console.error(error);
       }
-    } catch (error) {
-      console.error(error);
+
+      const source = audioCtx.createBufferSource();
+
+      source.buffer = buffer;
+      source.loop = true;
+      source.connect(audioCtx.destination);
+
+      this.addCalibrationNodeConvolved(source);
+    }else{
+      const buffer = audioCtx.createBuffer(
+        1, // number of channels
+        this.systemConvolution.length,
+        audioCtx.sampleRate // sample rate
+      );
+      const data = buffer.getChannelData(0); // get data
+        // fill the buffer with our data
+      try {
+        for (let i = 0; i < this.systemConvolution.length; i += 1) {
+          data[i] = this.systemConvolution[i];
+        }
+      } catch (error) {
+        console.error(error);
+      }
+
+      const source = audioCtx.createBufferSource();
+
+      source.buffer = buffer;
+      source.loop = true;
+      source.connect(audioCtx.destination);
+
+      this.addCalibrationNodeConvolved(source);
     }
+   
 
-    const source = audioCtx.createBufferSource();
-
-    source.buffer = buffer;
-    source.loop = true;
-    source.connect(audioCtx.destination);
-
-    this.addCalibrationNodeConvolved(source);
+    
   };
 
   /**
@@ -504,7 +600,7 @@ class Combination extends AudioCalibrator {
     this.calibrationNodes[0].stop(0);
     this.sourceAudioContext.close();
     this.stepNum += 1;
-    console.log('stop calibratoin audio ' + this.stepNum);
+    console.log('stop calibration audio ' + this.stepNum);
     this.status =
       `All Hz Calibration: stopping the calibration tone...`.toString() +
       this.generateTemplate().toString();
@@ -601,23 +697,22 @@ class Combination extends AudioCalibrator {
     // at this stage we've captured all the required signals,
     // and have received IRs for each one
     // so let's send all the IRs to the server to be converted to a single IIR
-    await this.sendImpulseResponsesToServerForProcessing();
+    await this.sendSystemImpulseResponsesToServerForProcessing();
+    await this.sendComponentImpulseResponsesToServerForProcessing();
 
     this.numSuccessfulCaptured = 0;
     // debugging function, use to test the result of the IIR
-    await this.playMLSwithIIR(stream, this.invertedImpulseResponse);
-    this.#stopCalibrationAudioConvolved();
 
-    let recs = this.getAllRecordedSignals();
-    let conv_recs = this.getAllFilteredRecordedSignals();
-    let unconv_rec = recs[0];
-    let conv_rec = conv_recs[0];
-
-    this.status =
-      `All Hz Calibration: computing PSD graphs...`.toString() + this.generateTemplate().toString();
-    this.emit('update', {message: this.status});
-
-    let results = await this.pyServerAPI
+    //if goal == loudspeaker etc, 
+    let iir_ir_and_plots;
+    if (this._calibrateSoundCheck != 'none'){
+      await this.playMLSwithIIR(stream, this.invertedImpulseResponse);
+      this.#stopCalibrationAudioConvolved();
+      let conv_recs = this.getAllFilteredRecordedSignals();
+      let recs = this.getAllRecordedSignals();
+      let unconv_rec = recs[0];
+      let conv_rec = conv_recs[0];
+      let results = await this.pyServerAPI
       .getPSDWithRetry({
         unconv_rec,
         conv_rec,
@@ -633,32 +728,72 @@ class Combination extends AudioCalibrator {
       .catch(err => {
         console.error(err);
       });
+      iir_ir_and_plots = {
+        systemIIR: this.systemInvertedImpulseResponse,
+        componentIIR: this.componentInvertedImpulseResponse,
+        x_unconv: results['x_unconv'],
+        y_unconv: results['y_unconv'],
+        x_conv: results['x_conv'],
+        y_conv: results['y_conv'],
+        componentIR: this.componentIR,
+        systemIR: this.systemIR,
+      };
+      if (this.#download) {
+        this.downloadSingleUnfilteredRecording();
+        this.downloadSingleFilteredRecording();
+        saveToCSV(this.#mls, 'MLS.csv');
+        saveToCSV(this.componentConvolution, 'python_component_convolution_mls_iir.csv');
+        saveToCSV(this.systemConvolution,'python_system_convolution_mls_iir.csv');
+        saveToCSV(this.componentInvertedImpulseResponse, 'componentIIR.csv');
+        saveToCSV(this.systemInvertedImpulseResponse, 'systemIIR.csv');
+        const computedIRagain = await Promise.all(this.impulseResponses).then(res => {
+          for (let i = 0; i < res.length; i++) {
+            if (res[i] != undefined) {
+              saveToCSV(res[i], `IR_${i}`);
+            }
+          }
+        });
+      }
+    }else{
+      iir_ir_and_plots = {
+        systemIIR: this.systemInvertedImpulseResponse,
+        componentIIR: this.componentInvertedImpulseResponse,
+        x_unconv: [],
+        y_unconv: [],
+        x_conv: [],
+        y_conv: [],
+        componentIR: this.componentIR,
+        systemIR: this.systemIR,
+      };
+      if (this.#download) {
+        saveToCSV(this.#mls, 'MLS.csv');
+        saveToCSV(this.componentConvolution, 'python_component_convolution_mls_iir.csv');
+        saveToCSV(this.systemConvolution,'python_system_convolution_mls_iir.csv');
+        saveToCSV(this.componentInvertedImpulseResponse, 'componentIIR.csv');
+        saveToCSV(this.systemInvertedImpulseResponse, 'systemIIR.csv');
+        const computedIRagain = await Promise.all(this.impulseResponses).then(res => {
+          for (let i = 0; i < res.length; i++) {
+            if (res[i] != undefined) {
+              saveToCSV(res[i], `IR_${i}`);
+            }
+          }
+        });
+      }
+    }
+    
+
+   
+    this.percent_complete = 100;
+
+    this.status =
+      `All Hz Calibration: Finished`.toString() + this.generateTemplate().toString();
+    this.emit('update', {message: this.status});
+
+    
 
     //here after calibration we have the component calibration (either loudspeaker or microphone) in the same form as the componentIR
     //that was used to calibrate
 
-    let iir_ir_and_plots = {
-      iir: this.invertedImpulseResponse,
-      x_unconv: results['x_unconv'],
-      y_unconv: results['y_unconv'],
-      x_conv: results['x_conv'],
-      y_conv: results['y_conv'],
-      componentIR: this.componentIR,
-    };
-    if (this.#download) {
-      this.downloadSingleUnfilteredRecording();
-      this.downloadSingleFilteredRecording();
-      saveToCSV(this.#mls, 'MLS.csv');
-      saveToCSV(this.convolution, 'python_convolution_mls_iir.csv');
-      saveToCSV(this.invertedImpulseResponse, 'IIR.csv');
-      const computedIRagain = await Promise.all(this.impulseResponses).then(res => {
-        for (let i = 0; i < res.length; i++) {
-          if (res[i] != undefined) {
-            saveToCSV(res[i], `IR_${i}`);
-          }
-        }
-      });
-    }
 
     return iir_ir_and_plots;
   };
@@ -975,14 +1110,21 @@ class Combination extends AudioCalibrator {
     gainValues,
     lCalib = 104.92978421490648,
     componentIR = null,
-    microphoneName = 'MiniDSPUMIK_1'
+    microphoneName = 'MiniDSPUMIK_1',
+    _calibrateSoundCheck = 'system'
   ) => {
+
+    //feed calibration goal here
+    this._calibrateSoundCheck = _calibrateSoundCheck;
+
+
+
     //check if a componentIR was given to the system, if it isn't check for the microphone. using dummy data here bc we need to
     //check the db based on the microphone currently connected
 
     //new lCalib found at top of calibration files *1000hz, make sure to correct
     //based on zeroing of 1000hz, search for "*1000Hz"
-    if (componentIR == null) {
+    if (componentIR == null) { //mode 'ir'
       //global variable this.componentIR must be set
       this.componentIR = await this.readFrqGain(microphoneName).then(data => {
         return data;
