@@ -1138,6 +1138,7 @@ class Combination extends AudioCalibrator {
       lCalib = this.findGainatFrequency(this.componentIR.Freq, this.componentIR.Gain, 1000);
       this.componentGainDBSPL = this.convertToDB(lCalib);
       await this.writeGainat1000Hz(microphoneName, lCalib);
+      await this.writeIsSmartPhone(microphoneName, isSmartPhone);
     }
 
     //TODO:
