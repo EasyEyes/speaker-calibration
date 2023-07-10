@@ -1054,8 +1054,8 @@ class Combination extends AudioCalibrator {
   };
 
   writeGainat1000Hz = async (speakerID, gain) => {
-    const data = {Gain1000: gain};
-    await set(ref(database, `Microphone/${speakerID}`), data);
+    const data = {Gain: gain};
+    await set(ref(database, `Microphone/${speakerID}/Gain1000`), gain);
   };
 
   convertToDB = gain => {
@@ -1091,7 +1091,7 @@ class Combination extends AudioCalibrator {
 
   writeIsSmartPhone = async (speakerID, isSmartPhone) => {
     const data = {isSmartPhone: isSmartPhone};
-    await set(ref(database, `Microphone/${speakerID}`), data);
+    await set(ref(database, `Microphone/${speakerID}/isSmartPhone`), isSmartPhone);
   };
 
   // Example of how to use the writeFrqGain and readFrqGain functions
@@ -1105,13 +1105,12 @@ class Combination extends AudioCalibrator {
     gainValues,
     lCalib = 104.92978421490648,
     componentIR = null,
-    microphoneName = 'MiniDSPUMIK_1',
+    microphoneName = 'MiniDSP-UMIK1-711-4754-vertical',
     _calibrateSoundCheck = 'system',
     isSmartPhone = false
   ) => {
     //feed calibration goal here
     this._calibrateSoundCheck = _calibrateSoundCheck;
-
     //check if a componentIR was given to the system, if it isn't check for the microphone. using dummy data here bc we need to
     //check the db based on the microphone currently connected
 
