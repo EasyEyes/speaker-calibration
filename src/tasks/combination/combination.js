@@ -144,7 +144,7 @@ class Combination extends AudioCalibrator {
     if (this.percent_complete > 100) {
       this.percent_complete = 100;
     }
-    const template = `<div style="display: flex; justify-content: center;"><div style="width: 200px; height: 20px; border: 2px solid #000; border-radius: 10px;"><div style="width: ${this.percent_complete}%; height: 100%; background-color: #00aaff; border-radius: 8px;"></div></div></div>`;
+    const template = `<div style="display: flex; justify-content: center;"><div style="width: 800px; height: 20px; border: 2px solid #000; border-radius: 10px;"><div style="width: ${this.percent_complete}%; height: 100%; background-color: #00aaff; border-radius: 8px;"></div></div></div>`;
     return template;
   };
 
