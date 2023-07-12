@@ -711,33 +711,37 @@ class Combination extends AudioCalibrator {
       let recs = this.getAllRecordedSignals();
       let unconv_rec = recs[0];
       let conv_rec = conv_recs[0];
-      if (this._calibrateSoundCheck != 'system'){
+      if (this._calibrateSoundCheck != 'system') {
         let knownGain = this.oldComponentIR.Gain;
         let knownFreq = this.oldComponentIR.Freq;
         let sampleRate = this.sourceSamplingRate || 96000;
-        let unconv_results = await this.pyServerAPI.getSubtractedPSDWithRetry(unconv_rec,knownGain,knownFreq,sampleRate).then(res => {
-          this.incrementStatusBar();
-          this.status =
-            `All Hz Calibration: done computing the PSD graphs...`.toString() +
-            this.generateTemplate().toString();
-          this.emit('update', {message: this.status});
-          return res;
-        })
-        .catch(err => {
-          console.error(err);
-        });
+        let unconv_results = await this.pyServerAPI
+          .getSubtractedPSDWithRetry(unconv_rec, knownGain, knownFreq, sampleRate)
+          .then(res => {
+            this.incrementStatusBar();
+            this.status =
+              `All Hz Calibration: done computing the PSD graphs...`.toString() +
+              this.generateTemplate().toString();
+            this.emit('update', {message: this.status});
+            return res;
+          })
+          .catch(err => {
+            console.error(err);
+          });
 
-        let conv_results = await this.pyServerAPI.getSubtractedPSDWithRetry(conv_rec,knownGain,knownFreq,sampleRate).then(res => {
-          this.incrementStatusBar();
-          this.status =
-            `All Hz Calibration: done computing the PSD graphs...`.toString() +
-            this.generateTemplate().toString();
-          this.emit('update', {message: this.status});
-          return res;
-        })
-        .catch(err => {
-          console.error(err);
-        });
+        let conv_results = await this.pyServerAPI
+          .getSubtractedPSDWithRetry(conv_rec, knownGain, knownFreq, sampleRate)
+          .then(res => {
+            this.incrementStatusBar();
+            this.status =
+              `All Hz Calibration: done computing the PSD graphs...`.toString() +
+              this.generateTemplate().toString();
+            this.emit('update', {message: this.status});
+            return res;
+          })
+          .catch(err => {
+            console.error(err);
+          });
         iir_ir_and_plots = {
           systemIIR: this.systemInvertedImpulseResponse,
           componentIIR: this.componentInvertedImpulseResponse,
@@ -748,24 +752,24 @@ class Combination extends AudioCalibrator {
           componentIR: this.componentIR,
           systemIR: this.systemIR,
         };
-      }else{
+      } else {
         let results = await this.pyServerAPI
-        .getPSDWithRetry({
-          unconv_rec,
-          conv_rec,
-          sampleRate: this.sourceSamplingRate || 96000
-        })
-        .then(res => {
-          this.incrementStatusBar();
-          this.status =
-            `All Hz Calibration: done computing the PSD graphs...`.toString() +
-            this.generateTemplate().toString();
-          this.emit('update', {message: this.status});
-          return res;
-        })
-        .catch(err => {
-          console.error(err);
-        });
+          .getPSDWithRetry({
+            unconv_rec,
+            conv_rec,
+            sampleRate: this.sourceSamplingRate || 96000,
+          })
+          .then(res => {
+            this.incrementStatusBar();
+            this.status =
+              `All Hz Calibration: done computing the PSD graphs...`.toString() +
+              this.generateTemplate().toString();
+            this.emit('update', {message: this.status});
+            return res;
+          })
+          .catch(err => {
+            console.error(err);
+          });
         iir_ir_and_plots = {
           systemIIR: this.systemInvertedImpulseResponse,
           componentIIR: this.componentInvertedImpulseResponse,
@@ -1168,7 +1172,8 @@ class Combination extends AudioCalibrator {
       });
 
       lCalib = await this.readGainat1000Hz(microphoneName);
-      this.componentGainDBSPL = this.convertToDB(lCalib);
+      // this.componentGainDBSPL = this.convertToDB(lCalib);
+      this.componentGainDBSPL = lCalib;
       //TODO: if this call to database is unknown, cannot perform experiment => return false
       if (this.componentIR == null) {
         this.status =
@@ -1179,7 +1184,8 @@ class Combination extends AudioCalibrator {
     } else {
       this.componentIR = componentIR;
       lCalib = this.findGainatFrequency(this.componentIR.Freq, this.componentIR.Gain, 1000);
-      this.componentGainDBSPL = this.convertToDB(lCalib);
+      // this.componentGainDBSPL = this.convertToDB(lCalib);
+      this.componentGainDBSPL = lCalib;
       await this.writeGainat1000Hz(microphoneName, lCalib);
       await this.writeIsSmartPhone(microphoneName, isSmartPhone);
     }
