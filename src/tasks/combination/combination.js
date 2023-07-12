@@ -147,7 +147,7 @@ class Combination extends AudioCalibrator {
     if (this.percent_complete > 100) {
       this.percent_complete = 100;
     }
-    const template = `<div style="display: flex; justify-content: center;"><div style="width: 200px; height: 20px; border: 2px solid #000; border-radius: 10px;"><div style="width: ${this.percent_complete}%; height: 100%; background-color: #00aaff; border-radius: 8px;"></div></div></div>`;
+    const template = `<div style="display: flex; justify-content: center;"><div style="width: 800px; height: 20px; border: 2px solid #000; border-radius: 10px;"><div style="width: ${this.percent_complete}%; height: 100%; background-color: #00aaff; border-radius: 8px;"></div></div></div>`;
     return template;
   };
 
@@ -1098,8 +1098,8 @@ class Combination extends AudioCalibrator {
   };
 
   writeGainat1000Hz = async (speakerID, gain) => {
-    const data = {Gain1000: gain};
-    await set(ref(database, `Microphone/${speakerID}`), data);
+    const data = {Gain: gain};
+    await set(ref(database, `Microphone/${speakerID}/Gain1000`), gain);
   };
 
   convertToDB = gain => {
@@ -1135,7 +1135,7 @@ class Combination extends AudioCalibrator {
 
   writeIsSmartPhone = async (speakerID, isSmartPhone) => {
     const data = {isSmartPhone: isSmartPhone};
-    await set(ref(database, `Microphone/${speakerID}`), data);
+    await set(ref(database, `Microphone/${speakerID}/isSmartPhone`), isSmartPhone);
   };
 
   // Example of how to use the writeFrqGain and readFrqGain functions

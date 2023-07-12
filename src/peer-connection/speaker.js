@@ -168,7 +168,6 @@ class Speaker extends AudioPeer {
     };
     const queryString = this.queryStringFromObject(queryStringParameters);
     const uri = this.siteUrl + queryString;
-
     if (this.isSmartPhone) {
       // Display QR code for the participant to scan
       const qrCanvas = document.createElement('canvas');
@@ -182,12 +181,24 @@ class Speaker extends AudioPeer {
       // show the link to the user
       // If specified HTML Id is available, show QR code there
       if (document.getElementById(this.targetElement)) {
-        const linkTag = document.createElement('a');
-        linkTag.setAttribute('href', uri);
-        linkTag.innerHTML = 'Click here to start the calibration';
-        linkTag.target = '_blank';
-        document.getElementById(this.targetElement).appendChild(linkTag);
+        // const linkTag = document.createElement('a');
+        // linkTag.setAttribute('href', uri);
+        // linkTag.innerHTML = 'Click here to start the calibration';
+        // linkTag.target = '_blank';
+        // document.getElementById(this.targetElement).appendChild(linkTag);
         // document.getElementById(this.targetElement).appendChild(qrCanvas);
+
+        const proceedButton = document.createElement('button');
+        proceedButton.setAttribute('id', 'calibrationProceedButton');
+        proceedButton.setAttribute('class', 'btn btn-success');
+        proceedButton.innerHTML = 'Proceed';
+        proceedButton.onclick = () => {
+          // open the link in a new tab
+          window.open(uri, '_blank');
+          // remove the button
+          document.getElementById('calibrationProceedButton').remove();
+        };
+        document.getElementById(this.targetElement).appendChild(proceedButton);
       }
     }
     // or just print it to console
