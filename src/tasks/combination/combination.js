@@ -130,6 +130,9 @@ class Combination extends AudioCalibrator {
   componentIR = null;
 
   /**@private */
+  oldComponentIR = null;
+
+  /**@private */
   systemIR = null;
 
   /**@private */
@@ -708,10 +711,49 @@ class Combination extends AudioCalibrator {
       let recs = this.getAllRecordedSignals();
       let unconv_rec = recs[0];
       let conv_rec = conv_recs[0];
-      let results = await this.pyServerAPI
+      if (this._calibrateSoundCheck != 'system'){
+        let knownGain = this.oldComponentIR.Gain;
+        let knownFreq = this.oldComponentIR.Freq;
+        let sampleRate = this.sourceSamplingRate || 96000;
+        let unconv_results = await this.pyServerAPI.getSubtractedPSDWithRetry(unconv_rec,knownGain,knownFreq,sampleRate).then(res => {
+          this.incrementStatusBar();
+          this.status =
+            `All Hz Calibration: done computing the PSD graphs...`.toString() +
+            this.generateTemplate().toString();
+          this.emit('update', {message: this.status});
+          return res;
+        })
+        .catch(err => {
+          console.error(err);
+        });
+
+        let conv_results = await this.pyServerAPI.getSubtractedPSDWithRetry(conv_rec,knownGain,knownFreq,sampleRate).then(res => {
+          this.incrementStatusBar();
+          this.status =
+            `All Hz Calibration: done computing the PSD graphs...`.toString() +
+            this.generateTemplate().toString();
+          this.emit('update', {message: this.status});
+          return res;
+        })
+        .catch(err => {
+          console.error(err);
+        });
+        iir_ir_and_plots = {
+          systemIIR: this.systemInvertedImpulseResponse,
+          componentIIR: this.componentInvertedImpulseResponse,
+          x_unconv: unconv_results['x'],
+          y_unconv: unconv_results['y'],
+          x_conv: conv_results['x'],
+          y_conv: conv_results['y'],
+          componentIR: this.componentIR,
+          systemIR: this.systemIR,
+        };
+      }else{
+        let results = await this.pyServerAPI
         .getPSDWithRetry({
           unconv_rec,
           conv_rec,
+          sampleRate: this.sourceSamplingRate || 96000
         })
         .then(res => {
           this.incrementStatusBar();
@@ -724,16 +766,18 @@ class Combination extends AudioCalibrator {
         .catch(err => {
           console.error(err);
         });
-      iir_ir_and_plots = {
-        systemIIR: this.systemInvertedImpulseResponse,
-        componentIIR: this.componentInvertedImpulseResponse,
-        x_unconv: results['x_unconv'],
-        y_unconv: results['y_unconv'],
-        x_conv: results['x_conv'],
-        y_conv: results['y_conv'],
-        componentIR: this.componentIR,
-        systemIR: this.systemIR,
-      };
+        iir_ir_and_plots = {
+          systemIIR: this.systemInvertedImpulseResponse,
+          componentIIR: this.componentInvertedImpulseResponse,
+          x_unconv: results['x_unconv'],
+          y_unconv: results['y_unconv'],
+          x_conv: results['x_conv'],
+          y_conv: results['y_conv'],
+          componentIR: this.componentIR,
+          systemIR: this.systemIR,
+        };
+      }
+
       if (this.#download) {
         this.downloadSingleUnfilteredRecording();
         this.downloadSingleFilteredRecording();
@@ -1106,7 +1150,7 @@ class Combination extends AudioCalibrator {
     lCalib = 104.92978421490648,
     componentIR = null,
     microphoneName = 'MiniDSP-UMIK1-711-4754-vertical',
-    _calibrateSoundCheck = 'system',
+    _calibrateSoundCheck = 'goal', //GOAL PASSed in by default
     isSmartPhone = false
   ) => {
     //feed calibration goal here
@@ -1139,6 +1183,8 @@ class Combination extends AudioCalibrator {
       await this.writeGainat1000Hz(microphoneName, lCalib);
       await this.writeIsSmartPhone(microphoneName, isSmartPhone);
     }
+
+    this.oldComponentIR = this.componentIR;
 
     //TODO:
     //if *1000 is in, lcalib is that value and componentGainDBSPL is that value converted to dB

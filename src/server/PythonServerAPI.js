@@ -3,9 +3,10 @@ import axios from 'axios';
  *
  */
 class PythonServerAPI {
-  static PYTHON_SERVER_URL = 'https://easyeyes-python-flask-server.herokuapp.com';
+  //static PYTHON_SERVER_URL = 'https://easyeyes-python-flask-server.herokuapp.com';
 
   static TEST_SERVER_URL = 'http://127.0.0.1:5000';
+  static PYTHON_SERVER_URL = 'http://127.0.0.1:5000';
 
   /** @private */
   MAX_RETRY_COUNT = 3;
@@ -56,7 +57,7 @@ class PythonServerAPI {
     return res.data[task];
   };
 
-  getPSD = async ({unconv_rec, conv_rec}) => {
+  getPSD = async ({unconv_rec, conv_rec, sampleRate}) => {
     const task = 'psd';
     let res = null;
 
@@ -64,6 +65,7 @@ class PythonServerAPI {
       task,
       unconv_rec,
       conv_rec,
+      sampleRate,
     });
 
     await axios({
@@ -83,14 +85,67 @@ class PythonServerAPI {
       });
     return res.data[task];
   };
+
+  getSubtractedPSD = async (rec, knownGains, knownFrequencies,sampleRate) => {
+    const task = 'subtracted-psd';
+    let res = null;
+
+    const data = JSON.stringify({
+      task,
+      rec,
+      knownGains,
+      knownFrequencies,
+      sampleRate,
+    });
+
+    await axios({
+      method: 'post',
+      baseURL: PythonServerAPI.PYTHON_SERVER_URL,
+      url: `/task/${task}`,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      data,
+    })
+      .then(response => {
+        res = response;
+      })
+      .catch(error => {
+        throw error;
+      });
+    return res.data[task];
+  };
+
+  getSubtractedPSDWithRetry = async ( rec, knownGains, knownFrequencies,sampleRate) => {
+    let retryCount = 0;
+    let response = null;
+
+    while (retryCount < this.MAX_RETRY_COUNT) {
+      try {
+        response = await this.getSubtractedPSD( rec, knownGains, knownFrequencies,sampleRate );
+        // If the request is successful, break out of the loop
+        break;
+      } catch (error) {
+        console.error(`Error occurred. Retrying... (${retryCount + 1}/${this.MAX_RETRY_COUNT})`);
+        retryCount++;
+        await new Promise(resolve => setTimeout(resolve, this.RETRY_DELAY_MS));
+      }
+    }
+
+    if (response) {
+      return response;
+    } else {
+      throw new Error(`Failed to get PSD after ${this.MAX_RETRY_COUNT} attempts.`);
+    }
+  };
   
-  getPSDWithRetry = async ({ unconv_rec, conv_rec }) => {
+  getPSDWithRetry = async ({ unconv_rec, conv_rec,sampleRate }) => {
     let retryCount = 0;
     let response = null;
   
     while (retryCount < this.MAX_RETRY_COUNT) {
       try {
-        response = await this.getPSD({ unconv_rec, conv_rec });
+        response = await this.getPSD({ unconv_rec, conv_rec,sampleRate });
         // If the request is successful, break out of the loop
         break;
       } catch (error) {
