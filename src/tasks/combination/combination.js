@@ -526,7 +526,8 @@ class Combination extends AudioCalibrator {
       "x_conv": results["x_conv"],
       "y_conv": results["y_conv"]
     }
-    if (this.#download) {
+    console.log('download this');
+    //if (this.#download) {
       this.downloadSingleUnfilteredRecording();
       this.downloadSingleFilteredRecording();
       saveToCSV(this.#mls,"MLS.csv");
@@ -540,7 +541,7 @@ class Combination extends AudioCalibrator {
             }
           }
         })
-    }
+    //}
 
     return iir_and_plots;
   };
@@ -756,14 +757,14 @@ class Combination extends AudioCalibrator {
   };
 
   startCalibration = async (stream, gainValues, lCalib = 104.92978421490648) => {
-    let volumeResults = await this.startCalibrationVolume(stream, gainValues, lCalib = 104.92978421490648);
+    //let volumeResults = await this.startCalibrationVolume(stream, gainValues, lCalib = 104.92978421490648);
     let impulseResponseResults = await this.startCalibrationImpulseResponse(stream);
-    console.log(volumeResults);
+    //console.log(volumeResults);
     console.log(impulseResponseResults);
-    const total_results = {...volumeResults, ...impulseResponseResults};
-    console.log('total');
-    console.log(total_results);
-    return total_results;
+    //const total_results = {...volumeResults, ...impulseResponseResults};
+    //console.log('total');
+    //console.log(total_results);
+    return impulseResponseResults;
   }
 
 
