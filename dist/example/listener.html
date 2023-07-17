@@ -29,12 +29,16 @@
         <a href="http://browsehappy.com/">upgrade your browser</a> to improve your experience.
       </p>
     <![endif]-->
-    <div class="container">
-      <h1>Sound Calibration</h1>
-      <p class="lead" id="message"></p>
-      <div>
+    <div class="container" id="listenerContainer">
+      <div id="phrases">
+        <h1>Sound Calibration</h1>
+        <p class="lead" id="allowMicrophone"></p>
+        <p id="recordingInProgress"></p>
+        <p class="lead" id="message"></p>
+      </div>
+      <div id="updateDisplay">
         <div class="col-6">
-          <button id="calibrationBeginButton" type="button" class="btn btn-success">Proceed</button>
+          <!-- <button id="calibrationBeginButton" type="button" class="btn btn-success">Proceed</button> -->
         </div>
         <div class="col-6">
           <div id="display"></div>

@@ -38,3 +38,20 @@ hr {
   height: fit-content;
   width: 200px;
 }
+
+.phrases {
+  transform: rotate(180deg);
+  margin-top: 100vh;
+  position: absolute;
+  bottom: 0;
+  right: 10px;
+}
+
+.updateDisplay {
+  transform: rotate(180deg);
+  position: absolute;
+  bottom: 20vh;
+  right: 10px;
+  overflow-y: scroll;
+  overflow-x: hidden;
+}
