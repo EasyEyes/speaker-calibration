@@ -298,6 +298,7 @@ class Combination extends AudioCalibrator {
           payload,
           mls,
           P: this.#P,
+          numPeriods: this.numMLSPerCapture,
         })
         .then(res => {
           if (this.numSuccessfulCaptured < this.numCaptures) {
