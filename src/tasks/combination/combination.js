@@ -298,6 +298,7 @@ class Combination extends AudioCalibrator {
           payload,
           mls,
           P: this.#P,
+          numPeriods: this.numMLSPerCapture,
         })
         .then(res => {
           if (this.numSuccessfulCaptured < this.numCaptures) {
@@ -563,6 +564,10 @@ class Combination extends AudioCalibrator {
    */
   #playCalibrationAudio = () => {
     this.calibrationNodes[0].start(0);
+    console.log('sink sampling rate');
+    console.log(this.sinkSamplingRate);
+    console.log('source sampling rate');
+    console.log(this.sourceSamplingRate);
     this.#mls = this.calibrationNodes[0].buffer.getChannelData(0);
     this.stepNum += 1;
     console.log('play calibration audio ' + this.stepNum);
@@ -574,6 +579,10 @@ class Combination extends AudioCalibrator {
 
   #playCalibrationAudioConvolved = () => {
     this.calibrationNodesConvolved[0].start(0);
+    console.log('sink sampling rate');
+    console.log(this.sinkSamplingRate);
+    console.log('source sampling rate');
+    console.log(this.sourceSamplingRate);
     this.stepNum += 1;
     console.log('play convolved audio ' + this.stepNum);
     this.status =

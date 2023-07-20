@@ -24,7 +24,7 @@ class PythonServerAPI {
    * @returns
    * @example
    */
-  getImpulseResponse = async ({mls, payload, sampleRate, P}) => {
+  getImpulseResponse = async ({mls, payload, sampleRate, P, numPeriods}) => {
     const task = 'impulse-response';
     let res = null;
 
@@ -36,6 +36,7 @@ class PythonServerAPI {
       'sample-rate': sampleRate,
       mls,
       P,
+      numPeriods,
     });
 
     await axios({

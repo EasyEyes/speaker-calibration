@@ -169,7 +169,7 @@ class Listener extends AudioPeer {
     }
 
     if (capabilities.sampleRate) {
-      constraints.sampleRate = 96000;
+      constraints.sampleRate = 48000;
     }
 
     if (capabilities.sampleSize) {
@@ -211,7 +211,7 @@ class Listener extends AudioPeer {
       //   ? {echoCancellation: {exact: false}}
       //   : {}),
       ...(availableConstraints.sampleRate && availableConstraints.sampleRate == true
-        ? {sampleRate: {ideal: 96000}}
+        ? {sampleRate: {ideal: 48000}}
         : {}),
       ...(availableConstraints.sampleSize && availableConstraints.sampleSize == true
         ? {sampleSize: {ideal: 24}}
