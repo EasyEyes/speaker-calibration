@@ -65,6 +65,7 @@ switch (isSmartPhone) {
 
       recordingInProgressElement.style.whiteSpace = 'nowrap';
       recordingInProgressElement.style.fontWeight = 'bold';
+
       // fit content
       recordingInProgressElement.style.width = 'fit-content';
       let fontSize = 100;
