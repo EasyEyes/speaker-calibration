@@ -37,6 +37,8 @@ switch (isSmartPhone) {
     calibrationBeginButton.addEventListener('click', () => {
       // remove the button
       calibrationBeginButton.remove();
+      // remove turn message
+      turnMessageElement.remove();
       // set the text of the html elements
       recordingInProgressElement.innerHTML = recordingInProgress;
       allowMicrophoneElement.innerHTML = allowMicrophone;
