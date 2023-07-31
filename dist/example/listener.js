@@ -21,6 +21,14 @@ const allowMicrophoneElement = document.getElementById('allowMicrophone');
 switch (isSmartPhone) {
   case 'true':
     allowMicrophoneElement.innerHTML = placeSmartphoneMicrophone;
+    // show the html upsidedown
+    const phrasesContainer = document.getElementById('phrases');
+    // add class
+    phrasesContainer.classList.add('phrases');
+    const html = document.querySelector('html');
+    html.style.overflow = 'hidden';
+    const display = document.getElementById('updateDisplay');
+    display.classList.add('updateDisplay');
     // event listener for id calibrationBeginButton
     const calibrationBeginButton = document.getElementById('calibrationBeginButton');
     calibrationBeginButton.addEventListener('click', () => {
@@ -41,14 +49,6 @@ switch (isSmartPhone) {
         fontSize--;
         recordingInProgressElement.style.fontSize = fontSize + 'px';
       }
-      // show the html upsidedown
-      const phrasesContainer = document.getElementById('phrases');
-      // add class
-      phrasesContainer.classList.add('phrases');
-      const html = document.querySelector('html');
-      html.style.overflow = 'hidden';
-      const display = document.getElementById('updateDisplay');
-      display.classList.add('updateDisplay');
       window.listener = new speakerCalibrator.Listener(listenerParameters);
       console.log(window.listener);
     });
