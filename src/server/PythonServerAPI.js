@@ -57,6 +57,56 @@ class PythonServerAPI {
     return res.data[task];
   };
 
+  getMLS = async(length) => {
+    const task = 'mls';
+    let res = null
+
+    const data = JSON.stringify({
+      task,
+      'length':length,
+    })
+
+    await axios({
+      method:'post',
+      baseURL: PythonServerAPI.PYTHON_SERVER_URL,
+      url: `/task/${task}`,
+      headers: {
+        'Content-Type':'application/json',
+      },
+      data,
+    })
+      .then(response => {
+        res = response;
+      })
+      .catch(error => {
+        throw error;
+      })
+
+      return res.data[task];
+  }
+  getMLSWithRetry = async (length) => {
+    let retryCount = 0;
+    let response = null;
+
+    while (retryCount < this.MAX_RETRY_COUNT) {
+      try {
+        response = await this.getMLS(length);
+        // If the request is successful, break out of the loop
+        break;
+      } catch (error) {
+        console.error(`Error occurred. Retrying... (${retryCount + 1}/${this.MAX_RETRY_COUNT})`);
+        retryCount++;
+        await new Promise(resolve => setTimeout(resolve, this.RETRY_DELAY_MS));
+      }
+    }
+
+    if (response) {
+      return response;
+    } else {
+      throw new Error(`Failed to get MLS after ${this.MAX_RETRY_COUNT} attempts.`);
+    }
+  };
+
   getPSD = async ({unconv_rec, conv_rec, sampleRate}) => {
     const task = 'psd';
     let res = null;
