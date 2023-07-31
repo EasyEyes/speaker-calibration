@@ -142,6 +142,14 @@ class Combination extends AudioCalibrator {
 
   deviceName = null;
 
+  desired_time_per_mls = 0;
+
+  num_mls_to_skip = 0;
+
+  desired_sampling_rate = 0;
+
+  #currentConvolution = [];
+
   /**generate string template that gets reevaluated as variable increases */
   generateTemplate = () => {
     if (this.percent_complete > 100) {
@@ -338,8 +346,24 @@ class Combination extends AudioCalibrator {
     this.emit('update', {
       message: this.status,
     });
-    await sleep((this.#P / this.sourceSamplingRate) * this.numMLSPerCapture);
+    let time_to_wait = (this.#mls.length/this.sourceSamplingRate)*this.numMLSPerCapture;
+    await sleep(time_to_wait);
   };
+
+  #awaitDesiredMLSLengthConvolved = async () => {
+    // seconds per MLS = P / SR
+    // await N * P / SR
+    this.stepNum += 1;
+    console.log('await desired length ' + this.stepNum);
+    this.status =
+      `All Hz Calibration: sampling the calibration signal...`.toString() + this.generateTemplate();
+    this.emit('update', {
+      message: this.status,
+    });
+    let time_to_wait = (this.#currentConvolution.length/this.sourceSamplingRate)*this.numMLSPerCapture;
+    await sleep(time_to_wait);
+  };
+
 
   /** .
    * .
@@ -357,7 +381,25 @@ class Combination extends AudioCalibrator {
     this.emit('update', {
       message: this.status,
     });
-    await sleep(this.TAPER_SECS);
+    let number_of_bursts_to_skip = this.num_mls_to_skip;
+    let time_to_sleep = (this.#mls.length)/this.sourceSamplingRate;
+    //await sleep(this.TAPER_SECS);
+    await sleep(time_to_sleep);
+  };
+
+  #awaitSignalOnsetConvolved = async () => {
+    this.stepNum += 1;
+    console.log('await signal onset ' + this.stepNum);
+    this.status =
+      `All Hz Calibration: waiting for the signal to stabilize...`.toString() +
+      this.generateTemplate();
+    this.emit('update', {
+      message: this.status,
+    });
+    let number_of_bursts_to_skip = this.num_mls_to_skip;
+    let time_to_sleep = (this.#currentConvolution.length)/this.sourceSamplingRate;
+    //await sleep(this.TAPER_SECS);
+    await sleep(time_to_sleep);
   };
 
   /**
@@ -464,8 +506,6 @@ class Combination extends AudioCalibrator {
     } catch (error) {
       console.error(error);
     }
-    console.log('mls second, same?');
-    console.log(data);
     const onsetGainNode = audioContext.createGain();
     this.offsetGainNode = audioContext.createGain();
     const source = audioContext.createBufferSource();
@@ -489,8 +529,6 @@ class Combination extends AudioCalibrator {
    */
   #setCalibrationNodesFromBuffer = (dataBufferArray = [this.#mlsBufferView]) => {
     if (dataBufferArray.length === 1) {
-      console.log('data buffer aray');
-      console.log(dataBufferArray);
       this.#createCalibrationNodeFromBuffer(dataBufferArray[0]);
     } else {
       throw new Error('The length of the data buffer array must be 1');
@@ -506,6 +544,7 @@ class Combination extends AudioCalibrator {
 
     //depends on goal
     if (this._calibrateSoundCheck != 'system') {
+      this.#currentConvolution = this.componentConvolution;
       const buffer = audioCtx.createBuffer(
         1, // number of channels
         this.componentConvolution.length,
@@ -530,6 +569,7 @@ class Combination extends AudioCalibrator {
 
       this.addCalibrationNodeConvolved(source);
     } else {
+      this.#currentConvolution = this.systemConvolution;
       const buffer = audioCtx.createBuffer(
         1, // number of channels
         this.systemConvolution.length,
@@ -644,11 +684,9 @@ class Combination extends AudioCalibrator {
       this.sourceSamplingRate
     ).then(mlsGenInterface => {
       this.#mlsGenInterface = mlsGenInterface;
-      this.#mlsBufferView = this.#mlsGenInterface.getMLS();
+      //this.#mlsBufferView = this.#mlsGenInterface.getMLS();
     });
 
-    console.log('after mls factory'); //works up to here.
-    console.log(this.#mls);
     // after intializating, start the calibration steps with garbage collection
     await this.#mlsGenInterface.withGarbageCollection([
       () =>
@@ -656,9 +694,9 @@ class Combination extends AudioCalibrator {
           stream,
           this.#playCalibrationAudioConvolved, // play audio func (required)
           this.#putInPythonConv, // before play func
-          this.#awaitSignalOnset, // before record
+          this.#awaitSignalOnsetConvolved, // before record
           () => this.numSuccessfulCaptured < 1,
-          this.#awaitDesiredMLSLength, // during record
+          this.#awaitDesiredMLSLengthConvolved, // during record
           this.#afterMLSwIIRRecord, // after record
           'filtered'
         ),
@@ -682,8 +720,24 @@ class Combination extends AudioCalibrator {
       this.sourceSamplingRate
     ).then(mlsGenInterface => {
       this.#mlsGenInterface = mlsGenInterface;
-      this.#mlsBufferView = this.#mlsGenInterface.getMLS();
+      //this.#mlsBufferView = this.#mlsGenInterface.getMLS();
     });
+
+    let desired_time = this.desired_time_per_mls;
+
+    length = this.sourceSamplingRate*desired_time
+    //get mls here
+    await this.pyServerAPI
+      .getMLSWithRetry(length)
+      .then(res => {
+        console.log(res);
+        this.#mlsBufferView = res['mls'];
+      })
+      .catch(err => {
+        // this.emit('InvertedImpulseResponse', {res: false});
+        console.error(err);
+      });
+
 
     // after intializating, start the calibration steps with garbage collection
     await this.#mlsGenInterface.withGarbageCollection([
@@ -1164,8 +1218,19 @@ class Combination extends AudioCalibrator {
     componentIR = null,
     microphoneName = 'MiniDSP-UMIK1-711-4754-vertical',
     _calibrateSoundCheck = 'goal', //GOAL PASSed in by default
-    isSmartPhone = false
+    isSmartPhone = false,
+    _calibrateSoundBurstRepeats=4,
+    _calibrateSoundBurstSec=1,
+    _calibrateSoundBurstsWarmup=1,
+    _calibrateSoundHz=48000
   ) => {
+
+    this.numMLSPerCapture = _calibrateSoundBurstRepeats;
+    this.desired_time_per_mls = _calibrateSoundBurstSec;
+    this.num_mls_to_skip = _calibrateSoundBurstsWarmup;
+    this.desired_sampling_rate = _calibrateSoundHz;
+    
+    
     //feed calibration goal here
     this._calibrateSoundCheck = _calibrateSoundCheck;
     //check if a componentIR was given to the system, if it isn't check for the microphone. using dummy data here bc we need to
