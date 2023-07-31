@@ -91,7 +91,11 @@ class Speaker extends AudioPeer {
             params.knownIR,
             params.microphoneName,
             params.calibrateSoundCheck,
-            params.isSmartPhone
+            params.isSmartPhone,
+            params.calibrateSoundBurstRepeats,
+            params.calibrateSoundBurstSec,
+            params.calibrateSoundBurstsWarmup,
+            params.calibrateSoundHz
           );
           speaker.#removeUIElems();
           resolve(speaker.result);

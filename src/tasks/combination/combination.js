@@ -346,7 +346,7 @@ class Combination extends AudioCalibrator {
     this.emit('update', {
       message: this.status,
     });
-    let time_to_wait = (this.#mls.length/this.sourceSamplingRate)*this.numMLSPerCapture;
+    let time_to_wait = (this.#mls.length / this.sourceSamplingRate) * this.numMLSPerCapture;
     await sleep(time_to_wait);
   };
 
@@ -360,10 +360,10 @@ class Combination extends AudioCalibrator {
     this.emit('update', {
       message: this.status,
     });
-    let time_to_wait = (this.#currentConvolution.length/this.sourceSamplingRate)*this.numMLSPerCapture;
+    let time_to_wait =
+      (this.#currentConvolution.length / this.sourceSamplingRate) * this.numMLSPerCapture;
     await sleep(time_to_wait);
   };
-
 
   /** .
    * .
@@ -382,7 +382,7 @@ class Combination extends AudioCalibrator {
       message: this.status,
     });
     let number_of_bursts_to_skip = this.num_mls_to_skip;
-    let time_to_sleep = (this.#mls.length)/this.sourceSamplingRate;
+    let time_to_sleep = this.#mls.length / this.sourceSamplingRate;
     //await sleep(this.TAPER_SECS);
     await sleep(time_to_sleep);
   };
@@ -397,7 +397,7 @@ class Combination extends AudioCalibrator {
       message: this.status,
     });
     let number_of_bursts_to_skip = this.num_mls_to_skip;
-    let time_to_sleep = (this.#currentConvolution.length)/this.sourceSamplingRate;
+    let time_to_sleep = this.#currentConvolution.length / this.sourceSamplingRate;
     //await sleep(this.TAPER_SECS);
     await sleep(time_to_sleep);
   };
@@ -725,7 +725,7 @@ class Combination extends AudioCalibrator {
 
     let desired_time = this.desired_time_per_mls;
 
-    length = this.sourceSamplingRate*desired_time
+    length = this.sourceSamplingRate * desired_time;
     //get mls here
     await this.pyServerAPI
       .getMLSWithRetry(length)
@@ -737,7 +737,6 @@ class Combination extends AudioCalibrator {
         // this.emit('InvertedImpulseResponse', {res: false});
         console.error(err);
       });
-
 
     // after intializating, start the calibration steps with garbage collection
     await this.#mlsGenInterface.withGarbageCollection([
@@ -1219,18 +1218,16 @@ class Combination extends AudioCalibrator {
     microphoneName = 'MiniDSP-UMIK1-711-4754-vertical',
     _calibrateSoundCheck = 'goal', //GOAL PASSed in by default
     isSmartPhone = false,
-    _calibrateSoundBurstRepeats=4,
-    _calibrateSoundBurstSec=1,
-    _calibrateSoundBurstsWarmup=1,
-    _calibrateSoundHz=48000
+    _calibrateSoundBurstRepeats = 4,
+    _calibrateSoundBurstSec = 1,
+    _calibrateSoundBurstsWarmup = 1,
+    _calibrateSoundHz = 48000
   ) => {
-
     this.numMLSPerCapture = _calibrateSoundBurstRepeats;
     this.desired_time_per_mls = _calibrateSoundBurstSec;
     this.num_mls_to_skip = _calibrateSoundBurstsWarmup;
     this.desired_sampling_rate = _calibrateSoundHz;
-    
-    
+
     //feed calibration goal here
     this._calibrateSoundCheck = _calibrateSoundCheck;
     //check if a componentIR was given to the system, if it isn't check for the microphone. using dummy data here bc we need to
