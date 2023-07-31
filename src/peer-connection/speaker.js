@@ -31,6 +31,8 @@ class Speaker extends AudioPeer {
     this.result = null;
     this.debug = params?.debug ?? false;
     this.isSmartPhone = params?.isSmartPhone ?? false;
+    this.instructionDisplayId = params?.instructionDisplayId ?? '';
+    this.titleDisplayId = params?.titleDisplayId ?? '';
 
     /* Set up callbacks that handle any events related to our peer object. */
     this.peer.on('open', this.#onPeerOpen);
@@ -215,6 +217,19 @@ class Speaker extends AudioPeer {
     spinner.role = 'status';
     spinner.ariaHidden = 'true';
     document.getElementById(this.targetElement).appendChild(spinner);
+
+    // clear instructionDisplay
+    const instructionDisplay = document.getElementById(this.instructionDisplayId);
+    if (instructionDisplay) {
+      instructionDisplay.innerHTML = '';
+    }
+
+    // Update title - titleDisplayId
+    const titleDisplay = document.getElementById(this.titleDisplayId);
+    if (titleDisplay) {
+      // replace 2 with 3
+      titleDisplay.innerHTML = titleDisplay.innerHTML.replace('2', '3');
+    }
   };
 
   #removeUIElems = () => {
