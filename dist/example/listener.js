@@ -15,12 +15,15 @@ const recordingInProgress = phrases.RC_soundRecording['en-US'];
 const backToExperimentWindow = phrases.RC_backToExperimentWindow['en-US'];
 const allowMicrophone = phrases.RC_allowMicrophoneUse['en-US'];
 const placeSmartphoneMicrophone = phrases.RC_placeSmartphoneMicrophone['en-US'];
+const turnMeToReadBelow = phrases.RC_turnMeToReadBelow['en-US'];
 const recordingInProgressElement = document.getElementById('recordingInProgress');
 const allowMicrophoneElement = document.getElementById('allowMicrophone');
+const turnMessageElement = document.getElementById('turnMeToReadBelow');
 
 switch (isSmartPhone) {
   case 'true':
     allowMicrophoneElement.innerHTML = placeSmartphoneMicrophone;
+    turnMessageElement.innerHTML = turnMeToReadBelow;
     // show the html upsidedown
     const phrasesContainer = document.getElementById('phrases');
     // add class
