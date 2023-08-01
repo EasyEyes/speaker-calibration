@@ -9,6 +9,7 @@ import {
 
 import database from '../config/firebase';
 import {ref, set, get, child} from 'firebase/database';
+import {phrases} from '../../dist/example/i18n';
 
 /**
  * @class Handles the speaker's side of the connection. Responsible for initiating the connection,
@@ -33,6 +34,7 @@ class Speaker extends AudioPeer {
     this.isSmartPhone = params?.isSmartPhone ?? false;
     this.instructionDisplayId = params?.instructionDisplayId ?? '';
     this.titleDisplayId = params?.titleDisplayId ?? '';
+    this.timeToCalibrate = params?.timeToCalibrate ?? 10;
 
     /* Set up callbacks that handle any events related to our peer object. */
     this.peer.on('open', this.#onPeerOpen);
@@ -220,8 +222,27 @@ class Speaker extends AudioPeer {
 
     // clear instructionDisplay
     const instructionDisplay = document.getElementById(this.instructionDisplayId);
+    const background = document.getElementById('background'); // todo: get background id from params
     if (instructionDisplay) {
       instructionDisplay.innerHTML = '';
+      instructionDisplay.style.whiteSpace = 'nowrap';
+      instructionDisplay.style.fontWeight = 'bold';
+      instructionDisplay.style.width = 'fit-content';
+      instructionDisplay.innerHTML = phrases.RC_soundRecording['en-US'];
+      let fontSize = 100;
+      instructionDisplay.style.fontSize = fontSize + 'px';
+      while (instructionDisplay.scrollWidth > background.scrollWidth * 0.9 && fontSize > 10) {
+        fontSize--;
+        instructionDisplay.style.fontSize = fontSize + 'px';
+      }
+      const p = document.createElement('p');
+      // font size
+      p.style.fontSize = '1.1rem';
+      p.style.fontWeight = 'normal';
+      p.style.paddingTop = '20px';
+      const timeToCalibrateText = phrases.RC_howLongToCalibrate['en-US'];
+      p.innerHTML = timeToCalibrateText.replace('111', this.timeToCalibrate);
+      instructionDisplay.appendChild(p);
     }
 
     // Update title - titleDisplayId
@@ -229,6 +250,8 @@ class Speaker extends AudioPeer {
     if (titleDisplay) {
       // replace 2 with 3
       titleDisplay.innerHTML = titleDisplay.innerHTML.replace('2', '3');
+      // replace 1 with 3
+      titleDisplay.innerHTML = titleDisplay.innerHTML.replace('1', '3');
     }
   };
 
