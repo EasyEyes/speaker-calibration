@@ -343,7 +343,7 @@ class Combination extends AudioCalibrator {
     console.log('await desired length ' + this.stepNum);
     this.status =
       `All Hz Calibration: sampling the calibration signal...`.toString() +
-      `\n iteration Count: ${this.stepNum}` +
+      `\niteration ${this.stepNum}` +
       this.generateTemplate();
     this.emit('update', {
       message: this.status,
@@ -359,7 +359,7 @@ class Combination extends AudioCalibrator {
     console.log('await desired length ' + this.stepNum);
     this.status =
       `All Hz Calibration: sampling the calibration signal...`.toString() +
-      `\n iteration Count: ${this.stepNum}`;
+      `\niteration ${this.stepNum}`;
     +this.generateTemplate();
 
     this.emit('update', {
