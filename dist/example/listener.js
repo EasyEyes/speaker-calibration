@@ -22,7 +22,7 @@ const turnMessageElement = document.getElementById('turnMeToReadBelow');
 
 switch (isSmartPhone) {
   case 'true':
-    // window.screen.orientation.lock('portrait');
+    screen.orientation.lock('portrait').catch(err => console.log(err));
     allowMicrophoneElement.innerHTML = placeSmartphoneMicrophone;
     turnMessageElement.innerHTML = turnMeToReadBelow;
     // show the html upsidedown
