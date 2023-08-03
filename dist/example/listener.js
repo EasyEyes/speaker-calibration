@@ -23,11 +23,7 @@ const turnMessageElement = document.getElementById('turnMeToReadBelow');
 switch (isSmartPhone) {
   case 'true':
     try {
-      window.screen.orientation.onchange = () => {
-        console.log('orientation changed');
-        console.log(window.screen.orientation.type);
-      };
-      await window.screen.orientation.lock('portrait');
+      console.log(screen.orientation);
     } catch (err) {
       console.log(err);
     }
