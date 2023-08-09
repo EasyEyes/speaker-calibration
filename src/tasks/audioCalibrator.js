@@ -238,8 +238,10 @@ class AudioCalibrator extends AudioRecorder {
    */
   downloadData = () => {
     const recordings = this.getAllRecordedSignals();
-    const i = recordings.length - 1;
-    saveToCSV(recordings[i], `recordedMLSignal_${i}_unconvolved.csv`);
+    //const i = recordings.length - 1;
+    for (let i = 0; i < recordings.length; i ++){
+      saveToCSV(recordings[i], `recordedMLSignal_${i}_unconvolved.csv`);
+    }
   };
   downloadSingleUnfilteredRecording = () => {
     const recordings = this.getAllRecordedSignals();

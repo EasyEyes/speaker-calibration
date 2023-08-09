@@ -293,6 +293,8 @@ class Combination extends AudioCalibrator {
     const payload =
       signalCsv && signalCsv.length > 0 ? csvToArray(signalCsv) : allSignals[numSignals - 1];
     console.log('sending rec');
+    //saveToCSV(allSignals[numSignals - 1],"failed_rec.csv");
+    //saveToCSV(mls,"MLS.csv");
     this.stepNum += 1;
     console.log('send rec ' + this.stepNum);
     this.status =
@@ -347,7 +349,7 @@ class Combination extends AudioCalibrator {
       message: this.status,
     });
     let time_to_wait = (this.#mls.length / this.sourceSamplingRate) * this.numMLSPerCapture;
-    await sleep(time_to_wait);
+    await sleep(time_to_wait*1.1);
   };
 
   #awaitDesiredMLSLengthConvolved = async () => {
@@ -362,7 +364,7 @@ class Combination extends AudioCalibrator {
     });
     let time_to_wait =
       (this.#currentConvolution.length / this.sourceSamplingRate) * this.numMLSPerCapture;
-    await sleep(time_to_wait);
+    await sleep(time_to_wait*1.1);
   };
 
   /** .
@@ -382,7 +384,7 @@ class Combination extends AudioCalibrator {
       message: this.status,
     });
     let number_of_bursts_to_skip = this.num_mls_to_skip;
-    let time_to_sleep = this.#mls.length / this.sourceSamplingRate;
+    let time_to_sleep = number_of_bursts_to_skip*this.#mls.length / this.sourceSamplingRate;
     //await sleep(this.TAPER_SECS);
     await sleep(time_to_sleep);
   };
@@ -397,7 +399,7 @@ class Combination extends AudioCalibrator {
       message: this.status,
     });
     let number_of_bursts_to_skip = this.num_mls_to_skip;
-    let time_to_sleep = this.#currentConvolution.length / this.sourceSamplingRate;
+    let time_to_sleep = number_of_bursts_to_skip*this.#currentConvolution.length / this.sourceSamplingRate;
     //await sleep(this.TAPER_SECS);
     await sleep(time_to_sleep);
   };
@@ -617,6 +619,7 @@ class Combination extends AudioCalibrator {
     this.emit('update', {message: this.status});
   };
 
+  //use same audio context
   #playCalibrationAudioConvolved = () => {
     this.calibrationNodesConvolved[0].start(0);
     console.log('sink sampling rate');
@@ -845,20 +848,22 @@ class Combination extends AudioCalibrator {
       }
 
       if (this.#download) {
-        this.downloadSingleUnfilteredRecording();
+        this.downloadData();
         this.downloadSingleFilteredRecording();
         saveToCSV(this.#mls, 'MLS.csv');
         saveToCSV(this.componentConvolution, 'python_component_convolution_mls_iir.csv');
         saveToCSV(this.systemConvolution, 'python_system_convolution_mls_iir.csv');
+        saveToCSV(this.#currentConvolution, 'used_convolution.csv');
         saveToCSV(this.componentInvertedImpulseResponse, 'componentIIR.csv');
         saveToCSV(this.systemInvertedImpulseResponse, 'systemIIR.csv');
+        saveToCSV(this.systemIR,'systemIR.csv');
         const computedIRagain = await Promise.all(this.impulseResponses).then(res => {
-          for (let i = 0; i < res.length; i++) {
-            if (res[i] != undefined) {
-              saveToCSV(res[i], `IR_${i}`);
-            }
-          }
-        });
+           for (let i = 0; i < res.length; i++) {
+             if (res[i] != undefined) {
+               saveToCSV(res[i], `IR_${i}`);
+             }
+           }
+         });
       }
     } else {
       iir_ir_and_plots = {
@@ -872,15 +877,15 @@ class Combination extends AudioCalibrator {
         systemIR: this.systemIR,
       };
       if (this.#download) {
-        saveToCSV(this.#mls, 'MLS.csv');
-        saveToCSV(this.componentConvolution, 'python_component_convolution_mls_iir.csv');
-        saveToCSV(this.systemConvolution, 'python_system_convolution_mls_iir.csv');
-        saveToCSV(this.componentInvertedImpulseResponse, 'componentIIR.csv');
-        saveToCSV(this.systemInvertedImpulseResponse, 'systemIIR.csv');
+        saveToCSV(this.#mls, '/home/billy/Downloads/debug_generate/MLS.csv');
+        saveToCSV(this.componentConvolution, '/home/billy/Downloads/debug_generate/python_component_convolution_mls_iir.csv');
+        saveToCSV(this.systemConvolution, '/home/billy/Downloads/debug_generate/python_system_convolution_mls_iir.csv');
+        saveToCSV(this.componentInvertedImpulseResponse, '/home/billy/Downloads/debug_generate/componentIIR.csv');
+        saveToCSV(this.systemInvertedImpulseResponse, '/home/billy/Downloads/debug_generate/systemIIR.csv');
         const computedIRagain = await Promise.all(this.impulseResponses).then(res => {
           for (let i = 0; i < res.length; i++) {
             if (res[i] != undefined) {
-              saveToCSV(res[i], `IR_${i}`);
+              saveToCSV(res[i], `/home/billy/Downloads/debug_generate/IR_${i}`);
             }
           }
         });
@@ -1274,12 +1279,12 @@ class Combination extends AudioCalibrator {
     // this.componentGainDBSPL = -30;
     // componentGainDBSPL = -30;
 
-    let volumeResults = await this.startCalibrationVolume(
-      stream,
-      gainValues,
-      lCalib,
-      this.componentGainDBSPL
-    );
+    // let volumeResults = await this.startCalibrationVolume(
+    //   stream,
+    //   gainValues,
+    //   lCalib,
+    //   this.componentGainDBSPL
+    // );
 
     let impulseResponseResults = await this.startCalibrationImpulseResponse(stream);
     //TODO: if needed, insert componentIR into db
@@ -1293,7 +1298,8 @@ class Combination extends AudioCalibrator {
       );
     }
 
-    const total_results = {...volumeResults, ...impulseResponseResults};
+    //const total_results = {...volumeResults, ...impulseResponseResults};
+    const total_results = {...impulseResponseResults};
     console.log('total');
     console.log(total_results);
     return total_results;
