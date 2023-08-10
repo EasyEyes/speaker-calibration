@@ -189,8 +189,6 @@ class Combination extends AudioCalibrator {
     const filteredComputedIRs = computedIRs.filter(element => {
       return element != undefined;
     });
-    //const componentIRGains = this.componentIR['Gain'];
-    //const componentIRFreqs = this.componentIR['Freq'];
     const mls = this.#mls;
     const lowHz = this.#lowHz;
     const highHz = this.#highHz;
@@ -218,12 +216,9 @@ class Combination extends AudioCalibrator {
         this.emit('update', {message: this.status});
         this.systemInvertedImpulseResponse = res['iir'];
         this.systemIR = res['ir'];
-        //this.componentIR['Gain'] = res['ir'];
-        //this.componentIR['Freq'] = res['frequencies'];
         this.systemConvolution = res['convolution'];
       })
       .catch(err => {
-        // this.emit('InvertedImpulseResponse', {res: false});
         console.error(err);
       });
   };
@@ -448,28 +443,6 @@ class Combination extends AudioCalibrator {
       j -= 1;
     }
     return curve;
-  };
-
-  /**
-   * Construct a Calibration Node with the calibration parameters.
-   *
-   * @param CALIBRATION_TONE_FREQUENCY
-   * @private
-   * @example
-   */
-  #createPureTonenNode = CALIBRATION_TONE_FREQUENCY => {
-    const audioContext = this.makeNewSourceAudioContext();
-    const oscilator = audioContext.createOscillator();
-    const gainNode = audioContext.createGain();
-
-    oscilator.frequency.value = CALIBRATION_TONE_FREQUENCY;
-    oscilator.type = 'sine';
-    gainNode.gain.value = 0.04;
-
-    oscilator.connect(gainNode);
-    gainNode.connect(audioContext.destination);
-
-    this.addCalibrationNode(oscilator);
   };
 
   /**
@@ -1207,17 +1180,6 @@ class Combination extends AudioCalibrator {
 
     this.oldComponentIR = this.componentIR;
 
-    //TODO:
-    //if *1000 is in, lcalib is that value and componentGainDBSPL is that value converted to dB
-    //this value (lcalib) is 1000 hz offset so it must be added to every gain
-    //if *1000 is not in, interpolate to get gain at 1000 hz (lcalib) and obtain componentGainDBSPL by converting lCalib to dB
-
-    //lCalib is gain at 1000 hz, componentGainDBSPL is gain at 1000 hz converted to db
-    //TODO: get this parameter from DB
-    // lCalib = -37.4;
-    // this.componentGainDBSPL = -30;
-    // componentGainDBSPL = -30;
-
     let volumeResults = await this.startCalibrationVolume(
       stream,
       gainValues,
@@ -1226,7 +1188,6 @@ class Combination extends AudioCalibrator {
     );
 
     let impulseResponseResults = await this.startCalibrationImpulseResponse(stream);
-    //TODO: if needed, insert componentIR into db
 
     if (componentIR != null) {
       //insert Freq and Gain from this.componentIR into db
