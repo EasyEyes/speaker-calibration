@@ -1,5 +1,4 @@
 import AudioCalibrator from '../audioCalibrator';
-import MlsGenInterface from './mlsGen/mlsGenInterface';
 
 import {sleep, csvToArray, saveToCSV} from '../../utils';
 import database from '../../config/firebase';
@@ -149,6 +148,10 @@ class Combination extends AudioCalibrator {
   desired_sampling_rate = 0;
 
   #currentConvolution = [];
+
+  mode = 'unfiltered';
+
+  sourceNode;
 
   /**generate string template that gets reevaluated as variable increases */
   generateTemplate = () => {
@@ -348,26 +351,17 @@ class Combination extends AudioCalibrator {
     this.emit('update', {
       message: this.status,
     });
-    let time_to_wait = (this.#mls.length / this.sourceSamplingRate) * this.numMLSPerCapture;
-    await sleep(time_to_wait);
-  };
-
-  #awaitDesiredMLSLengthConvolved = async () => {
-    // seconds per MLS = P / SR
-    // await N * P / SR
-    this.stepNum += 1;
-    console.log('await desired length ' + this.stepNum);
-    this.status =
-      `All Hz Calibration: sampling the calibration signal...`.toString() +
-      `\niteration ${this.stepNum}`;
-    +this.generateTemplate();
-
-    this.emit('update', {
-      message: this.status,
-    });
-    let time_to_wait =
+    let time_to_wait = 0;
+    if (this.mode === 'unfiltered'){
+      time_to_wait = (this.#mls.length / this.sourceSamplingRate) * this.numMLSPerCapture;
+    }else if (this.mode === 'filtered'){
+      time_to_wait =
       (this.#currentConvolution.length / this.sourceSamplingRate) * this.numMLSPerCapture;
-    await sleep(time_to_wait);
+    }else{
+      throw new Error("Mode broke in awaitDesiredMLSLength");
+    }
+    
+    await sleep(time_to_wait*1.1);
   };
 
   /** .
@@ -387,23 +381,14 @@ class Combination extends AudioCalibrator {
       message: this.status,
     });
     let number_of_bursts_to_skip = this.num_mls_to_skip;
-    let time_to_sleep = this.#mls.length / this.sourceSamplingRate;
-    //await sleep(this.TAPER_SECS);
-    await sleep(time_to_sleep);
-  };
-
-  #awaitSignalOnsetConvolved = async () => {
-    this.stepNum += 1;
-    console.log('await signal onset ' + this.stepNum);
-    this.status =
-      `All Hz Calibration: waiting for the signal to stabilize...`.toString() +
-      this.generateTemplate();
-    this.emit('update', {
-      message: this.status,
-    });
-    let number_of_bursts_to_skip = this.num_mls_to_skip;
-    let time_to_sleep = this.#currentConvolution.length / this.sourceSamplingRate;
-    //await sleep(this.TAPER_SECS);
+    let time_to_sleep = 0;
+    if (this.mode === 'unfiltered'){
+      time_to_sleep = this.#mls.length / this.sourceSamplingRate;
+    }else if (this.mode === 'filtered'){
+      time_to_sleep = this.#currentConvolution.length / this.sourceSamplingRate;
+    }else{
+      throw new Error("Mode broke in awaitSignalOnset");
+    }
     await sleep(time_to_sleep);
   };
 
@@ -495,11 +480,16 @@ class Combination extends AudioCalibrator {
    * @example
    */
   #createCalibrationNodeFromBuffer = dataBuffer => {
-    const audioContext = this.makeNewSourceAudioContext();
-    const buffer = audioContext.createBuffer(
+    console.log('databuffer');
+    console.log(dataBuffer);
+    if (!this.sourceAudioContext){
+      this.makeNewSourceAudioContext();
+    }
+    
+    const buffer = this.sourceAudioContext.createBuffer(
       1, // number of channels
       dataBuffer.length,
-      audioContext.sampleRate // sample rate
+      this.sourceAudioContext.sampleRate // sample rate
     );
 
     const data = buffer.getChannelData(0); // get data
@@ -511,19 +501,16 @@ class Combination extends AudioCalibrator {
     } catch (error) {
       console.error(error);
     }
-    const onsetGainNode = audioContext.createGain();
-    this.offsetGainNode = audioContext.createGain();
-    const source = audioContext.createBufferSource();
+   
+    this.sourceNode = this.sourceAudioContext.createBufferSource();
+    
+    
 
-    source.buffer = buffer;
-    source.loop = true;
-    source.connect(onsetGainNode);
-    onsetGainNode.connect(this.offsetGainNode);
-    this.offsetGainNode.connect(audioContext.destination);
+    this.sourceNode.buffer = buffer;
+    this.sourceNode.loop = true;
+    this.sourceNode.connect(this.sourceAudioContext.destination);
 
-    const onsetCurve = Combination.createSCurveBuffer(this.sourceSamplingRate, Math.PI / 2);
-    onsetGainNode.gain.setValueCurveAtTime(onsetCurve, 0, this.TAPER_SECS);
-    this.addCalibrationNode(source);
+    this.addCalibrationNode(this.sourceNode);
   };
 
   /**
@@ -608,33 +595,31 @@ class Combination extends AudioCalibrator {
    * @example
    */
   #playCalibrationAudio = () => {
-    this.calibrationNodes[0].start(0);
-    console.log('sink sampling rate');
-    console.log(this.sinkSamplingRate);
-    console.log('source sampling rate');
-    console.log(this.sourceSamplingRate);
-    this.#mls = this.calibrationNodes[0].buffer.getChannelData(0);
-    this.stepNum += 1;
-    console.log('play calibration audio ' + this.stepNum);
-    this.status =
+    if (this.mode === 'unfiltered'){
+      this.calibrationNodes[0].start(0);
+      this.#mls = this.calibrationNodes[0].buffer.getChannelData(0);
+      console.log('play calibration audio ' + this.stepNum);
+      this.status =
       `All Hz Calibration: playing the calibration tone...`.toString() +
       this.generateTemplate().toString();
-    this.emit('update', {message: this.status});
-  };
-
-  #playCalibrationAudioConvolved = () => {
-    this.calibrationNodesConvolved[0].start(0);
+      this.emit('update', {message: this.status});
+    } else if (this.mode === 'filtered'){
+      this.calibrationNodes[0].start(0);
+      console.log('play convolved audio ' + this.stepNum);
+      this.status =
+        `All Hz Calibration: playing the convolved calibration tone...`.toString() +
+      this.generateTemplate().toString();
+      this.emit('update', {message: this.status});
+    } else{
+      throw new Error("Mode is incorrect");
+    }
+    this.stepNum += 1;
     console.log('sink sampling rate');
     console.log(this.sinkSamplingRate);
     console.log('source sampling rate');
     console.log(this.sourceSamplingRate);
-    this.stepNum += 1;
-    console.log('play convolved audio ' + this.stepNum);
-    this.status =
-      `All Hz Calibration: playing the convolved calibration tone...`.toString() +
-      this.generateTemplate().toString();
-    this.emit('update', {message: this.status});
   };
+
 
   /** .
    * .
@@ -644,14 +629,10 @@ class Combination extends AudioCalibrator {
    * @example
    */
   #stopCalibrationAudio = () => {
-    this.offsetGainNode.gain.setValueAtTime(
-      this.offsetGainNode.gain.value,
-      this.sourceAudioContext.currentTime
-    );
 
-    this.offsetGainNode.gain.setTargetAtTime(0, this.sourceAudioContext.currentTime, 0.5);
     this.calibrationNodes[0].stop(0);
-    this.sourceAudioContext.close();
+    this.calibrationNodes = [];
+    this.sourceNode.disconnect();
     this.stepNum += 1;
     console.log('stop calibration audio ' + this.stepNum);
     this.status =
@@ -660,52 +641,21 @@ class Combination extends AudioCalibrator {
     this.emit('update', {message: this.status});
   };
 
-  #stopCalibrationAudioConvolved = () => {
-    this.offsetGainNode.gain.setValueAtTime(
-      this.offsetGainNode.gain.value,
-      this.sourceAudioContextConvolved.currentTime
-    );
-
-    this.offsetGainNode.gain.setTargetAtTime(0, this.sourceAudioContextConvolved.currentTime, 0.5);
-    //this.calibrationNodesConvolved[0].stop(0);
-    console.log('right before closing volved audio context');
-    this.sourceAudioContextConvolved.close();
-    this.stepNum += 1;
-    console.log('stop convolved calibration audio ' + this.stepNum);
-    this.status =
-      `All Hz Calibration: stopping the convolved calibration tone...`.toString() +
-      this.generateTemplate().toString();
-    this.emit('update', {message: this.status});
-  };
-
   playMLSwithIIR = async (stream, iir) => {
+    this.mode = 'filtered';
     console.log('play mls with iir');
     this.invertedImpulseResponse = iir;
-    // initialize the MLSGenInterface object with it's factory method
 
-    await MlsGenInterface.factory(
-      this.#mlsOrder,
-      this.sinkSamplingRate,
-      this.sourceSamplingRate
-    ).then(mlsGenInterface => {
-      this.#mlsGenInterface = mlsGenInterface;
-      //this.#mlsBufferView = this.#mlsGenInterface.getMLS();
-    });
-
-    // after intializating, start the calibration steps with garbage collection
-    await this.#mlsGenInterface.withGarbageCollection([
-      () =>
-        this.calibrationSteps(
-          stream,
-          this.#playCalibrationAudioConvolved, // play audio func (required)
-          this.#putInPythonConv, // before play func
-          this.#awaitSignalOnsetConvolved, // before record
-          () => this.numSuccessfulCaptured < 1,
-          this.#awaitDesiredMLSLengthConvolved, // during record
-          this.#afterMLSwIIRRecord, // after record
-          'filtered'
-        ),
-    ]);
+    await this.calibrationSteps(
+      stream,
+      this.#playCalibrationAudio, // play audio func (required)
+      this.#createCalibrationNodeFromBuffer(this.#currentConvolution), // before play func
+      this.#awaitSignalOnset, // before record
+      () => this.numSuccessfulCaptured < 1,
+      this.#awaitDesiredMLSLength, // during record
+      this.#afterMLSwIIRRecord, // after record
+      this.mode
+    )
   };
 
   /**
@@ -718,15 +668,6 @@ class Combination extends AudioCalibrator {
    * @example
    */
   startCalibrationImpulseResponse = async stream => {
-    // initialize the MLSGenInterface object with it's factory method
-    await MlsGenInterface.factory(
-      this.#mlsOrder,
-      this.sinkSamplingRate,
-      this.sourceSamplingRate
-    ).then(mlsGenInterface => {
-      this.#mlsGenInterface = mlsGenInterface;
-      //this.#mlsBufferView = this.#mlsGenInterface.getMLS();
-    });
 
     let desired_time = this.desired_time_per_mls;
 
@@ -742,21 +683,16 @@ class Combination extends AudioCalibrator {
         // this.emit('InvertedImpulseResponse', {res: false});
         console.error(err);
       });
-
-    // after intializating, start the calibration steps with garbage collection
-    await this.#mlsGenInterface.withGarbageCollection([
-      () =>
-        this.calibrationSteps(
-          stream,
-          this.#playCalibrationAudio, // play audio func (required)
-          this.#setCalibrationNodesFromBuffer, // before play func
-          this.#awaitSignalOnset, // before record
-          () => this.numSuccessfulCaptured < this.numCaptures, // loop while true
-          this.#awaitDesiredMLSLength, // during record
-          this.#afterMLSRecord, // after record
-          'unfiltered'
-        ),
-    ]);
+    await this.calibrationSteps(
+      stream,
+      this.#playCalibrationAudio, // play audio func (required)
+      this.#createCalibrationNodeFromBuffer(this.#mlsBufferView), // before play func
+      this.#awaitSignalOnset, // before record
+      () => this.numSuccessfulCaptured < this.numCaptures, // loop while true
+      this.#awaitDesiredMLSLength, // during record
+      this.#afterMLSRecord, // after record
+      this.mode
+    ),
 
     this.#stopCalibrationAudio();
 
@@ -767,13 +703,17 @@ class Combination extends AudioCalibrator {
     await this.sendComponentImpulseResponsesToServerForProcessing();
 
     this.numSuccessfulCaptured = 0;
-    // debugging function, use to test the result of the IIR
 
-    //if goal == loudspeaker etc,
     let iir_ir_and_plots;
     if (this._calibrateSoundCheck != 'none') {
+      if (this._calibrateSoundCheck != 'system') {
+        this.#currentConvolution = this.componentConvolution;
+      }else{
+        this.#currentConvolution = this.systemConvolution;
+      }
       await this.playMLSwithIIR(stream, this.invertedImpulseResponse);
-      this.#stopCalibrationAudioConvolved();
+      this.#stopCalibrationAudio();
+      this.sourceAudioContext.close();
       let conv_recs = this.getAllFilteredRecordedSignals();
       let recs = this.getAllRecordedSignals();
       let unconv_rec = recs[0];
@@ -913,7 +853,6 @@ class Combination extends AudioCalibrator {
       throw new Error(`Unknown data type: ${data.type}`);
     }
   };
-
   createSCurveBuffer = (onSetBool = true) => {
     const curve = new Float32Array(this.TAPER_SECS * this.sourceSamplingRate + 1);
     const frequency = 1 / (4 * this.TAPER_SECS);
@@ -926,8 +865,8 @@ class Combination extends AudioCalibrator {
       j += 1 / this.sourceSamplingRate;
     }
     return curve;
-  };
-
+    };
+    
   #getTruncatedSignal = (left = 3.5, right = 4.5) => {
     const start = Math.floor(left * this.sourceSamplingRate);
     const end = Math.floor(right * this.sourceSamplingRate);
