@@ -38,6 +38,7 @@ class AudioRecorder extends MyEventEmitter {
     const data = audioBuffer.getChannelData(0);
 
     console.log(`Decoded audio buffer with ${data.length} samples`);
+    console.log(`Unfiltered recording should be of length: ${data.length}`);
     this.#recordedSignals.push(Array.from(data));
   };
 
@@ -47,6 +48,7 @@ class AudioRecorder extends MyEventEmitter {
     const data = audioBuffer.getChannelData(0);
 
     console.log(`Decoded audio buffer with ${data.length} samples`);
+    console.log(`Filtered recording should be of length: ${data.length}`);
     this.#filteredRecordings.push(Array.from(data));
   };
 

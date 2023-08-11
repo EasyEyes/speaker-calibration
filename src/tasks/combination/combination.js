@@ -644,6 +644,9 @@ class Combination extends AudioCalibrator {
 
     let desired_time = this.desired_time_per_mls;
 
+    console.log("MLS sequence should be of length: " + (this.sourceSamplingRate * desired_time));
+
+
     length = this.sourceSamplingRate * desired_time;
     //get mls here
     await this.pyServerAPI

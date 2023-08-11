@@ -219,7 +219,12 @@ class Listener extends AudioPeer {
       ...(availableConstraints.channelCount && availableConstraints.channelCount == true
         ? {channelCount: {exact: 1}}
         : {}),
+        echoCanellation: false,
+        noiseSuppression: false,
+        autoGainControl: false
     };
+
+    console.log(contraints);
 
     this.displayUpdate(
       `Listener MediaDevices Contraints - ${JSON.stringify(contraints, undefined, 2)}`
