@@ -20,7 +20,7 @@ class Combination extends AudioCalibrator {
   constructor({
     download = false,
     mlsOrder = 18,
-    numCaptures = 3,
+    numCaptures = 1,
     numMLSPerCapture = 4,
     lowHz = 20,
     highHz = 10000,
@@ -153,6 +153,8 @@ class Combination extends AudioCalibrator {
 
   sourceNode;
 
+
+
   /**generate string template that gets reevaluated as variable increases */
   generateTemplate = () => {
     if (this.percent_complete > 100) {
@@ -222,6 +224,8 @@ class Combination extends AudioCalibrator {
         console.error(err);
       });
   };
+
+ 
 
   /** .
    * .
@@ -453,8 +457,41 @@ class Combination extends AudioCalibrator {
    * @example
    */
   #createCalibrationNodeFromBuffer = dataBuffer => {
+
+    // if (dataBuffer.length == 48500){
+    //   console.log("during convolved audio, making data a sine wave");
+    //   let sampleRate = 48000;
+    //   let duration = 2;
+    //   //let frequency = 4000;
+    //   let startFrequency = 20;
+    //   let endFrequency = 10000;
+    //   const omegaStart = 2 * Math.PI * startFrequency;
+    //   const omegaEnd = 2 * Math.PI * endFrequency;
+    //   const numSamples = Math.floor(sampleRate * duration);
+    //   const samples = new Float32Array(numSamples);
+
+    //   for (let i = 0; i < numSamples; i++) {
+    //     const t = i / sampleRate;
+    //     const frequency = startFrequency + (endFrequency - startFrequency) * (i / numSamples);
+    //     const omega = 2 * Math.PI * frequency;
+    //     samples[i] = Math.sin(omega * t);
+    //   }
+    //   dataBuffer = samples;
+    //   this.systemConvolution = dataBuffer;
+    //   this.componentConvolution = dataBuffer;
+    //   this.#currentConvolution = dataBuffer;
+  
+    // }
+
+
+       
+    
     console.log('databuffer');
     console.log(dataBuffer);
+    let uniqueSet = new Set(dataBuffer);
+    let uniqueVals = uniqueSet.size;
+    //let uniqueVals = this.countUniqueValue(dataBuffer);
+    console.log("Unique values in dataBuffer in createCalibrationNodeFromBuffer: " + uniqueVals);
     if (!this.sourceAudioContext){
       this.makeNewSourceAudioContext();
     }
@@ -683,8 +720,10 @@ class Combination extends AudioCalibrator {
     let iir_ir_and_plots;
     if (this._calibrateSoundCheck != 'none') {
       if (this._calibrateSoundCheck != 'system') {
+        console.log("Choosing component convolution");
         this.#currentConvolution = this.componentConvolution;
       }else{
+        console.log("Choosing system convolution");
         this.#currentConvolution = this.systemConvolution;
       }
       await this.playMLSwithIIR(stream, this.invertedImpulseResponse);
@@ -766,7 +805,8 @@ class Combination extends AudioCalibrator {
       }
 
       if (this.#download) {
-        this.downloadSingleUnfilteredRecording();
+        //this.downloadSingleUnfilteredRecording();
+        this.downloadData();
         this.downloadSingleFilteredRecording();
         saveToCSV(this.#mls, 'MLS.csv');
         saveToCSV(this.componentConvolution, 'python_component_convolution_mls_iir.csv');
@@ -1143,6 +1183,8 @@ class Combination extends AudioCalibrator {
     _calibrateSoundBurstsWarmup = 1,
     _calibrateSoundHz = 48000
   ) => {
+
+    //let numCaptures = 1;
     this.numMLSPerCapture = _calibrateSoundBurstRepeats;
     this.desired_time_per_mls = _calibrateSoundBurstSec;
     this.num_mls_to_skip = _calibrateSoundBurstsWarmup;
@@ -1183,12 +1225,14 @@ class Combination extends AudioCalibrator {
 
     this.oldComponentIR = this.componentIR;
 
-    let volumeResults = await this.startCalibrationVolume(
-      stream,
-      gainValues,
-      lCalib,
-      this.componentGainDBSPL
-    );
+    // let volumeResults = await this.startCalibrationVolume(
+    //   stream,
+    //   gainValues,
+    //   lCalib,
+    //   this.componentGainDBSPL
+    // );
+
+    console.log("Finished 1000 Hz calibration, starting All Hz calibration.");
 
     let impulseResponseResults = await this.startCalibrationImpulseResponse(stream);
 
@@ -1201,7 +1245,8 @@ class Combination extends AudioCalibrator {
       );
     }
 
-    const total_results = {...volumeResults, ...impulseResponseResults};
+    //const total_results = {...volumeResults, ...impulseResponseResults};
+    const total_results = impulseResponseResults
     console.log('total');
     console.log(total_results);
     return total_results;
