@@ -99,7 +99,11 @@ class Speaker extends AudioPeer {
             params.calibrateSoundBurstRepeats,
             params.calibrateSoundBurstSec,
             params.calibrateSoundBurstsWarmup,
-            params.calibrateSoundHz
+            params.calibrateSoundHz,
+            params.micManufacturer,
+            params.micSerialNumber,
+            params.micModelNumber,
+            params.micModelName
           );
           speaker.#removeUIElems();
           resolve(speaker.result);
@@ -379,6 +383,8 @@ class Speaker extends AudioPeer {
       case 'deviceName':
         this.ac.setDeviceName(data.payload);
         break;
+      case 'deviceInfo':
+        this.ac.setDeviceInfo(data.payload);
       case UnsupportedDeviceError.name:
       case MissingSpeakerIdError.name:
         throw data.payload;

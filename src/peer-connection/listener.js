@@ -99,7 +99,7 @@ class Listener extends AudioPeer {
     this.displayUpdate('Created connection');
     this.conn.on('open', async () => {
       this.displayUpdate('Listener - conn open');
-      // await this.getDeviceType();
+      await this.getDeviceInfo();
       // this.sendSamplingRate();
       await this.openAudioStream();
     });
@@ -134,23 +134,30 @@ class Listener extends AudioPeer {
     });
   };
 
-  getDeviceType = async () => {
-    const deviceType = deviceAPI.deviceType;
-    var deviceName = deviceAPI.deviceName;
-
-    // if deviceName is a comma separated string, only send the first part
-    if (deviceName.includes(',')) {
-      deviceName = deviceName.split(',')[0];
+  getDeviceInfo = async () => {
+    try {
+      const deviceInfo = {};
+      fod.complete(function (data) {
+        deviceInfo['IsMobile'] = data.device['ismobile'];
+        deviceInfo['HardwareName'] = data.device['hardwarename'];
+        deviceInfo['HardwareFamily'] = data.device['hardwarefamily'];
+        deviceInfo['HardwareModel'] = data.device['hardwaremodel'];
+        deviceInfo['OEM'] = data.device['oem'];
+        deviceInfo['HardwareModelVariants'] = data.device['hardwaremodelvariants'];
+        deviceInfo['DeviceId'] = data.device['deviceid'];
+        deviceInfo['PlatformName'] = data.device['platformname'];
+        deviceInfo['PlatformVersion'] = data.device['platformversion'];
+        deviceInfo['DeviceType'] = data.device['devicetype'];
+      });
+      this.conn.send({
+        name: 'deviceInfo',
+        payload: deviceInfo,
+      });
+      return deviceInfo;
+    } catch (error) {
+      console.error('Error fetching or executing script:', error.message);
+      return null;
     }
-
-    this.conn.send({
-      name: 'deviceType',
-      payload: deviceType,
-    });
-    this.conn.send({
-      name: 'deviceName',
-      payload: deviceName,
-    });
   };
 
   applyHQTrackConstraints = async stream => {
@@ -219,9 +226,9 @@ class Listener extends AudioPeer {
       ...(availableConstraints.channelCount && availableConstraints.channelCount == true
         ? {channelCount: {exact: 1}}
         : {}),
-        echoCancellation: false,
-        noiseSuppression: false,
-        autoGainControl: false
+      echoCancellation: false,
+      noiseSuppression: false,
+      autoGainControl: false,
     };
 
     console.log(contraints);

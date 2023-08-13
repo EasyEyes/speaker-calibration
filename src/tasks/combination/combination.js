@@ -347,16 +347,16 @@ class Combination extends AudioCalibrator {
       message: this.status,
     });
     let time_to_wait = 0;
-    if (this.mode === 'unfiltered'){
+    if (this.mode === 'unfiltered') {
       time_to_wait = (this.#mls.length / this.sourceSamplingRate) * this.numMLSPerCapture;
-    }else if (this.mode === 'filtered'){
+    } else if (this.mode === 'filtered') {
       time_to_wait =
-      (this.#currentConvolution.length / this.sourceSamplingRate) * this.numMLSPerCapture;
-    }else{
-      throw new Error("Mode broke in awaitDesiredMLSLength");
+        (this.#currentConvolution.length / this.sourceSamplingRate) * this.numMLSPerCapture;
+    } else {
+      throw new Error('Mode broke in awaitDesiredMLSLength');
     }
-    
-    await sleep(time_to_wait*1.1);
+
+    await sleep(time_to_wait * 1.1);
   };
 
   /** .
@@ -377,12 +377,12 @@ class Combination extends AudioCalibrator {
     });
     let number_of_bursts_to_skip = this.num_mls_to_skip;
     let time_to_sleep = 0;
-    if (this.mode === 'unfiltered'){
+    if (this.mode === 'unfiltered') {
       time_to_sleep = this.#mls.length / this.sourceSamplingRate;
-    }else if (this.mode === 'filtered'){
+    } else if (this.mode === 'filtered') {
       time_to_sleep = this.#currentConvolution.length / this.sourceSamplingRate;
-    }else{
-      throw new Error("Mode broke in awaitSignalOnset");
+    } else {
+      throw new Error('Mode broke in awaitSignalOnset');
     }
     await sleep(time_to_sleep);
   };
@@ -455,10 +455,10 @@ class Combination extends AudioCalibrator {
   #createCalibrationNodeFromBuffer = dataBuffer => {
     console.log('databuffer');
     console.log(dataBuffer);
-    if (!this.sourceAudioContext){
+    if (!this.sourceAudioContext) {
       this.makeNewSourceAudioContext();
     }
-    
+
     const buffer = this.sourceAudioContext.createBuffer(
       1, // number of channels
       dataBuffer.length,
@@ -474,10 +474,8 @@ class Combination extends AudioCalibrator {
     } catch (error) {
       console.error(error);
     }
-   
+
     this.sourceNode = this.sourceAudioContext.createBufferSource();
-    
-    
 
     this.sourceNode.buffer = buffer;
     this.sourceNode.loop = true;
@@ -568,23 +566,23 @@ class Combination extends AudioCalibrator {
    * @example
    */
   #playCalibrationAudio = () => {
-    if (this.mode === 'unfiltered'){
+    if (this.mode === 'unfiltered') {
       this.calibrationNodes[0].start(0);
       this.#mls = this.calibrationNodes[0].buffer.getChannelData(0);
       console.log('play calibration audio ' + this.stepNum);
       this.status =
-      `All Hz Calibration: playing the calibration tone...`.toString() +
-      this.generateTemplate().toString();
+        `All Hz Calibration: playing the calibration tone...`.toString() +
+        this.generateTemplate().toString();
       this.emit('update', {message: this.status});
-    } else if (this.mode === 'filtered'){
+    } else if (this.mode === 'filtered') {
       this.calibrationNodes[0].start(0);
       console.log('play convolved audio ' + this.stepNum);
       this.status =
         `All Hz Calibration: playing the convolved calibration tone...`.toString() +
-      this.generateTemplate().toString();
+        this.generateTemplate().toString();
       this.emit('update', {message: this.status});
-    } else{
-      throw new Error("Mode is incorrect");
+    } else {
+      throw new Error('Mode is incorrect');
     }
     this.stepNum += 1;
     console.log('sink sampling rate');
@@ -592,7 +590,6 @@ class Combination extends AudioCalibrator {
     console.log('source sampling rate');
     console.log(this.sourceSamplingRate);
   };
-
 
   /** .
    * .
@@ -602,7 +599,6 @@ class Combination extends AudioCalibrator {
    * @example
    */
   #stopCalibrationAudio = () => {
-
     this.calibrationNodes[0].stop(0);
     this.calibrationNodes = [];
     this.sourceNode.disconnect();
@@ -628,7 +624,7 @@ class Combination extends AudioCalibrator {
       this.#awaitDesiredMLSLength, // during record
       this.#afterMLSwIIRRecord, // after record
       this.mode
-    )
+    );
   };
 
   /**
@@ -641,11 +637,9 @@ class Combination extends AudioCalibrator {
    * @example
    */
   startCalibrationImpulseResponse = async stream => {
-
     let desired_time = this.desired_time_per_mls;
 
-    console.log("MLS sequence should be of length: " + (this.sourceSamplingRate * desired_time));
-
+    console.log('MLS sequence should be of length: ' + this.sourceSamplingRate * desired_time);
 
     length = this.sourceSamplingRate * desired_time;
     //get mls here
@@ -669,8 +663,7 @@ class Combination extends AudioCalibrator {
       this.#afterMLSRecord, // after record
       this.mode
     ),
-
-    this.#stopCalibrationAudio();
+      this.#stopCalibrationAudio();
 
     // at this stage we've captured all the required signals,
     // and have received IRs for each one
@@ -684,7 +677,7 @@ class Combination extends AudioCalibrator {
     if (this._calibrateSoundCheck != 'none') {
       if (this._calibrateSoundCheck != 'system') {
         this.#currentConvolution = this.componentConvolution;
-      }else{
+      } else {
         this.#currentConvolution = this.systemConvolution;
       }
       await this.playMLSwithIIR(stream, this.invertedImpulseResponse);
@@ -841,8 +834,8 @@ class Combination extends AudioCalibrator {
       j += 1 / this.sourceSamplingRate;
     }
     return curve;
-    };
-    
+  };
+
   #getTruncatedSignal = (left = 3.5, right = 4.5) => {
     const start = Math.floor(left * this.sourceSamplingRate);
     const end = Math.floor(right * this.sourceSamplingRate);
@@ -1141,7 +1134,11 @@ class Combination extends AudioCalibrator {
     _calibrateSoundBurstRepeats = 4,
     _calibrateSoundBurstSec = 1,
     _calibrateSoundBurstsWarmup = 1,
-    _calibrateSoundHz = 48000
+    _calibrateSoundHz = 48000,
+    micManufacturer = '',
+    micSerialNumber = '',
+    micModelNumber = '',
+    micModelName = ''
   ) => {
     this.numMLSPerCapture = _calibrateSoundBurstRepeats;
     this.desired_time_per_mls = _calibrateSoundBurstSec;
