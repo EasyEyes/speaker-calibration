@@ -141,6 +141,8 @@ class Combination extends AudioCalibrator {
 
   deviceName = null;
 
+  deviceInfo = null;
+
   desired_time_per_mls = 0;
 
   num_mls_to_skip = 0;
@@ -174,6 +176,10 @@ class Combination extends AudioCalibrator {
 
   setDeviceName = deviceName => {
     this.deviceName = deviceName;
+  };
+
+  setDeviceInfo = deviceInfo => {
+    this.deviceInfo = deviceInfo;
   };
 
   /** .
