@@ -21,9 +21,10 @@ class Listener extends AudioPeer {
     this.receiverPeerId = null;
 
     const urlParameters = this.parseURLSearchParams();
-    this.calibrateSoundHz = urlParameters.calibrateSoundHz !== null && urlParameters.calibrateSoundHz !== undefined
-    ? urlParameters.calibrateSoundHz
-    : 48000;
+    this.calibrateSoundHz =
+      urlParameters.calibrateSoundHz !== null && urlParameters.calibrateSoundHz !== undefined
+        ? urlParameters.calibrateSoundHz
+        : 48000;
     this.speakerPeerId = urlParameters.speakerPeerId;
 
     this.peer.on('open', this.onPeerOpen);

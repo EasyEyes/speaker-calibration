@@ -178,7 +178,7 @@ class Speaker extends AudioPeer {
     const queryStringParameters = {
       speakerPeerId: this.peer.id,
       isSmartPhone: this.isSmartPhone,
-      calibrateSoundHz:this.calibrateSoundHz,
+      calibrateSoundHz: this.calibrateSoundHz,
     };
     const queryString = this.queryStringFromObject(queryStringParameters);
     const uri = this.siteUrl + queryString;
