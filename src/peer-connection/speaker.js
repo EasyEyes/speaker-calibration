@@ -32,6 +32,7 @@ class Speaker extends AudioPeer {
     this.result = null;
     this.debug = params?.debug ?? false;
     this.isSmartPhone = params?.isSmartPhone ?? false;
+    this.calibrateSoundHz = params?.calibrateSoundHz ?? 48000;
     this.instructionDisplayId = params?.instructionDisplayId ?? '';
     this.titleDisplayId = params?.titleDisplayId ?? '';
     this.timeToCalibrate = params?.timeToCalibrate ?? 10;
@@ -177,6 +178,7 @@ class Speaker extends AudioPeer {
     const queryStringParameters = {
       speakerPeerId: this.peer.id,
       isSmartPhone: this.isSmartPhone,
+      calibrateSoundHz:this.calibrateSoundHz,
     };
     const queryString = this.queryStringFromObject(queryStringParameters);
     const uri = this.siteUrl + queryString;
