@@ -21,6 +21,9 @@ class Listener extends AudioPeer {
     this.receiverPeerId = null;
 
     const urlParameters = this.parseURLSearchParams();
+    this.calibrateSoundHz = urlParameters.calibrateSoundHz !== null && urlParameters.calibrateSoundHz !== undefined
+    ? urlParameters.calibrateSoundHz
+    : 48000;
     this.speakerPeerId = urlParameters.speakerPeerId;
 
     this.peer.on('open', this.onPeerOpen);
@@ -162,6 +165,7 @@ class Listener extends AudioPeer {
 
   applyHQTrackConstraints = async stream => {
     // Contraint the incoming audio to the sampling rate we want
+
     const track = stream.getAudioTracks()[0];
     const capabilities = track.getCapabilities();
 
@@ -176,7 +180,7 @@ class Listener extends AudioPeer {
     }
 
     if (capabilities.sampleRate) {
-      constraints.sampleRate = 48000;
+      constraints.sampleRate = this.calibrateSoundHz;
     }
 
     if (capabilities.sampleSize) {
@@ -218,7 +222,7 @@ class Listener extends AudioPeer {
       //   ? {echoCancellation: {exact: false}}
       //   : {}),
       ...(availableConstraints.sampleRate && availableConstraints.sampleRate == true
-        ? {sampleRate: {ideal: 48000}}
+        ? {sampleRate: {ideal: this.calibrateSoundHz}}
         : {}),
       ...(availableConstraints.sampleSize && availableConstraints.sampleSize == true
         ? {sampleSize: {ideal: 24}}
