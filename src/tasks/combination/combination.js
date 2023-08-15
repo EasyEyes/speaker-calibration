@@ -155,6 +155,8 @@ class Combination extends AudioCalibrator {
 
   sourceNode;
 
+  autocorrelations = [];
+
   /**generate string template that gets reevaluated as variable increases */
   generateTemplate = () => {
     if (this.percent_complete > 100) {
@@ -325,7 +327,8 @@ class Combination extends AudioCalibrator {
             this.emit('update', {
               message: this.status,
             });
-            return res;
+            this.autocorrelations.push(res['autocorrelation']);
+            return res['ir'];
           }
         })
         .catch(err => {
@@ -772,6 +775,9 @@ class Combination extends AudioCalibrator {
         saveToCSV(this.systemConvolution, 'python_system_convolution_mls_iir.csv');
         saveToCSV(this.componentInvertedImpulseResponse, 'componentIIR.csv');
         saveToCSV(this.systemInvertedImpulseResponse, 'systemIIR.csv');
+        for (let i = 0; i < this.autocorrelations.length; i++){
+          saveToCSV(this.autocorrelations[i],`autocorrelation_${i}`);
+        }
         const computedIRagain = await Promise.all(this.impulseResponses).then(res => {
           for (let i = 0; i < res.length; i++) {
             if (res[i] != undefined) {
@@ -797,6 +803,9 @@ class Combination extends AudioCalibrator {
         saveToCSV(this.systemConvolution, 'python_system_convolution_mls_iir.csv');
         saveToCSV(this.componentInvertedImpulseResponse, 'componentIIR.csv');
         saveToCSV(this.systemInvertedImpulseResponse, 'systemIIR.csv');
+        for (let i = 0; i < this.autocorrelations.length; i++){
+          saveToCSV(this.autocorrelations[i],`autocorrelation_${i}`);
+        }
         const computedIRagain = await Promise.all(this.impulseResponses).then(res => {
           for (let i = 0; i < res.length; i++) {
             if (res[i] != undefined) {

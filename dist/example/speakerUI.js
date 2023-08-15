@@ -217,6 +217,7 @@ window.onload = () => {
         numMLSPerCapture: document.getElementById('numMLSPerCaptureInput').value,
         mlsOrder: document.getElementById('mlsOrder').value,
         download: document.getElementById('flexSwitchCheckDownload').checked,
+        calibrateSoundHz: document.getElementById('calibrateSoundHzBox').value,
       };
 
       const calibrator = new CombinationCalibration(calibratorParams);
