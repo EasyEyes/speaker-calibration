@@ -157,6 +157,8 @@ class Combination extends AudioCalibrator {
 
   autocorrelations = [];
 
+  iirLength = 0;
+
   /**generate string template that gets reevaluated as variable increases */
   generateTemplate = () => {
     if (this.percent_complete > 100) {
@@ -200,6 +202,7 @@ class Combination extends AudioCalibrator {
     const mls = this.#mls;
     const lowHz = this.#lowHz;
     const highHz = this.#highHz;
+    const iirLength = this.iirLength;
     this.stepNum += 1;
     console.log('send impulse responses to server: ' + this.stepNum);
     this.status =
@@ -211,6 +214,7 @@ class Combination extends AudioCalibrator {
         mls,
         lowHz,
         highHz,
+        iirLength,
         sampleRate: this.sourceSamplingRate || 96000,
       })
       .then(res => {
@@ -248,6 +252,7 @@ class Combination extends AudioCalibrator {
     const componentIRFreqs = this.componentIR['Freq'];
     const mls = this.#mls;
     const lowHz = this.#lowHz;
+    const iirLength = this.iirLength;
     const highHz = this.#highHz;
     this.stepNum += 1;
     console.log('send impulse responses to server: ' + this.stepNum);
@@ -260,6 +265,7 @@ class Combination extends AudioCalibrator {
         mls,
         lowHz,
         highHz,
+        iirLength,
         componentIRGains,
         componentIRFreqs,
         sampleRate: this.sourceSamplingRate || 96000,
@@ -1159,11 +1165,13 @@ class Combination extends AudioCalibrator {
     _calibrateSoundBurstSec = 1,
     _calibrateSoundBurstsWarmup = 1,
     _calibrateSoundHz = 48000,
+    _calibrateSoundIIRSec = 0.2,
     micManufacturer = '',
     micSerialNumber = '',
     micModelNumber = '',
     micModelName = ''
   ) => {
+    this.iirLength = Math.floor(_calibrateSoundIIRSec*this.sourceSamplingRate);
     console.log('device info:', this.deviceInfo);
     this.numMLSPerCapture = _calibrateSoundBurstRepeats;
     this.desired_time_per_mls = _calibrateSoundBurstSec;
