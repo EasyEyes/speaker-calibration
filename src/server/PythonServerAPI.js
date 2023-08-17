@@ -213,7 +213,7 @@ class PythonServerAPI {
   };
   
 
-  getComponentInverseImpulseResponse = async ({payload,mls,lowHz,highHz,componentIRGains,componentIRFreqs,sampleRate}) => {
+  getComponentInverseImpulseResponse = async ({payload,mls,lowHz,highHz,componentIRGains,iirLength,componentIRFreqs,sampleRate}) => {
     const task = 'component-inverse-impulse-response';
     let res = null;
 
@@ -225,6 +225,7 @@ class PythonServerAPI {
       mls,
       lowHz,
       highHz,
+      iirLength,
       componentIRGains,
       componentIRFreqs,
       sampleRate,
@@ -248,7 +249,7 @@ class PythonServerAPI {
 
     return res.data[task];
   };
-  getSystemInverseImpulseResponse = async ({payload,mls,lowHz,highHz,sampleRate}) => {
+  getSystemInverseImpulseResponse = async ({payload,mls,lowHz,highHz,iirLength,sampleRate}) => {
     const task = 'system-inverse-impulse-response';
     let res = null;
 
@@ -259,6 +260,7 @@ class PythonServerAPI {
       payload,
       mls,
       lowHz,
+      iirLength,
       highHz,
       sampleRate,
     });
@@ -282,13 +284,13 @@ class PythonServerAPI {
     return res.data[task];
   };
 
-getComponentInverseImpulseResponseWithRetry = async ({ payload, mls, lowHz, highHz,componentIRGains,componentIRFreqs, sampleRate}) => {
+getComponentInverseImpulseResponseWithRetry = async ({ payload, mls, lowHz, highHz,componentIRGains,iirLength,componentIRFreqs, sampleRate}) => {
   let retryCount = 0;
   let response = null;
 
   while (retryCount < this.MAX_RETRY_COUNT) {
     try {
-      response = await this.getComponentInverseImpulseResponse({ payload, mls, lowHz, highHz,componentIRGains,componentIRFreqs,sampleRate});
+      response = await this.getComponentInverseImpulseResponse({ payload, mls, lowHz, highHz,componentIRGains,iirLength,componentIRFreqs,sampleRate});
       // If the request is successful, break out of the loop
       break;
     } catch (error) {
@@ -305,13 +307,13 @@ getComponentInverseImpulseResponseWithRetry = async ({ payload, mls, lowHz, high
   }
 };
 
-getSystemInverseImpulseResponseWithRetry = async ({ payload, mls, lowHz, highHz, sampleRate}) => {
+getSystemInverseImpulseResponseWithRetry = async ({ payload, mls, lowHz, highHz,iirLength, sampleRate}) => {
   let retryCount = 0;
   let response = null;
 
   while (retryCount < this.MAX_RETRY_COUNT) {
     try {
-      response = await this.getSystemInverseImpulseResponse({ payload, mls, lowHz, highHz,sampleRate});
+      response = await this.getSystemInverseImpulseResponse({ payload, mls, lowHz, highHz,iirLength,sampleRate});
       // If the request is successful, break out of the loop
       break;
     } catch (error) {
