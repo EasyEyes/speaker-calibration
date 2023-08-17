@@ -775,8 +775,8 @@ class Combination extends AudioCalibrator {
         saveToCSV(this.systemConvolution, 'python_system_convolution_mls_iir.csv');
         saveToCSV(this.componentInvertedImpulseResponse, 'componentIIR.csv');
         saveToCSV(this.systemInvertedImpulseResponse, 'systemIIR.csv');
-        for (let i = 0; i < this.autocorrelations.length; i++){
-          saveToCSV(this.autocorrelations[i],`autocorrelation_${i}`);
+        for (let i = 0; i < this.autocorrelations.length; i++) {
+          saveToCSV(this.autocorrelations[i], `autocorrelation_${i}`);
         }
         const computedIRagain = await Promise.all(this.impulseResponses).then(res => {
           for (let i = 0; i < res.length; i++) {
@@ -803,8 +803,8 @@ class Combination extends AudioCalibrator {
         saveToCSV(this.systemConvolution, 'python_system_convolution_mls_iir.csv');
         saveToCSV(this.componentInvertedImpulseResponse, 'componentIIR.csv');
         saveToCSV(this.systemInvertedImpulseResponse, 'systemIIR.csv');
-        for (let i = 0; i < this.autocorrelations.length; i++){
-          saveToCSV(this.autocorrelations[i],`autocorrelation_${i}`);
+        for (let i = 0; i < this.autocorrelations.length; i++) {
+          saveToCSV(this.autocorrelations[i], `autocorrelation_${i}`);
         }
         const computedIRagain = await Promise.all(this.impulseResponses).then(res => {
           for (let i = 0; i < res.length; i++) {
@@ -1055,7 +1055,7 @@ class Combination extends AudioCalibrator {
   };
 
   // function to write frq and gain to firebase database given speakerID
-  writeFrqGain = async (speakerID, frq, gain) => {
+  writeFrqGain = async (speakerID, frq, gain, OEM) => {
     // freq and gain are too large to take samples 1 in every 100 samples
 
     const sampledFrq = [];
@@ -1067,33 +1067,47 @@ class Combination extends AudioCalibrator {
 
     const data = {Freq: sampledFrq, Gain: sampledGain};
 
-    await set(ref(database, `Microphone/${speakerID}/linear`), data);
+    await set(ref(database, `Microphone2/${OEM}/${speakerID}/linear`), data);
   };
 
   // Function to Read frq and gain from firebase database given speakerID
   // returns an array of frq and gain if speakerID exists, returns null otherwise
 
-  readFrqGain = async speakerID => {
+  readFrqGain = async (speakerID, OEM) => {
     const dbRef = ref(database);
-    const snapshot = await get(child(dbRef, `Microphone/${speakerID}/linear`));
+    const snapshot = await get(child(dbRef, `Microphone2/${OEM}/${speakerID}/linear`));
     if (snapshot.exists()) {
       return snapshot.val();
     }
     return null;
   };
 
-  readGainat1000Hz = async speakerID => {
+  readGainat1000Hz = async (speakerID, OEM) => {
     const dbRef = ref(database);
-    const snapshot = await get(child(dbRef, `Microphone/${speakerID}/Gain1000`));
+    const snapshot = await get(child(dbRef, `Microphone2/${OEM}/${speakerID}/Gain1000`));
     if (snapshot.exists()) {
       return snapshot.val();
     }
     return null;
   };
 
-  writeGainat1000Hz = async (speakerID, gain) => {
+  writeGainat1000Hz = async (speakerID, gain, OEM) => {
     const data = {Gain: gain};
-    await set(ref(database, `Microphone/${speakerID}/Gain1000`), gain);
+    await set(ref(database, `Microphone2/${OEM}/${speakerID}/Gain1000`), gain);
+  };
+
+  writeIsSmartPhone = async (speakerID, isSmartPhone, OEM) => {
+    const data = {isSmartPhone: isSmartPhone};
+    await set(ref(database, `Microphone2/${OEM}/${speakerID}/isSmartPhone`), isSmartPhone);
+  };
+
+  doesMicrophoneExist = async (speakerID, OEM) => {
+    const dbRef = ref(database);
+    const snapshot = await get(child(dbRef, `Microphone2/${OEM}/${speakerID}`));
+    if (snapshot.exists()) {
+      return true;
+    }
+    return false;
   };
 
   convertToDB = gain => {
@@ -1127,11 +1141,6 @@ class Combination extends AudioCalibrator {
     }
   };
 
-  writeIsSmartPhone = async (speakerID, isSmartPhone) => {
-    const data = {isSmartPhone: isSmartPhone};
-    await set(ref(database, `Microphone/${speakerID}/isSmartPhone`), isSmartPhone);
-  };
-
   // Example of how to use the writeFrqGain and readFrqGain functions
   // writeFrqGain('speaker1', [1, 2, 3], [4, 5, 6]);
   // Speaker1 is the speakerID  you want to write to in the database
@@ -1155,6 +1164,7 @@ class Combination extends AudioCalibrator {
     micModelNumber = '',
     micModelName = ''
   ) => {
+    console.log('device info:', this.deviceInfo);
     this.numMLSPerCapture = _calibrateSoundBurstRepeats;
     this.desired_time_per_mls = _calibrateSoundBurstSec;
     this.num_mls_to_skip = _calibrateSoundBurstsWarmup;
@@ -1167,20 +1177,22 @@ class Combination extends AudioCalibrator {
 
     //new lCalib found at top of calibration files *1000hz, make sure to correct
     //based on zeroing of 1000hz, search for "*1000Hz"
+    const ID = isSmartPhone ? micModelNumber : micSerialNumber;
+    const OEM = isSmartPhone ? this.deviceInfo.OEM : micManufacturer;
     if (componentIR == null) {
       //mode 'ir'
       //global variable this.componentIR must be set
-      this.componentIR = await this.readFrqGain(microphoneName).then(data => {
+      this.componentIR = await this.readFrqGain(ID, OEM).then(data => {
         return data;
       });
 
-      lCalib = await this.readGainat1000Hz(microphoneName);
+      lCalib = await this.readGainat1000Hz(ID, OEM);
       // this.componentGainDBSPL = this.convertToDB(lCalib);
       this.componentGainDBSPL = lCalib;
       //TODO: if this call to database is unknown, cannot perform experiment => return false
       if (this.componentIR == null) {
         this.status =
-          `Microphone ${microphoneName} is not in the database. Please add it to the database.`.toString();
+          `Microphone (${OEM},${ID}) is not found in the database. Please add it to the database.`.toString();
         this.emit('update', {message: this.status});
         return false;
       }
@@ -1189,8 +1201,8 @@ class Combination extends AudioCalibrator {
       lCalib = this.findGainatFrequency(this.componentIR.Freq, this.componentIR.Gain, 1000);
       // this.componentGainDBSPL = this.convertToDB(lCalib);
       this.componentGainDBSPL = lCalib;
-      await this.writeGainat1000Hz(microphoneName, lCalib);
-      await this.writeIsSmartPhone(microphoneName, isSmartPhone);
+      await this.writeGainat1000Hz(ID, lCalib, OEM);
+      await this.writeIsSmartPhone(ID, isSmartPhone, OEM);
     }
 
     this.oldComponentIR = this.componentIR;
@@ -1207,15 +1219,24 @@ class Combination extends AudioCalibrator {
     if (componentIR != null) {
       //insert Freq and Gain from this.componentIR into db
       await this.writeFrqGain(
-        microphoneName,
+        ID,
         impulseResponseResults.componentIR.Freq,
-        impulseResponseResults.componentIR.Gain
+        impulseResponseResults.componentIR.Gain,
+        OEM
       );
     }
 
     const total_results = {...volumeResults, ...impulseResponseResults};
     console.log('total');
     console.log(total_results);
+    total_results['micInfo'] = {
+      micManufacturer: micManufacturer,
+      micSerialNumber: micSerialNumber,
+      micModelNumber: micModelNumber,
+      micModelName: micModelName,
+      ID: ID,
+      OEM: OEM,
+    };
     return total_results;
   };
 }
