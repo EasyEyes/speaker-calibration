@@ -1235,8 +1235,7 @@ class Combination extends AudioCalibrator {
     }
 
     const total_results = {...volumeResults, ...impulseResponseResults};
-    console.log('total');
-    console.log(total_results);
+
     total_results['micInfo'] = {
       micManufacturer: micManufacturer,
       micSerialNumber: micSerialNumber,
@@ -1245,6 +1244,8 @@ class Combination extends AudioCalibrator {
       ID: ID,
       OEM: OEM,
     };
+    console.log('total results');
+    console.log(total_results);
     return total_results;
   };
 }
