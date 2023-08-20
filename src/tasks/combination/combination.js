@@ -203,6 +203,7 @@ class Combination extends AudioCalibrator {
     const lowHz = this.#lowHz;
     const highHz = this.#highHz;
     const iirLength = this.iirLength;
+    const num_periods = this.numMLSPerCapture;
     this.stepNum += 1;
     console.log('send impulse responses to server: ' + this.stepNum);
     this.status =
@@ -215,6 +216,7 @@ class Combination extends AudioCalibrator {
         lowHz,
         highHz,
         iirLength,
+        num_periods,
         sampleRate: this.sourceSamplingRate || 96000,
       })
       .then(res => {
@@ -253,6 +255,7 @@ class Combination extends AudioCalibrator {
     const mls = this.#mls;
     const lowHz = this.#lowHz;
     const iirLength = this.iirLength;
+    const num_periods = this.numMLSPerCapture;
     const highHz = this.#highHz;
     this.stepNum += 1;
     console.log('send impulse responses to server: ' + this.stepNum);
@@ -268,6 +271,7 @@ class Combination extends AudioCalibrator {
         iirLength,
         componentIRGains,
         componentIRFreqs,
+        num_periods,
         sampleRate: this.sourceSamplingRate || 96000,
       })
       .then(res => {
@@ -393,9 +397,10 @@ class Combination extends AudioCalibrator {
     let number_of_bursts_to_skip = this.num_mls_to_skip;
     let time_to_sleep = 0;
     if (this.mode === 'unfiltered') {
-      time_to_sleep = this.#mls.length / this.sourceSamplingRate;
+      time_to_sleep = (this.#mls.length / this.sourceSamplingRate)*this.number_of_bursts_to_skip;
     } else if (this.mode === 'filtered') {
-      time_to_sleep = this.#currentConvolution.length / this.sourceSamplingRate;
+      console.log(this.#currentConvolution.length);
+      time_to_sleep = (this.#currentConvolution.length / this.sourceSamplingRate)*this.number_of_bursts_to_skip;
     } else {
       throw new Error('Mode broke in awaitSignalOnset');
     }
@@ -493,7 +498,12 @@ class Combination extends AudioCalibrator {
     this.sourceNode = this.sourceAudioContext.createBufferSource();
 
     this.sourceNode.buffer = buffer;
-    this.sourceNode.loop = true;
+    if (this.mode === 'filtered'){
+      this.sourceNode.loop = false;
+    }else{
+      this.sourceNode.loop = true;
+    }
+    
     this.sourceNode.connect(this.sourceAudioContext.destination);
 
     this.addCalibrationNode(this.sourceNode);
@@ -695,6 +705,7 @@ class Combination extends AudioCalibrator {
       } else {
         this.#currentConvolution = this.systemConvolution;
       }
+      this.numMLSPerCapture = 1;
       await this.playMLSwithIIR(stream, this.invertedImpulseResponse);
       this.#stopCalibrationAudio();
       this.sourceAudioContext.close();
@@ -1163,7 +1174,7 @@ class Combination extends AudioCalibrator {
     isSmartPhone = false,
     _calibrateSoundBurstRepeats = 4,
     _calibrateSoundBurstSec = 1,
-    _calibrateSoundBurstsWarmup = 1,
+    _calibrateSoundBurstsWarmup = 0,
     _calibrateSoundHz = 48000,
     _calibrateSoundIIRSec = 0.2,
     micManufacturer = '',

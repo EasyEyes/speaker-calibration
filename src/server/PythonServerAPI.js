@@ -3,9 +3,10 @@ import axios from 'axios';
  *
  */
 class PythonServerAPI {
-  static PYTHON_SERVER_URL = 'https://easyeyes-python-flask-server.herokuapp.com';
+  //static PYTHON_SERVER_URL = 'https://easyeyes-python-flask-server.herokuapp.com';
 
   static TEST_SERVER_URL = 'http://127.0.0.1:5000';
+  static PYTHON_SERVER_URL ='http://127.0.0.1:5000';
 
   /** @private */
   MAX_RETRY_COUNT = 3;
@@ -213,7 +214,7 @@ class PythonServerAPI {
   };
   
 
-  getComponentInverseImpulseResponse = async ({payload,mls,lowHz,highHz,componentIRGains,iirLength,componentIRFreqs,sampleRate}) => {
+  getComponentInverseImpulseResponse = async ({payload,mls,lowHz,highHz,componentIRGains,iirLength,componentIRFreqs,num_periods,sampleRate}) => {
     const task = 'component-inverse-impulse-response';
     let res = null;
 
@@ -228,6 +229,7 @@ class PythonServerAPI {
       iirLength,
       componentIRGains,
       componentIRFreqs,
+      num_periods,
       sampleRate,
     });
 
@@ -249,7 +251,7 @@ class PythonServerAPI {
 
     return res.data[task];
   };
-  getSystemInverseImpulseResponse = async ({payload,mls,lowHz,highHz,iirLength,sampleRate}) => {
+  getSystemInverseImpulseResponse = async ({payload,mls,lowHz,highHz,iirLength,num_periods,sampleRate}) => {
     const task = 'system-inverse-impulse-response';
     let res = null;
 
@@ -262,6 +264,7 @@ class PythonServerAPI {
       lowHz,
       iirLength,
       highHz,
+      num_periods,
       sampleRate,
     });
 
@@ -284,13 +287,13 @@ class PythonServerAPI {
     return res.data[task];
   };
 
-getComponentInverseImpulseResponseWithRetry = async ({ payload, mls, lowHz, highHz,componentIRGains,iirLength,componentIRFreqs, sampleRate}) => {
+getComponentInverseImpulseResponseWithRetry = async ({ payload, mls, lowHz, highHz,componentIRGains,iirLength,componentIRFreqs, num_periods,sampleRate}) => {
   let retryCount = 0;
   let response = null;
 
   while (retryCount < this.MAX_RETRY_COUNT) {
     try {
-      response = await this.getComponentInverseImpulseResponse({ payload, mls, lowHz, highHz,componentIRGains,iirLength,componentIRFreqs,sampleRate});
+      response = await this.getComponentInverseImpulseResponse({ payload, mls, lowHz, highHz,componentIRGains,iirLength,componentIRFreqs,num_periods,sampleRate});
       // If the request is successful, break out of the loop
       break;
     } catch (error) {
@@ -307,13 +310,13 @@ getComponentInverseImpulseResponseWithRetry = async ({ payload, mls, lowHz, high
   }
 };
 
-getSystemInverseImpulseResponseWithRetry = async ({ payload, mls, lowHz, highHz,iirLength, sampleRate}) => {
+getSystemInverseImpulseResponseWithRetry = async ({ payload, mls, lowHz, highHz,iirLength, num_periods,sampleRate}) => {
   let retryCount = 0;
   let response = null;
 
   while (retryCount < this.MAX_RETRY_COUNT) {
     try {
-      response = await this.getSystemInverseImpulseResponse({ payload, mls, lowHz, highHz,iirLength,sampleRate});
+      response = await this.getSystemInverseImpulseResponse({ payload, mls, lowHz, highHz,iirLength,num_periods,sampleRate});
       // If the request is successful, break out of the loop
       break;
     } catch (error) {
