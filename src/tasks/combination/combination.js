@@ -203,7 +203,7 @@ class Combination extends AudioCalibrator {
     const lowHz = this.#lowHz;
     const highHz = this.#highHz;
     const iirLength = this.iirLength;
-    const num_periods = this.numMLSPerCapture;
+    const num_periods = this.numMLSPerCapture + this.num_mls_to_skip;
     this.stepNum += 1;
     console.log('send impulse responses to server: ' + this.stepNum);
     this.status =
@@ -255,7 +255,7 @@ class Combination extends AudioCalibrator {
     const mls = this.#mls;
     const lowHz = this.#lowHz;
     const iirLength = this.iirLength;
-    const num_periods = this.numMLSPerCapture;
+    const num_periods = this.numMLSPerCapture + this.num_mls_to_skip;
     const highHz = this.#highHz;
     this.stepNum += 1;
     console.log('send impulse responses to server: ' + this.stepNum);
@@ -368,14 +368,15 @@ class Combination extends AudioCalibrator {
     let time_to_wait = 0;
     if (this.mode === 'unfiltered') {
       time_to_wait = (this.#mls.length / this.sourceSamplingRate) * this.numMLSPerCapture;
+      time_to_wait= time_to_wait*1.1;
     } else if (this.mode === 'filtered') {
       time_to_wait =
-        (this.#currentConvolution.length / this.sourceSamplingRate) * this.numMLSPerCapture;
+        (this.#currentConvolution.length / this.sourceSamplingRate) * (this.numMLSPerCapture/(this.num_mls_to_skip+this.numMLSPerCapture));
     } else {
       throw new Error('Mode broke in awaitDesiredMLSLength');
     }
 
-    await sleep(time_to_wait * 1.1);
+    await sleep(time_to_wait);
   };
 
   /** .
@@ -397,10 +398,10 @@ class Combination extends AudioCalibrator {
     let number_of_bursts_to_skip = this.num_mls_to_skip;
     let time_to_sleep = 0;
     if (this.mode === 'unfiltered') {
-      time_to_sleep = (this.#mls.length / this.sourceSamplingRate)*this.number_of_bursts_to_skip;
+      time_to_sleep = (this.#mls.length / this.sourceSamplingRate)*number_of_bursts_to_skip;
     } else if (this.mode === 'filtered') {
       console.log(this.#currentConvolution.length);
-      time_to_sleep = (this.#currentConvolution.length / this.sourceSamplingRate)*this.number_of_bursts_to_skip;
+      time_to_sleep = (this.#currentConvolution.length / this.sourceSamplingRate)*(number_of_bursts_to_skip/(number_of_bursts_to_skip+this.numMLSPerCapture));
     } else {
       throw new Error('Mode broke in awaitSignalOnset');
     }
@@ -524,66 +525,6 @@ class Combination extends AudioCalibrator {
   };
 
   /**
-   * function to put MLS filtered IIR data obtained from
-   * python server into our audio buffer to be played aloud
-   */
-  #putInPythonConv = () => {
-    const audioCtx = this.makeNewSourceAudioContextConvolved();
-
-    //depends on goal
-    if (this._calibrateSoundCheck != 'system') {
-      this.#currentConvolution = this.componentConvolution;
-      const buffer = audioCtx.createBuffer(
-        1, // number of channels
-        this.componentConvolution.length,
-        audioCtx.sampleRate // sample rate
-      );
-
-      const data = buffer.getChannelData(0); // get data
-      // fill the buffer with our data
-      try {
-        for (let i = 0; i < this.componentConvolution.length; i += 1) {
-          data[i] = this.componentConvolution[i];
-        }
-      } catch (error) {
-        console.error(error);
-      }
-
-      const source = audioCtx.createBufferSource();
-
-      source.buffer = buffer;
-      source.loop = true;
-      source.connect(audioCtx.destination);
-
-      this.addCalibrationNodeConvolved(source);
-    } else {
-      this.#currentConvolution = this.systemConvolution;
-      const buffer = audioCtx.createBuffer(
-        1, // number of channels
-        this.systemConvolution.length,
-        audioCtx.sampleRate // sample rate
-      );
-      const data = buffer.getChannelData(0); // get data
-      // fill the buffer with our data
-      try {
-        for (let i = 0; i < this.systemConvolution.length; i += 1) {
-          data[i] = this.systemConvolution[i];
-        }
-      } catch (error) {
-        console.error(error);
-      }
-
-      const source = audioCtx.createBufferSource();
-
-      source.buffer = buffer;
-      source.loop = true;
-      source.connect(audioCtx.destination);
-
-      this.addCalibrationNodeConvolved(source);
-    }
-  };
-
-  /**
    * Creates an audio context and plays it for a few seconds.
    *
    * @private
@@ -591,24 +532,24 @@ class Combination extends AudioCalibrator {
    * @example
    */
   #playCalibrationAudio = () => {
+
+    this.calibrationNodes[0].start(0);
+    this.status = ``;
     if (this.mode === 'unfiltered') {
-      this.calibrationNodes[0].start(0);
       this.#mls = this.calibrationNodes[0].buffer.getChannelData(0);
       console.log('play calibration audio ' + this.stepNum);
       this.status =
         `All Hz Calibration: playing the calibration tone...`.toString() +
-        this.generateTemplate().toString();
-      this.emit('update', {message: this.status});
+      this.generateTemplate().toString();
     } else if (this.mode === 'filtered') {
-      this.calibrationNodes[0].start(0);
       console.log('play convolved audio ' + this.stepNum);
       this.status =
         `All Hz Calibration: playing the convolved calibration tone...`.toString() +
         this.generateTemplate().toString();
-      this.emit('update', {message: this.status});
     } else {
       throw new Error('Mode is incorrect');
     }
+    this.emit('update', {message: this.status});
     this.stepNum += 1;
     console.log('sink sampling rate');
     console.log(this.sinkSamplingRate);
@@ -705,7 +646,6 @@ class Combination extends AudioCalibrator {
       } else {
         this.#currentConvolution = this.systemConvolution;
       }
-      this.numMLSPerCapture = 1;
       await this.playMLSwithIIR(stream, this.invertedImpulseResponse);
       this.#stopCalibrationAudio();
       this.sourceAudioContext.close();
@@ -1174,7 +1114,7 @@ class Combination extends AudioCalibrator {
     isSmartPhone = false,
     _calibrateSoundBurstRepeats = 4,
     _calibrateSoundBurstSec = 1,
-    _calibrateSoundBurstsWarmup = 0,
+    _calibrateSoundBurstsWarmup = 1,
     _calibrateSoundHz = 48000,
     _calibrateSoundIIRSec = 0.2,
     micManufacturer = '',
