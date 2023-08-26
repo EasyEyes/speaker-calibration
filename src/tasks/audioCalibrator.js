@@ -83,7 +83,8 @@ class AudioCalibrator extends AudioRecorder {
     loopCondition = () => false,
     duringRecord = async () => {},
     afterRecord = async () => {},
-    mode
+    mode,
+    checkRec
   ) => {
     this.numSuccessfulCaptured = 0;
 
@@ -111,7 +112,7 @@ class AudioCalibrator extends AudioRecorder {
 
       // when done, stop recording
       console.warn('stopRecording');
-      await this.stopRecording(mode);
+      await this.stopRecording(mode,checkRec);
 
       // do something after recording such as start processing values
       console.warn('afterRecord');
@@ -136,7 +137,8 @@ class AudioCalibrator extends AudioRecorder {
     beforeRecord = () => {},
     afterRecord = () => {},
     gainValue,
-    lCalib = 104.92978421490648
+    lCalib = 104.92978421490648,
+    checkRec
   ) => {
     this.numCalibratingRoundsCompleted = 0;
 
@@ -154,7 +156,7 @@ class AudioCalibrator extends AudioRecorder {
 
       // when done, stop recording
       console.log('Calibration Round Complete');
-      await this.stopRecording();
+      await this.stopRecording('volume',checkRec);
 
       // after recording
       await afterRecord(lCalib);
@@ -243,7 +245,7 @@ class AudioCalibrator extends AudioRecorder {
   };
   downloadSingleUnfilteredRecording = () => {
     const recordings = this.getAllRecordedSignals();
-    saveToCSV(recordings[0], `recordedMLSignal_unconvolved.csv`);
+    saveToCSV(recordings[recordings.length-1], `recordedMLSignal_unconvolved.csv`);
   }
   downloadSingleFilteredRecording = () => {
     const recordings = this.getAllFilteredRecordedSignals();

@@ -578,6 +578,7 @@ class Combination extends AudioCalibrator {
   };
 
   playMLSwithIIR = async (stream, iir) => {
+    let checkRec = false;
     this.mode = 'filtered';
     console.log('play mls with iir');
     this.invertedImpulseResponse = iir;
@@ -590,7 +591,8 @@ class Combination extends AudioCalibrator {
       () => this.numSuccessfulCaptured < 1,
       this.#awaitDesiredMLSLength, // during record
       this.#afterMLSwIIRRecord, // after record
-      this.mode
+      this.mode,
+      checkRec
     );
   };
 
@@ -605,6 +607,7 @@ class Combination extends AudioCalibrator {
    */
   startCalibrationImpulseResponse = async stream => {
     let desired_time = this.desired_time_per_mls;
+    let checkRec = 'allhz';
 
     console.log('MLS sequence should be of length: ' + this.sourceSamplingRate * desired_time);
 
@@ -628,9 +631,11 @@ class Combination extends AudioCalibrator {
       () => this.numSuccessfulCaptured < this.numCaptures, // loop while true
       this.#awaitDesiredMLSLength, // during record
       this.#afterMLSRecord, // after record
-      this.mode
+      this.mode,
+      checkRec
     ),
       this.#stopCalibrationAudio();
+      checkRec = false;
 
     // at this stage we've captured all the required signals,
     // and have received IRs for each one
@@ -928,6 +933,7 @@ class Combination extends AudioCalibrator {
     let inDB = 0;
     const outDBSPLValues = [];
     const outDBSPL1000Values = [];
+    let checkRec = false;
 
     // do one calibration that will be discarded
     const soundLevelToDiscard = -60;
@@ -946,7 +952,8 @@ class Combination extends AudioCalibrator {
         this.#createCalibrationToneWithGainValue,
         this.#sendToServerForProcessing,
         gainToDiscard,
-        lCalib //todo make this a class parameter
+        lCalib, //todo make this a class parameter
+        checkRec
       );
     } while (this.outDBSPL === null);
     //reset the values
@@ -960,6 +967,9 @@ class Combination extends AudioCalibrator {
     // run the calibration at different gain values provided by the user
     for (let i = 0; i < trialIterations; i++) {
       //convert gain to DB and add to inDB
+      if (i == trialIterations-1){
+        checkRec = 'loudest';
+      }
       inDB = Math.log10(gainValues[i]) * 20;
       // precision to 1 decimal place
       inDB = Math.round(inDB * 10) / 10;
@@ -977,7 +987,8 @@ class Combination extends AudioCalibrator {
           this.#createCalibrationToneWithGainValue,
           this.#sendToServerForProcessing,
           gainValues[i],
-          lCalib //todo make this a class parameter
+          lCalib, //todo make this a class parameter
+          checkRec
         );
       } while (this.outDBSPL === null);
       outDBSPL1000Values.push(this.outDBSPL1000);
