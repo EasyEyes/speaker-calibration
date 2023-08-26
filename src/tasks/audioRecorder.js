@@ -32,14 +32,32 @@ class AudioRecorder extends MyEventEmitter {
    * @private
    * @example
    */
-  #saveRecording = async () => {
+  #saveRecording = async (checkRec) => {
     const arrayBuffer = await this.#audioBlob.arrayBuffer();
     const audioBuffer = await this.#audioContext.decodeAudioData(arrayBuffer);
     const data = audioBuffer.getChannelData(0);
+    const dataArray = Array.from(data);
 
     console.log(`Decoded audio buffer with ${data.length} samples`);
     console.log(`Unfiltered recording should be of length: ${data.length}`);
-    this.#recordedSignals.push(Array.from(data));
+    if (checkRec == 'loudest'){
+      const uniqueSet = new Set(dataArray);
+      const numberOfUniqueValues = uniqueSet.size;
+      const squaredValues = dataArray.map(value => value * value);
+      const sum_of_squares = squaredValues.reduce((total, value) => total + value, 0);
+      const squared_mean = sum_of_squares / dataArray.length;
+      const dbLevel = 20 * Math.log10(Math.sqrt(squared_mean));
+      console.log("Loudest 1000-Hz recording: " + dbLevel + " with " + numberOfUniqueValues + " unique values.")
+    }else if (checkRec == 'allhz'){
+      const uniqueSet = new Set(dataArray);
+      const numberOfUniqueValues = uniqueSet.size;
+      const squaredValues = dataArray.map(value => value * value);
+      const sum_of_squares = squaredValues.reduce((total, value) => total + value, 0);
+      const squared_mean = sum_of_squares / dataArray.length;
+      const dbLevel = 20 * Math.log10(Math.sqrt(squared_mean));
+      console.log("All Hz Recording: " + dbLevel + " with " + numberOfUniqueValues + " unique values.")
+    }
+    this.#recordedSignals.push(dataArray);
   };
 
   #saveFilteredRecording = async () => {
@@ -110,7 +128,7 @@ class AudioRecorder extends MyEventEmitter {
    * @public
    * @example
    */
-  stopRecording = async (mode) => {
+  stopRecording = async (mode,checkRec) => {
     // Stop the media recorder, and wait for the data to be available
     await new Promise(resolve => {
       this.#mediaRecorder.onstop = () => {
@@ -127,7 +145,7 @@ class AudioRecorder extends MyEventEmitter {
     if (mode === 'filtered'){
       await this.#saveFilteredRecording();
     }else{
-      await this.#saveRecording();
+      await this.#saveRecording(checkRec);
     }
   };
 
