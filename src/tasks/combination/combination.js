@@ -635,7 +635,7 @@ class Combination extends AudioCalibrator {
       checkRec
     ),
       this.#stopCalibrationAudio();
-      checkRec = false;
+    checkRec = false;
 
     // at this stage we've captured all the required signals,
     // and have received IRs for each one
@@ -967,7 +967,7 @@ class Combination extends AudioCalibrator {
     // run the calibration at different gain values provided by the user
     for (let i = 0; i < trialIterations; i++) {
       //convert gain to DB and add to inDB
-      if (i == trialIterations-1){
+      if (i == trialIterations - 1) {
         checkRec = 'loudest';
       }
       inDB = Math.log10(gainValues[i]) * 20;
@@ -1208,6 +1208,7 @@ class Combination extends AudioCalibrator {
       micModelName: micModelName,
       ID: ID,
       OEM: OEM,
+      micInfo: this.deviceInfo,
     };
     console.log('total results');
     console.log(total_results);
