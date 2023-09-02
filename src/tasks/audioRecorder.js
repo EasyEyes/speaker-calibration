@@ -32,7 +32,7 @@ class AudioRecorder extends MyEventEmitter {
    * @private
    * @example
    */
-  #saveRecording = async (checkRec) => {
+  #saveRecording = async checkRec => {
     const arrayBuffer = await this.#audioBlob.arrayBuffer();
     const audioBuffer = await this.#audioContext.decodeAudioData(arrayBuffer);
     const data = audioBuffer.getChannelData(0);
@@ -40,22 +40,36 @@ class AudioRecorder extends MyEventEmitter {
 
     console.log(`Decoded audio buffer with ${data.length} samples`);
     console.log(`Unfiltered recording should be of length: ${data.length}`);
-    if (checkRec == 'loudest'){
+    if (checkRec == 'loudest') {
       const uniqueSet = new Set(dataArray);
       const numberOfUniqueValues = uniqueSet.size;
       const squaredValues = dataArray.map(value => value * value);
       const sum_of_squares = squaredValues.reduce((total, value) => total + value, 0);
       const squared_mean = sum_of_squares / dataArray.length;
       const dbLevel = 20 * Math.log10(Math.sqrt(squared_mean));
-      console.log("Loudest 1000-Hz recording: " + dbLevel + " with " + numberOfUniqueValues + " unique values.")
-    }else if (checkRec == 'allhz'){
+      const roundedDbLevel = Math.round(dbLevel * 10) / 10;
+      console.log(
+        'Loudest 1000-Hz recording: ' +
+          roundedDbLevel +
+          ' dB with ' +
+          numberOfUniqueValues +
+          ' unique values.'
+      );
+    } else if (checkRec == 'allhz') {
       const uniqueSet = new Set(dataArray);
       const numberOfUniqueValues = uniqueSet.size;
       const squaredValues = dataArray.map(value => value * value);
       const sum_of_squares = squaredValues.reduce((total, value) => total + value, 0);
       const squared_mean = sum_of_squares / dataArray.length;
       const dbLevel = 20 * Math.log10(Math.sqrt(squared_mean));
-      console.log("All Hz Recording: " + dbLevel + " with " + numberOfUniqueValues + " unique values.")
+      const roundedDbLevel = Math.round(dbLevel * 10) / 10;
+      console.log(
+        'All Hz Recording: ' +
+          roundedDbLevel +
+          ' dB with ' +
+          numberOfUniqueValues +
+          ' unique values.'
+      );
     }
     this.#recordedSignals.push(dataArray);
   };
@@ -128,7 +142,7 @@ class AudioRecorder extends MyEventEmitter {
    * @public
    * @example
    */
-  stopRecording = async (mode,checkRec) => {
+  stopRecording = async (mode, checkRec) => {
     // Stop the media recorder, and wait for the data to be available
     await new Promise(resolve => {
       this.#mediaRecorder.onstop = () => {
@@ -142,9 +156,9 @@ class AudioRecorder extends MyEventEmitter {
       this.#mediaRecorder.stop();
     });
     // Now that we have data, save it
-    if (mode === 'filtered'){
+    if (mode === 'filtered') {
       await this.#saveFilteredRecording();
-    }else{
+    } else {
       await this.#saveRecording(checkRec);
     }
   };
@@ -169,7 +183,7 @@ class AudioRecorder extends MyEventEmitter {
    */
   getAllRecordedSignals = () => this.#recordedSignals;
 
-    /** .
+  /** .
    * .
    * .
    * Public method to get all the recorded audio signals
