@@ -1079,6 +1079,15 @@ class Combination extends AudioCalibrator {
     return false;
   };
 
+  addMicrophoneInfo = async (speakerID, OEM, micInfo) => {
+    // add to database if /info does not exist
+    const dbRef = ref(database);
+    const snapshot = await get(child(dbRef, `Microphone2/${OEM}/${speakerID}/info`));
+    if (!snapshot.exists()) {
+      await set(ref(database, `Microphone2/${OEM}/${speakerID}/info`), micInfo);
+    }
+  };
+
   convertToDB = gain => {
     return Math.log10(gain) * 20;
   };
@@ -1152,6 +1161,17 @@ class Combination extends AudioCalibrator {
     //based on zeroing of 1000hz, search for "*1000Hz"
     const ID = isSmartPhone ? micModelNumber : micSerialNumber;
     const OEM = isSmartPhone ? this.deviceInfo.OEM : micManufacturer;
+    const micInfo = {
+      OEM: OEM,
+      ID: ID,
+      HardwareName: isSmartPhone ? this.deviceInfo.hardwarename : micModelName,
+      hardwareFamily: isSmartPhone ? this.deviceInfo.hardwarefamily : micModelName,
+      HardwareModel: isSmartPhone ? this.deviceInfo.hardwaremodel : micModelName,
+      PlatformName: isSmartPhone ? this.deviceInfo.platformname : 'N/A',
+      PlatformVersion: isSmartPhone ? this.deviceInfo.platformversion : 'N/A',
+      DeviceType: isSmartPhone ? this.deviceInfo.devicetype : 'N/A',
+    };
+    this.addMicrophoneInfo(ID, OEM, micInfo);
     if (componentIR == null) {
       //mode 'ir'
       //global variable this.componentIR must be set
@@ -1208,7 +1228,7 @@ class Combination extends AudioCalibrator {
       micModelName: micModelName,
       ID: ID,
       OEM: OEM,
-      micInfo: this.deviceInfo,
+      micInfo: micInfo,
     };
     console.log('total results');
     console.log(total_results);
