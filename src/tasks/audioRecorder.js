@@ -20,6 +20,9 @@ class AudioRecorder extends MyEventEmitter {
   /** @private */
   #recordedSignals = [];
 
+  /**@private */
+  #psdRecordings = [];
+
   /** @private */
   #filteredRecordings = [];
 
@@ -70,6 +73,7 @@ class AudioRecorder extends MyEventEmitter {
           numberOfUniqueValues +
           ' unique values.'
       );
+      this.#psdRecordings.push(dataArray);
     }
     this.#recordedSignals.push(dataArray);
   };
@@ -192,6 +196,16 @@ class AudioRecorder extends MyEventEmitter {
    * @example
    */
   getAllFilteredRecordedSignals = () => this.#filteredRecordings;
+
+  /** .
+   * .
+   * .
+   * Public method to get all the recorded audio signals for psd
+   *
+   * @returns
+   * @example
+   */
+  getAllUnfilteredPSD = () => this.#psdRecordings;
 
   /** .
    * .
