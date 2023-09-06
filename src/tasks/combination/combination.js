@@ -1162,11 +1162,12 @@ class Combination extends AudioCalibrator {
     const ID = isSmartPhone ? micModelNumber : micSerialNumber;
     const OEM = isSmartPhone ? this.deviceInfo.OEM : micManufacturer;
     const micInfo = {
+      micModelName: isSmartPhone ? micModelName : microphoneName,
       OEM: OEM,
       ID: ID,
-      HardwareName: isSmartPhone ? this.deviceInfo.hardwarename : micModelName,
-      hardwareFamily: isSmartPhone ? this.deviceInfo.hardwarefamily : micModelName,
-      HardwareModel: isSmartPhone ? this.deviceInfo.hardwaremodel : micModelName,
+      HardwareName: isSmartPhone ? this.deviceInfo.hardwarename : microphoneName,
+      hardwareFamily: isSmartPhone ? this.deviceInfo.hardwarefamily : microphoneName,
+      HardwareModel: isSmartPhone ? this.deviceInfo.hardwaremodel : microphoneName,
       PlatformName: isSmartPhone ? this.deviceInfo.platformname : 'N/A',
       PlatformVersion: isSmartPhone ? this.deviceInfo.platformversion : 'N/A',
       DeviceType: isSmartPhone ? this.deviceInfo.devicetype : 'N/A',
@@ -1221,15 +1222,7 @@ class Combination extends AudioCalibrator {
 
     const total_results = {...volumeResults, ...impulseResponseResults};
 
-    total_results['micInfo'] = {
-      micManufacturer: micManufacturer,
-      micSerialNumber: micSerialNumber,
-      micModelNumber: micModelNumber,
-      micModelName: micModelName,
-      ID: ID,
-      OEM: OEM,
-      micInfo: micInfo,
-    };
+    total_results['micInfo'] = micInfo;
     console.log('total results');
     console.log(total_results);
     return total_results;
