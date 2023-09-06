@@ -656,7 +656,7 @@ class Combination extends AudioCalibrator {
       this.#stopCalibrationAudio();
       this.sourceAudioContext.close();
       let conv_recs = this.getAllFilteredRecordedSignals();
-      let recs = this.getAllRecordedSignals();
+      let recs = this.getAllUnfilteredPSD();
       let unconv_rec = recs[0];
       let conv_rec = conv_recs[0];
       if (this._calibrateSoundCheck != 'system') {
