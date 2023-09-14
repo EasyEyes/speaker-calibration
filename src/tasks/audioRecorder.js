@@ -21,13 +21,16 @@ class AudioRecorder extends MyEventEmitter {
   #recordedSignals = [];
 
   /**@private */
-  #psdRecordings = [];
+  #allHzUnfilteredRecordings = [];
 
   /** @private */
-  #filteredRecordings = [];
+  #allHzFilteredRecordings = [];
 
   /** @private */
   sinkSamplingRate;
+
+  /** @private */
+  #allVolumeRecordings = [];
 
   /**
    * Decode the audio data from the recorded audio blob.
@@ -35,7 +38,7 @@ class AudioRecorder extends MyEventEmitter {
    * @private
    * @example
    */
-  #saveRecording = async checkRec => {
+  #saveRecording = async (mode, checkRec) => {
     const arrayBuffer = await this.#audioBlob.arrayBuffer();
     const audioBuffer = await this.#audioContext.decodeAudioData(arrayBuffer);
     const data = audioBuffer.getChannelData(0);
@@ -73,9 +76,19 @@ class AudioRecorder extends MyEventEmitter {
           numberOfUniqueValues +
           ' unique values.'
       );
-      this.#psdRecordings.push(dataArray);
     }
-    this.#recordedSignals.push(dataArray);
+
+    if (mode === 'volume'){
+      console.log('Saving 1000 Hz Recording to #allVolumeRecordings')
+      this.#allVolumeRecordings.push(dataArray);
+    }else if (mode ==='unfiltered'){
+      console.log('Saving unfiltered all Hz recording to #allHzUnfilteredRecordings')
+      this.#allHzUnfilteredRecordings.push(dataArray);
+    }else if (mode ==='filtered'){
+      console.log('Saving filtered all hz recording to #allHzFilteredRecordings')
+      this.#allHzFilteredRecordings.push(dataArray);
+    }
+
   };
 
   #saveFilteredRecording = async () => {
@@ -85,7 +98,7 @@ class AudioRecorder extends MyEventEmitter {
 
     console.log(`Decoded audio buffer with ${data.length} samples`);
     console.log(`Filtered recording should be of length: ${data.length}`);
-    this.#filteredRecordings.push(Array.from(data));
+    this.#allHzFilteredRecordings.push(Array.from(data));
   };
 
   /**
@@ -160,11 +173,7 @@ class AudioRecorder extends MyEventEmitter {
       this.#mediaRecorder.stop();
     });
     // Now that we have data, save it
-    if (mode === 'filtered') {
-      await this.#saveFilteredRecording();
-    } else {
-      await this.#saveRecording(checkRec);
-    }
+    await this.#saveRecording(mode,checkRec);
   };
 
   /** .
@@ -176,6 +185,16 @@ class AudioRecorder extends MyEventEmitter {
    * @example
    */
   getLastRecordedSignal = () => this.#recordedSignals[this.#recordedSignals.length - 1];
+
+  /** .
+   * .
+   * .
+   * Public method to get the last 1000hz recorded audio signal
+   *
+   * @returns
+   * @example
+   */
+  getLastVolumeRecordedSignal = () => this.#allVolumeRecordings[this.#allVolumeRecordings.length - 1];
 
   /** .
    * .
@@ -195,7 +214,17 @@ class AudioRecorder extends MyEventEmitter {
    * @returns
    * @example
    */
-  getAllFilteredRecordedSignals = () => this.#filteredRecordings;
+  getAllVolumeRecordedSignals = () => this.#allVolumeRecordings;
+
+  /** .
+   * .
+   * .
+   * Public method to get all the recorded audio signals
+   *
+   * @returns
+   * @example
+   */
+  getAllFilteredRecordedSignals = () => this.#allHzFilteredRecordings;
 
   /** .
    * .
@@ -205,7 +234,7 @@ class AudioRecorder extends MyEventEmitter {
    * @returns
    * @example
    */
-  getAllUnfilteredPSD = () => this.#psdRecordings;
+  getAllUnfilteredRecordedSignals = () => this.#allHzUnfilteredRecordings;
 
   /** .
    * .

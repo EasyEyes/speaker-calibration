@@ -302,7 +302,8 @@ class Combination extends AudioCalibrator {
    * @example
    */
   sendRecordingToServerForProcessing = signalCsv => {
-    const allSignals = this.getAllRecordedSignals();
+    const allSignals = this.getAllUnfilteredRecordedSignals();
+    console.log('Obtaining last all hz unfiltered recording from #allHzUnfilteredRecordings to send to server for processing')
     const numSignals = allSignals.length;
     const mls = this.#mls;
     const payload =
@@ -656,7 +657,9 @@ class Combination extends AudioCalibrator {
       this.#stopCalibrationAudio();
       this.sourceAudioContext.close();
       let conv_recs = this.getAllFilteredRecordedSignals();
-      let recs = this.getAllUnfilteredPSD();
+      let recs = this.getAllUnfilteredRecordedSignals();
+      console.log('Obtaining unfiltered recording from #allHzUnfilteredRecordings to calculate PSD');
+      console.log('Obtaining filtered recording from #allHzFilteredRecordings to calculate PSD')
       let unconv_rec = recs[0];
       let conv_rec = conv_recs[0];
       if (this._calibrateSoundCheck != 'system') {
@@ -817,8 +820,8 @@ class Combination extends AudioCalibrator {
   #getTruncatedSignal = (left = 3.5, right = 4.5) => {
     const start = Math.floor(left * this.sourceSamplingRate);
     const end = Math.floor(right * this.sourceSamplingRate);
-    const result = Array.from(this.getLastRecordedSignal().slice(start, end));
-
+    const result = Array.from(this.getLastVolumeRecordedSignal().slice(start, end));
+    console.log("Obtaining last 1000 hz recording from #allVolumeRecordings to send for processing");
     /**
      * function to check that capture was properly made
      * @param {*} list
@@ -828,7 +831,7 @@ class Combination extends AudioCalibrator {
       if (setItem.size === 1 && setItem.has(0)) {
         console.warn(
           'The last capture failed, all recorded signal is zero',
-          this.getAllRecordedSignals()
+          this.getAllVolumeRecordedSignals()
         );
       }
       if (setItem.size === 0) {
