@@ -303,7 +303,9 @@ class Combination extends AudioCalibrator {
    */
   sendRecordingToServerForProcessing = signalCsv => {
     const allSignals = this.getAllUnfilteredRecordedSignals();
-    console.log('Obtaining last all hz unfiltered recording from #allHzUnfilteredRecordings to send to server for processing')
+    console.log(
+      'Obtaining last all hz unfiltered recording from #allHzUnfilteredRecordings to send to server for processing'
+    );
     const numSignals = allSignals.length;
     const mls = this.#mls;
     const payload =
@@ -658,8 +660,10 @@ class Combination extends AudioCalibrator {
       this.sourceAudioContext.close();
       let conv_recs = this.getAllFilteredRecordedSignals();
       let recs = this.getAllUnfilteredRecordedSignals();
-      console.log('Obtaining unfiltered recording from #allHzUnfilteredRecordings to calculate PSD');
-      console.log('Obtaining filtered recording from #allHzFilteredRecordings to calculate PSD')
+      console.log(
+        'Obtaining unfiltered recording from #allHzUnfilteredRecordings to calculate PSD'
+      );
+      console.log('Obtaining filtered recording from #allHzFilteredRecordings to calculate PSD');
       let unconv_rec = recs[0];
       let conv_rec = conv_recs[0];
       if (this._calibrateSoundCheck != 'system') {
@@ -821,7 +825,9 @@ class Combination extends AudioCalibrator {
     const start = Math.floor(left * this.sourceSamplingRate);
     const end = Math.floor(right * this.sourceSamplingRate);
     const result = Array.from(this.getLastVolumeRecordedSignal().slice(start, end));
-    console.log("Obtaining last 1000 hz recording from #allVolumeRecordings to send for processing");
+    console.log(
+      'Obtaining last 1000 hz recording from #allVolumeRecordings to send for processing'
+    );
     /**
      * function to check that capture was properly made
      * @param {*} list
@@ -1184,6 +1190,7 @@ class Combination extends AudioCalibrator {
       });
 
       lCalib = await this.readGainat1000Hz(ID, OEM);
+      micInfo['gainDBSPL'] = lCalib;
       // this.componentGainDBSPL = this.convertToDB(lCalib);
       this.componentGainDBSPL = lCalib;
       //TODO: if this call to database is unknown, cannot perform experiment => return false
@@ -1200,6 +1207,7 @@ class Combination extends AudioCalibrator {
       this.componentGainDBSPL = lCalib;
       await this.writeGainat1000Hz(ID, lCalib, OEM);
       await this.writeIsSmartPhone(ID, isSmartPhone, OEM);
+      micInfo['gainDBSPL'] = lCalib;
     }
 
     this.oldComponentIR = this.componentIR;
