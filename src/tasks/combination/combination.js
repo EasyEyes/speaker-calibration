@@ -1205,9 +1205,7 @@ class Combination extends AudioCalibrator {
       lCalib = this.findGainatFrequency(this.componentIR.Freq, this.componentIR.Gain, 1000);
       // this.componentGainDBSPL = this.convertToDB(lCalib);
       this.componentGainDBSPL = lCalib;
-      await this.writeGainat1000Hz(ID, lCalib, OEM);
       await this.writeIsSmartPhone(ID, isSmartPhone, OEM);
-      micInfo['gainDBSPL'] = lCalib;
     }
 
     this.oldComponentIR = this.componentIR;
@@ -1229,6 +1227,8 @@ class Combination extends AudioCalibrator {
         impulseResponseResults.componentIR.Gain,
         OEM
       );
+      micInfo['gainDBSPL'] = impulseResponseResults.parameters.gainDBSPL;
+      await this.writeGainat1000Hz(ID, micInfo['gainDBSPL'], OEM);
     }
 
     const total_results = {...volumeResults, ...impulseResponseResults};
