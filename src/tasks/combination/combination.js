@@ -758,6 +758,13 @@ class Combination extends AudioCalibrator {
           y_component_iir: component_iir_psd['y_conv'],
           x_component_iir_no_bandpass: component_iir_psd['x_unconv'],
           y_component_iir_no_bandpass: component_iir_psd['y_unconv'],
+          unconv_rec: recs[0],
+          conv_rec: conv_recs[0],
+          mls: this.#mls,
+          componentConvolution: this.componentConvolution,
+          systemConvolution: this.systemConvolution,
+          autocorrelations:this.autocorrelations,
+          impulseResponses: []
         };
       } else {
         let results = await this.pyServerAPI
@@ -835,8 +842,22 @@ class Combination extends AudioCalibrator {
           y_component_iir: component_iir_psd['y_conv'],
           x_component_iir_no_bandpass: component_iir_psd['x_unconv'],
           y_component_iir_no_bandpass: component_iir_psd['y_unconv'],
+          unconv_rec: recs[0],
+          conv_rec: conv_recs[0],
+          mls: this.#mls,
+          componentConvolution: this.componentConvolution,
+          systemConvolution: this.systemConvolution,
+          autocorrelations:this.autocorrelations,
+          impulseResponses: []
         };
       }
+      await Promise.all(this.impulseResponses).then(res => {
+        for (let i = 0; i < res.length; i++) {
+          if (res[i] != undefined) {
+            iir_ir_and_plots['impulseResponses'].push(res[i])
+          }
+        }
+      });
 
       if (this.#download) {
         this.downloadSingleUnfilteredRecording();
@@ -913,7 +934,22 @@ class Combination extends AudioCalibrator {
         y_component_iir: component_iir_psd['y_conv'],
         x_component_iir_no_bandpass: component_iir_psd['x_unconv'],
         y_component_iir_no_bandpass: component_iir_psd['y_unconv'],
+        unconv_rec: recs[0],
+        conv_rec: conv_recs[0],
+        mls: this.#mls,
+        componentConvolution: this.componentConvolution,
+        systemConvolution: this.systemConvolution,
+        autocorrelations:this.autocorrelations,
+        impulseResponses: []
       };
+      await Promise.all(this.impulseResponses).then(res => {
+        for (let i = 0; i < res.length; i++) {
+          if (res[i] != undefined) {
+            iir_ir_and_plots['impulseResponses'].push(res[i])
+          }
+        }
+      });
+
       if (this.#download) {
         saveToCSV(this.#mls, 'MLS.csv');
         saveToCSV(this.componentConvolution, 'python_component_convolution_mls_iir.csv');
@@ -1315,8 +1351,8 @@ class Combination extends AudioCalibrator {
 
     //new lCalib found at top of calibration files *1000hz, make sure to correct
     //based on zeroing of 1000hz, search for "*1000Hz"
-    const ID = isSmartPhone ? micModelNumber : micSerialNumber;
-    const OEM = isSmartPhone ? this.deviceInfo.OEM : micManufacturer;
+    const ID = "711-4754";
+    const OEM = "MiniDSP";
     const micInfo = {
       micModelName: isSmartPhone ? micModelName : microphoneName,
       OEM: OEM,
