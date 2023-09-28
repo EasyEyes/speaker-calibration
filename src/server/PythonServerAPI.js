@@ -137,6 +137,59 @@ class PythonServerAPI {
     return res.data[task];
   };
 
+  getBackgroundNoisePSD = async ({background_rec, sampleRate}) => {
+    const task = 'background-psd';
+    let res = null;
+
+    const data = JSON.stringify({
+      task,
+      background_rec,
+      sampleRate,
+    });
+
+    await axios({
+      method: 'post',
+      baseURL: PythonServerAPI.PYTHON_SERVER_URL,
+      url: `/task/${task}`,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      data,
+    })
+      .then(response => {
+        res = response;
+      })
+      .catch(error => {
+        throw error;
+      });
+    return res.data[task];
+  };
+
+  getBackgroundNoisePSDWithRetry = async ({ background_rec,sampleRate }) => {
+    let retryCount = 0;
+    let response = null;
+
+    while (retryCount < this.MAX_RETRY_COUNT) {
+      try {
+        response = await this.getBackgroundNoisePSD({ background_rec,sampleRate });
+        // If the request is successful, break out of the loop
+        break;
+      } catch (error) {
+        console.error(`Error occurred. Retrying... (${retryCount + 1}/${this.MAX_RETRY_COUNT})`);
+        retryCount++;
+        await new Promise(resolve => setTimeout(resolve, this.RETRY_DELAY_MS));
+      }
+    }
+
+    if (response) {
+      return response;
+    } else {
+      throw new Error(`Failed to get PSD after ${this.MAX_RETRY_COUNT} attempts.`);
+    }
+  };
+
+
+
   getSubtractedPSD = async (rec, knownGains, knownFrequencies,sampleRate) => {
     const task = 'subtracted-psd';
     let res = null;

@@ -23,6 +23,9 @@ class AudioRecorder extends MyEventEmitter {
   /**@private */
   #allHzUnfilteredRecordings = [];
 
+  /**@private */
+  #allBackgroundRecordings = [];
+
   /** @private */
   #allHzFilteredRecordings = [];
 
@@ -77,7 +80,6 @@ class AudioRecorder extends MyEventEmitter {
           ' unique values.'
       );
     }
-
     if (mode === 'volume'){
       console.log('Saving 1000 Hz Recording to #allVolumeRecordings')
       this.#allVolumeRecordings.push(dataArray);
@@ -87,6 +89,9 @@ class AudioRecorder extends MyEventEmitter {
     }else if (mode ==='filtered'){
       console.log('Saving filtered all hz recording to #allHzFilteredRecordings')
       this.#allHzFilteredRecordings.push(dataArray);
+    }else if (mode ==='background'){
+      console.log('Saving background recording to #allBackgroundRecordings')
+      this.#allBackgroundRecordings.push(dataArray);
     }
 
   };
@@ -235,6 +240,16 @@ class AudioRecorder extends MyEventEmitter {
    * @example
    */
   getAllUnfilteredRecordedSignals = () => this.#allHzUnfilteredRecordings;
+
+  /** .
+   * .
+   * .
+   * Public method to get all the recorded audio signals for psd
+   *
+   * @returns
+   * @example
+   */
+  getAllBackgroundRecordings = () => this.#allBackgroundRecordings;
 
   /** .
    * .

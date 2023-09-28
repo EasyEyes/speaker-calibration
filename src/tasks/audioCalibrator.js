@@ -65,6 +65,39 @@ class AudioCalibrator extends AudioRecorder {
     targetElement.appendChild(this.localAudio);
   };
 
+  recordBackground = async(
+    stream,
+    loopCondition = () => false,
+    duringRecord = async () => {},
+    afterRecord = async () => {},
+    mode,
+    checkRec
+  ) => {
+    this.numSuccesfulCaptures = 0;
+    console.warn('before recording background noise');
+        // calibration loop
+        while (loopCondition()) {
+          // start recording
+          console.warn('startRecording');
+          await this.startRecording(stream);
+
+          // do something during the recording such as sleep n amount of time
+          console.warn('duringRecord');
+          await duringRecord();
+
+          // when done, stop recording
+          console.warn('stopRecording');
+          await this.stopRecording(mode,checkRec);
+
+          // do something after recording such as start processing values
+          console.warn('afterRecord');
+          await afterRecord();
+
+          // eslint-disable-next-line no-await-in-loop
+          await sleep(1);
+        }
+  }
+
   /**
    *
    * @param {MediaStream} stream
