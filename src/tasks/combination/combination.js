@@ -162,6 +162,12 @@ class Combination extends AudioCalibrator {
 
   systemInvertedImpulseResponseNoBandpass = [];
 
+  _calibrateSoundBackgroundSecs;
+
+  background_noise = {};
+
+  numSuccessfulBackgroundCaptured;
+
   /**generate string template that gets reevaluated as variable increases */
   generateTemplate = () => {
     if (this.percent_complete > 100) {
@@ -299,6 +305,32 @@ class Combination extends AudioCalibrator {
       });
   };
 
+  sendBackgroundRecording = () => {
+    const allSignals = this.getAllBackgroundRecordings();
+    const numSignals = allSignals.length;
+    const background_rec_whole = allSignals[numSignals-1];
+    const halfLength = Math.ceil(background_rec_whole.length / 2);
+    const background_rec = background_rec_whole.slice(halfLength);
+    console.log('Sending background recording to server for processing');
+    this.pyServerAPI
+          .getBackgroundNoisePSDWithRetry({
+            background_rec,
+            sampleRate: this.sourceSamplingRate || 96000,
+          })
+          .then(res => {
+            if (this.numSuccessfulBackgroundCaptured < 1) {
+              this.numSuccessfulBackgroundCaptured += 1;
+              //storing all background data in background_psd object
+              this.background_noise['x_background'] = res['x_background'];
+              this.background_noise['y_background'] = res['y_background'];
+              this.background_noise['recording'] = background_rec;
+            }
+          })
+          .catch(err => {
+            console.error(err);
+          });
+  }
+
   /** .
    * .
    * .
@@ -387,6 +419,19 @@ class Combination extends AudioCalibrator {
 
     await sleep(time_to_wait);
   };
+
+  /**
+   * Passed to the background noise recording function, awaits the desired amount of seconds to capture the desired number
+   * of seconds of background noise
+   *
+   * @example
+   */
+  #awaitBackgroundNoiseRecording = async () => {
+    console.log('Waiting ' + this._calibrateSoundBackgroundSecs + " second(s) to record background noise");
+    let time_to_wait = this._calibrateSoundBackgroundSecs;
+    await sleep(time_to_wait);
+  };
+
 
   /** .
    * .
@@ -632,6 +677,25 @@ class Combination extends AudioCalibrator {
         // this.emit('InvertedImpulseResponse', {res: false});
         console.error(err);
       });
+    this.numSuccessfulBackgroundCaptured = 0;
+    if (this._calibrateSoundBackgroundSecs > 0){
+      this.mode='background';
+      this.status =
+      `All Hz Calibration: sampling the background noise...`.toString() + this.generateTemplate().toString();
+      this.emit('update', {message: this.status});
+      await this.recordBackground(
+        stream, //stream
+        () => this.numSuccessfulBackgroundCaptured < 1, //loop condition
+        this.#awaitBackgroundNoiseRecording, //sleep to record
+        this.sendBackgroundRecording, //send to get PSD
+        this.mode,
+        checkRec
+      )
+      this.incrementStatusBar();
+    }
+    this.mode='unfiltered';
+    this.numSuccessfulCaptured = 0;
+
     await this.calibrationSteps(
       stream,
       this.#playCalibrationAudio, // play audio func (required)
@@ -643,7 +707,7 @@ class Combination extends AudioCalibrator {
       this.mode,
       checkRec
     ),
-      this.#stopCalibrationAudio();
+    this.#stopCalibrationAudio();
     checkRec = false;
 
     // at this stage we've captured all the required signals,
@@ -1331,6 +1395,7 @@ class Combination extends AudioCalibrator {
     _calibrateSoundHz = 48000,
     _calibrateSoundIIRSec = 0.2,
     calibrateSound1000HzSec = 5,
+    _calibrateSoundBackgroundSecs = 0,
     micManufacturer = '',
     micSerialNumber = '',
     micModelNumber = '',
@@ -1343,6 +1408,7 @@ class Combination extends AudioCalibrator {
     this.desired_time_per_mls = _calibrateSoundBurstSec;
     this.num_mls_to_skip = _calibrateSoundBurstsWarmup;
     this.desired_sampling_rate = _calibrateSoundHz;
+    this._calibrateSoundBackgroundSecs = _calibrateSoundBackgroundSecs;
 
     //feed calibration goal here
     this._calibrateSoundCheck = _calibrateSoundCheck;
@@ -1401,7 +1467,7 @@ class Combination extends AudioCalibrator {
     );
 
     let impulseResponseResults = await this.startCalibrationImpulseResponse(stream);
-
+    impulseResponseResults['background_noise'] = this.background_noise;
     if (componentIR != null) {
       //insert Freq and Gain from this.componentIR into db
       await this.writeFrqGain(
