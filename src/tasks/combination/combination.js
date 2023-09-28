@@ -309,8 +309,11 @@ class Combination extends AudioCalibrator {
     const allSignals = this.getAllBackgroundRecordings();
     const numSignals = allSignals.length;
     const background_rec_whole = allSignals[numSignals-1];
-    const halfLength = Math.ceil(background_rec_whole.length / 2);
-    const background_rec = background_rec_whole.slice(halfLength);
+    const fraction = .5/(this._calibrateSoundBackgroundSecs + .5);
+    // Calculate the starting index for slicing the array
+    const startIndex = Math.round(fraction * background_rec_whole.length);
+    // Slice the array from the calculated start index to the end of the array
+    const background_rec = background_rec_whole.slice(startIndex);
     console.log('Sending background recording to server for processing');
     this.pyServerAPI
           .getBackgroundNoisePSDWithRetry({
@@ -428,7 +431,7 @@ class Combination extends AudioCalibrator {
    */
   #awaitBackgroundNoiseRecording = async () => {
     console.log('Waiting ' + this._calibrateSoundBackgroundSecs + " second(s) to record background noise");
-    let time_to_wait = this._calibrateSoundBackgroundSecs;
+    let time_to_wait = this._calibrateSoundBackgroundSecs + .5;
     await sleep(time_to_wait);
   };
 
@@ -546,7 +549,7 @@ class Combination extends AudioCalibrator {
     // fill the buffer with our data
     try {
       for (let i = 0; i < dataBuffer.length; i += 1) {
-        data[i] = dataBuffer[i] * 0.1;
+        data[i] = dataBuffer[i] * 0.33;
       }
     } catch (error) {
       console.error(error);
