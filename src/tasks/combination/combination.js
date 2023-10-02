@@ -1431,7 +1431,7 @@ class Combination extends AudioCalibrator {
     _calibrateSoundBurstsWarmup = 1,
     _calibrateSoundHz = 48000,
     _calibrateSoundIIRSec = 0.2,
-    calibrateSound1000HzPreSec = 1.5,
+    calibrateSound1000HzPreSec = 3.5,
     calibrateSound1000HzSec = 1.0,
     calibrateSound1000HzPostSec = 0.5,
     _calibrateSoundBackgroundSecs = 0,
