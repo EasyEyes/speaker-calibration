@@ -657,6 +657,234 @@ class Combination extends AudioCalibrator {
     );
   };
 
+  singleSoundCheck = async () => {
+    let iir_ir_and_plots;
+    if (this._calibrateSoundCheck != 'system') {
+      this.#currentConvolution = this.componentConvolution;
+    } else {
+      this.#currentConvolution = this.systemConvolution;
+    }
+    await this.playMLSwithIIR(stream, this.invertedImpulseResponse);
+    this.#stopCalibrationAudio();
+    this.sourceAudioContext.close();
+    let conv_recs = this.getAllFilteredRecordedSignals();
+    let recs = this.getAllUnfilteredRecordedSignals();
+    console.log(
+      'Obtaining unfiltered recording from #allHzUnfilteredRecordings to calculate PSD'
+    );
+    console.log('Obtaining filtered recording from #allHzFilteredRecordings to calculate PSD');
+    let unconv_rec = recs[0];
+    let conv_rec = conv_recs[0];
+    if (this._calibrateSoundCheck != 'system') {
+      let knownGain = this.oldComponentIR.Gain;
+      let knownFreq = this.oldComponentIR.Freq;
+      let sampleRate = this.sourceSamplingRate || 96000;
+      let unconv_results = await this.pyServerAPI
+        .getSubtractedPSDWithRetry(unconv_rec, knownGain, knownFreq, sampleRate)
+        .then(res => {
+          this.incrementStatusBar();
+          this.status =
+            `All Hz Calibration: done computing the PSD graphs...`.toString() +
+            this.generateTemplate().toString();
+          this.emit('update', {message: this.status});
+          return res;
+        })
+        .catch(err => {
+          console.error(err);
+        });
+
+      let conv_results = await this.pyServerAPI
+        .getSubtractedPSDWithRetry(conv_rec, knownGain, knownFreq, sampleRate)
+        .then(res => {
+          this.incrementStatusBar();
+          this.status =
+            `All Hz Calibration: done computing the PSD graphs...`.toString() +
+            this.generateTemplate().toString();
+          this.emit('update', {message: this.status});
+          return res;
+        })
+        .catch(err => {
+          console.error(err);
+        });
+      unconv_rec = this.componentInvertedImpulseResponseNoBandpass;
+      conv_rec = this.componentInvertedImpulseResponse;
+      let component_iir_psd = await this.pyServerAPI
+        .getPSDWithRetry({
+          unconv_rec,
+          conv_rec,
+          sampleRate: this.sourceSamplingRate || 96000,
+        })
+        .then(res => {
+          this.incrementStatusBar();
+          this.status =
+            `All Hz Calibration: done computing the PSD graphs...`.toString() +
+            this.generateTemplate().toString();
+          this.emit('update', {message: this.status});
+          return res;
+        })
+        .catch(err => {
+          console.error(err);
+        });
+      unconv_rec = this.systemInvertedImpulseResponseNoBandpass;
+      conv_rec = this.systemInvertedImpulseResponse;
+      let system_iir_psd = await this.pyServerAPI
+          .getPSDWithRetry({
+            unconv_rec,
+            conv_rec,
+            sampleRate: this.sourceSamplingRate || 96000,
+          })
+          .then(res => {
+            this.incrementStatusBar();
+            this.status =
+              `All Hz Calibration: done computing the PSD graphs...`.toString() +
+              this.generateTemplate().toString();
+            this.emit('update', {message: this.status});
+            return res;
+          })
+          .catch(err => {
+            console.error(err);
+          });
+      iir_ir_and_plots = {
+        systemIIR: this.systemInvertedImpulseResponse,
+        componentIIR: this.componentInvertedImpulseResponse,
+        x_unconv: unconv_results['x'],
+        y_unconv: unconv_results['y'],
+        x_conv: conv_results['x'],
+        y_conv: conv_results['y'],
+        componentIR: this.componentIR,
+        systemIR: this.systemIR,
+        x_system_iir: system_iir_psd['x_conv'],
+        y_system_iir: system_iir_psd['y_conv'],
+        x_system_iir_no_bandpass: system_iir_psd['x_unconv'],
+        y_system_iir_no_bandpass: system_iir_psd['y_unconv'],
+        x_component_iir: component_iir_psd['x_conv'],
+        y_component_iir: component_iir_psd['y_conv'],
+        x_component_iir_no_bandpass: component_iir_psd['x_unconv'],
+        y_component_iir_no_bandpass: component_iir_psd['y_unconv'],
+        unconv_rec: recs[0],
+        conv_rec: conv_recs[0],
+        mls: this.#mls,
+        componentConvolution: this.componentConvolution,
+        systemConvolution: this.systemConvolution,
+        autocorrelations:this.autocorrelations,
+        impulseResponses: []
+      };
+    } else {
+      let results = await this.pyServerAPI
+        .getPSDWithRetry({
+          unconv_rec,
+          conv_rec,
+          sampleRate: this.sourceSamplingRate || 96000,
+        })
+        .then(res => {
+          this.incrementStatusBar();
+          this.status =
+            `All Hz Calibration: done computing the PSD graphs...`.toString() +
+            this.generateTemplate().toString();
+          this.emit('update', {message: this.status});
+          return res;
+        })
+        .catch(err => {
+          console.error(err);
+        });
+
+      //iir w/ and without bandpass psd
+      unconv_rec = this.componentInvertedImpulseResponseNoBandpass;
+      conv_rec = this.componentInvertedImpulseResponse;
+      let component_iir_psd = await this.pyServerAPI
+        .getPSDWithRetry({
+          unconv_rec,
+          conv_rec,
+          sampleRate: this.sourceSamplingRate || 96000,
+        })
+        .then(res => {
+          this.incrementStatusBar();
+          this.status =
+            `All Hz Calibration: done computing the PSD graphs...`.toString() +
+            this.generateTemplate().toString();
+          this.emit('update', {message: this.status});
+          return res;
+        })
+        .catch(err => {
+          console.error(err);
+        });
+      unconv_rec = this.systemInvertedImpulseResponseNoBandpass;
+      conv_rec = this.systemInvertedImpulseResponse;
+      let system_iir_psd = await this.pyServerAPI
+          .getPSDWithRetry({
+            unconv_rec,
+            conv_rec,
+            sampleRate: this.sourceSamplingRate || 96000,
+          })
+          .then(res => {
+            this.incrementStatusBar();
+            this.status =
+              `All Hz Calibration: done computing the PSD graphs...`.toString() +
+              this.generateTemplate().toString();
+            this.emit('update', {message: this.status});
+            return res;
+          })
+          .catch(err => {
+            console.error(err);
+          });
+
+      iir_ir_and_plots = {
+        systemIIR: this.systemInvertedImpulseResponse,
+        componentIIR: this.componentInvertedImpulseResponse,
+        x_unconv: results['x_unconv'],
+        y_unconv: results['y_unconv'],
+        x_conv: results['x_conv'],
+        y_conv: results['y_conv'],
+        componentIR: this.componentIR,
+        systemIR: this.systemIR,
+        x_system_iir: system_iir_psd['x_conv'],
+        y_system_iir: system_iir_psd['y_conv'],
+        x_system_iir_no_bandpass: system_iir_psd['x_unconv'],
+        y_system_iir_no_bandpass: system_iir_psd['y_unconv'],
+        x_component_iir: component_iir_psd['x_conv'],
+        y_component_iir: component_iir_psd['y_conv'],
+        x_component_iir_no_bandpass: component_iir_psd['x_unconv'],
+        y_component_iir_no_bandpass: component_iir_psd['y_unconv'],
+        unconv_rec: recs[0],
+        conv_rec: conv_recs[0],
+        mls: this.#mls,
+        componentConvolution: this.componentConvolution,
+        systemConvolution: this.systemConvolution,
+        autocorrelations:this.autocorrelations,
+        impulseResponses: []
+      };
+    }
+    await Promise.all(this.impulseResponses).then(res => {
+      for (let i = 0; i < res.length; i++) {
+        if (res[i] != undefined) {
+          iir_ir_and_plots['impulseResponses'].push(res[i])
+        }
+      }
+    });
+
+    if (this.#download) {
+      this.downloadSingleUnfilteredRecording();
+      this.downloadSingleFilteredRecording();
+      saveToCSV(this.#mls, 'MLS.csv');
+      saveToCSV(this.componentConvolution, 'python_component_convolution_mls_iir.csv');
+      saveToCSV(this.systemConvolution, 'python_system_convolution_mls_iir.csv');
+      saveToCSV(this.componentInvertedImpulseResponse, 'componentIIR.csv');
+      saveToCSV(this.systemInvertedImpulseResponse, 'systemIIR.csv');
+      for (let i = 0; i < this.autocorrelations.length; i++) {
+        saveToCSV(this.autocorrelations[i], `autocorrelation_${i}`);
+      }
+      const computedIRagain = await Promise.all(this.impulseResponses).then(res => {
+        for (let i = 0; i < res.length; i++) {
+          if (res[i] != undefined) {
+            saveToCSV(res[i], `IR_${i}`);
+          }
+        }
+      });
+    }
+
+    return iir_ir_and_plots;
+  }
+
   /**
    * Public method to start the calibration process. Objects intialized from webassembly allocate new memory
    * and must be manually freed. This function is responsible for intializing the MlsGenInterface,
@@ -727,228 +955,8 @@ class Combination extends AudioCalibrator {
 
     let iir_ir_and_plots;
     if (this._calibrateSoundCheck != 'none') {
-      if (this._calibrateSoundCheck != 'system') {
-        this.#currentConvolution = this.componentConvolution;
-      } else {
-        this.#currentConvolution = this.systemConvolution;
-      }
-      await this.playMLSwithIIR(stream, this.invertedImpulseResponse);
-      this.#stopCalibrationAudio();
-      this.sourceAudioContext.close();
-      let conv_recs = this.getAllFilteredRecordedSignals();
-      let recs = this.getAllUnfilteredRecordedSignals();
-      console.log(
-        'Obtaining unfiltered recording from #allHzUnfilteredRecordings to calculate PSD'
-      );
-      console.log('Obtaining filtered recording from #allHzFilteredRecordings to calculate PSD');
-      let unconv_rec = recs[0];
-      let conv_rec = conv_recs[0];
-      if (this._calibrateSoundCheck != 'system') {
-        let knownGain = this.oldComponentIR.Gain;
-        let knownFreq = this.oldComponentIR.Freq;
-        let sampleRate = this.sourceSamplingRate || 96000;
-        let unconv_results = await this.pyServerAPI
-          .getSubtractedPSDWithRetry(unconv_rec, knownGain, knownFreq, sampleRate)
-          .then(res => {
-            this.incrementStatusBar();
-            this.status =
-              `All Hz Calibration: done computing the PSD graphs...`.toString() +
-              this.generateTemplate().toString();
-            this.emit('update', {message: this.status});
-            return res;
-          })
-          .catch(err => {
-            console.error(err);
-          });
-
-        let conv_results = await this.pyServerAPI
-          .getSubtractedPSDWithRetry(conv_rec, knownGain, knownFreq, sampleRate)
-          .then(res => {
-            this.incrementStatusBar();
-            this.status =
-              `All Hz Calibration: done computing the PSD graphs...`.toString() +
-              this.generateTemplate().toString();
-            this.emit('update', {message: this.status});
-            return res;
-          })
-          .catch(err => {
-            console.error(err);
-          });
-        unconv_rec = this.componentInvertedImpulseResponseNoBandpass;
-        conv_rec = this.componentInvertedImpulseResponse;
-        let component_iir_psd = await this.pyServerAPI
-          .getPSDWithRetry({
-            unconv_rec,
-            conv_rec,
-            sampleRate: this.sourceSamplingRate || 96000,
-          })
-          .then(res => {
-            this.incrementStatusBar();
-            this.status =
-              `All Hz Calibration: done computing the PSD graphs...`.toString() +
-              this.generateTemplate().toString();
-            this.emit('update', {message: this.status});
-            return res;
-          })
-          .catch(err => {
-            console.error(err);
-          });
-        unconv_rec = this.systemInvertedImpulseResponseNoBandpass;
-        conv_rec = this.systemInvertedImpulseResponse;
-        let system_iir_psd = await this.pyServerAPI
-            .getPSDWithRetry({
-              unconv_rec,
-              conv_rec,
-              sampleRate: this.sourceSamplingRate || 96000,
-            })
-            .then(res => {
-              this.incrementStatusBar();
-              this.status =
-                `All Hz Calibration: done computing the PSD graphs...`.toString() +
-                this.generateTemplate().toString();
-              this.emit('update', {message: this.status});
-              return res;
-            })
-            .catch(err => {
-              console.error(err);
-            });
-        iir_ir_and_plots = {
-          systemIIR: this.systemInvertedImpulseResponse,
-          componentIIR: this.componentInvertedImpulseResponse,
-          x_unconv: unconv_results['x'],
-          y_unconv: unconv_results['y'],
-          x_conv: conv_results['x'],
-          y_conv: conv_results['y'],
-          componentIR: this.componentIR,
-          systemIR: this.systemIR,
-          x_system_iir: system_iir_psd['x_conv'],
-          y_system_iir: system_iir_psd['y_conv'],
-          x_system_iir_no_bandpass: system_iir_psd['x_unconv'],
-          y_system_iir_no_bandpass: system_iir_psd['y_unconv'],
-          x_component_iir: component_iir_psd['x_conv'],
-          y_component_iir: component_iir_psd['y_conv'],
-          x_component_iir_no_bandpass: component_iir_psd['x_unconv'],
-          y_component_iir_no_bandpass: component_iir_psd['y_unconv'],
-          unconv_rec: recs[0],
-          conv_rec: conv_recs[0],
-          mls: this.#mls,
-          componentConvolution: this.componentConvolution,
-          systemConvolution: this.systemConvolution,
-          autocorrelations:this.autocorrelations,
-          impulseResponses: []
-        };
-      } else {
-        let results = await this.pyServerAPI
-          .getPSDWithRetry({
-            unconv_rec,
-            conv_rec,
-            sampleRate: this.sourceSamplingRate || 96000,
-          })
-          .then(res => {
-            this.incrementStatusBar();
-            this.status =
-              `All Hz Calibration: done computing the PSD graphs...`.toString() +
-              this.generateTemplate().toString();
-            this.emit('update', {message: this.status});
-            return res;
-          })
-          .catch(err => {
-            console.error(err);
-          });
-
-        //iir w/ and without bandpass psd
-        unconv_rec = this.componentInvertedImpulseResponseNoBandpass;
-        conv_rec = this.componentInvertedImpulseResponse;
-        let component_iir_psd = await this.pyServerAPI
-          .getPSDWithRetry({
-            unconv_rec,
-            conv_rec,
-            sampleRate: this.sourceSamplingRate || 96000,
-          })
-          .then(res => {
-            this.incrementStatusBar();
-            this.status =
-              `All Hz Calibration: done computing the PSD graphs...`.toString() +
-              this.generateTemplate().toString();
-            this.emit('update', {message: this.status});
-            return res;
-          })
-          .catch(err => {
-            console.error(err);
-          });
-        unconv_rec = this.systemInvertedImpulseResponseNoBandpass;
-        conv_rec = this.systemInvertedImpulseResponse;
-        let system_iir_psd = await this.pyServerAPI
-            .getPSDWithRetry({
-              unconv_rec,
-              conv_rec,
-              sampleRate: this.sourceSamplingRate || 96000,
-            })
-            .then(res => {
-              this.incrementStatusBar();
-              this.status =
-                `All Hz Calibration: done computing the PSD graphs...`.toString() +
-                this.generateTemplate().toString();
-              this.emit('update', {message: this.status});
-              return res;
-            })
-            .catch(err => {
-              console.error(err);
-            });
-
-        iir_ir_and_plots = {
-          systemIIR: this.systemInvertedImpulseResponse,
-          componentIIR: this.componentInvertedImpulseResponse,
-          x_unconv: results['x_unconv'],
-          y_unconv: results['y_unconv'],
-          x_conv: results['x_conv'],
-          y_conv: results['y_conv'],
-          componentIR: this.componentIR,
-          systemIR: this.systemIR,
-          x_system_iir: system_iir_psd['x_conv'],
-          y_system_iir: system_iir_psd['y_conv'],
-          x_system_iir_no_bandpass: system_iir_psd['x_unconv'],
-          y_system_iir_no_bandpass: system_iir_psd['y_unconv'],
-          x_component_iir: component_iir_psd['x_conv'],
-          y_component_iir: component_iir_psd['y_conv'],
-          x_component_iir_no_bandpass: component_iir_psd['x_unconv'],
-          y_component_iir_no_bandpass: component_iir_psd['y_unconv'],
-          unconv_rec: recs[0],
-          conv_rec: conv_recs[0],
-          mls: this.#mls,
-          componentConvolution: this.componentConvolution,
-          systemConvolution: this.systemConvolution,
-          autocorrelations:this.autocorrelations,
-          impulseResponses: []
-        };
-      }
-      await Promise.all(this.impulseResponses).then(res => {
-        for (let i = 0; i < res.length; i++) {
-          if (res[i] != undefined) {
-            iir_ir_and_plots['impulseResponses'].push(res[i])
-          }
-        }
-      });
-
-      if (this.#download) {
-        this.downloadSingleUnfilteredRecording();
-        this.downloadSingleFilteredRecording();
-        saveToCSV(this.#mls, 'MLS.csv');
-        saveToCSV(this.componentConvolution, 'python_component_convolution_mls_iir.csv');
-        saveToCSV(this.systemConvolution, 'python_system_convolution_mls_iir.csv');
-        saveToCSV(this.componentInvertedImpulseResponse, 'componentIIR.csv');
-        saveToCSV(this.systemInvertedImpulseResponse, 'systemIIR.csv');
-        for (let i = 0; i < this.autocorrelations.length; i++) {
-          saveToCSV(this.autocorrelations[i], `autocorrelation_${i}`);
-        }
-        const computedIRagain = await Promise.all(this.impulseResponses).then(res => {
-          for (let i = 0; i < res.length; i++) {
-            if (res[i] != undefined) {
-              saveToCSV(res[i], `IR_${i}`);
-            }
-          }
-        });
-      }
+      //do single check
+      iir_ir_and_plots = await this.singleSoundCheck();
     } else {
         let unconv_rec = this.componentInvertedImpulseResponseNoBandpass;
         let conv_rec = this.componentInvertedImpulseResponse;
@@ -1432,10 +1440,10 @@ class Combination extends AudioCalibrator {
 
     //new lCalib found at top of calibration files *1000hz, make sure to correct
     //based on zeroing of 1000hz, search for "*1000Hz"
-    const ID = isSmartPhone ? micModelNumber : micSerialNumber;
-    const OEM = isSmartPhone ? this.deviceInfo.OEM : micManufacturer;
-    // const ID = "711-4754";
-    // const OEM = "MiniDSP";
+    //const ID = isSmartPhone ? micModelNumber : micSerialNumber;
+    //const OEM = isSmartPhone ? this.deviceInfo.OEM : micManufacturer;
+    const ID = "711-4754";
+    const OEM = "MiniDSP";
     const micInfo = {
       micModelName: isSmartPhone ? micModelName : microphoneName,
       OEM: OEM,
@@ -1476,12 +1484,12 @@ class Combination extends AudioCalibrator {
 
     this.oldComponentIR = this.componentIR;
 
-    let volumeResults = await this.startCalibrationVolume(
-      stream,
-      gainValues,
-      lCalib,
-      this.componentGainDBSPL
-    );
+    // let volumeResults = await this.startCalibrationVolume(
+    //   stream,
+    //   gainValues,
+    //   lCalib,
+    //   this.componentGainDBSPL
+    // );
 
     let impulseResponseResults = await this.startCalibrationImpulseResponse(stream);
     impulseResponseResults['background_noise'] = this.background_noise;
@@ -1497,7 +1505,7 @@ class Combination extends AudioCalibrator {
       await this.writeGainat1000Hz(ID, micInfo['gainDBSPL'], OEM);
     }
 
-    const total_results = {...volumeResults, ...impulseResponseResults};
+    const total_results = {...impulseResponseResults};
 
     total_results['micInfo'] = micInfo;
     console.log('total results');
