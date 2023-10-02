@@ -638,16 +638,16 @@ class Combination extends AudioCalibrator {
     this.emit('update', {message: this.status});
   };
 
-  playMLSwithIIR = async (stream, iir) => {
+  playMLSwithIIR = async (stream, convolution) => {
     let checkRec = false;
     this.mode = 'filtered';
     console.log('play mls with iir');
-    this.invertedImpulseResponse = iir;
+    //this.invertedImpulseResponse = iir;
 
     await this.calibrationSteps(
       stream,
       this.#playCalibrationAudio, // play audio func (required)
-      this.#createCalibrationNodeFromBuffer(this.#currentConvolution), // before play func
+      this.#createCalibrationNodeFromBuffer(convolution), // before play func
       this.#awaitSignalOnset, // before record
       () => this.numSuccessfulCaptured < 1,
       this.#awaitDesiredMLSLength, // during record
@@ -657,14 +657,29 @@ class Combination extends AudioCalibrator {
     );
   };
 
-  singleSoundCheck = async () => {
+  bothSoundCheck = async (stream) => {
+    let iir_ir_and_plots;
+    this.#currentConvolution = this.componentConvolution;
+    await this.playMLSwithIIR(stream, this.#currentConvolution);
+    this.#stopCalibrationAudio();
+    let component_conv_recs = this.getAllFilteredRecordedSignals();
+    this.clearAllFilteredRecordedSignals();
+    this.#currentConvolution = this.systemConvolution;
+    await this.playMLSwithIIR(stream, this.#currentConvolution);
+    this.#stopCalibrationAudio();
+    let system_conv_recs = this.getAllFilteredRecordedSignals();
+    this.sourceAudioContext.close();
+    let recs = this.getAllUnfilteredRecordedSignals();
+  }
+
+  singleSoundCheck = async (stream) => {
     let iir_ir_and_plots;
     if (this._calibrateSoundCheck != 'system') {
       this.#currentConvolution = this.componentConvolution;
     } else {
       this.#currentConvolution = this.systemConvolution;
     }
-    await this.playMLSwithIIR(stream, this.invertedImpulseResponse);
+    await this.playMLSwithIIR(stream, this.#currentConvolution);
     this.#stopCalibrationAudio();
     this.sourceAudioContext.close();
     let conv_recs = this.getAllFilteredRecordedSignals();
@@ -956,7 +971,12 @@ class Combination extends AudioCalibrator {
     let iir_ir_and_plots;
     if (this._calibrateSoundCheck != 'none') {
       //do single check
-      iir_ir_and_plots = await this.singleSoundCheck();
+      if (this._calibrateSoundCheck == 'goal' || this._calibrateSoundCheck == 'system'){
+        iir_ir_and_plots = await this.singleSoundCheck(stream);
+      } else{//both
+        iir_ir_and_plots = await this.bothSoundCheck(stream);
+      }
+      
     } else {
         let unconv_rec = this.componentInvertedImpulseResponseNoBandpass;
         let conv_rec = this.componentInvertedImpulseResponse;
