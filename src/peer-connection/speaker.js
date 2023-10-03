@@ -34,6 +34,7 @@ class Speaker extends AudioPeer {
     this.isSmartPhone = params?.isSmartPhone ?? false;
     this.calibrateSoundHz = params?.calibrateSoundHz ?? 48000;
     this.instructionDisplayId = params?.instructionDisplayId ?? '';
+    this.soundMessageId = params?.soundMessageId ?? '';
     this.titleDisplayId = params?.titleDisplayId ?? '';
     this.timeToCalibrate = params?.timeToCalibrate ?? 10;
 
@@ -230,6 +231,8 @@ class Speaker extends AudioPeer {
     document.getElementById(this.targetElement).appendChild(spinner);
 
     // clear instructionDisplay
+    const soundMessage = document.getElementById(this.soundMessageId);
+    soundMessage.innerHTML = '';
     const instructionDisplay = document.getElementById(this.instructionDisplayId);
     const background = document.getElementById('background'); // todo: get background id from params
     if (instructionDisplay) {
