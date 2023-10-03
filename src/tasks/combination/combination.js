@@ -100,6 +100,10 @@ class Combination extends AudioCalibrator {
   #CALIBRATION_TONE_TYPE = 'sine';
 
   CALIBRATION_TONE_DURATION = 5; // seconds
+  calibrateSound1000HzPreSec = 3.5;
+  calibrateSound1000HzSec = 1.0;
+  calibrateSound1000HzPostSec = 0.5;
+
 
   /** @private */
   outDBSPL = null;
@@ -1163,12 +1167,14 @@ class Combination extends AudioCalibrator {
     await sleep(totalDuration);
   };
 
-  #sendToServerForProcessing = lCalib => {
+  #sendToServerForProcessing = (lCalib) => {
     console.log('Sending data to server');
+    let left = this.calibrateSound1000HzPreSec
+    let right = this.calibrateSound1000HzPreSec + this.calibrateSound1000HzSec
     this.pyServerAPI
       .getVolumeCalibration({
         sampleRate: this.sourceSamplingRate,
-        payload: this.#getTruncatedSignal(),
+        payload: this.#getTruncatedSignal(left,right),
         lCalib: lCalib,
       })
       .then(res => {
@@ -1397,14 +1403,20 @@ class Combination extends AudioCalibrator {
     _calibrateSoundBurstsWarmup = 1,
     _calibrateSoundHz = 48000,
     _calibrateSoundIIRSec = 0.2,
-    calibrateSound1000HzSec = 5,
+    calibrateSound1000HzPreSec = 3.5,
+    calibrateSound1000HzSec = 1.0,
+    calibrateSound1000HzPostSec = 0.5,
     _calibrateSoundBackgroundSecs = 0,
     micManufacturer = '',
     micSerialNumber = '',
     micModelNumber = '',
     micModelName = ''
   ) => {
-    this.CALIBRATION_TONE_DURATION = calibrateSound1000HzSec;
+    this.CALIBRATION_TONE_DURATION = 
+    calibrateSound1000HzPreSec + calibrateSound1000HzSec + calibrateSound1000HzPostSec;
+    this.calibrateSound1000HzPreSec = calibrateSound1000HzPreSec;
+    this.calibrateSound1000HzSec = calibrateSound1000HzSec;
+    this.calibrateSound1000HzPostSec = calibrateSound1000HzPostSec;
     this.iirLength = Math.floor(_calibrateSoundIIRSec * this.sourceSamplingRate);
     console.log('device info:', this.deviceInfo);
     this.numMLSPerCapture = _calibrateSoundBurstRepeats;
@@ -1422,6 +1434,8 @@ class Combination extends AudioCalibrator {
     //based on zeroing of 1000hz, search for "*1000Hz"
     const ID = isSmartPhone ? micModelNumber : micSerialNumber;
     const OEM = isSmartPhone ? this.deviceInfo.OEM : micManufacturer;
+    // const ID = "711-4754";
+    // const OEM = "MiniDSP";
     const micInfo = {
       micModelName: isSmartPhone ? micModelName : microphoneName,
       OEM: OEM,
