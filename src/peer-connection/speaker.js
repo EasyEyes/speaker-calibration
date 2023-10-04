@@ -34,6 +34,7 @@ class Speaker extends AudioPeer {
     this.isSmartPhone = params?.isSmartPhone ?? false;
     this.calibrateSoundHz = params?.calibrateSoundHz ?? 48000;
     this.instructionDisplayId = params?.instructionDisplayId ?? '';
+    this.timeToCalibrateDisplay = params?.timeToCalibrateId ?? '';
     this.soundMessageId = params?.soundMessageId ?? '';
     this.titleDisplayId = params?.titleDisplayId ?? '';
     this.timeToCalibrate = params?.timeToCalibrate ?? 10;
@@ -249,14 +250,23 @@ class Speaker extends AudioPeer {
         fontSize--;
         instructionDisplay.style.fontSize = fontSize + 'px';
       }
-      const p = document.createElement('p');
-      // font size
-      p.style.fontSize = '1.1rem';
-      p.style.fontWeight = 'normal';
-      p.style.paddingTop = '20px';
+      // const p = document.createElement('p');
+      // // font size
+      // p.style.fontSize = '1.1rem';
+      // p.style.fontWeight = 'normal';
+      // p.style.paddingTop = '20px';
+      // const timeToCalibrateText = phrases.RC_howLongToCalibrate['en-US'];
+      // p.innerHTML = timeToCalibrateText.replace('111', this.timeToCalibrate);
+      // instructionDisplay.appendChild(p);
+    }
+
+    const timeToCalibrateDisplay = document.getElementById(this.timeToCalibrateDisplay);
+    if (timeToCalibrateDisplay) {
       const timeToCalibrateText = phrases.RC_howLongToCalibrate['en-US'];
-      p.innerHTML = timeToCalibrateText.replace('111', this.timeToCalibrate);
-      instructionDisplay.appendChild(p);
+      timeToCalibrateDisplay.innerHTML = timeToCalibrateText.replace('111', this.timeToCalibrate);
+      timeToCalibrateDisplay.style.fontWeight = 'normal';
+      timeToCalibrateDisplay.style.fontSize = '1.1rem';
+      // timeToCalibrateDisplay.style.paddingTop = '20px';
     }
 
     // Update title - titleDisplayId
