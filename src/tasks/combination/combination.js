@@ -412,13 +412,15 @@ class Combination extends AudioCalibrator {
       message: this.status,
     });
     let time_to_wait = 0;
-    if (this.mode === 'unfiltered') {
+    if (this.mode === 'unfiltered') { //unfiltered
       time_to_wait = (this.#mls.length / this.sourceSamplingRate) * this.numMLSPerCapture;
       time_to_wait = time_to_wait * 1.1;
-    } else if (this.mode === 'filtered') {
-      time_to_wait =
-        (this.#currentConvolution.length / this.sourceSamplingRate) *
-        (this.numMLSPerCapture / (this.num_mls_to_skip + this.numMLSPerCapture));
+    } else if (this.mode === 'filtered') { //filtered
+      // time_to_wait =
+      //   (this.#currentConvolution.length / this.sourceSamplingRate) *
+      //   (this.numMLSPerCapture / (this.num_mls_to_skip + this.numMLSPerCapture));
+      time_to_wait = (this.#currentConvolution.length / this.sourceSamplingRate) * this.numMLSPerCapture;
+      time_to_wait = time_to_wait * 1.1;
     } else {
       throw new Error('Mode broke in awaitDesiredMLSLength');
     }
@@ -462,9 +464,10 @@ class Combination extends AudioCalibrator {
       time_to_sleep = (this.#mls.length / this.sourceSamplingRate) * number_of_bursts_to_skip;
     } else if (this.mode === 'filtered') {
       console.log(this.#currentConvolution.length);
-      time_to_sleep =
-        (this.#currentConvolution.length / this.sourceSamplingRate) *
-        (number_of_bursts_to_skip / (number_of_bursts_to_skip + this.numMLSPerCapture));
+      // time_to_sleep =
+      //   (this.#currentConvolution.length / this.sourceSamplingRate) *
+      //   (number_of_bursts_to_skip / (number_of_bursts_to_skip + this.numMLSPerCapture));
+      time_to_sleep = (this.#currentConvolution.length / this.sourceSamplingRate) * number_of_bursts_to_skip;
     } else {
       throw new Error('Mode broke in awaitSignalOnset');
     }
@@ -537,8 +540,8 @@ class Combination extends AudioCalibrator {
    * @example
    */
   #createCalibrationNodeFromBuffer = dataBuffer => {
-    console.log('databuffer');
-    console.log(dataBuffer);
+    console.log('length databuffer');
+    console.log(dataBuffer.length);
     if (!this.sourceAudioContext) {
       this.makeNewSourceAudioContext();
     }
@@ -562,8 +565,8 @@ class Combination extends AudioCalibrator {
     this.sourceNode = this.sourceAudioContext.createBufferSource();
 
     this.sourceNode.buffer = buffer;
-    if (this.mode === 'filtered') {
-      this.sourceNode.loop = false;
+    if (this.mode === 'filtered') { //used to not loop filtered
+      this.sourceNode.loop = true;
     } else {
       this.sourceNode.loop = true;
     }
