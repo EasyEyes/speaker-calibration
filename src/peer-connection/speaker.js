@@ -236,6 +236,7 @@ class Speaker extends AudioPeer {
     // clear instructionDisplay
     const soundMessage = document.getElementById(this.soundMessageId);
     soundMessage.innerHTML = '';
+    soundMessage.style.display = 'none';
     const instructionDisplay = document.getElementById(this.instructionDisplayId);
     const background = document.getElementById('background'); // todo: get background id from params
     if (instructionDisplay) {
@@ -265,7 +266,7 @@ class Speaker extends AudioPeer {
       const timeToCalibrateText = phrases.RC_howLongToCalibrate['en-US'];
       timeToCalibrateDisplay.innerHTML = timeToCalibrateText.replace('111', this.timeToCalibrate);
       timeToCalibrateDisplay.style.fontWeight = 'normal';
-      timeToCalibrateDisplay.style.fontSize = '1.1rem';
+      timeToCalibrateDisplay.style.fontSize = '1rem';
       // timeToCalibrateDisplay.style.paddingTop = '20px';
     }
 

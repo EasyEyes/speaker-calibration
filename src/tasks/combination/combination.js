@@ -176,7 +176,7 @@ class Combination extends AudioCalibrator {
     if (this.percent_complete > 100) {
       this.percent_complete = 100;
     }
-    const template = `<div style="display: flex; justify-content: center;"><div style="width: 800px; height: 20px; border: 2px solid #000; border-radius: 10px;"><div style="width: ${this.percent_complete}%; height: 100%; background-color: #00aaff; border-radius: 8px;"></div></div></div>`;
+    const template = `<div style="display: flex; justify-content: center; margin-top:12px;"><div style="width: 800px; height: 20px; border: 2px solid #000; border-radius: 10px;"><div style="width: ${this.percent_complete}%; height: 100%; background-color: #00aaff; border-radius: 8px;"></div></div></div>`;
     return template;
   };
 
@@ -412,14 +412,17 @@ class Combination extends AudioCalibrator {
       message: this.status,
     });
     let time_to_wait = 0;
-    if (this.mode === 'unfiltered') { //unfiltered
+    if (this.mode === 'unfiltered') {
+      //unfiltered
       time_to_wait = (this.#mls.length / this.sourceSamplingRate) * this.numMLSPerCapture;
       time_to_wait = time_to_wait * 1.1;
-    } else if (this.mode === 'filtered') { //filtered
+    } else if (this.mode === 'filtered') {
+      //filtered
       // time_to_wait =
       //   (this.#currentConvolution.length / this.sourceSamplingRate) *
       //   (this.numMLSPerCapture / (this.num_mls_to_skip + this.numMLSPerCapture));
-      time_to_wait = (this.#currentConvolution.length / this.sourceSamplingRate) * this.numMLSPerCapture;
+      time_to_wait =
+        (this.#currentConvolution.length / this.sourceSamplingRate) * this.numMLSPerCapture;
       time_to_wait = time_to_wait * 1.1;
     } else {
       throw new Error('Mode broke in awaitDesiredMLSLength');
@@ -467,7 +470,8 @@ class Combination extends AudioCalibrator {
       // time_to_sleep =
       //   (this.#currentConvolution.length / this.sourceSamplingRate) *
       //   (number_of_bursts_to_skip / (number_of_bursts_to_skip + this.numMLSPerCapture));
-      time_to_sleep = (this.#currentConvolution.length / this.sourceSamplingRate) * number_of_bursts_to_skip;
+      time_to_sleep =
+        (this.#currentConvolution.length / this.sourceSamplingRate) * number_of_bursts_to_skip;
     } else {
       throw new Error('Mode broke in awaitSignalOnset');
     }
@@ -565,7 +569,8 @@ class Combination extends AudioCalibrator {
     this.sourceNode = this.sourceAudioContext.createBufferSource();
 
     this.sourceNode.buffer = buffer;
-    if (this.mode === 'filtered') { //used to not loop filtered
+    if (this.mode === 'filtered') {
+      //used to not loop filtered
       this.sourceNode.loop = true;
     } else {
       this.sourceNode.loop = true;
