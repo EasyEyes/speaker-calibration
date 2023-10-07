@@ -171,6 +171,8 @@ class Combination extends AudioCalibrator {
 
   numSuccessfulBackgroundCaptured;
 
+  _calibrateSoundBurstDb;
+
   /**generate string template that gets reevaluated as variable increases */
   generateTemplate = () => {
     if (this.percent_complete > 100) {
@@ -560,7 +562,7 @@ class Combination extends AudioCalibrator {
     // fill the buffer with our data
     try {
       for (let i = 0; i < dataBuffer.length; i += 1) {
-        data[i] = dataBuffer[i] * 0.33;
+        data[i] = dataBuffer[i] * this._calibrateSoundBurstDb;
       }
     } catch (error) {
       console.error(error);
@@ -1664,6 +1666,7 @@ class Combination extends AudioCalibrator {
     microphoneName = 'MiniDSP-UMIK1-711-4754-vertical',
     _calibrateSoundCheck = 'goal', //GOAL PASSed in by default
     isSmartPhone = false,
+    _calibrateSoundBurstDb = .33,
     _calibrateSoundBurstRepeats = 4,
     _calibrateSoundBurstSec = 1,
     _calibrateSoundBurstsWarmup = 1,
@@ -1678,6 +1681,7 @@ class Combination extends AudioCalibrator {
     micModelNumber = '',
     micModelName = ''
   ) => {
+    this._calibrateSoundBurstDb = _calibrateSoundBurstDb;
     this.CALIBRATION_TONE_DURATION =
       calibrateSound1000HzPreSec + calibrateSound1000HzSec + calibrateSound1000HzPostSec;
     this.calibrateSound1000HzPreSec = calibrateSound1000HzPreSec;

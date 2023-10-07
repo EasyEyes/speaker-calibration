@@ -99,6 +99,7 @@ class Speaker extends AudioPeer {
             params.microphoneName,
             params.calibrateSoundCheck,
             params.isSmartPhone,
+            params.calibrateSoundBurstDb,
             params.calibrateSoundBurstRepeats,
             params.calibrateSoundBurstSec,
             params.calibrateSoundBurstsWarmup,
