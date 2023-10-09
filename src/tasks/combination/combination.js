@@ -213,7 +213,7 @@ class Combination extends AudioCalibrator {
     const filteredComputedIRs = computedIRs.filter(element => {
       return element != undefined;
     }); //log any errors that are found in this step
-    const mls = this.#mls;
+    const mls = this.#mlsBufferView;
     const lowHz = this.#lowHz; //gain of 1 below cutoff, need gain of 0
     const highHz = this.#highHz; //check error for anything other than 10 kHz
     const iirLength = this.iirLength;
@@ -267,7 +267,7 @@ class Combination extends AudioCalibrator {
     });
     const componentIRGains = this.componentIR['Gain'];
     const componentIRFreqs = this.componentIR['Freq'];
-    const mls = this.#mls;
+    const mls = this.#mlsBufferView;
     const lowHz = this.#lowHz;
     const iirLength = this.iirLength;
     const num_periods = this.numMLSPerCapture + this.num_mls_to_skip;
@@ -609,6 +609,8 @@ class Combination extends AudioCalibrator {
     this.status = ``;
     if (this.mode === 'unfiltered') {
       this.#mls = this.calibrationNodes[0].buffer.getChannelData(0);
+      console.log("mls", this.#mls);
+      console.log("mls buffer view", this.#mlsBufferView);
       console.log('play calibration audio ' + this.stepNum);
       this.status =
         `All Hz Calibration: playing the calibration tone...`.toString() +
