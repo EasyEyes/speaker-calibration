@@ -828,7 +828,7 @@ class Combination extends AudioCalibrator {
           },
         },
       },
-      mls: this.#mls,
+      mls: this.#mlsBufferView,
       autocorrelations: this.autocorrelations,
       impulseResponses: [],
     };
@@ -970,7 +970,7 @@ class Combination extends AudioCalibrator {
             },
           },
         },
-        mls: this.#mls,
+        mls: this.#mlsBufferView,
         autocorrelations: this.autocorrelations,
         impulseResponses: [],
       };
@@ -1079,7 +1079,7 @@ class Combination extends AudioCalibrator {
             },
           },
         },
-        mls: this.#mls,
+        mls: this.#mlsBufferView,
         autocorrelations: this.autocorrelations,
         impulseResponses: [],
       };
@@ -1279,7 +1279,7 @@ class Combination extends AudioCalibrator {
             },
           },
         },
-        mls: this.#mls,
+        mls: this.#mlsBufferView,
         autocorrelations: this.autocorrelations,
         impulseResponses: [],
       };
