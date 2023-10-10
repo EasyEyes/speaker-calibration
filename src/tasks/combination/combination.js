@@ -886,8 +886,8 @@ class Combination extends AudioCalibrator {
       },
       mls: this.#mlsBufferView,
       mls_psd: {
-        x: mls_psd['x'],
-        y: mls_psd['y'],
+        x: mls_psd['x_mls'],
+        y: mls_psd['y_mls'],
       },
       autocorrelations: this.autocorrelations,
       impulseResponses: [],
