@@ -781,7 +781,7 @@ class Combination extends AudioCalibrator {
       });
 
     let mls_psd = await this.pyServerAPI
-      .getMLSPSDWithRetry({mls: this.#mls, sampleRate: this.sourceSamplingRate || 96000})
+      .getMLSPSDWithRetry({mls: this.#mlsBufferView, sampleRate: this.sourceSamplingRate || 96000})
       .then(res => {
         this.incrementStatusBar();
         this.status =
@@ -985,7 +985,10 @@ class Combination extends AudioCalibrator {
         });
 
       let mls_psd = await this.pyServerAPI
-        .getMLSPSDWithRetry({mls: this.#mls, sampleRate: this.sourceSamplingRate || 96000})
+        .getMLSPSDWithRetry({
+          mls: this.#mlsBufferView,
+          sampleRate: this.sourceSamplingRate || 96000,
+        })
         .then(res => {
           this.incrementStatusBar();
           this.status =
@@ -1134,7 +1137,10 @@ class Combination extends AudioCalibrator {
         });
 
       let mls_psd = await this.pyServerAPI
-        .getMLSPSDWithRetry({mls: this.#mls, sampleRate: this.sourceSamplingRate || 96000})
+        .getMLSPSDWithRetry({
+          mls: this.#mlsBufferView,
+          sampleRate: this.sourceSamplingRate || 96000,
+        })
         .then(res => {
           this.incrementStatusBar();
           this.status =
