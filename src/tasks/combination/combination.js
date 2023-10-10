@@ -609,8 +609,8 @@ class Combination extends AudioCalibrator {
     this.status = ``;
     if (this.mode === 'unfiltered') {
       this.#mls = this.calibrationNodes[0].buffer.getChannelData(0);
-      console.log("mls", this.#mls);
-      console.log("mls buffer view", this.#mlsBufferView);
+      console.log('mls', this.#mls);
+      console.log('mls buffer view', this.#mlsBufferView);
       console.log('play calibration audio ' + this.stepNum);
       this.status =
         `All Hz Calibration: playing the calibration tone...`.toString() +
@@ -780,6 +780,54 @@ class Combination extends AudioCalibrator {
         console.error(err);
       });
 
+    let mls_psd = await this.pyServerAPI
+      .getMLSPSDWithRetry({mls: this.#mls, sampleRate: this.sourceSamplingRate || 96000})
+      .then(res => {
+        this.incrementStatusBar();
+        this.status =
+          `All Hz Calibration: done computing the PSD graphs...`.toString() +
+          this.generateTemplate().toString();
+        this.emit('update', {message: this.status});
+        return res;
+      })
+      .catch(err => {
+        console.error(err);
+      });
+
+    let system_filtered_mls_psd = await this.pyServerAPI
+      .getMLSPSDWithRetry({
+        mls: this.systemConvolution,
+        sampleRate: this.sourceSamplingRate || 96000,
+      })
+      .then(res => {
+        this.incrementStatusBar();
+        this.status =
+          `All Hz Calibration: done computing the PSD graphs...`.toString() +
+          this.generateTemplate().toString();
+        this.emit('update', {message: this.status});
+        return res;
+      })
+      .catch(err => {
+        console.error(err);
+      });
+
+    let component_filtered_mls_psd = await this.pyServerAPI
+      .getMLSPSDWithRetry({
+        mls: this.componentConvolution,
+        sampleRate: this.sourceSamplingRate || 96000,
+      })
+      .then(res => {
+        this.incrementStatusBar();
+        this.status =
+          `All Hz Calibration: done computing the PSD graphs...`.toString() +
+          this.generateTemplate().toString();
+        this.emit('update', {message: this.status});
+        return res;
+      })
+      .catch(err => {
+        console.error(err);
+      });
+
     iir_ir_and_plots = {
       filtered_recording: {
         component: return_component_conv_rec,
@@ -794,6 +842,10 @@ class Combination extends AudioCalibrator {
           x: system_iir_psd['x_conv'],
           y_no_bandpass: system_iir_psd['y_unconv'],
           x_no_bandpass: system_iir_psd['x_unconv'],
+        },
+        filtered_mls_psd: {
+          x: system_filtered_mls_psd['x_mls'],
+          y: system_filtered_mls_psd['y_mls'],
         },
         convolution: this.systemConvolution,
         psd: {
@@ -816,6 +868,10 @@ class Combination extends AudioCalibrator {
           y_no_bandpass: component_iir_psd['y_unconv'],
           x_no_bandpass: component_iir_psd['x_unconv'],
         },
+        filtered_mls_psd: {
+          x: component_filtered_mls_psd['x_mls'],
+          y: component_filtered_mls_psd['y_mls'],
+        },
         convolution: this.componentConvolution,
         psd: {
           unconv: {
@@ -829,6 +885,10 @@ class Combination extends AudioCalibrator {
         },
       },
       mls: this.#mlsBufferView,
+      mls_psd: {
+        x: mls_psd['x'],
+        y: mls_psd['y'],
+      },
       autocorrelations: this.autocorrelations,
       impulseResponses: [],
     };
@@ -924,6 +984,37 @@ class Combination extends AudioCalibrator {
           console.error(err);
         });
 
+      let mls_psd = await this.pyServerAPI
+        .getMLSPSDWithRetry({mls: this.#mls, sampleRate: this.sourceSamplingRate || 96000})
+        .then(res => {
+          this.incrementStatusBar();
+          this.status =
+            `All Hz Calibration: done computing the PSD graphs...`.toString() +
+            this.generateTemplate().toString();
+          this.emit('update', {message: this.status});
+          return res;
+        })
+        .catch(err => {
+          console.error(err);
+        });
+
+      let filtered_mls_psd = await this.pyServerAPI
+        .getMLSPSDWithRetry({
+          mls: this.componentConvolution,
+          sampleRate: this.sourceSamplingRate || 96000,
+        })
+        .then(res => {
+          this.incrementStatusBar();
+          this.status =
+            `All Hz Calibration: done computing the PSD graphs...`.toString() +
+            this.generateTemplate().toString();
+          this.emit('update', {message: this.status});
+          return res;
+        })
+        .catch(err => {
+          console.error(err);
+        });
+
       iir_ir_and_plots = {
         unfiltered_recording: return_unconv_rec,
         filtered_recording: return_conv_rec,
@@ -937,6 +1028,7 @@ class Combination extends AudioCalibrator {
             x_no_bandpass: system_iir_psd['x_unconv'],
           },
           filtered_recording: [],
+          filtered_mls_psd: {},
           convolution: this.systemConvolution,
           psd: {
             unconv: {
@@ -958,6 +1050,10 @@ class Combination extends AudioCalibrator {
             y_no_bandpass: component_iir_psd['y_unconv'],
             x_no_bandpass: component_iir_psd['x_unconv'],
           },
+          filtered_mls_psd: {
+            x: filtered_mls_psd['x_mls'],
+            y: filtered_mls_psd['y_mls'],
+          },
           convolution: this.componentConvolution,
           psd: {
             unconv: {
@@ -971,6 +1067,10 @@ class Combination extends AudioCalibrator {
           },
         },
         mls: this.#mlsBufferView,
+        mls_psd: {
+          x: mls_psd['x_mls'],
+          y: mls_psd['y_mls'],
+        },
         autocorrelations: this.autocorrelations,
         impulseResponses: [],
       };
@@ -1033,6 +1133,37 @@ class Combination extends AudioCalibrator {
           console.error(err);
         });
 
+      let mls_psd = await this.pyServerAPI
+        .getMLSPSDWithRetry({mls: this.#mls, sampleRate: this.sourceSamplingRate || 96000})
+        .then(res => {
+          this.incrementStatusBar();
+          this.status =
+            `All Hz Calibration: done computing the PSD graphs...`.toString() +
+            this.generateTemplate().toString();
+          this.emit('update', {message: this.status});
+          return res;
+        })
+        .catch(err => {
+          console.error(err);
+        });
+
+      let filtered_mls_psd = await this.pyServerAPI
+        .getMLSPSDWithRetry({
+          mls: this.systemConvolution,
+          sampleRate: this.sourceSamplingRate || 96000,
+        })
+        .then(res => {
+          this.incrementStatusBar();
+          this.status =
+            `All Hz Calibration: done computing the PSD graphs...`.toString() +
+            this.generateTemplate().toString();
+          this.emit('update', {message: this.status});
+          return res;
+        })
+        .catch(err => {
+          console.error(err);
+        });
+
       iir_ir_and_plots = {
         unfiltered_recording: return_unconv_rec,
         filtered_recording: return_conv_rec,
@@ -1046,6 +1177,10 @@ class Combination extends AudioCalibrator {
             x_no_bandpass: system_iir_psd['x_unconv'],
           },
           filtered_recording: [],
+          filtered_mls_psd: {
+            x: filtered_mls_psd['x_mls'],
+            y: filtered_mls_psd['y_mls'],
+          },
           convolution: this.systemConvolution,
           psd: {
             unconv: {
@@ -1067,6 +1202,7 @@ class Combination extends AudioCalibrator {
             y_no_bandpass: component_iir_psd['y_unconv'],
             x_no_bandpass: component_iir_psd['x_unconv'],
           },
+          filtered_mls_psd: {},
           convolution: this.componentConvolution,
           psd: {
             unconv: {
@@ -1080,6 +1216,10 @@ class Combination extends AudioCalibrator {
           },
         },
         mls: this.#mlsBufferView,
+        mls_psd: {
+          x: mls_psd['x_mls'],
+          y: mls_psd['y_mls'],
+        },
         autocorrelations: this.autocorrelations,
         impulseResponses: [],
       };
@@ -1668,7 +1808,7 @@ class Combination extends AudioCalibrator {
     microphoneName = 'MiniDSP-UMIK1-711-4754-vertical',
     _calibrateSoundCheck = 'goal', //GOAL PASSed in by default
     isSmartPhone = false,
-    _calibrateSoundBurstDb = .33,
+    _calibrateSoundBurstDb = 0.33,
     _calibrateSoundBurstRepeats = 4,
     _calibrateSoundBurstSec = 1,
     _calibrateSoundBurstsWarmup = 1,

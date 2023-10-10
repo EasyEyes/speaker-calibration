@@ -58,21 +58,21 @@ class PythonServerAPI {
     return res.data[task];
   };
 
-  getMLS = async(length) => {
+  getMLS = async length => {
     const task = 'mls';
-    let res = null
+    let res = null;
 
     const data = JSON.stringify({
       task,
-      'length':length,
-    })
+      length: length,
+    });
 
     await axios({
-      method:'post',
+      method: 'post',
       baseURL: PythonServerAPI.PYTHON_SERVER_URL,
       url: `/task/${task}`,
       headers: {
-        'Content-Type':'application/json',
+        'Content-Type': 'application/json',
       },
       data,
     })
@@ -81,11 +81,11 @@ class PythonServerAPI {
       })
       .catch(error => {
         throw error;
-      })
+      });
 
-      return res.data[task];
-  }
-  getMLSWithRetry = async (length) => {
+    return res.data[task];
+  };
+  getMLSWithRetry = async length => {
     let retryCount = 0;
     let response = null;
 
@@ -165,13 +165,13 @@ class PythonServerAPI {
     return res.data[task];
   };
 
-  getBackgroundNoisePSDWithRetry = async ({ background_rec,sampleRate }) => {
+  getBackgroundNoisePSDWithRetry = async ({background_rec, sampleRate}) => {
     let retryCount = 0;
     let response = null;
 
     while (retryCount < this.MAX_RETRY_COUNT) {
       try {
-        response = await this.getBackgroundNoisePSD({ background_rec,sampleRate });
+        response = await this.getBackgroundNoisePSD({background_rec, sampleRate});
         // If the request is successful, break out of the loop
         break;
       } catch (error) {
@@ -188,9 +188,7 @@ class PythonServerAPI {
     }
   };
 
-
-
-  getSubtractedPSD = async (rec, knownGains, knownFrequencies,sampleRate) => {
+  getSubtractedPSD = async (rec, knownGains, knownFrequencies, sampleRate) => {
     const task = 'subtracted-psd';
     let res = null;
 
@@ -220,13 +218,13 @@ class PythonServerAPI {
     return res.data[task];
   };
 
-  getSubtractedPSDWithRetry = async ( rec, knownGains, knownFrequencies,sampleRate) => {
+  getSubtractedPSDWithRetry = async (rec, knownGains, knownFrequencies, sampleRate) => {
     let retryCount = 0;
     let response = null;
 
     while (retryCount < this.MAX_RETRY_COUNT) {
       try {
-        response = await this.getSubtractedPSD( rec, knownGains, knownFrequencies,sampleRate );
+        response = await this.getSubtractedPSD(rec, knownGains, knownFrequencies, sampleRate);
         // If the request is successful, break out of the loop
         break;
       } catch (error) {
@@ -242,14 +240,14 @@ class PythonServerAPI {
       throw new Error(`Failed to get PSD after ${this.MAX_RETRY_COUNT} attempts.`);
     }
   };
-  
-  getPSDWithRetry = async ({ unconv_rec, conv_rec,sampleRate }) => {
+
+  getPSDWithRetry = async ({unconv_rec, conv_rec, sampleRate}) => {
     let retryCount = 0;
     let response = null;
-  
+
     while (retryCount < this.MAX_RETRY_COUNT) {
       try {
-        response = await this.getPSD({ unconv_rec, conv_rec,sampleRate });
+        response = await this.getPSD({unconv_rec, conv_rec, sampleRate});
         // If the request is successful, break out of the loop
         break;
       } catch (error) {
@@ -258,16 +256,25 @@ class PythonServerAPI {
         await new Promise(resolve => setTimeout(resolve, this.RETRY_DELAY_MS));
       }
     }
-  
+
     if (response) {
       return response;
     } else {
       throw new Error(`Failed to get PSD after ${this.MAX_RETRY_COUNT} attempts.`);
     }
   };
-  
 
-  getComponentInverseImpulseResponse = async ({payload,mls,lowHz,highHz,componentIRGains,iirLength,componentIRFreqs,num_periods,sampleRate}) => {
+  getComponentInverseImpulseResponse = async ({
+    payload,
+    mls,
+    lowHz,
+    highHz,
+    componentIRGains,
+    iirLength,
+    componentIRFreqs,
+    num_periods,
+    sampleRate,
+  }) => {
     const task = 'component-inverse-impulse-response';
     let res = null;
 
@@ -304,7 +311,15 @@ class PythonServerAPI {
 
     return res.data[task];
   };
-  getSystemInverseImpulseResponse = async ({payload,mls,lowHz,highHz,iirLength,num_periods,sampleRate}) => {
+  getSystemInverseImpulseResponse = async ({
+    payload,
+    mls,
+    lowHz,
+    highHz,
+    iirLength,
+    num_periods,
+    sampleRate,
+  }) => {
     const task = 'system-inverse-impulse-response';
     let res = null;
 
@@ -340,53 +355,145 @@ class PythonServerAPI {
     return res.data[task];
   };
 
-getComponentInverseImpulseResponseWithRetry = async ({ payload, mls, lowHz, highHz,componentIRGains,iirLength,componentIRFreqs, num_periods,sampleRate}) => {
-  let retryCount = 0;
-  let response = null;
+  getMLSPSD = async ({mls, sampleRate}) => {
+    const task = 'mls-psd';
+    let res = null;
 
-  while (retryCount < this.MAX_RETRY_COUNT) {
-    try {
-      response = await this.getComponentInverseImpulseResponse({ payload, mls, lowHz, highHz,componentIRGains,iirLength,componentIRFreqs,num_periods,sampleRate});
-      // If the request is successful, break out of the loop
-      break;
-    } catch (error) {
-      console.error(`Error occurred. Retrying... (${retryCount + 1}/${this.MAX_RETRY_COUNT})`);
-      retryCount++;
-      await new Promise(resolve => setTimeout(resolve, this.RETRY_DELAY_MS));
+    const data = JSON.stringify({
+      task,
+      mls,
+      sampleRate,
+    });
+
+    await axios({
+      method: 'post',
+      baseURL: PythonServerAPI.PYTHON_SERVER_URL,
+      url: `/task/${task}`,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      data,
+    })
+      .then(response => {
+        res = response;
+      })
+      .catch(error => {
+        throw error;
+      });
+
+    return res.data[task];
+  };
+
+  getMLSPSDWithRetry = async ({mls, sampleRate}) => {
+    let retryCount = 0;
+    let response = null;
+
+    while (retryCount < this.MAX_RETRY_COUNT) {
+      try {
+        response = await this.getMLSPSD({mls, sampleRate});
+        // If the request is successful, break out of the loop
+        break;
+      } catch (error) {
+        console.error(`Error occurred. Retrying... (${retryCount + 1}/${this.MAX_RETRY_COUNT})`);
+        retryCount++;
+        await new Promise(resolve => setTimeout(resolve, this.RETRY_DELAY_MS));
+      }
     }
-  }
 
-  if (response) {
-    return response;
-  } else {
-    throw new Error(`Failed to get inverse impulse response after ${this.MAX_RETRY_COUNT} attempts.`);
-  }
-};
-
-getSystemInverseImpulseResponseWithRetry = async ({ payload, mls, lowHz, highHz,iirLength, num_periods,sampleRate}) => {
-  let retryCount = 0;
-  let response = null;
-
-  while (retryCount < this.MAX_RETRY_COUNT) {
-    try {
-      response = await this.getSystemInverseImpulseResponse({ payload, mls, lowHz, highHz,iirLength,num_periods,sampleRate});
-      // If the request is successful, break out of the loop
-      break;
-    } catch (error) {
-      console.error(`Error occurred. Retrying... (${retryCount + 1}/${this.MAX_RETRY_COUNT})`);
-      retryCount++;
-      await new Promise(resolve => setTimeout(resolve, this.RETRY_DELAY_MS));
+    if (response) {
+      return response;
+    } else {
+      throw new Error(
+        `Failed to get inverse impulse response after ${this.MAX_RETRY_COUNT} attempts.`
+      );
     }
-  }
+  };
 
-  if (response) {
-    return response;
-  } else {
-    throw new Error(`Failed to get inverse impulse response after ${this.MAX_RETRY_COUNT} attempts.`);
-  }
-};
+  getComponentInverseImpulseResponseWithRetry = async ({
+    payload,
+    mls,
+    lowHz,
+    highHz,
+    componentIRGains,
+    iirLength,
+    componentIRFreqs,
+    num_periods,
+    sampleRate,
+  }) => {
+    let retryCount = 0;
+    let response = null;
 
+    while (retryCount < this.MAX_RETRY_COUNT) {
+      try {
+        response = await this.getComponentInverseImpulseResponse({
+          payload,
+          mls,
+          lowHz,
+          highHz,
+          componentIRGains,
+          iirLength,
+          componentIRFreqs,
+          num_periods,
+          sampleRate,
+        });
+        // If the request is successful, break out of the loop
+        break;
+      } catch (error) {
+        console.error(`Error occurred. Retrying... (${retryCount + 1}/${this.MAX_RETRY_COUNT})`);
+        retryCount++;
+        await new Promise(resolve => setTimeout(resolve, this.RETRY_DELAY_MS));
+      }
+    }
 
+    if (response) {
+      return response;
+    } else {
+      throw new Error(
+        `Failed to get inverse impulse response after ${this.MAX_RETRY_COUNT} attempts.`
+      );
+    }
+  };
+
+  getSystemInverseImpulseResponseWithRetry = async ({
+    payload,
+    mls,
+    lowHz,
+    highHz,
+    iirLength,
+    num_periods,
+    sampleRate,
+  }) => {
+    let retryCount = 0;
+    let response = null;
+
+    while (retryCount < this.MAX_RETRY_COUNT) {
+      try {
+        response = await this.getSystemInverseImpulseResponse({
+          payload,
+          mls,
+          lowHz,
+          highHz,
+          iirLength,
+          num_periods,
+          sampleRate,
+        });
+        // If the request is successful, break out of the loop
+        break;
+      } catch (error) {
+        console.error(`Error occurred. Retrying... (${retryCount + 1}/${this.MAX_RETRY_COUNT})`);
+        retryCount++;
+        await new Promise(resolve => setTimeout(resolve, this.RETRY_DELAY_MS));
+      }
+    }
+
+    if (response) {
+      return response;
+    } else {
+      throw new Error(
+        `Failed to get inverse impulse response after ${this.MAX_RETRY_COUNT} attempts.`
+      );
+    }
+  };
 
   getVolumeCalibration = async ({payload, sampleRate, lCalib}) => {
     const task = 'volume';
@@ -420,7 +527,12 @@ getSystemInverseImpulseResponseWithRetry = async ({ payload, mls, lowHz, highHz,
     return res.data[task];
   };
 
-  getVolumeCalibrationParameters = async ({inDBValues, outDBSPLValues, lCalib, componentGainDBSPL}) => {
+  getVolumeCalibrationParameters = async ({
+    inDBValues,
+    outDBSPLValues,
+    lCalib,
+    componentGainDBSPL,
+  }) => {
     const task = 'volume-parameters';
     let res = null;
 
@@ -448,8 +560,6 @@ getSystemInverseImpulseResponseWithRetry = async ({ payload, mls, lowHz, highHz,
       .catch(error => {
         throw error;
       });
-
-
 
     // console.log(res.data[task]);
     //below is an example of res.data[task]
