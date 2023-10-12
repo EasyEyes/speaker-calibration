@@ -213,7 +213,7 @@ class Combination extends AudioCalibrator {
     const filteredComputedIRs = computedIRs.filter(element => {
       return element != undefined;
     }); //log any errors that are found in this step
-    const mls = this.#mlsBufferView;
+    const mls = this.#mls;
     const lowHz = this.#lowHz; //gain of 1 below cutoff, need gain of 0
     const highHz = this.#highHz; //check error for anything other than 10 kHz
     const iirLength = this.iirLength;
@@ -232,6 +232,7 @@ class Combination extends AudioCalibrator {
         iirLength,
         num_periods,
         sampleRate: this.sourceSamplingRate || 96000,
+        calibrateSoundBurstDb: this._calibrateSoundBurstDb
       })
       .then(res => {
         console.log(res);
@@ -267,7 +268,7 @@ class Combination extends AudioCalibrator {
     });
     const componentIRGains = this.componentIR['Gain'];
     const componentIRFreqs = this.componentIR['Freq'];
-    const mls = this.#mlsBufferView;
+    const mls = this.#mls;
     const lowHz = this.#lowHz;
     const iirLength = this.iirLength;
     const num_periods = this.numMLSPerCapture + this.num_mls_to_skip;
@@ -288,6 +289,7 @@ class Combination extends AudioCalibrator {
         componentIRFreqs,
         num_periods,
         sampleRate: this.sourceSamplingRate || 96000,
+        calibrateSoundBurstDb: this._calibrateSoundBurstDb
       })
       .then(res => {
         console.log(res);
@@ -353,7 +355,7 @@ class Combination extends AudioCalibrator {
       'Obtaining last all hz unfiltered recording from #allHzUnfilteredRecordings to send to server for processing'
     );
     const numSignals = allSignals.length;
-    const mls = this.#mls;
+    const mls = this.#mlsBufferView;
     const payload =
       signalCsv && signalCsv.length > 0 ? csvToArray(signalCsv) : allSignals[numSignals - 1];
     console.log('sending rec');
@@ -560,21 +562,31 @@ class Combination extends AudioCalibrator {
 
     const data = buffer.getChannelData(0); // get data
     // fill the buffer with our data
-    try {
-      for (let i = 0; i < dataBuffer.length; i += 1) {
-        data[i] = dataBuffer[i] * this._calibrateSoundBurstDb;
-      }
-    } catch (error) {
-      console.error(error);
-    }
-
-    this.sourceNode = this.sourceAudioContext.createBufferSource();
-
-    this.sourceNode.buffer = buffer;
+    
     if (this.mode === 'filtered') {
+      try {
+        for (let i = 0; i < dataBuffer.length; i += 1) {
+          data[i] = dataBuffer[i];
+        }
+      } catch (error) {
+        console.error(error);
+      }
+  
+      this.sourceNode = this.sourceAudioContext.createBufferSource();
+  
+      this.sourceNode.buffer = buffer;
       //used to not loop filtered
       this.sourceNode.loop = true;
     } else {
+      try {
+        for (let i = 0; i < dataBuffer.length; i += 1) {
+          data[i] = dataBuffer[i] * this._calibrateSoundBurstDb;
+        }
+      } catch (error) {
+        console.error(error);
+      }
+      this.sourceNode = this.sourceAudioContext.createBufferSource();
+      this.sourceNode.buffer = buffer;
       this.sourceNode.loop = true;
     }
 
@@ -608,9 +620,8 @@ class Combination extends AudioCalibrator {
     this.calibrationNodes[0].start(0);
     this.status = ``;
     if (this.mode === 'unfiltered') {
-      this.#mls = this.calibrationNodes[0].buffer.getChannelData(0);
-      console.log('mls', this.#mls);
-      console.log('mls buffer view', this.#mlsBufferView);
+      console.log('mls', this.#mls); // before multiplied by calibrateSoundBurstDb
+      console.log('mls buffer view', this.#mlsBufferView); // after multiplied by calibrateSoundBurstDb
       console.log('play calibration audio ' + this.stepNum);
       this.status =
         `All Hz Calibration: playing the calibration tone...`.toString() +
@@ -1278,11 +1289,13 @@ class Combination extends AudioCalibrator {
 
     length = this.sourceSamplingRate * desired_time;
     //get mls here
+   const calibrateSoundBurstDb = this._calibrateSoundBurstDb;
     await this.pyServerAPI
-      .getMLSWithRetry(length)
+      .getMLSWithRetry({length, calibrateSoundBurstDb})
       .then(res => {
         console.log(res);
         this.#mlsBufferView = res['mls'];
+        this.#mls = res['unscaledMLS']
       })
       .catch(err => {
         // this.emit('InvertedImpulseResponse', {res: false});
