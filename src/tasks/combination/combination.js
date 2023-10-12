@@ -562,31 +562,23 @@ class Combination extends AudioCalibrator {
 
     const data = buffer.getChannelData(0); // get data
     // fill the buffer with our data
+    try {
+      for (let i = 0; i < dataBuffer.length; i += 1) {
+        data[i] = dataBuffer[i];
+      }
+    } catch (error) {
+      console.error(error);
+    }
+
+    this.sourceNode = this.sourceAudioContext.createBufferSource();
+
+    this.sourceNode.buffer = buffer;
     
     if (this.mode === 'filtered') {
-      try {
-        for (let i = 0; i < dataBuffer.length; i += 1) {
-          data[i] = dataBuffer[i];
-        }
-      } catch (error) {
-        console.error(error);
-      }
-  
-      this.sourceNode = this.sourceAudioContext.createBufferSource();
-  
-      this.sourceNode.buffer = buffer;
+      
       //used to not loop filtered
       this.sourceNode.loop = true;
     } else {
-      try {
-        for (let i = 0; i < dataBuffer.length; i += 1) {
-          data[i] = dataBuffer[i] * this._calibrateSoundBurstDb;
-        }
-      } catch (error) {
-        console.error(error);
-      }
-      this.sourceNode = this.sourceAudioContext.createBufferSource();
-      this.sourceNode.buffer = buffer;
       this.sourceNode.loop = true;
     }
 
