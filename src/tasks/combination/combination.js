@@ -1855,10 +1855,10 @@ class Combination extends AudioCalibrator {
 
     //new lCalib found at top of calibration files *1000hz, make sure to correct
     //based on zeroing of 1000hz, search for "*1000Hz"
-    // const ID = isSmartPhone ? micModelNumber : micSerialNumber;
-    // const OEM = isSmartPhone ? this.deviceInfo.OEM : micManufacturer;
-    const ID = "711-4754";
-    const OEM = "MiniDSP";
+    const ID = isSmartPhone ? micModelNumber : micSerialNumber;
+    const OEM = isSmartPhone ? this.deviceInfo.OEM : micManufacturer;
+    // const ID = "711-4754";
+    // const OEM = "MiniDSP";
     const micInfo = {
       micModelName: isSmartPhone ? micModelName : microphoneName,
       OEM: OEM,
