@@ -561,6 +561,14 @@ class Combination extends AudioCalibrator {
     );
 
     const data = buffer.getChannelData(0); // get data
+    if (this.mode === 'filtered') {
+      console.log("check max and min of convolution");
+    } else {
+      console.log("check max and min of mls");
+    }
+   
+    console.log("Max:", Math.min(...dataBuffer));
+    console.log("Min:",Math.max(...dataBuffer));
     // fill the buffer with our data
     try {
       for (let i = 0; i < dataBuffer.length; i += 1) {
