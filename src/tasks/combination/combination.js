@@ -15,13 +15,13 @@ class Combination extends AudioCalibrator {
    * @param {boolean} [calibratorParams.download = false]  - boolean flag to download captures
    * @param {number} [calibratorParams.mlsOrder = 18] - order of the MLS to be generated
    * @param {number} [calibratorParams.numCaptures = 5] - number of captures to perform
-   * @param {number} [calibratorParams.numMLSPerCapture = 4] - number of bursts of MLS per capture
+   * @param {number} [calibratorParams.numMLSPerCapture = 2] - number of bursts of MLS per capture
    */
   constructor({
     download = false,
     mlsOrder = 18,
     numCaptures = 3,
-    numMLSPerCapture = 4,
+    numMLSPerCapture = 2,
     lowHz = 20,
     highHz = 10000,
   }) {
@@ -1828,7 +1828,7 @@ class Combination extends AudioCalibrator {
     _calibrateSoundCheck = 'goal', //GOAL PASSed in by default
     isSmartPhone = false,
     _calibrateSoundBurstDb = 0.33,
-    _calibrateSoundBurstRepeats = 4,
+    _calibrateSoundBurstRepeats = 2,
     _calibrateSoundBurstSec = 1,
     _calibrateSoundBurstsWarmup = 1,
     _calibrateSoundHz = 48000,
@@ -1863,10 +1863,10 @@ class Combination extends AudioCalibrator {
 
     //new lCalib found at top of calibration files *1000hz, make sure to correct
     //based on zeroing of 1000hz, search for "*1000Hz"
-    const ID = isSmartPhone ? micModelNumber : micSerialNumber;
-    const OEM = isSmartPhone ? this.deviceInfo.OEM : micManufacturer;
-    // const ID = "711-4754";
-    // const OEM = "MiniDSP";
+    // const ID = isSmartPhone ? micModelNumber : micSerialNumber;
+    // const OEM = isSmartPhone ? this.deviceInfo.OEM : micManufacturer;
+    const ID = "711-4754";
+    const OEM = "MiniDSP";
     const micInfo = {
       micModelName: isSmartPhone ? micModelName : microphoneName,
       OEM: OEM,
