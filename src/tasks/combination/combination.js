@@ -173,6 +173,17 @@ class Combination extends AudioCalibrator {
 
   _calibrateSoundBurstDb;
 
+  filteredMLSRange = {
+    component: {
+      Min: null,
+      Max: null,
+    },
+    system: {
+      Min: null,
+      Max: null,
+    },
+  };
+
   /**generate string template that gets reevaluated as variable increases */
   generateTemplate = () => {
     if (this.percent_complete > 100) {
@@ -232,7 +243,7 @@ class Combination extends AudioCalibrator {
         iirLength,
         num_periods,
         sampleRate: this.sourceSamplingRate || 96000,
-        calibrateSoundBurstDb: this._calibrateSoundBurstDb
+        calibrateSoundBurstDb: this._calibrateSoundBurstDb,
       })
       .then(res => {
         console.log(res);
@@ -289,7 +300,7 @@ class Combination extends AudioCalibrator {
         componentIRFreqs,
         num_periods,
         sampleRate: this.sourceSamplingRate || 96000,
-        calibrateSoundBurstDb: this._calibrateSoundBurstDb
+        calibrateSoundBurstDb: this._calibrateSoundBurstDb,
       })
       .then(res => {
         console.log(res);
@@ -562,13 +573,13 @@ class Combination extends AudioCalibrator {
 
     const data = buffer.getChannelData(0); // get data
     if (this.mode === 'filtered') {
-      console.log("check max and min of convolution");
+      console.log('check max and min of convolution');
     } else {
-      console.log("check max and min of mls");
+      console.log('check max and min of mls');
     }
-   
-    console.log("Max:", Math.min(...dataBuffer));
-    console.log("Min:",Math.max(...dataBuffer));
+
+    console.log('Max:', Math.min(...dataBuffer));
+    console.log('Min:', Math.max(...dataBuffer));
     // fill the buffer with our data
     try {
       for (let i = 0; i < dataBuffer.length; i += 1) {
@@ -583,7 +594,6 @@ class Combination extends AudioCalibrator {
     this.sourceNode.buffer = buffer;
 
     if (this.mode === 'filtered') {
-      
       //used to not loop filtered
       this.sourceNode.loop = true;
     } else {
@@ -665,7 +675,7 @@ class Combination extends AudioCalibrator {
     let checkRec = false;
     this.mode = 'filtered';
     console.log('play mls with iir');
-    //this.invertedImpulseResponse = iir;
+    //this.invertedImpulseResponse = iir
 
     await this.calibrationSteps(
       stream,
@@ -683,12 +693,16 @@ class Combination extends AudioCalibrator {
   bothSoundCheck = async stream => {
     let iir_ir_and_plots;
     this.#currentConvolution = this.componentConvolution;
+    this.filteredMLSRange.component.Min = Math.min(...this.#currentConvolution);
+    this.filteredMLSRange.component.Max = Math.max(...this.#currentConvolution);
     await this.playMLSwithIIR(stream, this.#currentConvolution);
     this.#stopCalibrationAudio();
     let component_conv_recs = this.getAllFilteredRecordedSignals();
     let return_component_conv_rec = component_conv_recs[0];
     this.clearAllFilteredRecordedSignals();
     this.#currentConvolution = this.systemConvolution;
+    this.filteredMLSRange.system.Min = Math.min(...this.#currentConvolution);
+    this.filteredMLSRange.system.Max = Math.max(...this.#currentConvolution);
     await this.playMLSwithIIR(stream, this.#currentConvolution);
     this.#stopCalibrationAudio();
     let system_conv_recs = this.getAllFilteredRecordedSignals();
@@ -911,8 +925,12 @@ class Combination extends AudioCalibrator {
     let iir_ir_and_plots;
     if (this._calibrateSoundCheck != 'system') {
       this.#currentConvolution = this.componentConvolution;
+      this.filteredMLSRange.component.Min = Math.min(...this.#currentConvolution);
+      this.filteredMLSRange.component.Max = Math.max(...this.#currentConvolution);
     } else {
       this.#currentConvolution = this.systemConvolution;
+      this.filteredMLSRange.system.Min = Math.min(...this.#currentConvolution);
+      this.filteredMLSRange.system.Max = Math.max(...this.#currentConvolution);
     }
     await this.playMLSwithIIR(stream, this.#currentConvolution);
     this.#stopCalibrationAudio();
@@ -1289,13 +1307,13 @@ class Combination extends AudioCalibrator {
 
     length = this.sourceSamplingRate * desired_time;
     //get mls here
-   const calibrateSoundBurstDb = this._calibrateSoundBurstDb;
+    const calibrateSoundBurstDb = this._calibrateSoundBurstDb;
     await this.pyServerAPI
       .getMLSWithRetry({length, calibrateSoundBurstDb})
       .then(res => {
         console.log(res);
         this.#mlsBufferView = res['mls'];
-        this.#mls = res['unscaledMLS']
+        this.#mls = res['unscaledMLS'];
       })
       .catch(err => {
         // this.emit('InvertedImpulseResponse', {res: false});
@@ -1929,7 +1947,7 @@ class Combination extends AudioCalibrator {
     }
 
     const total_results = {...volumeResults, ...impulseResponseResults};
-
+    total_results['filteredMLSRange'] = this.filteredMLSRange;
     total_results['micInfo'] = micInfo;
     console.log('total results');
     console.log(total_results);
