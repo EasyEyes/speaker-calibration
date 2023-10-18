@@ -61,3 +61,8 @@ hr {
   top: 20px;
   font-size: larger;
 }
+
+#calibrationBeginButton {
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
