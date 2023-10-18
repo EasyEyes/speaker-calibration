@@ -11,6 +11,7 @@ const listenerParameters = {
   targetElementId: 'display',
 };
 
+const container = document.getElementById('listenerContainer');
 const recordingInProgress = phrases.RC_soundRecording['en-US'];
 const backToExperimentWindow = phrases.RC_backToExperimentWindow['en-US'];
 const allowMicrophone = phrases.RC_allowMicrophoneUse['en-US'];
@@ -37,6 +38,7 @@ switch (isSmartPhone) {
     html.style.overflow = 'hidden';
     const display = document.getElementById('updateDisplay');
     display.classList.add('updateDisplay');
+    container.style.display = 'block';
     // event listener for id calibrationBeginButton
     const calibrationBeginButton = document.getElementById('calibrationBeginButton');
     calibrationBeginButton.addEventListener('click', () => {
@@ -67,6 +69,7 @@ switch (isSmartPhone) {
     // remove the button
     const calibrationBeginButton2 = document.getElementById('calibrationBeginButton');
     calibrationBeginButton2.remove();
+    container.style.display = 'block';
     // event listener for when the page is loaded
     window.addEventListener('load', () => {
       // set the text of the html elements
