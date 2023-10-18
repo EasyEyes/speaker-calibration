@@ -1793,6 +1793,8 @@ class Combination extends AudioCalibrator {
 
   addMicrophoneInfo = async (speakerID, OEM, micInfo) => {
     // add to database if /info does not exist
+    // if there is "undefined" in the micInfo, change it to null
+    JSON.parse(JSON.stringify(micInfo));
     const dbRef = ref(database);
     const snapshot = await get(child(dbRef, `Microphone2/${OEM}/${speakerID}/info`));
     if (!snapshot.exists()) {
