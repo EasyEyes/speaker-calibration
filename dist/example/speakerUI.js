@@ -172,6 +172,7 @@ window.onload = () => {
       siteUrl: window.location.href.substring(0, location.href.lastIndexOf('/')),
       targetElementId: 'display',
       soundMessageId:'speak123',
+      calibrateSoundSamplingDesiredBits: document.getElementById('calibrateSoundSamplingDesiredBitsBox').value,
       // gainValues: [0.1, 0.5, 0.9], // example gain values
       // gainValues: [
       //   0.6998419960022735, 0.44668359215096315, 0.31622776601683794, 0.17782794100389226, 0.1,
@@ -219,6 +220,7 @@ window.onload = () => {
         mlsOrder: document.getElementById('mlsOrder').value,
         download: document.getElementById('flexSwitchCheckDownload').checked,
         calibrateSoundHz: document.getElementById('calibrateSoundHzBox').value,
+        calibrateSoundSamplingDesiredBits: document.getElementById('calibrateSoundSamplingDesiredBitsBox').value,
       };
 
       const calibrator = new CombinationCalibration(calibratorParams);
