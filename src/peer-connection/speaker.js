@@ -33,6 +33,7 @@ class Speaker extends AudioPeer {
     this.debug = params?.debug ?? false;
     this.isSmartPhone = params?.isSmartPhone ?? false;
     this.calibrateSoundHz = params?.calibrateSoundHz ?? 48000;
+    this.calibrateSoundSamplingDesiredBits = params?.calibrateSoundSamplingDesiredBits ?? 24;
     this.instructionDisplayId = params?.instructionDisplayId ?? '';
     this.timeToCalibrateDisplay = params?.timeToCalibrateId ?? '';
     this.soundMessageId = params?.soundMessageId ?? '';
@@ -187,6 +188,7 @@ class Speaker extends AudioPeer {
       speakerPeerId: this.peer.id,
       isSmartPhone: this.isSmartPhone,
       calibrateSoundHz: this.calibrateSoundHz,
+      calibrateSoundSamplingDesiredBits: this.calibrateSoundSamplingDesiredBits,
     };
     const queryString = this.queryStringFromObject(queryStringParameters);
     const uri = this.siteUrl + queryString;
