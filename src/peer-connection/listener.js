@@ -25,6 +25,9 @@ class Listener extends AudioPeer {
       urlParameters.calibrateSoundHz !== null && urlParameters.calibrateSoundHz !== undefined
         ? urlParameters.calibrateSoundHz
         : 48000;
+    this.calibrateSoundSamplingDesiredBits = urlParameters.calibrateSoundSamplingDesiredBits!== null && urlParameters.calibrateSoundSamplingDesiredBits !== undefined
+    ? urlParameters.calibrateSoundSamplingDesiredBits
+    : 24;
     this.speakerPeerId = urlParameters.speakerPeerId;
 
     this.peer.on('open', this.onPeerOpen);
@@ -185,7 +188,7 @@ class Listener extends AudioPeer {
     }
 
     if (capabilities.sampleSize) {
-      constraints.sampleSize = 24;
+      constraints.sampleSize = this.calibrateSoundSamplingDesiredBits;
     }
 
     if (capabilities.channelCount) {
@@ -226,7 +229,7 @@ class Listener extends AudioPeer {
         ? {sampleRate: {ideal: this.calibrateSoundHz}}
         : {}),
       ...(availableConstraints.sampleSize && availableConstraints.sampleSize == true
-        ? {sampleSize: {ideal: 24}}
+        ? {sampleSize: {ideal: this.calibrateSoundSamplingDesiredBits}}
         : {}),
       ...(availableConstraints.channelCount && availableConstraints.channelCount == true
         ? {channelCount: {exact: 1}}
