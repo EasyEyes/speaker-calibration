@@ -36,6 +36,19 @@ const saveToCSV = (data, filename = 'recordedMLSignal.csv') => {
   link.click();
 };
 
+const saveToJSON = (data, filename = 'recordedMLSignal.json') => {
+  const jsonData = JSON.stringify(data, null, 2);
+  const blob = new Blob([jsonData], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.setAttribute('href', url);
+  link.setAttribute('download', filename);
+  document.body.appendChild(link);
+  link.click();
+  URL.revokeObjectURL(url);
+};
+
+
 /** .
  * .
  * .
@@ -52,4 +65,24 @@ const csvToArray = (csvString, delimiter = ',') =>
     .split('\n')
     .map(row => parseFloat(row.trim().split(delimiter)[1]));
 
-export {sleep, saveToCSV, csvToArray};
+const findMinValue = (array) => {
+  let minValue = array[0];
+  for (let i = 1; i < array.length; i++) {
+      if (array[i] < minValue) {
+          minValue = array[i];
+      }
+  }
+  return minValue;
+};
+
+const findMaxValue = (array) => {
+  let maxValue = array[0];
+  for (let i = 1; i < array.length; i++) {
+      if (array[i] > maxValue) {
+          maxValue = array[i];
+      }
+  }
+  return maxValue;
+};
+
+export {sleep, saveToCSV, saveToJSON, csvToArray,findMinValue,findMaxValue};

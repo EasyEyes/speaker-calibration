@@ -1,6 +1,6 @@
 import AudioCalibrator from '../audioCalibrator';
 
-import {sleep, csvToArray, saveToCSV} from '../../utils';
+import {sleep, csvToArray, saveToCSV, saveToJSON,findMinValue,findMaxValue} from '../../utils';
 import database from '../../config/firebase';
 import {ref, set, get, child} from 'firebase/database';
 
@@ -572,14 +572,7 @@ class Combination extends AudioCalibrator {
     );
 
     const data = buffer.getChannelData(0); // get data
-    if (this.mode === 'filtered') {
-      console.log('check max and min of convolution');
-    } else {
-      console.log('check max and min of mls');
-    }
 
-    console.log('Max:', Math.min(...dataBuffer));
-    console.log('Min:', Math.max(...dataBuffer));
     // fill the buffer with our data
     try {
       for (let i = 0; i < dataBuffer.length; i += 1) {
@@ -693,16 +686,16 @@ class Combination extends AudioCalibrator {
   bothSoundCheck = async stream => {
     let iir_ir_and_plots;
     this.#currentConvolution = this.componentConvolution;
-    this.filteredMLSRange.component.Min = Math.min(...this.#currentConvolution);
-    this.filteredMLSRange.component.Max = Math.max(...this.#currentConvolution);
+    this.filteredMLSRange.component.Min = findMinValue(this.#currentConvolution);
+    this.filteredMLSRange.component.Max = findMaxValue(this.#currentConvolution);
     await this.playMLSwithIIR(stream, this.#currentConvolution);
     this.#stopCalibrationAudio();
     let component_conv_recs = this.getAllFilteredRecordedSignals();
     let return_component_conv_rec = component_conv_recs[0];
     this.clearAllFilteredRecordedSignals();
     this.#currentConvolution = this.systemConvolution;
-    this.filteredMLSRange.system.Min = Math.min(...this.#currentConvolution);
-    this.filteredMLSRange.system.Max = Math.max(...this.#currentConvolution);
+    this.filteredMLSRange.system.Min = findMinValue(this.#currentConvolution);
+    this.filteredMLSRange.system.Max = findMaxValue(this.#currentConvolution);
     await this.playMLSwithIIR(stream, this.#currentConvolution);
     this.#stopCalibrationAudio();
     let system_conv_recs = this.getAllFilteredRecordedSignals();
@@ -925,12 +918,12 @@ class Combination extends AudioCalibrator {
     let iir_ir_and_plots;
     if (this._calibrateSoundCheck != 'system') {
       this.#currentConvolution = this.componentConvolution;
-      this.filteredMLSRange.component.Min = Math.min(...this.#currentConvolution);
-      this.filteredMLSRange.component.Max = Math.max(...this.#currentConvolution);
+      this.filteredMLSRange.component.Min = findMinValue(this.#currentConvolution);
+      this.filteredMLSRange.component.Max = findMaxValue(this.#currentConvolution);
     } else {
       this.#currentConvolution = this.systemConvolution;
-      this.filteredMLSRange.system.Min = Math.min(...this.#currentConvolution);
-      this.filteredMLSRange.system.Max = Math.max(...this.#currentConvolution);
+      this.filteredMLSRange.system.Min = findMinValue(this.#currentConvolution);
+      this.filteredMLSRange.system.Max = findMaxValue(this.#currentConvolution);
     }
     await this.playMLSwithIIR(stream, this.#currentConvolution);
     this.#stopCalibrationAudio();
@@ -1494,7 +1487,7 @@ class Combination extends AudioCalibrator {
 
     //here after calibration we have the component calibration (either loudspeaker or microphone) in the same form as the componentIR
     //that was used to calibrate
-
+    // saveToJSON(iir_ir_and_plots);
     return iir_ir_and_plots;
   };
 
@@ -1848,7 +1841,7 @@ class Combination extends AudioCalibrator {
     _calibrateSoundCheck = 'goal', //GOAL PASSed in by default
     isSmartPhone = false,
     _calibrateSoundBurstDb = 0.33,
-    _calibrateSoundBurstRepeats = 2,
+    _calibrateSoundBurstRepeats = 3,
     _calibrateSoundBurstSec = 1,
     _calibrateSoundBurstsWarmup = 1,
     _calibrateSoundHz = 48000,
