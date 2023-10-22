@@ -697,6 +697,14 @@ class Combination extends AudioCalibrator {
     let component_conv_recs = this.getAllFilteredRecordedSignals();
     let return_component_conv_rec = component_conv_recs[0];
     this.clearAllFilteredRecordedSignals();
+
+    this.#currentConvolution = this.testConvolution;
+    await this.playMLSwithIIR(stream, this.#currentConvolution);
+    this.#stopCalibrationAudio();
+    let test_conv_recs = this.getAllFilteredRecordedSignals();
+    let return_test_conv_rec = test_conv_recs[0];
+    this.clearAllFilteredRecordedSignals();
+
     this.#currentConvolution = this.systemConvolution;
     this.filteredMLSRange.system.Min = findMinValue(this.#currentConvolution);
     this.filteredMLSRange.system.Max = findMaxValue(this.#currentConvolution);
@@ -704,11 +712,9 @@ class Combination extends AudioCalibrator {
     this.#stopCalibrationAudio();
     let system_conv_recs = this.getAllFilteredRecordedSignals();
     let return_system_conv_rec = system_conv_recs[0];
-    this.#currentConvolution = this.testConvolution;
-    await this.playMLSwithIIR(stream, this.#currentConvolution);
-    this.#stopCalibrationAudio();
-    let test_conv_recs = this.getAllFilteredRecordedSignals();
-    let return_test_conv_rec = test_conv_recs[0];
+
+    this.clearAllFilteredRecordedSignals();
+
     this.sourceAudioContext.close();
     let recs = this.getAllUnfilteredRecordedSignals();
     let unconv_rec = recs[0];
@@ -956,6 +962,7 @@ class Combination extends AudioCalibrator {
     this.#stopCalibrationAudio();
     let conv_recs = this.getAllFilteredRecordedSignals();
     let recs = this.getAllUnfilteredRecordedSignals();
+    this.clearAllFilteredRecordedSignals();
     console.log('Obtaining unfiltered recording from #allHzUnfilteredRecordings to calculate PSD');
     console.log('Obtaining filtered recording from #allHzFilteredRecordings to calculate PSD');
     let unconv_rec = recs[0];
