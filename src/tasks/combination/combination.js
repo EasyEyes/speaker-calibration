@@ -1551,7 +1551,7 @@ class Combination extends AudioCalibrator {
 
     //here after calibration we have the component calibration (either loudspeaker or microphone) in the same form as the componentIR
     //that was used to calibrate
-    saveToJSON(iir_ir_and_plots);
+    // saveToJSON(iir_ir_and_plots);
     return iir_ir_and_plots;
   };
 
