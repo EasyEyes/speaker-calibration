@@ -227,6 +227,10 @@ class AudioCalibrator extends AudioRecorder {
     // this.emit('update', {message: `sampling at ${samplingRate}Hz...`});
   };
 
+  setSampleSize = sampleSize => {
+    this.sampleSize = sampleSize;
+  };
+
   sampleRatesSet = () => this.sourceSamplingRate && this.sinkSamplingRate;
 
   addCalibrationNode = node => {
