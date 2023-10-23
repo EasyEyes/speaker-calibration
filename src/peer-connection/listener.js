@@ -141,6 +141,14 @@ class Listener extends AudioPeer {
     });
   };
 
+  sendSampleSize = sampleSize => {
+    this.displayUpdate('Listener - sendSampleSize');
+    this.conn.send({
+      name: 'sampleSize',
+      payload: sampleSize,
+    });
+  };
+
   getDeviceInfo = async () => {
     try {
       const deviceInfo = {};
@@ -207,7 +215,7 @@ class Listener extends AudioPeer {
 
     const settings = track.getSettings();
     this.displayUpdate(`Listener Track Settings - ${JSON.stringify(settings, undefined, 2)}`);
-    return settings.sampleRate;
+    return settings;
   };
 
   getMediaDevicesAudioContraints = () => {
@@ -267,8 +275,9 @@ class Listener extends AudioPeer {
       })
       .then(stream => {
         this.applyHQTrackConstraints(stream)
-          .then(sampleRate => {
-            this.sendSamplingRate(sampleRate);
+          .then(settings => {
+            this.sendSamplingRate(settings.sampleRate);
+            this.sendSampleSize(settings.sampleSize);
             this.peer.call(this.speakerPeerId, stream); // one-way call
             this.displayUpdate('Listener - openAudioStream');
           })

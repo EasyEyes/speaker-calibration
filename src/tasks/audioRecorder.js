@@ -33,6 +33,9 @@ class AudioRecorder extends MyEventEmitter {
   sinkSamplingRate;
 
   /** @private */
+  sampleSize;
+
+  /** @private */
   #allVolumeRecordings = [];
 
   /**
@@ -137,6 +140,7 @@ class AudioRecorder extends MyEventEmitter {
       window.webkitAudioContext ||
       window.audioContext)({
       sampleRate: this.sinkSamplingRate,
+      sampleSize: this.sampleSize,
       //sampleRate: 96000
     });
   };
