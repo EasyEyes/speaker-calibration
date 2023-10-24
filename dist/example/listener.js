@@ -181,7 +181,8 @@ switch (isSmartPhone) {
           alert('Please enter model number and name');
           modelNumberButton.innerHTML = 'Proceed';
         } else {
-          if (await speakerCalibrator.Speaker.doesMicrophoneExist(modelNumber, deviceInfo['OEM'])) {
+          const oem = deviceInfo['OEM'].toLowerCase().split(' ').join('');
+          if (await speakerCalibrator.Speaker.doesMicrophoneExist(modelNumber, oem)) {
             // remove the button
             modelNumberButton.remove();
             askModelNumberElement.remove();
