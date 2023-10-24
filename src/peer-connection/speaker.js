@@ -409,6 +409,9 @@ class Speaker extends AudioPeer {
       case 'samplingRate':
         this.ac.setSamplingRates(data.payload);
         break;
+      case 'sampleSize':
+        this.ac.setSampleSize(data.payload);
+        break;
       case 'deviceType':
         this.ac.setDeviceType(data.payload);
         break;

@@ -647,6 +647,8 @@ class Combination extends AudioCalibrator {
     console.log(this.sinkSamplingRate);
     console.log('source sampling rate');
     console.log(this.sourceSamplingRate);
+    console.log('sample size');
+    console.log(this.sampleSize);
   };
 
   /** .
@@ -2018,6 +2020,11 @@ class Combination extends AudioCalibrator {
     const total_results = {...volumeResults, ...impulseResponseResults};
     total_results['filteredMLSRange'] = this.filteredMLSRange;
     total_results['micInfo'] = micInfo;
+    total_results['audioInfo'] = {};
+    total_results['audioInfo']['sinkSampleRate'] = this.sinkSamplingRate;
+    total_results['audioInfo']['sourceSampleRate'] = this.sourceSamplingRate;
+    total_results['audioInfo']['bitsPerSample'] = this.sampleSize;
+
     console.log('total results');
     console.log(total_results);
     return total_results;
