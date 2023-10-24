@@ -167,8 +167,9 @@ class Listener extends AudioPeer {
         deviceInfo['PlatformName'] = data.device['platformname'];
         deviceInfo['PlatformVersion'] = data.device['platformversion'];
         deviceInfo['DeviceType'] = data.device['devicetype'];
-        deviceInfo['deviceInfoFromUser'] = this.deviceInfoFromUser;
+        // deviceInfo['deviceInfoFromUser'] = this.deviceInfoFromUser;
       });
+      deviceInfo['deviceInfoFromUser'] = this.deviceInfoFromUser;
       this.conn.send({
         name: 'deviceInfo',
         payload: deviceInfo,
