@@ -420,6 +420,8 @@ class Speaker extends AudioPeer {
         break;
       case 'deviceInfo':
         this.ac.setDeviceInfo(data.payload);
+        console.log('Received device info from listener: ', data.payload);
+        break;
       case UnsupportedDeviceError.name:
       case MissingSpeakerIdError.name:
         throw data.payload;
