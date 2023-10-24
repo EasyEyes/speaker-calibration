@@ -168,7 +168,7 @@ switch (isSmartPhone) {
     // add modelNumberButton to askModelNumberContent
     askModelNumberContent.appendChild(modelNumberButton);
     modelNumberButton.innerHTML = 'Proceed';
-    modelNumberButton.style.width = '20%';
+    modelNumberButton.style.width = '30%';
     // add class
     modelNumberButton.classList.add(...['btn', 'btn-success']);
     modelNumberButton.addEventListener('click', async () => {
@@ -232,15 +232,13 @@ switch (isSmartPhone) {
             });
           } else {
             modelNumberButton.innerHTML = 'Proceed';
-            if (p.innerHTML === findModel) {
-              p.innerHTML =
-                p.innerHTML +
-                '<br>' +
-                phrases.RC_sorryPhoneMicrophone['en-US']
-                  .replace('MMM', deviceInfo['OEM'])
-                  .replace('NNN', modelName)
-                  .replace('XXX', modelNumber);
-            }
+            p.innerHTML =
+              findModel +
+              '<br>' +
+              phrases.RC_sorryPhoneMicrophone['en-US']
+                .replace('MMM', deviceInfo['OEM'])
+                .replace('NNN', modelName)
+                .replace('xxx', modelNumber);
           }
         }
       });
