@@ -125,20 +125,20 @@ try {
 switch (isSmartPhone) {
   case 'true':
     //  add turnMessageElement2 to body
-    document.body.appendChild(turnMessageElement2);
+    // document.body.appendChild(turnMessageElement2);
     // style turnMessageElement2
-    turnMessageElement2.style.position = 'absolute';
-    turnMessageElement2.style.top = '20px';
-    turnMessageElement2.style.fontSize = 'larger';
+    // turnMessageElement2.style.position = 'absolute';
+    // turnMessageElement2.style.top = '20px';
+    // turnMessageElement2.style.fontSize = 'larger';
 
     // add askModelNumberElement to body
     document.body.appendChild(askModelNumberElement);
     // style askModelNumberElement
-    askModelNumberElement.style.transform = 'rotate(180deg)';
-    askModelNumberElement.style.marginTop = '100vh';
+    // askModelNumberElement.style.transform = 'rotate(180deg)';
+    askModelNumberElement.style.marginTop = '10px';
     askModelNumberElement.style.position = 'absolute';
-    askModelNumberElement.style.bottom = '0';
-    askModelNumberElement.style.right = '10px';
+    askModelNumberElement.style.top = '0';
+    askModelNumberElement.style.left = '10px';
 
     const askModelNumberContent = document.createElement('div');
     askModelNumberContent.style.display = 'flex';
@@ -168,7 +168,7 @@ switch (isSmartPhone) {
     // add modelNumberButton to askModelNumberContent
     askModelNumberContent.appendChild(modelNumberButton);
     modelNumberButton.innerHTML = 'Proceed';
-    modelNumberButton.style.width = '100px';
+    modelNumberButton.style.width = '20%';
     // add class
     modelNumberButton.classList.add(...['btn', 'btn-success']);
     modelNumberButton.addEventListener('click', async () => {
