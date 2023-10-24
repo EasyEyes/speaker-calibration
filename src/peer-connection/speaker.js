@@ -287,7 +287,9 @@ class Speaker extends AudioPeer {
     const titleDisplay = document.getElementById(this.titleDisplayId);
     if (titleDisplay) {
       // replace 5 with 6
-      titleDisplay.innerHTML = titleDisplay.innerHTML.replace('5', '6');
+      titleDisplay.innerHTML = this.isSmartPhone
+        ? titleDisplay.innerHTML.replace('2', '3')
+        : titleDisplay.innerHTML.replace('5', '6');
     }
   };
 
