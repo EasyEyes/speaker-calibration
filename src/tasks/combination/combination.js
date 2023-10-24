@@ -1,6 +1,6 @@
 import AudioCalibrator from '../audioCalibrator';
 
-import {sleep, csvToArray, saveToCSV, saveToJSON,findMinValue,findMaxValue} from '../../utils';
+import {sleep, csvToArray, saveToCSV, saveToJSON, findMinValue, findMaxValue} from '../../utils';
 import database from '../../config/firebase';
 import {ref, set, get, child} from 'firebase/database';
 
@@ -318,7 +318,7 @@ class Combination extends AudioCalibrator {
         this.componentIR['Gain'] = res['ir'];
         this.componentIR['Freq'] = res['frequencies'];
         this.componentConvolution = res['convolution'];
-        this.testConvolution = res['convolutionTest']
+        this.testConvolution = res['convolutionTest'];
         this.componentInvertedImpulseResponseNoBandpass = res['iirNoBandpass'];
       })
       .catch(err => {
@@ -932,7 +932,7 @@ class Combination extends AudioCalibrator {
           test: {
             x: test_conv_rec_psd['x'],
             y: test_conv_rec_psd['y'],
-          }
+          },
         },
       },
       mls: this.#mlsBufferView,
@@ -958,7 +958,7 @@ class Combination extends AudioCalibrator {
       this.filteredMLSRange.system.Min = findMinValue(this.#currentConvolution);
       this.filteredMLSRange.system.Max = findMaxValue(this.#currentConvolution);
     }
-    await this.playMLSwithIIR(stream, this.#currentConvolution);    
+    await this.playMLSwithIIR(stream, this.#currentConvolution);
     this.#stopCalibrationAudio();
     let conv_recs = this.getAllFilteredRecordedSignals();
     let recs = this.getAllUnfilteredRecordedSignals();
@@ -971,12 +971,12 @@ class Combination extends AudioCalibrator {
     let return_conv_rec = conv_rec;
     if (this._calibrateSoundCheck != 'system') {
       this.#currentConvolution = this.testConvolution;
-      await this.playMLSwithIIR(stream, this.#currentConvolution);    
+      await this.playMLSwithIIR(stream, this.#currentConvolution);
       this.#stopCalibrationAudio();
     }
     let test_conv_recs = this.getAllFilteredRecordedSignals();
     let return_test_conv_rec = test_conv_recs[0];
-    this.sourceAudioContext.close(); 
+    this.sourceAudioContext.close();
     if (this._calibrateSoundCheck != 'system') {
       let knownGain = this.oldComponentIR.Gain;
       let knownFreq = this.oldComponentIR.Freq;
@@ -1008,7 +1008,7 @@ class Combination extends AudioCalibrator {
         .catch(err => {
           console.error(err);
         });
-      
+
       let test_conv_results = await this.pyServerAPI
         .getSubtractedPSDWithRetry(return_test_conv_rec, knownGain, knownFreq, sampleRate)
         .then(res => {
@@ -1022,7 +1022,7 @@ class Combination extends AudioCalibrator {
         .catch(err => {
           console.error(err);
         });
-      
+
       unconv_rec = this.componentInvertedImpulseResponseNoBandpass;
       conv_rec = this.componentInvertedImpulseResponse;
       let component_iir_psd = await this.pyServerAPI
@@ -1148,7 +1148,7 @@ class Combination extends AudioCalibrator {
             test: {
               x: test_conv_results['x'],
               y: test_conv_results['y'],
-            }
+            },
           },
         },
         mls: this.#mlsBufferView,
@@ -1850,8 +1850,6 @@ class Combination extends AudioCalibrator {
 
   addMicrophoneInfo = async (speakerID, OEM, micInfo) => {
     // add to database if /info does not exist
-    // if there is "undefined" in the micInfo, change it to null
-    JSON.parse(JSON.stringify(micInfo));
     const dbRef = ref(database);
     const snapshot = await get(child(dbRef, `Microphone2/${OEM}/${speakerID}/info`));
     if (!snapshot.exists()) {
@@ -1933,6 +1931,11 @@ class Combination extends AudioCalibrator {
     this.desired_sampling_rate = _calibrateSoundHz;
     this._calibrateSoundBackgroundSecs = _calibrateSoundBackgroundSecs;
 
+    if (isSmartPhone) {
+      micModelName = this.deviceInfo.deviceInfoFromUser.modelName;
+      micModelNumber = this.deviceInfo.deviceInfoFromUser.modelNumber;
+    }
+
     //feed calibration goal here
     this._calibrateSoundCheck = _calibrateSoundCheck;
     //check if a componentIR was given to the system, if it isn't check for the microphone. using dummy data here bc we need to
@@ -1955,6 +1958,13 @@ class Combination extends AudioCalibrator {
       PlatformVersion: isSmartPhone ? this.deviceInfo.platformversion : 'N/A',
       DeviceType: isSmartPhone ? this.deviceInfo.devicetype : 'N/A',
     };
+    // if undefined in micInfo, set to empty string
+    for (const [key, value] of Object.entries(micInfo)) {
+      if (value === undefined) {
+        micInfo[key] = '';
+      }
+    }
+
     this.addMicrophoneInfo(ID, OEM, micInfo);
     if (componentIR == null) {
       //mode 'ir'

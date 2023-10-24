@@ -57,6 +57,15 @@ class Speaker extends AudioPeer {
     return null;
   };
 
+  static doesMicrophoneExist = async (speakerID, OEM) => {
+    const dbRef = ref(database);
+    const snapshot = await get(child(dbRef, `Microphone2/${OEM}/${speakerID}`));
+    if (snapshot.exists()) {
+      return true;
+    }
+    return false;
+  };
+
   /**
    * Async factory method that creates the Speaker object, and returns a promise that resolves to the result of the calibration.
    *
@@ -76,6 +85,7 @@ class Speaker extends AudioPeer {
       // when a call is received
       speaker.peer.on('call', async call => {
         // Answer the call (one way)
+
         call.answer();
         speaker.#removeUIElems();
         speaker.#showSpinner();
@@ -276,11 +286,8 @@ class Speaker extends AudioPeer {
     // Update title - titleDisplayId
     const titleDisplay = document.getElementById(this.titleDisplayId);
     if (titleDisplay) {
-      // replace 2 with 3
-      titleDisplay.innerHTML = titleDisplay.innerHTML.replace('2', '3');
-      // replace 1 with 3
-      titleDisplay.innerHTML = titleDisplay.innerHTML.replace('1', '3');
-      titleDisplay.innerHTML = titleDisplay.innerHTML.replace('4', '5');
+      // replace 5 with 6
+      titleDisplay.innerHTML = titleDisplay.innerHTML.replace('5', '6');
     }
   };
 

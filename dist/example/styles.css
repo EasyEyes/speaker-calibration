@@ -56,7 +56,7 @@ hr {
   overflow-x: hidden;
 }
 
-#turnMeToReadBelow {
+.turnMeToReadBelow {
   position: absolute;
   top: 20px;
   font-size: larger;
@@ -69,4 +69,24 @@ hr {
 
 .container {
   display: none;
+}
+
+#modelNumberInput {
+  width: 30vw;
+  height: 100%;
+  font-size: 1rem;
+  border-radius: 5px;
+  border: 1px solid black;
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+
+#modelNameInput {
+  width: 30vw;
+  height: 100%;
+  font-size: 1rem;
+  border-radius: 5px;
+  border: 1px solid black;
+  margin-top: 10px;
+  margin-bottom: 10px;
 }

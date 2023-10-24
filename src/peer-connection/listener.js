@@ -17,6 +17,7 @@ class Listener extends AudioPeer {
   constructor(params) {
     super(params);
 
+    this.deviceInfoFromUser = params.deviceInfoFromUser;
     this.startTime = Date.now();
     this.receiverPeerId = null;
 
@@ -25,9 +26,11 @@ class Listener extends AudioPeer {
       urlParameters.calibrateSoundHz !== null && urlParameters.calibrateSoundHz !== undefined
         ? urlParameters.calibrateSoundHz
         : 48000;
-    this.calibrateSoundSamplingDesiredBits = urlParameters.calibrateSoundSamplingDesiredBits!== null && urlParameters.calibrateSoundSamplingDesiredBits !== undefined
-    ? urlParameters.calibrateSoundSamplingDesiredBits
-    : 24;
+    this.calibrateSoundSamplingDesiredBits =
+      urlParameters.calibrateSoundSamplingDesiredBits !== null &&
+      urlParameters.calibrateSoundSamplingDesiredBits !== undefined
+        ? urlParameters.calibrateSoundSamplingDesiredBits
+        : 24;
     this.speakerPeerId = urlParameters.speakerPeerId;
 
     this.peer.on('open', this.onPeerOpen);
@@ -155,6 +158,7 @@ class Listener extends AudioPeer {
         deviceInfo['PlatformName'] = data.device['platformname'];
         deviceInfo['PlatformVersion'] = data.device['platformversion'];
         deviceInfo['DeviceType'] = data.device['devicetype'];
+        deviceInfo['deviceInfoFromUser'] = this.deviceInfoFromUser;
       });
       this.conn.send({
         name: 'deviceInfo',
