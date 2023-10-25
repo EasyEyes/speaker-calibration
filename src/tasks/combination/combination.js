@@ -1954,7 +1954,7 @@ class Combination extends AudioCalibrator {
     lCalib = 104.92978421490648,
     componentIR = null,
     microphoneName = 'MiniDSP-UMIK1-711-4754-vertical',
-    _calibrateSoundCheck = 'both', //GOAL PASSed in by default
+    _calibrateSoundCheck = 'goal', //GOAL PASSed in by default
     isSmartPhone = false,
     _calibrateSoundBurstDb = 0.33,
     _calibrateSoundBurstRepeats = 3,
