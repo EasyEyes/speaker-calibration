@@ -27,6 +27,7 @@ class Speaker extends AudioPeer {
    */
   constructor(params, CalibratorInstance) {
     super(params);
+    this.language = params?.language ?? 'en-US';
     this.siteUrl += '/listener?';
     this.ac = CalibratorInstance;
     this.result = null;
@@ -199,6 +200,7 @@ class Speaker extends AudioPeer {
       isSmartPhone: this.isSmartPhone,
       calibrateSoundHz: this.calibrateSoundHz,
       calibrateSoundSamplingDesiredBits: this.calibrateSoundSamplingDesiredBits,
+      lang: this.language,
     };
     const queryString = this.queryStringFromObject(queryStringParameters);
     const uri = this.siteUrl + queryString;
@@ -257,7 +259,7 @@ class Speaker extends AudioPeer {
       instructionDisplay.style.whiteSpace = 'nowrap';
       instructionDisplay.style.fontWeight = 'bold';
       instructionDisplay.style.width = 'fit-content';
-      instructionDisplay.innerHTML = phrases.RC_soundRecording['en-US'];
+      instructionDisplay.innerHTML = phrases.RC_soundRecording[this.language];
       let fontSize = 100;
       instructionDisplay.style.fontSize = fontSize + 'px';
       while (instructionDisplay.scrollWidth > background.scrollWidth * 0.9 && fontSize > 10) {
@@ -276,7 +278,7 @@ class Speaker extends AudioPeer {
 
     const timeToCalibrateDisplay = document.getElementById(this.timeToCalibrateDisplay);
     if (timeToCalibrateDisplay) {
-      const timeToCalibrateText = phrases.RC_howLongToCalibrate['en-US'];
+      const timeToCalibrateText = phrases.RC_howLongToCalibrate[this.language];
       timeToCalibrateDisplay.innerHTML = timeToCalibrateText.replace('111', this.timeToCalibrate);
       timeToCalibrateDisplay.style.fontWeight = 'normal';
       timeToCalibrateDisplay.style.fontSize = '1rem';
@@ -289,7 +291,7 @@ class Speaker extends AudioPeer {
       // replace 5 with 6
       titleDisplay.innerHTML = this.isSmartPhone
         ? titleDisplay.innerHTML.replace('2', '3')
-        : titleDisplay.innerHTML.replace('5', '6');
+        : titleDisplay.innerHTML.replace('4', '5');
     }
   };
 
