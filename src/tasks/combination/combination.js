@@ -2059,8 +2059,8 @@ class Combination extends AudioCalibrator {
       //insert Freq and Gain from this.componentIR into db
       await this.writeFrqGain(
         ID,
-        impulseResponseResults.componentIR.Freq,
-        impulseResponseResults.componentIR.Gain,
+        impulseResponseResults.component.ir.Freq,
+        impulseResponseResults.component.ir.Gain,
         OEM
       );
       micInfo['gainDBSPL'] = impulseResponseResults.parameters.gainDBSPL;
