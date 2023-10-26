@@ -283,7 +283,11 @@ class Listener extends AudioPeer {
         this.applyHQTrackConstraints(stream)
           .then(settings => {
             this.sendSamplingRate(settings.sampleRate);
-            this.sendSampleSize(settings.sampleSize);
+            let sampleSize = settings.sampleSize;
+            if (!sampleSize){
+              sampleSize = this.calibrateSoundSamplingDesiredBits;
+            }
+            this.sendSampleSize(sampleSize);
             this.peer.call(this.speakerPeerId, stream); // one-way call
             this.displayUpdate('Listener - openAudioStream');
           })
