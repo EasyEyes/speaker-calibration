@@ -898,6 +898,9 @@ class Combination extends AudioCalibrator {
       .catch(err => {
         console.error(err);
       });
+    
+
+    let gainValue = this.getGainDBSPL();
 
     iir_ir_and_plots = {
       filtered_recording: {
@@ -958,6 +961,7 @@ class Combination extends AudioCalibrator {
             y: test_conv_rec_psd['y'],
           },
         },
+        gainDBSPL: gainValue
       },
       mls: this.#mlsBufferView,
       mls_psd: {
@@ -1130,6 +1134,7 @@ class Combination extends AudioCalibrator {
           console.error(err);
         });
 
+      let gainValue = this.getGainDBSPL();
       iir_ir_and_plots = {
         unfiltered_recording: return_unconv_rec,
         filtered_recording: return_conv_rec,
@@ -1184,6 +1189,7 @@ class Combination extends AudioCalibrator {
               y: test_conv_results['y'],
             },
           },
+          gainDBSPL: gainValue
         },
         mls: this.#mlsBufferView,
         mls_psd: {
@@ -1291,6 +1297,8 @@ class Combination extends AudioCalibrator {
           console.error(err);
         });
 
+
+      let gainValue = this.getGainDBSPL();
       iir_ir_and_plots = {
         unfiltered_recording: return_unconv_rec,
         filtered_recording: return_conv_rec,
@@ -1345,6 +1353,7 @@ class Combination extends AudioCalibrator {
               y: [],
             },
           },
+          gainDBSPL: gainValue
         },
         mls: this.#mlsBufferView,
         mls_psd: {
@@ -1507,6 +1516,7 @@ class Combination extends AudioCalibrator {
           console.error(err);
         });
 
+      let gainValue = this.getGainDBSPL();
       iir_ir_and_plots = {
         unfiltered_recording: return_unconv_rec,
         filtered_recording: return_conv_rec,
@@ -1552,6 +1562,7 @@ class Combination extends AudioCalibrator {
               y: [],
             },
           },
+          gainDBSPL: gainValue
         },
         mls: this.#mlsBufferView,
         autocorrelations: this.autocorrelations,
@@ -1938,6 +1949,19 @@ class Combination extends AudioCalibrator {
     this.timeStamp.push(`SOUND ${Number(startTaskTime.toFixed(1))} s. ${taskName}`);
   };
 
+  getGainDBSPL = () => {
+    var freqIndex = this.componentIR.Freq.indexOf(1000);
+
+    // If freqIndex is not -1 (meaning 1000 is found in the freq array)
+    if (freqIndex !== -1) {
+        // Get the corresponding gain value using the index
+        var gainValue = this.componentIR.Gain[freqIndex];
+        return gainValue;
+    } else {
+        console.log("Freq 1000 not found in the array.");
+        return null;
+    }
+  };
   // Example of how to use the writeFrqGain and readFrqGain functions
   // writeFrqGain('speaker1', [1, 2, 3], [4, 5, 6]);
   // Speaker1 is the speakerID  you want to write to in the database
@@ -2063,7 +2087,7 @@ class Combination extends AudioCalibrator {
         impulseResponseResults.component.ir.Gain,
         OEM
       );
-      micInfo['gainDBSPL'] = impulseResponseResults.parameters.gainDBSPL;
+      micInfo['gainDBSPL'] = impulseResponseResults.component.gainDBSPL;
       await this.writeGainat1000Hz(ID, micInfo['gainDBSPL'], OEM);
     }
 
