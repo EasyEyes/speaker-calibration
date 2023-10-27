@@ -89,8 +89,6 @@ class Combination extends AudioCalibrator {
   /** @private */
   componentConvolution;
 
-  /** @private */
-  testConvolution;
 
   /** @private */
   systemConvolution;
@@ -327,7 +325,6 @@ class Combination extends AudioCalibrator {
         this.componentIR['Gain'] = res['ir'];
         this.componentIR['Freq'] = res['frequencies'];
         this.componentConvolution = res['convolution'];
-        this.testConvolution = res['convolutionTest'];
         this.componentInvertedImpulseResponseNoBandpass = res['iirNoBandpass'];
       })
       .catch(err => {
@@ -634,6 +631,7 @@ class Combination extends AudioCalibrator {
    * @example
    */
   #playCalibrationAudio = () => {
+    this.addTimeStamp("Play unfiltered mls");
     this.calibrationNodes[0].start(0);
     this.status = ``;
     if (this.mode === 'unfiltered') {
@@ -711,14 +709,6 @@ class Combination extends AudioCalibrator {
     let return_component_conv_rec = component_conv_recs[0];
     this.clearAllFilteredRecordedSignals();
 
-    this.#currentConvolution = this.testConvolution;
-    this.addTimeStamp('Play MLS with test IIR');
-    await this.playMLSwithIIR(stream, this.#currentConvolution);
-    this.#stopCalibrationAudio();
-    let test_conv_recs = this.getAllFilteredRecordedSignals();
-    let return_test_conv_rec = test_conv_recs[0];
-    this.clearAllFilteredRecordedSignals();
-
     this.#currentConvolution = this.systemConvolution;
     this.filteredMLSRange.system.Min = findMinValue(this.#currentConvolution);
     this.filteredMLSRange.system.Max = findMaxValue(this.#currentConvolution);
@@ -762,21 +752,6 @@ class Combination extends AudioCalibrator {
         this.incrementStatusBar();
         this.status =
           `All Hz Calibration: done computing the PSD graphs...`.toString() +
-          this.generateTemplate().toString();
-        this.emit('update', {message: this.status});
-        return res;
-      })
-      .catch(err => {
-        console.error(err);
-      });
-
-    this.addTimeStamp('Get PSD of filtered recording (test component)');
-    let test_conv_rec_psd = await this.pyServerAPI
-      .getSubtractedPSDWithRetry(return_test_conv_rec, knownGain, knownFreq, sampleRate)
-      .then(res => {
-        this.incrementStatusBar();
-        this.status =
-          `All Hz Calibration: done computing testing PSD graphs...`.toString() +
           this.generateTemplate().toString();
         this.emit('update', {message: this.status});
         return res;
@@ -956,10 +931,6 @@ class Combination extends AudioCalibrator {
             x: component_conv_rec_psd['x'],
             y: component_conv_rec_psd['y'],
           },
-          test: {
-            x: test_conv_rec_psd['x'],
-            y: test_conv_rec_psd['y'],
-          },
         },
         gainDBSPL: gainValue
       },
@@ -999,14 +970,6 @@ class Combination extends AudioCalibrator {
     let return_unconv_rec = unconv_rec;
     let conv_rec = conv_recs[0];
     let return_conv_rec = conv_rec;
-    if (this._calibrateSoundCheck != 'system') {
-      this.addTimeStamp('Play MLS with test IIR');
-      this.#currentConvolution = this.testConvolution;
-      await this.playMLSwithIIR(stream, this.#currentConvolution);
-      this.#stopCalibrationAudio();
-    }
-    let test_conv_recs = this.getAllFilteredRecordedSignals();
-    let return_test_conv_rec = test_conv_recs[0];
     this.sourceAudioContext.close();
     if (this._calibrateSoundCheck != 'system') {
       let knownGain = this.oldComponentIR.Gain;
@@ -1030,21 +993,6 @@ class Combination extends AudioCalibrator {
       this.addTimeStamp('Get PSD recording of filtered recording (component)');
       let conv_results = await this.pyServerAPI
         .getSubtractedPSDWithRetry(conv_rec, knownGain, knownFreq, sampleRate)
-        .then(res => {
-          this.incrementStatusBar();
-          this.status =
-            `All Hz Calibration: done computing the PSD graphs...`.toString() +
-            this.generateTemplate().toString();
-          this.emit('update', {message: this.status});
-          return res;
-        })
-        .catch(err => {
-          console.error(err);
-        });
-
-      this.addTimeStamp('Get PSD of filtered recording (test component)');
-      let test_conv_results = await this.pyServerAPI
-        .getSubtractedPSDWithRetry(return_test_conv_rec, knownGain, knownFreq, sampleRate)
         .then(res => {
           this.incrementStatusBar();
           this.status =
@@ -1183,10 +1131,6 @@ class Combination extends AudioCalibrator {
             conv: {
               x: conv_results['x'],
               y: conv_results['y'],
-            },
-            test: {
-              x: test_conv_results['x'],
-              y: test_conv_results['y'],
             },
           },
           gainDBSPL: gainValue
@@ -1345,10 +1289,6 @@ class Combination extends AudioCalibrator {
               y: [],
             },
             conv: {
-              x: [],
-              y: [],
-            },
-            test: {
               x: [],
               y: [],
             },
