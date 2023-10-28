@@ -1981,11 +1981,6 @@ class Combination extends AudioCalibrator {
     this.desired_sampling_rate = _calibrateSoundHz;
     this._calibrateSoundBackgroundSecs = _calibrateSoundBackgroundSecs;
 
-    if (isSmartPhone) {
-      micModelName = this.deviceInfo.deviceInfoFromUser.modelName;
-      micModelNumber = this.deviceInfo.deviceInfoFromUser.modelNumber;
-    }
-
     //feed calibration goal here
     this._calibrateSoundCheck = _calibrateSoundCheck;
     //check if a componentIR was given to the system, if it isn't check for the microphone. using dummy data here bc we need to

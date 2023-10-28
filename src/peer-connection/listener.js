@@ -16,9 +16,9 @@ class Listener extends AudioPeer {
    */
   constructor(params) {
     super(params);
-    this.deviceInfoFromUser = params.deviceInfoFromUser
-      ? params.deviceInfoFromUser
-      : {modelNumber: '', modelName: ''};
+    // this.deviceInfoFromUser = params.deviceInfoFromUser
+    //   ? params.deviceInfoFromUser
+    //   : {modelNumber: '', modelName: ''};
     this.startTime = Date.now();
     this.receiverPeerId = null;
 
@@ -169,7 +169,7 @@ class Listener extends AudioPeer {
         deviceInfo['DeviceType'] = data.device['devicetype'];
         // deviceInfo['deviceInfoFromUser'] = this.deviceInfoFromUser;
       });
-      deviceInfo['deviceInfoFromUser'] = this.deviceInfoFromUser;
+      // deviceInfo['deviceInfoFromUser'] = this.deviceInfoFromUser;
       this.conn.send({
         name: 'deviceInfo',
         payload: deviceInfo,
