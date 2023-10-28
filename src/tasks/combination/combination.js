@@ -89,7 +89,6 @@ class Combination extends AudioCalibrator {
   /** @private */
   componentConvolution;
 
-
   /** @private */
   systemConvolution;
 
@@ -362,10 +361,15 @@ class Combination extends AudioCalibrator {
         console.error(err);
       });
 
-      let knownGain = this.componentIR.Gain;
-      let knownFreq = this.componentIR.Freq;
-      this.pyServerAPI
-      .getSubtractedPSDWithRetry(background_rec, knownGain, knownFreq, this.sourceSamplingRate || 96000)
+    let knownGain = this.componentIR.Gain;
+    let knownFreq = this.componentIR.Freq;
+    this.pyServerAPI
+      .getSubtractedPSDWithRetry(
+        background_rec,
+        knownGain,
+        knownFreq,
+        this.sourceSamplingRate || 96000
+      )
       .then(res => {
         this.background_noise['x_subtracted'] = res['x'];
         this.background_noise['y_subtracted'] = res['y'];
@@ -643,7 +647,7 @@ class Combination extends AudioCalibrator {
    * @example
    */
   #playCalibrationAudio = () => {
-    this.addTimeStamp("Play unfiltered mls");
+    this.addTimeStamp('Play unfiltered mls');
     this.calibrationNodes[0].start(0);
     this.status = ``;
     if (this.mode === 'unfiltered') {
@@ -885,7 +889,6 @@ class Combination extends AudioCalibrator {
       .catch(err => {
         console.error(err);
       });
-    
 
     let gainValue = this.getGainDBSPL();
 
@@ -944,7 +947,7 @@ class Combination extends AudioCalibrator {
             y: component_conv_rec_psd['y'],
           },
         },
-        gainDBSPL: gainValue
+        gainDBSPL: gainValue,
       },
       mls: this.#mlsBufferView,
       mls_psd: {
@@ -1145,7 +1148,7 @@ class Combination extends AudioCalibrator {
               y: conv_results['y'],
             },
           },
-          gainDBSPL: gainValue
+          gainDBSPL: gainValue,
         },
         mls: this.#mlsBufferView,
         mls_psd: {
@@ -1253,7 +1256,6 @@ class Combination extends AudioCalibrator {
           console.error(err);
         });
 
-
       let gainValue = this.getGainDBSPL();
       iir_ir_and_plots = {
         unfiltered_recording: return_unconv_rec,
@@ -1305,7 +1307,7 @@ class Combination extends AudioCalibrator {
               y: [],
             },
           },
-          gainDBSPL: gainValue
+          gainDBSPL: gainValue,
         },
         mls: this.#mlsBufferView,
         mls_psd: {
@@ -1514,7 +1516,7 @@ class Combination extends AudioCalibrator {
               y: [],
             },
           },
-          gainDBSPL: gainValue
+          gainDBSPL: gainValue,
         },
         mls: this.#mlsBufferView,
         autocorrelations: this.autocorrelations,
@@ -1906,12 +1908,12 @@ class Combination extends AudioCalibrator {
 
     // If freqIndex is not -1 (meaning 1000 is found in the freq array)
     if (freqIndex !== -1) {
-        // Get the corresponding gain value using the index
-        var gainValue = this.componentIR.Gain[freqIndex];
-        return gainValue;
+      // Get the corresponding gain value using the index
+      var gainValue = this.componentIR.Gain[freqIndex];
+      return gainValue;
     } else {
-        console.log("Freq 1000 not found in the array.");
-        return null;
+      console.log('Freq 1000 not found in the array.');
+      return null;
     }
   };
   // Example of how to use the writeFrqGain and readFrqGain functions
@@ -2028,14 +2030,14 @@ class Combination extends AudioCalibrator {
     impulseResponseResults['background_noise'] = this.background_noise;
     if (componentIR != null) {
       //insert Freq and Gain from this.componentIR into db
-      await this.writeFrqGain(
-        ID,
-        impulseResponseResults.component.ir.Freq,
-        impulseResponseResults.component.ir.Gain,
-        OEM
-      );
+      // await this.writeFrqGain(
+      //   ID,
+      //   impulseResponseResults.component.ir.Freq,
+      //   impulseResponseResults.component.ir.Gain,
+      //   OEM
+      // );
       micInfo['gainDBSPL'] = impulseResponseResults.component.gainDBSPL;
-      await this.writeGainat1000Hz(ID, micInfo['gainDBSPL'], OEM);
+      // await this.writeGainat1000Hz(ID, micInfo['gainDBSPL'], OEM);
     }
 
     const total_results = {...volumeResults, ...impulseResponseResults};
