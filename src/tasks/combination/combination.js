@@ -163,6 +163,8 @@ class Combination extends AudioCalibrator {
 
   componentInvertedImpulseResponseNoBandpass = [];
 
+  componentIRInTimeDomain = [];
+
   systemInvertedImpulseResponseNoBandpass = [];
 
   _calibrateSoundBackgroundSecs;
@@ -325,6 +327,7 @@ class Combination extends AudioCalibrator {
         this.componentIR['Freq'] = res['frequencies'];
         this.componentConvolution = res['convolution'];
         this.componentInvertedImpulseResponseNoBandpass = res['iirNoBandpass'];
+        this.componentIRInTimeDomain = res['irTime'];
       })
       .catch(err => {
         // this.emit('InvertedImpulseResponse', {res: false});
@@ -926,6 +929,7 @@ class Combination extends AudioCalibrator {
       component: {
         iir: this.componentInvertedImpulseResponse,
         ir: this.componentIR,
+        ir_in_time_domain: this.componentIRInTimeDomain,
         iir_psd: {
           y: component_iir_psd['y_conv'],
           x: component_iir_psd['x_conv'],
@@ -1127,6 +1131,7 @@ class Combination extends AudioCalibrator {
         component: {
           iir: this.componentInvertedImpulseResponse,
           ir: this.componentIR,
+          ir_in_time_domain: this.componentIRInTimeDomain,
           iir_psd: {
             y: component_iir_psd['y_conv'],
             x: component_iir_psd['x_conv'],
@@ -1289,6 +1294,7 @@ class Combination extends AudioCalibrator {
         component: {
           iir: this.componentInvertedImpulseResponse,
           ir: this.componentIR,
+          ir_in_time_domain: this.componentIRInTimeDomain,
           iir_psd: {
             y: component_iir_psd['y_conv'],
             x: component_iir_psd['x_conv'],
@@ -1499,6 +1505,7 @@ class Combination extends AudioCalibrator {
         component: {
           iir: this.componentInvertedImpulseResponse,
           ir: this.componentIR,
+          ir_in_time_domain: this.componentIRInTimeDomain,
           iir_psd: {
             y: component_iir_psd['y_conv'],
             x: component_iir_psd['x_conv'],
