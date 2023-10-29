@@ -7,8 +7,6 @@ import {
   CalibrationTimedOutError,
 } from './peerErrors';
 
-import database from '../config/firebase';
-import {ref, set, get, child} from 'firebase/database';
 import {phrases} from '../../dist/example/i18n';
 
 /**
@@ -48,25 +46,6 @@ class Speaker extends AudioPeer {
     this.peer.on('disconnected', this.#onPeerDisconnected);
     this.peer.on('error', this.#onPeerError);
   }
-
-  static getMicrophoneNamesFromDatabase = async () => {
-    const dbRef = ref(database);
-    const snapshot = await get(child(dbRef, 'Microphone'));
-    if (snapshot.exists()) {
-      return Object.keys(snapshot.val());
-    }
-    return null;
-  };
-
-  static doesMicrophoneExist = async (speakerID, OEM) => {
-    const dbRef = ref(database);
-    const snapshot = await get(child(dbRef, `Microphone2/${OEM}/${speakerID}`));
-    if (snapshot.exists()) {
-      return true;
-    }
-    return false;
-  };
-
   /**
    * Async factory method that creates the Speaker object, and returns a promise that resolves to the result of the calibration.
    *
