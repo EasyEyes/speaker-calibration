@@ -1884,6 +1884,7 @@ class Combination extends AudioCalibrator {
 
   writeGainat1000HzToFirestore = async (speakerID, gain, OEM, documentID) => {
     const docRef = doc(database, 'Microphone', OEM, speakerID, documentID);
+
     await updateDoc(docRef, {
       Gain1000: gain,
     });
