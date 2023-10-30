@@ -2136,8 +2136,8 @@ class Combination extends AudioCalibrator {
         OEM,
         id
       );
-      await this.writeGainat1000HzToFirestore(ID, micInfo['gainDBSPL'], OEM, id);
       micInfo['gainDBSPL'] = impulseResponseResults.component.gainDBSPL;
+      await this.writeGainat1000HzToFirestore(ID, micInfo['gainDBSPL'], OEM, id);
       // await this.writeGainat1000Hz(ID, micInfo['gainDBSPL'], OEM);
     }
     const total_results = {...volumeResults, ...impulseResponseResults};
