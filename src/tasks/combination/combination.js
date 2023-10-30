@@ -371,23 +371,6 @@ class Combination extends AudioCalibrator {
       .catch(err => {
         console.error(err);
       });
-
-    let knownGain = this.componentIR.Gain;
-    let knownFreq = this.componentIR.Freq;
-    this.pyServerAPI
-      .getSubtractedPSDWithRetry(
-        background_rec,
-        knownGain,
-        knownFreq,
-        this.sourceSamplingRate || 96000
-      )
-      .then(res => {
-        this.background_noise['x_subtracted'] = res['x'];
-        this.background_noise['y_subtracted'] = res['y'];
-      })
-      .catch(err => {
-        console.error(err);
-      });
   };
 
   /** .
