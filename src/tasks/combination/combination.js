@@ -162,6 +162,8 @@ class Combination extends AudioCalibrator {
 
   iirLength = 0;
 
+  irLength = 0;
+
   componentInvertedImpulseResponseNoBandpass = [];
 
   componentIRInTimeDomain = [];
@@ -294,6 +296,7 @@ class Combination extends AudioCalibrator {
     const mls = this.#mls;
     const lowHz = this.#lowHz;
     const iirLength = this.iirLength;
+    const irLength = this.irLength;
     const num_periods = this.numMLSPerCapture + this.num_mls_to_skip;
     const highHz = this.#highHz;
     this.stepNum += 1;
@@ -313,6 +316,7 @@ class Combination extends AudioCalibrator {
         num_periods,
         sampleRate: this.sourceSamplingRate || 96000,
         calibrateSoundBurstDb: this._calibrateSoundBurstDb,
+        irLength
       })
       .then(res => {
         console.log(res);
@@ -2022,6 +2026,7 @@ class Combination extends AudioCalibrator {
     _calibrateSoundBurstsWarmup = 1,
     _calibrateSoundHz = 48000,
     _calibrateSoundIIRSec = 0.2,
+    _calibrateSoundIRSec = 0.05,
     calibrateSound1000HzPreSec = 3.5,
     calibrateSound1000HzSec = 1.0,
     calibrateSound1000HzPostSec = 0.5,
@@ -2038,6 +2043,7 @@ class Combination extends AudioCalibrator {
     this.calibrateSound1000HzSec = calibrateSound1000HzSec;
     this.calibrateSound1000HzPostSec = calibrateSound1000HzPostSec;
     this.iirLength = Math.floor(_calibrateSoundIIRSec * this.sourceSamplingRate);
+    this.irLength = Math.floor(_calibrateSoundIRSec * this.sourceSamplingRate);
     console.log('device info:', this.deviceInfo);
     this.numMLSPerCapture = _calibrateSoundBurstRepeats;
     this.desired_time_per_mls = _calibrateSoundBurstSec;

@@ -95,6 +95,7 @@ class Speaker extends AudioPeer {
             params.calibrateSoundBurstSec,
             params.calibrateSoundBurstsWarmup,
             params.calibrateSoundHz,
+            params.calibrateSoundIRSec,
             params.calibrateSoundIIRSec,
             params.calibrateSound1000HzPreSec,
             params.calibrateSound1000HzSec,
