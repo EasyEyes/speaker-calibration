@@ -172,6 +172,8 @@ class Combination extends AudioCalibrator {
 
   _calibrateSoundBackgroundSecs;
 
+  _calibrateSoundSmoothOctaves;
+
   background_noise = {};
 
   numSuccessfulBackgroundCaptured;
@@ -317,6 +319,7 @@ class Combination extends AudioCalibrator {
         sampleRate: this.sourceSamplingRate || 96000,
         calibrateSoundBurstDb: this._calibrateSoundBurstDb,
         irLength,
+        calibrateSoundSmoothOctaves: this._calibrateSoundSmoothOctaves
       })
       .then(res => {
         console.log(res);
@@ -2032,6 +2035,7 @@ class Combination extends AudioCalibrator {
     calibrateSound1000HzSec = 1.0,
     calibrateSound1000HzPostSec = 0.5,
     _calibrateSoundBackgroundSecs = 0,
+    _calibrateSoundSmoothOctaves = 0.33,
     micManufacturer = '',
     micSerialNumber = '',
     micModelNumber = '',
@@ -2051,6 +2055,7 @@ class Combination extends AudioCalibrator {
     this.num_mls_to_skip = _calibrateSoundBurstsWarmup;
     this.desired_sampling_rate = _calibrateSoundHz;
     this._calibrateSoundBackgroundSecs = _calibrateSoundBackgroundSecs;
+    this._calibrateSoundSmoothOctaves = _calibrateSoundSmoothOctaves;
 
     //feed calibration goal here
     this._calibrateSoundCheck = _calibrateSoundCheck;
