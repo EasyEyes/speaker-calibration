@@ -316,7 +316,7 @@ class Combination extends AudioCalibrator {
         num_periods,
         sampleRate: this.sourceSamplingRate || 96000,
         calibrateSoundBurstDb: this._calibrateSoundBurstDb,
-        irLength
+        irLength,
       })
       .then(res => {
         console.log(res);
@@ -1850,6 +1850,7 @@ class Combination extends AudioCalibrator {
   // returns an array of frq and gain if speakerID exists, returns null otherwise
   readFrqGainFromFirestore = async (speakerID, OEM, documentID) => {
     const docRef = doc(database, 'Microphone', OEM, speakerID, documentID);
+
     const docSnap = await getDoc(docRef);
 
     if (docSnap.exists()) {
