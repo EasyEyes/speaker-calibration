@@ -275,7 +275,8 @@ class PythonServerAPI {
     componentIRFreqs,
     num_periods,
     sampleRate,
-    calibrateSoundBurstDb
+    calibrateSoundBurstDb,
+    irLength
   }) => {
     const task = 'component-inverse-impulse-response';
     let res = null;
@@ -293,7 +294,8 @@ class PythonServerAPI {
       componentIRFreqs,
       num_periods,
       sampleRate,
-      calibrateSoundBurstDb
+      calibrateSoundBurstDb,
+      irLength
     });
 
     await axios({
@@ -424,7 +426,8 @@ class PythonServerAPI {
     componentIRFreqs,
     num_periods,
     sampleRate,
-    calibrateSoundBurstDb
+    calibrateSoundBurstDb,
+    irLength
   }) => {
     let retryCount = 0;
     let response = null;
@@ -441,7 +444,8 @@ class PythonServerAPI {
           componentIRFreqs,
           num_periods,
           sampleRate,
-          calibrateSoundBurstDb
+          calibrateSoundBurstDb,
+          irLength
         });
         // If the request is successful, break out of the loop
         break;
