@@ -101,6 +101,7 @@ class Speaker extends AudioPeer {
             params.calibrateSound1000HzSec,
             params.calibrateSound1000HzPostSec,
             params.calibrateSoundBackgroundSecs,
+            params.calibrateSoundSmoothOctaves,
             params.micManufacturer,
             params.micSerialNumber,
             params.micModelNumber,

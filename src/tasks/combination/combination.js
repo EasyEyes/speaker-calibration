@@ -172,6 +172,8 @@ class Combination extends AudioCalibrator {
 
   _calibrateSoundBackgroundSecs;
 
+  _calibrateSoundSmoothOctaves;
+
   background_noise = {};
 
   numSuccessfulBackgroundCaptured;
@@ -317,6 +319,7 @@ class Combination extends AudioCalibrator {
         sampleRate: this.sourceSamplingRate || 96000,
         calibrateSoundBurstDb: this._calibrateSoundBurstDb,
         irLength,
+        calibrateSoundSmoothOctaves: this._calibrateSoundSmoothOctaves
       })
       .then(res => {
         console.log(res);
@@ -364,23 +367,6 @@ class Combination extends AudioCalibrator {
           this.background_noise['y_background'] = res['y_background'];
           this.background_noise['recording'] = background_rec;
         }
-      })
-      .catch(err => {
-        console.error(err);
-      });
-
-    let knownGain = this.componentIR.Gain;
-    let knownFreq = this.componentIR.Freq;
-    this.pyServerAPI
-      .getSubtractedPSDWithRetry(
-        background_rec,
-        knownGain,
-        knownFreq,
-        this.sourceSamplingRate || 96000
-      )
-      .then(res => {
-        this.background_noise['x_subtracted'] = res['x'];
-        this.background_noise['y_subtracted'] = res['y'];
       })
       .catch(err => {
         console.error(err);
@@ -2032,6 +2018,7 @@ class Combination extends AudioCalibrator {
     calibrateSound1000HzSec = 1.0,
     calibrateSound1000HzPostSec = 0.5,
     _calibrateSoundBackgroundSecs = 0,
+    _calibrateSoundSmoothOctaves = 0.33,
     micManufacturer = '',
     micSerialNumber = '',
     micModelNumber = '',
@@ -2053,6 +2040,7 @@ class Combination extends AudioCalibrator {
     this.num_mls_to_skip = _calibrateSoundBurstsWarmup;
     this.desired_sampling_rate = _calibrateSoundHz;
     this._calibrateSoundBackgroundSecs = _calibrateSoundBackgroundSecs;
+    this._calibrateSoundSmoothOctaves = _calibrateSoundSmoothOctaves;
 
     //feed calibration goal here
     this._calibrateSoundCheck = _calibrateSoundCheck;
