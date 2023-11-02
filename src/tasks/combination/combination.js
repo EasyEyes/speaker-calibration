@@ -2035,7 +2035,9 @@ class Combination extends AudioCalibrator {
     micManufacturer = '',
     micSerialNumber = '',
     micModelNumber = '',
-    micModelName = ''
+    micModelName = '',
+    calibrateMicrophonesBool,
+    authorEmails
   ) => {
     this._calibrateSoundBurstDb = _calibrateSoundBurstDb;
     this.CALIBRATION_TONE_DURATION =
@@ -2075,7 +2077,12 @@ class Combination extends AudioCalibrator {
       PlatformName: isSmartPhone ? this.deviceInfo.platformname : 'N/A',
       PlatformVersion: isSmartPhone ? this.deviceInfo.platformversion : 'N/A',
       DeviceType: isSmartPhone ? this.deviceInfo.devicetype : 'N/A',
+      ID_from_51Degrees: isSmartPhone ? this.deviceInfo.DeviceId : 'N/A',
+      calibrateMicrophonesBool: calibrateMicrophonesBool,
     };
+    if (calibrateMicrophonesBool) {
+      micInfo['authorEmails'] = authorEmails;
+    }
     // if undefined in micInfo, set to empty string
     for (const [key, value] of Object.entries(micInfo)) {
       if (value === undefined) {

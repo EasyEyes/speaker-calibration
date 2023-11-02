@@ -104,7 +104,9 @@ class Speaker extends AudioPeer {
             params.micManufacturer,
             params.micSerialNumber,
             params.micModelNumber,
-            params.micModelName
+            params.micModelName,
+            params.calibrateMicrophonesBool,
+            params.authorEmails
           );
           speaker.#removeUIElems();
           resolve(speaker.result);
