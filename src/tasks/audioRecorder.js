@@ -258,6 +258,16 @@ class AudioRecorder extends MyEventEmitter {
   /** .
    * .
    * .
+   * Public method to get all the recorded audio signals
+   *
+   * @returns
+   * @example
+   */
+  clearLastUnfilteredRecordedSignals = () => this.#allHzUnfilteredRecordings.pop();
+
+  /** .
+   * .
+   * .
    * Public method to get all the recorded audio signals for psd
    *
    * @returns

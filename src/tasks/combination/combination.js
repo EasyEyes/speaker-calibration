@@ -407,7 +407,10 @@ class Combination extends AudioCalibrator {
           numPeriods: this.numMLSPerCapture,
         })
         .then(res => {
-          if (this.numSuccessfulCaptured < this.numCaptures) {
+          console.log("sd =", res['sd']);
+          console.log("numSuccessfulCaptured",this.numSuccessfulCaptured);
+          console.log("this.numCaptures", this.numCaptures); 
+          if (res['sd'] <= 1.0 && this.numSuccessfulCaptured < this.numCaptures) {
             this.numSuccessfulCaptured += 1;
             console.log('num succ capt: ' + this.numSuccessfulCaptured);
             this.stepNum += 1;
@@ -421,6 +424,9 @@ class Combination extends AudioCalibrator {
             });
             this.autocorrelations.push(res['autocorrelation']);
             return res['ir'];
+          } else {
+            console.log("sd too high, recapture mls");
+            this.clearLastUnfilteredRecordedSignals();
           }
         })
         .catch(err => {
@@ -2007,7 +2013,7 @@ class Combination extends AudioCalibrator {
     microphoneName = 'MiniDSP-UMIK1-711-4754-vertical',
     _calibrateSoundCheck = 'goal', //GOAL PASSed in by default
     isSmartPhone = false,
-    _calibrateSoundBurstDb = 0.33,
+    _calibrateSoundBurstDb = 0.1,
     _calibrateSoundBurstRepeats = 3,
     _calibrateSoundBurstSec = 1,
     _calibrateSoundBurstsWarmup = 1,
