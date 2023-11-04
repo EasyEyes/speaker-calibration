@@ -319,7 +319,7 @@ class Combination extends AudioCalibrator {
         sampleRate: this.sourceSamplingRate || 96000,
         calibrateSoundBurstDb: this._calibrateSoundBurstDb,
         irLength,
-        calibrateSoundSmoothOctaves: this._calibrateSoundSmoothOctaves
+        calibrateSoundSmoothOctaves: this._calibrateSoundSmoothOctaves,
       })
       .then(res => {
         console.log(res);
@@ -2051,8 +2051,11 @@ class Combination extends AudioCalibrator {
     //based on zeroing of 1000hz, search for "*1000Hz"
     const ID = isSmartPhone ? micModelNumber : micSerialNumber;
     const OEM = isSmartPhone
-      ? this.deviceInfo.OEM.toLowerCase().split(' ').join('')
+      ? micModelName === 'umik-1' || micModelName === 'umik-2'
+        ? 'minidsp'
+        : this.deviceInfo.OEM.toLowerCase().split(' ').join('')
       : micManufacturer;
+    console.log('OEM', OEM);
     // const ID = "711-4754";
     // const OEM = "minidsp";
     const micInfo = {
