@@ -273,21 +273,29 @@ class Listener extends AudioPeer {
       });
       return;
     }
-
+    
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
     navigator.mediaDevices
       .getUserMedia({
         audio: this.getMediaDevicesAudioContraints(),
         video: false,
       })
       .then(stream => {
+        const sourceNode = audioContext.createMediaStreamSource(stream);
+        const sampleRate = sourceNode.context.sampleRate;
+        console.log(sampleRate);
+        const audioBuffer = audioContext.createBuffer(1, 1, sampleRate);
+        const sampleSizeInBits = audioBuffer.getChannelData(0).BYTES_PER_ELEMENT * 8;
+        console.log(sampleSizeInBits);
+        audioContext.close();
         this.applyHQTrackConstraints(stream)
           .then(settings => {
-            this.sendSamplingRate(settings.sampleRate);
-            let sampleSize = settings.sampleSize;
-            if (!sampleSize){
-              sampleSize = this.calibrateSoundSamplingDesiredBits;
-            }
-            this.sendSampleSize(sampleSize);
+            this.sendSamplingRate(sampleRate);
+            // let sampleSize = settings.sampleSize;
+            // if (!sampleSize){
+            //   sampleSize = this.calibrateSoundSamplingDesiredBits;
+            // }
+            this.sendSampleSize(sampleSizeInBits);
             this.peer.call(this.speakerPeerId, stream); // one-way call
             this.displayUpdate('Listener - openAudioStream');
           })

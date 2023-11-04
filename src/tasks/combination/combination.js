@@ -2055,7 +2055,6 @@ class Combination extends AudioCalibrator {
         ? 'minidsp'
         : this.deviceInfo.OEM.toLowerCase().split(' ').join('')
       : micManufacturer;
-    console.log('OEM', OEM);
     // const ID = "711-4754";
     // const OEM = "minidsp";
     const micInfo = {
