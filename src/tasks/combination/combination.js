@@ -2059,7 +2059,11 @@ class Combination extends AudioCalibrator {
     // const OEM = "minidsp";
     const micInfo = {
       micModelName: isSmartPhone ? micModelName : microphoneName,
-      OEM: isSmartPhone ? this.deviceInfo.OEM : micManufacturer,
+      OEM: isSmartPhone
+        ? micModelName === 'umik-1' || micModelName === 'umik-2'
+          ? 'miniDSP'
+          : this.deviceInfo.OEM
+        : micManufacturer,
       ID: ID,
       HardwareName: isSmartPhone ? this.deviceInfo.hardwarename : microphoneName,
       hardwareFamily: isSmartPhone ? this.deviceInfo.hardwarefamily : microphoneName,
