@@ -91,6 +91,12 @@ class Combination extends AudioCalibrator {
   componentConvolution;
 
   /** @private */
+  componentIROrigin = {
+    Freq:[],
+    Gain:[]
+  };
+
+  /** @private */
   systemConvolution;
 
   ////////////////////////volume
@@ -179,6 +185,14 @@ class Combination extends AudioCalibrator {
   numSuccessfulBackgroundCaptured;
 
   _calibrateSoundBurstDb;
+
+  recordingChecks = {
+    unfiltered: [],
+    system:[],
+    component:[]
+  };
+
+  soundCheck = "";
 
   filteredMLSRange = {
     component: {
@@ -333,6 +347,8 @@ class Combination extends AudioCalibrator {
         this.componentInvertedImpulseResponse = res['iir'];
         this.componentIR['Gain'] = res['ir'];
         this.componentIR['Freq'] = res['frequencies'];
+        this.componentIROrigin['Freq'] = res['frequencies'];
+        this.componentIROrigin['Gain'] = res['irOrigin'];
         this.componentConvolution = res['convolution'];
         this.componentInvertedImpulseResponseNoBandpass = res['iirNoBandpass'];
         this.componentIRInTimeDomain = res['irTime'];
@@ -397,36 +413,54 @@ class Combination extends AudioCalibrator {
       `All Hz Calibration Step: computing the IR of the last recording...`.toString() +
       this.generateTemplate().toString();
     this.emit('update', {message: this.status});
-    this.impulseResponses.push(
-      this.pyServerAPI
-        .getImpulseResponse({
-          sampleRate: this.sourceSamplingRate || 96000,
+    let checkVolume = this.pyServerAPI
+        .allHzVolumeCheck({
           payload,
-          mls,
-          P: this.#P, //get rid of this
-          numPeriods: this.numMLSPerCapture,
+          sampleRate: this.sourceSamplingRate || 96000,
+          binDesiredSec: this._calibrateSoundPowerBinDesiredSec,
+          burstSec: this.desired_time_per_mls
         })
-        .then(res => {
-          if (this.numSuccessfulCaptured < this.numCaptures) {
-            this.numSuccessfulCaptured += 1;
-            console.log('num succ capt: ' + this.numSuccessfulCaptured);
-            this.stepNum += 1;
-            console.log('got impulse response ' + this.stepNum);
-            this.incrementStatusBar();
-            this.status =
-              `All Hz Calibration: ${this.numSuccessfulCaptured}/${this.numCaptures} IRs computed...`.toString() +
-              this.generateTemplate().toString();
-            this.emit('update', {
-              message: this.status,
-            });
-            this.autocorrelations.push(res['autocorrelation']);
-            return res['ir'];
+        .then(result => {
+          this.recordingChecks['unfiltered'].push(result);
+          if (result['sd'] < this._calibrateSoundPowerDbSDToleratedDb) {
+            this.impulseResponses.push(
+              this.pyServerAPI
+                .getImpulseResponse({
+                  sampleRate: this.sourceSamplingRate || 96000,
+                  payload,
+                  mls,
+                  P: this.#P, //get rid of this
+                  numPeriods: this.numMLSPerCapture
+                })
+                .then(res => {
+                  if (this.numSuccessfulCaptured < this.numCaptures) {
+                    this.numSuccessfulCaptured += 1;
+                    console.log('num succ capt: ' + this.numSuccessfulCaptured);
+                    this.stepNum += 1;
+                    console.log('got impulse response ' + this.stepNum);
+                    this.incrementStatusBar();
+                    this.status =
+                      `All Hz Calibration: ${this.numSuccessfulCaptured}/${this.numCaptures} IRs computed...`.toString() +
+                      this.generateTemplate().toString();
+                    this.emit('update', {
+                      message: this.status,
+                    });
+                    this.autocorrelations.push(res['autocorrelation']);
+                    return res['ir'];
+                  };
+                })
+                .catch(err => {
+                  console.error(err);
+                })
+            );
+          } else {
+            this.clearLastUnfilteredRecordedSignals;
+            console.log("unfiltered rec", this.getAllUnfilteredRecordedSignals.length);
           }
         })
         .catch(err => {
           console.error(err);
-        })
-    );
+        });
   };
 
   /**
@@ -526,18 +560,36 @@ class Combination extends AudioCalibrator {
   };
 
   #afterMLSwIIRRecord = () => {
-    if (this.numSuccessfulCaptured < 1) {
-      this.numSuccessfulCaptured += 1;
-      this.stepNum += 1;
-      this.incrementStatusBar();
-      console.log('after mls w iir record for some reason add numSucc capt ' + this.stepNum);
-      this.status =
-        `All Hz Calibration: ${this.numSuccessfulCaptured} recording of convolved MLS captured`.toString() +
-        this.generateTemplate().toString();
-      this.emit('update', {
-        message: this.status,
-      });
-    }
+    let payload  = this.getAllFilteredRecordedSignals()[0];
+
+    let checkVolume = this.pyServerAPI
+        .allHzVolumeCheck({
+          payload: payload,
+          sampleRate: this.sourceSamplingRate || 96000,
+          binDesiredSec: this._calibrateSoundPowerBinDesiredSec,
+          burstSec: this.desired_time_per_mls
+        }).
+        then(res => {
+          this.recordingChecks[this.soundCheck].push(res);
+          if (this.numSuccessfulCaptured < 1 && res['sd'] < this._calibrateSoundPowerDbSDToleratedDb) {
+            this.numSuccessfulCaptured += 1;
+            this.stepNum += 1;
+            this.incrementStatusBar();
+            console.log('after mls w iir record for some reason add numSucc capt ' + this.stepNum);
+            this.status =
+              `All Hz Calibration: ${this.numSuccessfulCaptured} recording of convolved MLS captured`.toString() +
+              this.generateTemplate().toString();
+            this.emit('update', {
+              message: this.status
+            });
+          } else {
+            this.clearAllFilteredRecordedSignals();
+          }
+          console.log("this.numSuccessfulCaptured", this.numSuccessfulCaptured);
+        })
+        .catch(err => {
+          console.log(err);
+        });
   };
 
   /** .
@@ -713,6 +765,7 @@ class Combination extends AudioCalibrator {
     this.filteredMLSRange.component.Min = findMinValue(this.#currentConvolution);
     this.filteredMLSRange.component.Max = findMaxValue(this.#currentConvolution);
     this.addTimeStamp('Play MLS with component IIR');
+    this.soundCheck = "component";
     await this.playMLSwithIIR(stream, this.#currentConvolution);
     this.#stopCalibrationAudio();
     let component_conv_recs = this.getAllFilteredRecordedSignals();
@@ -722,6 +775,7 @@ class Combination extends AudioCalibrator {
     this.#currentConvolution = this.systemConvolution;
     this.filteredMLSRange.system.Min = findMinValue(this.#currentConvolution);
     this.filteredMLSRange.system.Max = findMaxValue(this.#currentConvolution);
+    this.soundCheck = "system";
     this.addTimeStamp('Play MLS with system IIR');
     await this.playMLSwithIIR(stream, this.#currentConvolution);
     this.#stopCalibrationAudio();
@@ -920,6 +974,7 @@ class Combination extends AudioCalibrator {
       component: {
         iir: this.componentInvertedImpulseResponse,
         ir: this.componentIR,
+        ir_origin: this.componentIROrigin,
         ir_in_time_domain: this.componentIRInTimeDomain,
         iir_psd: {
           y: component_iir_psd['y_conv'],
@@ -963,14 +1018,18 @@ class Combination extends AudioCalibrator {
       this.filteredMLSRange.component.Min = findMinValue(this.#currentConvolution);
       this.filteredMLSRange.component.Max = findMaxValue(this.#currentConvolution);
       this.addTimeStamp('Play MLS with component IIR');
+      this.soundCheck = "component";
+      await this.playMLSwithIIR(stream, this.#currentConvolution);
+      this.#stopCalibrationAudio();
     } else {
       this.#currentConvolution = this.systemConvolution;
       this.filteredMLSRange.system.Min = findMinValue(this.#currentConvolution);
       this.filteredMLSRange.system.Max = findMaxValue(this.#currentConvolution);
       this.addTimeStamp('Play MLS with system IIR');
+      this.soundCheck = "systen";
+      await this.playMLSwithIIR(stream, this.#currentConvolution);
+      this.#stopCalibrationAudio();
     }
-    await this.playMLSwithIIR(stream, this.#currentConvolution);
-    this.#stopCalibrationAudio();
     let conv_recs = this.getAllFilteredRecordedSignals();
     let recs = this.getAllUnfilteredRecordedSignals();
     this.clearAllFilteredRecordedSignals();
@@ -1122,6 +1181,7 @@ class Combination extends AudioCalibrator {
         component: {
           iir: this.componentInvertedImpulseResponse,
           ir: this.componentIR,
+          ir_origin: this.componentIROrigin,
           ir_in_time_domain: this.componentIRInTimeDomain,
           iir_psd: {
             y: component_iir_psd['y_conv'],
@@ -1285,6 +1345,7 @@ class Combination extends AudioCalibrator {
         component: {
           iir: this.componentInvertedImpulseResponse,
           ir: this.componentIR,
+          ir_origin: this.componentIROrigin,
           ir_in_time_domain: this.componentIRInTimeDomain,
           iir_psd: {
             y: component_iir_psd['y_conv'],
@@ -2007,7 +2068,7 @@ class Combination extends AudioCalibrator {
     microphoneName = 'MiniDSP-UMIK1-711-4754-vertical',
     _calibrateSoundCheck = 'goal', //GOAL PASSed in by default
     isSmartPhone = false,
-    _calibrateSoundBurstDb = 0.33,
+    _calibrateSoundBurstDb = 0.1,
     _calibrateSoundBurstRepeats = 3,
     _calibrateSoundBurstSec = 1,
     _calibrateSoundBurstsWarmup = 1,
@@ -2019,6 +2080,8 @@ class Combination extends AudioCalibrator {
     calibrateSound1000HzPostSec = 0.5,
     _calibrateSoundBackgroundSecs = 0,
     _calibrateSoundSmoothOctaves = 0.33,
+    _calibrateSoundPowerBinDesiredSec = 0.2,
+    _calibrateSoundPowerDbSDToleratedDb = 1,
     micManufacturer = '',
     micSerialNumber = '',
     micModelNumber = '',
@@ -2041,6 +2104,8 @@ class Combination extends AudioCalibrator {
     this.desired_sampling_rate = _calibrateSoundHz;
     this._calibrateSoundBackgroundSecs = _calibrateSoundBackgroundSecs;
     this._calibrateSoundSmoothOctaves = _calibrateSoundSmoothOctaves;
+    this._calibrateSoundPowerBinDesiredSec = _calibrateSoundPowerBinDesiredSec;
+    this._calibrateSoundPowerDbSDToleratedDb =  _calibrateSoundPowerDbSDToleratedDb;
 
     //feed calibration goal here
     this._calibrateSoundCheck = _calibrateSoundCheck;
@@ -2157,6 +2222,7 @@ class Combination extends AudioCalibrator {
     total_results['audioInfo']['bitsPerSample'] = this.sampleSize;
     const timeStampresult = [...this.timeStamp].join('\n');
     total_results['timeStamps'] = timeStampresult;
+    total_results['recordingChecks'] = this.recordingChecks;
     console.log('total results');
     console.log(total_results);
     console.log('Time Stamps');

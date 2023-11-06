@@ -25,7 +25,13 @@ class PythonServerAPI {
    * @returns
    * @example
    */
-  getImpulseResponse = async ({mls, payload, sampleRate, P, numPeriods}) => {
+  getImpulseResponse = async ({
+    mls, 
+    payload, 
+    sampleRate, 
+    P, 
+    numPeriods
+  }) => {
     const task = 'impulse-response';
     let res = null;
 
@@ -588,6 +594,41 @@ class PythonServerAPI {
     //  backgroundDBSPL: 43.88233142069752,
     //  gainDBSPL: -128.24742161208985
     //}
+    return res.data[task];
+  };
+
+  allHzVolumeCheck = async ({
+    payload, 
+    sampleRate, 
+    binDesiredSec,
+    burstSec
+  }) => {
+    const task = 'volume-check';
+    let res = null;
+
+    const data = JSON.stringify({
+      payload, 
+      sampleRate, 
+      binDesiredSec,
+      burstSec
+    });
+
+    await axios({
+      method: 'post',
+      baseURL: PythonServerAPI.PYTHON_SERVER_URL, //server
+      url: `/task/${task}`,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      data,
+    })
+      .then(response => {
+        res = response;
+        console.log(res.data[task]);
+      })
+      .catch(error => {
+        throw error;
+      });
     return res.data[task];
   };
 }
