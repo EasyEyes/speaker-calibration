@@ -397,7 +397,7 @@ class Combination extends AudioCalibrator {
    * @param {<array>String} signalCsv - Optional csv string of a previously recorded signal, if given, this signal will be processed
    * @example
    */
-  sendRecordingToServerForProcessing = signalCsv => {
+  sendRecordingToServerForProcessing = async signalCsv => {
     const allSignals = this.getAllUnfilteredRecordedSignals();
     console.log(
       'Obtaining last all hz unfiltered recording from #allHzUnfilteredRecordings to send to server for processing'
@@ -413,7 +413,7 @@ class Combination extends AudioCalibrator {
       `All Hz Calibration Step: computing the IR of the last recording...`.toString() +
       this.generateTemplate().toString();
     this.emit('update', {message: this.status});
-    this.pyServerAPI
+    await this.pyServerAPI
         .allHzVolumeCheck({
           payload,
           sampleRate: this.sourceSamplingRate || 96000,
@@ -559,19 +559,8 @@ class Combination extends AudioCalibrator {
     this.sendRecordingToServerForProcessing();
   };
 
-  #afterMLSwIIRRecord = () => {
-    if (this.numSuccessfulCaptured < 1) {
-      this.numSuccessfulCaptured += 1;
-      this.stepNum += 1;
-      this.incrementStatusBar();
-      console.log('after mls w iir record for some reason add numSucc capt ' + this.stepNum);
-      this.status =
-        `All Hz Calibration: ${this.numSuccessfulCaptured} recording of convolved MLS captured`.toString() +
-        this.generateTemplate().toString();
-      this.emit('update', {
-        message: this.status,
-      });
-    }
+  #afterMLSwIIRRecord = async () => {
+    await this.checkPowerVariation();
   };
 
   /** .
@@ -753,7 +742,7 @@ class Combination extends AudioCalibrator {
     let component_conv_recs = this.getAllFilteredRecordedSignals();
     let return_component_conv_rec = component_conv_recs[0];
     this.clearAllFilteredRecordedSignals();
-    this.checkPowerVariation(return_component_conv_rec);
+    // await this.checkPowerVariation(return_component_conv_rec);
     this.numSuccessfulCaptured = 0;
     this.#currentConvolution = this.systemConvolution;
     this.filteredMLSRange.system.Min = findMinValue(this.#currentConvolution);
@@ -766,7 +755,7 @@ class Combination extends AudioCalibrator {
 
     let system_conv_recs = this.getAllFilteredRecordedSignals();
     let return_system_conv_rec = system_conv_recs[0];
-    this.checkPowerVariation(return_system_conv_rec);
+    // await this.checkPowerVariation(return_system_conv_rec);
 
     this.clearAllFilteredRecordedSignals();
 
@@ -2027,8 +2016,11 @@ class Combination extends AudioCalibrator {
     this.timeStamp.push(`SOUND ${Number(startTaskTime.toFixed(1))} s. ${taskName}`);
   };
 
-  checkPowerVariation = rec => {
-    this.pyServerAPI
+  checkPowerVariation = async () => {
+    const recordings = this.getAllFilteredRecordedSignals();
+    const rec = recordings[recordings.length - 1];
+    console.log(rec);
+    await this.pyServerAPI
         .allHzVolumeCheck({
           payload:rec,
           sampleRate: this.sourceSamplingRate || 96000,
@@ -2039,6 +2031,20 @@ class Combination extends AudioCalibrator {
           this.recordingChecks[this.soundCheck].push(result);
           if (result['sd'] > this._calibrateSoundPowerDbSDToleratedDb) {
             console.log("filtered recording sd too high");
+            this.clearLastFilteredRecordedSignals();
+          } else {
+            if (this.numSuccessfulCaptured < 1) {
+              this.numSuccessfulCaptured += 1;
+              this.stepNum += 1;
+              this.incrementStatusBar();
+              console.log('after mls w iir record for some reason add numSucc capt ' + this.stepNum);
+              this.status =
+                `All Hz Calibration: ${this.numSuccessfulCaptured} recording of convolved MLS captured`.toString() +
+                this.generateTemplate().toString();
+              this.emit('update', {
+                message: this.status,
+              });
+            }
           }
         })
   };
