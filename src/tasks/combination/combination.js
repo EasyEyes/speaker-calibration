@@ -453,8 +453,8 @@ class Combination extends AudioCalibrator {
                   console.error(err);
                 })
             );
-          } else {
-            this.clearLastUnfilteredRecordedSignals;
+          } else if (result['sd'] > this._calibrateSoundPowerDbSDToleratedDb) {
+            this.clearLastUnfilteredRecordedSignals();
             console.log("unfiltered rec", this.getAllUnfilteredRecordedSignals.length);
           }
         })
@@ -582,7 +582,7 @@ class Combination extends AudioCalibrator {
             this.emit('update', {
               message: this.status
             });
-          } else {
+          } else if (res['sd'] > this._calibrateSoundPowerDbSDToleratedDb) {
             this.clearAllFilteredRecordedSignals();
           }
           console.log("this.numSuccessfulCaptured", this.numSuccessfulCaptured);
