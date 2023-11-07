@@ -34,6 +34,7 @@ class Speaker extends AudioPeer {
     this.calibrateSoundHz = params?.calibrateSoundHz ?? 48000;
     this.calibrateSoundSamplingDesiredBits = params?.calibrateSoundSamplingDesiredBits ?? 24;
     this.instructionDisplayId = params?.instructionDisplayId ?? '';
+    this.soundSubtitleId = params?.soundSubtitleId ?? '';
     this.timeToCalibrateDisplay = params?.timeToCalibrateId ?? '';
     this.soundMessageId = params?.soundMessageId ?? '';
     this.titleDisplayId = params?.titleDisplayId ?? '';
@@ -109,7 +110,8 @@ class Speaker extends AudioPeer {
             params.micModelNumber,
             params.micModelName,
             params.calibrateMicrophonesBool,
-            params.authorEmails
+            params.authorEmails,
+            params.webAudioDeviceNames
           );
           speaker.#removeUIElems();
           resolve(speaker.result);
@@ -239,6 +241,10 @@ class Speaker extends AudioPeer {
     soundMessage.style.display = 'none';
     const instructionDisplay = document.getElementById(this.instructionDisplayId);
     const background = document.getElementById('background'); // todo: get background id from params
+    const subtitle = document.getElementById(this.soundSubtitleId);
+    if (subtitle) {
+      subtitle.innerHTML = '';
+    }
     if (instructionDisplay) {
       instructionDisplay.innerHTML = '';
       instructionDisplay.style.whiteSpace = 'nowrap';
