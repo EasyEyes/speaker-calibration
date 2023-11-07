@@ -740,7 +740,7 @@ class Combination extends AudioCalibrator {
     await this.playMLSwithIIR(stream, this.#currentConvolution);
     this.#stopCalibrationAudio();
     let component_conv_recs = this.getAllFilteredRecordedSignals();
-    let return_component_conv_rec = component_conv_recs[0];
+    let return_component_conv_rec = component_conv_recs[component_conv_recs.length - 1];
     this.clearAllFilteredRecordedSignals();
     // await this.checkPowerVariation(return_component_conv_rec);
     this.numSuccessfulCaptured = 0;
@@ -754,7 +754,7 @@ class Combination extends AudioCalibrator {
     this.#stopCalibrationAudio();
 
     let system_conv_recs = this.getAllFilteredRecordedSignals();
-    let return_system_conv_rec = system_conv_recs[0];
+    let return_system_conv_rec = system_conv_recs[system_conv_recs.length - 1];
     // await this.checkPowerVariation(return_system_conv_rec);
 
     this.clearAllFilteredRecordedSignals();
@@ -763,7 +763,7 @@ class Combination extends AudioCalibrator {
     let recs = this.getAllUnfilteredRecordedSignals();
     let unconv_rec = recs[0];
     let return_unconv_rec = unconv_rec;
-    let conv_rec = component_conv_recs[0];
+    let conv_rec = component_conv_recs[component_conv_recs.length - 1];
 
     //psd of component
     let knownGain = this.oldComponentIR.Gain;
@@ -799,7 +799,7 @@ class Combination extends AudioCalibrator {
         console.error(err);
       });
 
-    conv_rec = system_conv_recs[0];
+    conv_rec = system_conv_recs[system_conv_recs.length-1];
     //psd of system
     this.addTimeStamp('Get PSD of filtered recording (system) and unfiltered recording');
     let system_recs_psd = await this.pyServerAPI
@@ -1012,7 +1012,7 @@ class Combination extends AudioCalibrator {
     console.log('Obtaining filtered recording from #allHzFilteredRecordings to calculate PSD');
     let unconv_rec = recs[0];
     let return_unconv_rec = unconv_rec;
-    let conv_rec = conv_recs[0];
+    let conv_rec = conv_recs[conv_recs.length - 1];
     let return_conv_rec = conv_rec;
     this.sourceAudioContext.close();
     if (this._calibrateSoundCheck != 'system') {
@@ -2031,7 +2031,6 @@ class Combination extends AudioCalibrator {
           this.recordingChecks[this.soundCheck].push(result);
           if (result['sd'] > this._calibrateSoundPowerDbSDToleratedDb) {
             console.log("filtered recording sd too high");
-            this.clearLastFilteredRecordedSignals();
           } else {
             if (this.numSuccessfulCaptured < 1) {
               this.numSuccessfulCaptured += 1;
