@@ -2150,6 +2150,10 @@ class Combination extends AudioCalibrator {
       DeviceType: isSmartPhone ? this.deviceInfo.devicetype : 'N/A',
       ID_from_51Degrees: isSmartPhone ? this.deviceInfo.DeviceId : 'N/A',
       calibrateMicrophonesBool: calibrateMicrophonesBool,
+      webAudioDeviceNames: {
+        loudspeaker: this.webAudioDeviceNames.loudspeaker,
+        microphone: this.webAudioDeviceNames.microphone,
+      },
     };
     if (calibrateMicrophonesBool) {
       micInfo['authorEmails'] = authorEmails;
