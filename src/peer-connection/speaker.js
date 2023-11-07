@@ -111,7 +111,8 @@ class Speaker extends AudioPeer {
             params.micModelName,
             params.calibrateMicrophonesBool,
             params.authorEmails,
-            params.webAudioDeviceNames
+            params.webAudioDeviceNames,
+            params.IDsToSaveInSoundProfileLibrary
           );
           speaker.#removeUIElems();
           resolve(speaker.result);

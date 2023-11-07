@@ -2098,7 +2098,8 @@ class Combination extends AudioCalibrator {
     micModelName = '',
     calibrateMicrophonesBool,
     authorEmails,
-    webAudioDeviceNames
+    webAudioDeviceNames,
+    userIDs
   ) => {
     this._calibrateSoundBurstDb = _calibrateSoundBurstDb;
     this.CALIBRATION_TONE_DURATION =
@@ -2154,6 +2155,7 @@ class Combination extends AudioCalibrator {
         loudspeaker: this.webAudioDeviceNames.loudspeaker,
         microphone: this.webAudioDeviceNames.microphone,
       },
+      userIDs: userIDs,
     };
     if (calibrateMicrophonesBool) {
       micInfo['authorEmails'] = authorEmails;
