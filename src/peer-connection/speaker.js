@@ -200,7 +200,16 @@ class Speaker extends AudioPeer {
       QRCode.toCanvas(qrCanvas, uri, error => {
         if (error) console.error(error);
       });
-      document.getElementById(this.targetElement).appendChild(qrCanvas);
+      const qrImage = new Image(400, 400);
+      qrImage.setAttribute('id', 'compatibilityCheckQRImage');
+      qrImage.style.zIndex = Infinity;
+      qrImage.style.width = 400;
+      qrImage.style.height = 400;
+      qrImage.style.aspectRatio = 1;
+      qrImage.src = qrCanvas.toDataURL();
+      qrImage.style.maxHeight = '150px';
+      qrImage.style.maxWidth = '150px';
+      document.getElementById(this.targetElement).appendChild(qrImage);
     } else {
       // show the link to the user
       // If specified HTML Id is available, show QR code there

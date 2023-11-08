@@ -3,7 +3,7 @@ import AudioCalibrator from '../audioCalibrator';
 import {sleep, csvToArray, saveToCSV, saveToJSON, findMinValue, findMaxValue} from '../../utils';
 import database from '../../config/firebase';
 import {ref, set, get, child} from 'firebase/database';
-import {doc, getDoc, collection, addDoc, updateDoc, setDoc} from 'firebase/firestore';
+import {doc, getDoc, collection, addDoc, updateDoc, setDoc, arrayUnion} from 'firebase/firestore';
 
 /**
  *
@@ -1926,7 +1926,16 @@ class Combination extends AudioCalibrator {
 
   writeIsSmartPhoneToFirestore = async (speakerID, isSmartPhone, OEM) => {
     // if Microphone/OEM/speakerID/default exists, leave it alone and create a new document at Microphone/OEM/speakerID and return the id of the new document
-
+    const OEMdocRef = doc(database, 'Microphone', OEM);
+    const OEMdocSnap = await getDoc(OEMdocRef);
+    // if OEM does not exist, create it with dummy field
+    if (!OEMdocSnap.exists()) {
+      await setDoc(OEMdocRef, {dummy: 'dummy'});
+    }
+    // save the collectionIDs in the OEM document as a field. If the field already exists, add the new collectionID to the array
+    await updateDoc(OEMdocRef, {
+      collectionIDs: arrayUnion(speakerID),
+    });
     const docRef = doc(database, 'Microphone', OEM, speakerID, 'default');
     const docSnap = await getDoc(docRef);
 
