@@ -597,13 +597,13 @@ class PythonServerAPI {
     return res.data[task];
   };
 
-  allHzVolumeCheck = async ({
+  allHzPowerCheck = async ({
     payload, 
     sampleRate, 
     binDesiredSec,
     burstSec
   }) => {
-    const task = 'volume-check';
+    const task = 'all-hz-check';
     let res = null;
 
     const data = JSON.stringify({
@@ -611,6 +611,43 @@ class PythonServerAPI {
       sampleRate, 
       binDesiredSec,
       burstSec
+    });
+
+    await axios({
+      method: 'post',
+      baseURL: PythonServerAPI.PYTHON_SERVER_URL, //server
+      url: `/task/${task}`,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      data,
+    })
+      .then(response => {
+        res = response;
+        console.log(res.data[task]);
+      })
+      .catch(error => {
+        throw error;
+      });
+    return res.data[task];
+  };
+
+  volumePowerCheck = async ({
+    payload, 
+    sampleRate, 
+    preSec,
+    Sec,
+    binDesiredSec
+  }) => {
+    const task = 'volume-check';
+    let res = null;
+
+    const data = JSON.stringify({
+      payload, 
+      sampleRate, 
+      preSec,
+      Sec,
+      binDesiredSec
     });
 
     await axios({

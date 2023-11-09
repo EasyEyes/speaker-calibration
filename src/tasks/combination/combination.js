@@ -189,10 +189,13 @@ class Combination extends AudioCalibrator {
   webAudioDeviceNames = {loudspeaker: '', microphone: '', loudspeakerText: '', microphoneText: ''};
 
   recordingChecks = {
+    volume:{},
     unfiltered: [],
     system: [],
     component: [],
   };
+
+  inDB;
 
   soundCheck = '';
 
@@ -417,7 +420,7 @@ class Combination extends AudioCalibrator {
       this.generateTemplate().toString();
     this.emit('update', {message: this.status});
     await this.pyServerAPI
-      .allHzVolumeCheck({
+      .allHzPowerCheck({
         payload,
         sampleRate: this.sourceSamplingRate || 96000,
         binDesiredSec: this._calibrateSoundPowerBinDesiredSec,
@@ -1719,22 +1722,35 @@ class Combination extends AudioCalibrator {
     let left = this.calibrateSound1000HzPreSec;
     let right = this.calibrateSound1000HzPreSec + this.calibrateSound1000HzSec;
     this.pyServerAPI
-      .getVolumeCalibration({
-        sampleRate: this.sourceSamplingRate,
-        payload: this.#getTruncatedSignal(left, right),
-        lCalib: lCalib,
-      })
-      .then(res => {
-        if (this.outDBSPL === null) {
-          this.incrementStatusBar();
-          this.outDBSPL = res['outDbSPL'];
-          this.outDBSPL1000 = res['outDbSPL1000'];
-          this.THD = res['thd'];
-        }
-      })
-      .catch(err => {
-        console.warn(err);
-      });
+    .getVolumeCalibration({
+      sampleRate: this.sourceSamplingRate,
+      payload: this.#getTruncatedSignal(left, right),
+      lCalib: lCalib,
+        })
+        .then(res => {
+          if (this.outDBSPL === null) {
+            this.incrementStatusBar();
+            this.outDBSPL = res['outDbSPL'];
+            this.outDBSPL1000 = res['outDbSPL1000'];
+            this.THD = res['thd'];
+          }
+        })
+        .catch(err => {
+          console.warn(err);
+        });
+
+    this.pyServerAPI.volumePowerCheck({
+      payload: this.getLastVolumeRecordedSignal(),
+      sampleRate: this.sourceSamplingRate || 96000,
+      binDesiredSec: this._calibrateSoundPowerBinDesiredSec,
+      preSec: this.calibrateSound1000HzPreSec,
+      Sec: this.calibrateSound1000HzSec
+    })
+    .then(res =>{
+      if (res['sd'] < this._calibrateSoundPowerDbSDToleratedDb) {
+        this.recordingChecks['volume'][this.inDB] = res;
+      }
+    });
   };
 
   startCalibrationVolume = async (stream, gainValues, lCalib, componentGainDBSPL) => {
@@ -1750,6 +1766,7 @@ class Combination extends AudioCalibrator {
     // do one calibration that will be discarded
     const soundLevelToDiscard = -60;
     const gainToDiscard = Math.pow(10, soundLevelToDiscard / 20);
+    this.inDB = soundLevelToDiscard;
     this.status =
       `1000 Hz Calibration: Sound Level ${soundLevelToDiscard} dB`.toString() +
       this.generateTemplate().toString();
@@ -1786,6 +1803,7 @@ class Combination extends AudioCalibrator {
       inDB = Math.log10(gainValues[i]) * 20;
       // precision to 1 decimal place
       inDB = Math.round(inDB * 10) / 10;
+      this.inDB = inDB;
       inDBValues.push(inDB);
       console.log('next update');
       this.status =
@@ -2033,7 +2051,7 @@ class Combination extends AudioCalibrator {
     const rec = recordings[recordings.length - 1];
     console.log(rec);
     await this.pyServerAPI
-      .allHzVolumeCheck({
+      .allHzPowerCheck({
         payload: rec,
         sampleRate: this.sourceSamplingRate || 96000,
         binDesiredSec: this._calibrateSoundPowerBinDesiredSec,
@@ -2093,7 +2111,7 @@ class Combination extends AudioCalibrator {
     _calibrateSoundBurstsWarmup = 1,
     _calibrateSoundHz = 48000,
     _calibrateSoundIIRSec = 0.2,
-    _calibrateSoundIRSec = 0.05,
+    _calibrateSoundIRSec = 0.2,
     calibrateSound1000HzPreSec = 3.5,
     calibrateSound1000HzSec = 1.0,
     calibrateSound1000HzPostSec = 0.5,
@@ -2107,7 +2125,7 @@ class Combination extends AudioCalibrator {
     micModelName = '',
     calibrateMicrophonesBool,
     authorEmails,
-    webAudioDeviceNames,
+    webAudioDeviceNames = {loudspeaker:"",microphone:""},
     userIDs
   ) => {
     this._calibrateSoundBurstDb = _calibrateSoundBurstDb;
@@ -2142,7 +2160,7 @@ class Combination extends AudioCalibrator {
         ? 'minidsp'
         : this.deviceInfo.OEM.toLowerCase().split(' ').join('')
       : micManufacturer;
-    // const ID = "711-4754";
+    // const ID = "712-5669";
     // const OEM = "minidsp";
     const micInfo = {
       micModelName: isSmartPhone ? micModelName : microphoneName,
