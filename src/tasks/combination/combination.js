@@ -2148,7 +2148,9 @@ class Combination extends AudioCalibrator {
     this._calibrateSoundPowerDbSDToleratedDb = _calibrateSoundPowerDbSDToleratedDb;
     this.webAudioDeviceNames = webAudioDeviceNames;
     if (isSmartPhone) this.webAudioDeviceNames.microphone = this.deviceInfo.microphoneFromAPI;
-
+    this.webAudioDeviceNames.microphoneText = this.webAudioDeviceNames.microphoneText
+      .replace('xxx', this.webAudioDeviceNames.microphone)
+      .replace('XXX', this.webAudioDeviceNames.microphone);
     //feed calibration goal here
     this._calibrateSoundCheck = _calibrateSoundCheck;
     //check if a componentIR was given to the system, if it isn't check for the microphone. using dummy data here bc we need to
