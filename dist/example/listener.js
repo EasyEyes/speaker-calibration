@@ -8,7 +8,7 @@ const isSmartPhone = urlParams.get('isSmartPhone');
 
 const listenerParameters = {
   targetElementId: 'display',
-  deviceInfoFromUser: {},
+  microphoneFromAPI: '',
 };
 
 const container = document.getElementById('listenerContainer');
@@ -36,7 +36,7 @@ switch (isSmartPhone) {
     container.style.display = 'block';
     // event listener for id calibrationBeginButton
     const calibrationBeginButton = document.getElementById('calibrationBeginButton');
-    calibrationBeginButton.addEventListener('click', () => {
+    calibrationBeginButton.addEventListener('click', async () => {
       // remove the button
       calibrationBeginButton.remove();
       // remove turn message
@@ -56,6 +56,26 @@ switch (isSmartPhone) {
         fontSize--;
         recordingInProgressElement.style.fontSize = fontSize + 'px';
       }
+      const webAudioDeviceNames = {microphone: ''};
+      const externalMicList = ['UMIK', 'Airpods', 'Bluetooth'];
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({audio: true});
+        if (stream) {
+          const devices = await navigator.mediaDevices.enumerateDevices();
+          const mics = devices.filter(device => device.kind === 'audioinput');
+          mics.forEach(mic => {
+            if (externalMicList.some(externalMic => mic.label.includes(externalMic))) {
+              webAudioDeviceNames.microphone = mic.label;
+            }
+          });
+          if (webAudioDeviceNames.microphone === '') {
+            webAudioDeviceNames.microphone = mics[0].label;
+          }
+        }
+      } catch (err) {
+        console.log(err);
+      }
+      listenerParameters.microphoneFromAPI = webAudioDeviceNames.microphone;
       window.listener = new speakerCalibrator.Listener(listenerParameters);
       console.log(window.listener);
     });

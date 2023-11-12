@@ -16,6 +16,7 @@ class Listener extends AudioPeer {
    */
   constructor(params) {
     super(params);
+    this.microphoneFromAPI = params.microphoneFromAPI ? params.microphoneFromAPI : '';
     // this.deviceInfoFromUser = params.deviceInfoFromUser
     //   ? params.deviceInfoFromUser
     //   : {modelNumber: '', modelName: ''};
@@ -170,6 +171,7 @@ class Listener extends AudioPeer {
         // deviceInfo['deviceInfoFromUser'] = this.deviceInfoFromUser;
       });
       // deviceInfo['deviceInfoFromUser'] = this.deviceInfoFromUser;
+      deviceInfo['microphoneFromAPI'] = this.microphoneFromAPI;
       this.conn.send({
         name: 'deviceInfo',
         payload: deviceInfo,
@@ -273,7 +275,7 @@ class Listener extends AudioPeer {
       });
       return;
     }
-    
+
     const audioContext = new (window.AudioContext || window.webkitAudioContext)();
     navigator.mediaDevices
       .getUserMedia({

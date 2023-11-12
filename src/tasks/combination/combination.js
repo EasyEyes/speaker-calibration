@@ -189,7 +189,7 @@ class Combination extends AudioCalibrator {
   webAudioDeviceNames = {loudspeaker: '', microphone: '', loudspeakerText: '', microphoneText: ''};
 
   recordingChecks = {
-    volume:{},
+    volume: {},
     unfiltered: [],
     system: [],
     component: [],
@@ -1722,35 +1722,36 @@ class Combination extends AudioCalibrator {
     let left = this.calibrateSound1000HzPreSec;
     let right = this.calibrateSound1000HzPreSec + this.calibrateSound1000HzSec;
     this.pyServerAPI
-    .getVolumeCalibration({
-      sampleRate: this.sourceSamplingRate,
-      payload: this.#getTruncatedSignal(left, right),
-      lCalib: lCalib,
-        })
-        .then(res => {
-          if (this.outDBSPL === null) {
-            this.incrementStatusBar();
-            this.outDBSPL = res['outDbSPL'];
-            this.outDBSPL1000 = res['outDbSPL1000'];
-            this.THD = res['thd'];
-          }
-        })
-        .catch(err => {
-          console.warn(err);
-        });
+      .getVolumeCalibration({
+        sampleRate: this.sourceSamplingRate,
+        payload: this.#getTruncatedSignal(left, right),
+        lCalib: lCalib,
+      })
+      .then(res => {
+        if (this.outDBSPL === null) {
+          this.incrementStatusBar();
+          this.outDBSPL = res['outDbSPL'];
+          this.outDBSPL1000 = res['outDbSPL1000'];
+          this.THD = res['thd'];
+        }
+      })
+      .catch(err => {
+        console.warn(err);
+      });
 
-    this.pyServerAPI.volumePowerCheck({
-      payload: this.getLastVolumeRecordedSignal(),
-      sampleRate: this.sourceSamplingRate || 96000,
-      binDesiredSec: this._calibrateSoundPowerBinDesiredSec,
-      preSec: this.calibrateSound1000HzPreSec,
-      Sec: this.calibrateSound1000HzSec
-    })
-    .then(res =>{
-      if (res['sd'] < this._calibrateSoundPowerDbSDToleratedDb) {
-        this.recordingChecks['volume'][this.inDB] = res;
-      }
-    });
+    this.pyServerAPI
+      .volumePowerCheck({
+        payload: this.getLastVolumeRecordedSignal(),
+        sampleRate: this.sourceSamplingRate || 96000,
+        binDesiredSec: this._calibrateSoundPowerBinDesiredSec,
+        preSec: this.calibrateSound1000HzPreSec,
+        Sec: this.calibrateSound1000HzSec,
+      })
+      .then(res => {
+        if (res['sd'] < this._calibrateSoundPowerDbSDToleratedDb) {
+          this.recordingChecks['volume'][this.inDB] = res;
+        }
+      });
   };
 
   startCalibrationVolume = async (stream, gainValues, lCalib, componentGainDBSPL) => {
@@ -2125,7 +2126,7 @@ class Combination extends AudioCalibrator {
     micModelName = '',
     calibrateMicrophonesBool,
     authorEmails,
-    webAudioDeviceNames = {loudspeaker:"",microphone:""},
+    webAudioDeviceNames = {loudspeaker: '', microphone: ''},
     userIDs
   ) => {
     this._calibrateSoundBurstDb = _calibrateSoundBurstDb;
@@ -2146,6 +2147,7 @@ class Combination extends AudioCalibrator {
     this._calibrateSoundPowerBinDesiredSec = _calibrateSoundPowerBinDesiredSec;
     this._calibrateSoundPowerDbSDToleratedDb = _calibrateSoundPowerDbSDToleratedDb;
     this.webAudioDeviceNames = webAudioDeviceNames;
+    if (isSmartPhone) this.webAudioDeviceNames.microphone = this.deviceInfo.microphoneFromAPI;
 
     //feed calibration goal here
     this._calibrateSoundCheck = _calibrateSoundCheck;
