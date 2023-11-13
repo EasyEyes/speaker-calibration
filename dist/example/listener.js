@@ -9,6 +9,7 @@ const isSmartPhone = urlParams.get('isSmartPhone');
 const listenerParameters = {
   targetElementId: 'display',
   microphoneFromAPI: '',
+  microphoneDeviceId: '',
 };
 
 const container = document.getElementById('listenerContainer');
@@ -56,7 +57,7 @@ switch (isSmartPhone) {
         fontSize--;
         recordingInProgressElement.style.fontSize = fontSize + 'px';
       }
-      const webAudioDeviceNames = {microphone: ''};
+      const webAudioDeviceNames = {microphone: '', deviceID: ''};
       const externalMicList = ['UMIK', 'Airpods', 'Bluetooth'];
       try {
         const stream = await navigator.mediaDevices.getUserMedia({audio: true});
@@ -66,16 +67,19 @@ switch (isSmartPhone) {
           mics.forEach(mic => {
             if (externalMicList.some(externalMic => mic.label.includes(externalMic))) {
               webAudioDeviceNames.microphone = mic.label;
+              webAudioDeviceNames.deviceID = mic.deviceId;
             }
           });
           if (webAudioDeviceNames.microphone === '') {
             webAudioDeviceNames.microphone = mics[0].label;
+            webAudioDeviceNames.deviceID = mics[0].deviceId;
           }
         }
       } catch (err) {
         console.log(err);
       }
       listenerParameters.microphoneFromAPI = webAudioDeviceNames.microphone;
+      listenerParameters.microphoneDeviceId = webAudioDeviceNames.deviceID;
       window.listener = new speakerCalibrator.Listener(listenerParameters);
       console.log(window.listener);
     });

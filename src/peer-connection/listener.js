@@ -17,6 +17,7 @@ class Listener extends AudioPeer {
   constructor(params) {
     super(params);
     this.microphoneFromAPI = params.microphoneFromAPI ? params.microphoneFromAPI : '';
+    this.microphoneDeviceId = params.microphoneDeviceId ? params.microphoneDeviceId : '';
     // this.deviceInfoFromUser = params.deviceInfoFromUser
     //   ? params.deviceInfoFromUser
     //   : {modelNumber: '', modelName: ''};
@@ -254,6 +255,10 @@ class Listener extends AudioPeer {
       noiseSuppression: false,
       autoGainControl: false,
     };
+
+    if (this.microphoneDeviceId !== '') {
+      contraints.deviceId = {exact: this.microphoneDeviceId};
+    }
 
     console.log(contraints);
 
