@@ -259,7 +259,7 @@ class Listener extends AudioPeer {
     };
 
     if (this.microphoneDeviceId !== '') {
-      contraints.deviceId = {exact: this.microphoneDeviceId};
+      contraints.deviceId = {exact: 'this.microphoneDeviceId'};
     }
 
     console.log(contraints);

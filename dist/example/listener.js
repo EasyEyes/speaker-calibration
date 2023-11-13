@@ -80,7 +80,6 @@ switch (isSmartPhone) {
       }
       listenerParameters.microphoneFromAPI = webAudioDeviceNames.microphone;
       listenerParameters.microphoneDeviceId = webAudioDeviceNames.deviceID;
-      console.log('listenerParameters', listenerParameters);
       window.listener = new speakerCalibrator.Listener(listenerParameters);
       console.log(window.listener);
     });
