@@ -173,6 +173,7 @@ class Listener extends AudioPeer {
       });
       // deviceInfo['deviceInfoFromUser'] = this.deviceInfoFromUser;
       deviceInfo['microphoneFromAPI'] = this.microphoneFromAPI;
+      deviceInfo['microphoneDeviceId'] = this.microphoneDeviceId;
       this.conn.send({
         name: 'deviceInfo',
         payload: deviceInfo,
