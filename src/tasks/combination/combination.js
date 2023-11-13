@@ -186,6 +186,10 @@ class Combination extends AudioCalibrator {
 
   _calibrateSoundBurstDb;
 
+  componentIRPhase = [];
+
+  systemIRPhase = [];
+
   webAudioDeviceNames = {loudspeaker: '', microphone: '', loudspeakerText: '', microphoneText: ''};
 
   recordingChecks = {
@@ -353,6 +357,8 @@ class Combination extends AudioCalibrator {
         this.componentInvertedImpulseResponse = res['iir'];
         this.componentIR['Gain'] = res['ir'];
         this.componentIR['Freq'] = res['frequencies'];
+        this.componentIRPhase = res['component_angle'];
+        this.systemIRPhase = res['system_angle']
         this.componentIROrigin['Freq'] = res['frequencies'];
         this.componentIROrigin['Gain'] = res['irOrigin'];
         this.componentConvolution = res['convolution'];
@@ -2272,6 +2278,8 @@ class Combination extends AudioCalibrator {
     const timeStampresult = [...this.timeStamp].join('\n');
     total_results['timeStamps'] = timeStampresult;
     total_results['recordingChecks'] = this.recordingChecks;
+    total_results['component']['phase'] = this.componentIRPhase;
+    total_results['system']['phase'] = this.systemIRPhase;
     console.log('total results');
     console.log(total_results);
     console.log('Time Stamps');
