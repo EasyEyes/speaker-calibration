@@ -1,6 +1,6 @@
 import AudioCalibrator from '../audioCalibrator';
 
-import {sleep, csvToArray, saveToCSV, saveToJSON, findMinValue, findMaxValue} from '../../utils';
+import {sleep, csvToArray, saveToCSV, saveToJSON, findMinValue, findMaxValue, getCurrentTimeString} from '../../utils';
 import database from '../../config/firebase';
 import {ref, set, get, child} from 'firebase/database';
 import {doc, getDoc, collection, addDoc, updateDoc, setDoc, arrayUnion} from 'firebase/firestore';
@@ -2184,6 +2184,8 @@ class Combination extends AudioCalibrator {
           : this.deviceInfo.OEM
         : micManufacturer,
       ID: ID,
+      createDate: new Date(),
+      DateText: getCurrentTimeString(),
       HardwareName: isSmartPhone ? this.deviceInfo.hardwarename : microphoneName,
       hardwareFamily: isSmartPhone ? this.deviceInfo.hardwarefamily : microphoneName,
       HardwareModel: isSmartPhone ? this.deviceInfo.hardwaremodel : microphoneName,
