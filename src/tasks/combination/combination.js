@@ -2254,19 +2254,26 @@ class Combination extends AudioCalibrator {
     let impulseResponseResults = await this.startCalibrationImpulseResponse(stream);
     impulseResponseResults['background_noise'] = this.background_noise;
     if (componentIR != null) {
-      //insert Freq and Gain from this.componentIR into db
-      // await this.writeFrqGain(
-      //   ID,
-      //   impulseResponseResults.component.ir.Freq,
-      //   impulseResponseResults.component.ir.Gain,
-      //   OEM
-      // );
+      // I corrected microphone/loudpeaker IR scale in easyeyes, 
+      // but since we write microphone IR to firestore here
+      // we need to correct microphone IR here 
+      let correctGain = Math.round(
+        (volumeResults.parameters.gainDBSPL -
+          this.componentGainDBSPL) *
+          10
+      ) / 10;
+
+      let IrFreq = impulseResponseResults?.component.ir.Freq.map((freq) => Math.round(freq));
+      let IrGain = impulseResponseResults?.component?.ir.Gain;
+      const IrGainAt1000Hz = IrGain[IrFreq.findIndex((freq) => freq === 1000)];
+      const difference = Math.round(10 * (IrGainAt1000Hz - correctGain)) / 10;
+      IrGain = IrGain.map((gain) => gain - difference);
       const id = await this.writeIsSmartPhoneToFirestore(ID, isSmartPhone, OEM);
       await this.writeMicrophoneInfoToFirestore(ID, micInfo, OEM, id);
       await this.writeFrqGainToFirestore(
         ID,
-        impulseResponseResults.component.ir.Freq,
-        impulseResponseResults.component.ir.Gain,
+        IrFreq,
+        IrGain,
         OEM,
         id
       );
