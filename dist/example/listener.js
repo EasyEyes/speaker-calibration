@@ -80,7 +80,18 @@ switch (isSmartPhone) {
       }
       listenerParameters.microphoneFromAPI = webAudioDeviceNames.microphone;
       listenerParameters.microphoneDeviceId = webAudioDeviceNames.deviceID;
+      let lock = null;
+      try {
+        if ('wakeLock' in navigator) {
+          lock = await navigator.wakeLock.request('screen');
+        }
+      } catch (err) {
+        console.log(err);
+      }
       window.listener = new speakerCalibrator.Listener(listenerParameters);
+      if (lock) {
+        lock.release();
+      }
     });
     break;
   case 'false':
