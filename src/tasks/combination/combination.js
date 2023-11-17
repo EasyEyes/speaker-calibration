@@ -1,9 +1,28 @@
 import AudioCalibrator from '../audioCalibrator';
 
-import {sleep, csvToArray, saveToCSV, saveToJSON, findMinValue, findMaxValue, getCurrentTimeString} from '../../utils';
+import {
+  sleep,
+  csvToArray,
+  saveToCSV,
+  saveToJSON,
+  findMinValue,
+  findMaxValue,
+  getCurrentTimeString,
+} from '../../utils';
 import database from '../../config/firebase';
 import {ref, set, get, child} from 'firebase/database';
-import {doc, getDoc, collection, addDoc, updateDoc, setDoc, arrayUnion} from 'firebase/firestore';
+import {
+  doc,
+  getDoc,
+  collection,
+  addDoc,
+  updateDoc,
+  setDoc,
+  arrayUnion,
+  getDocs,
+  query,
+  where,
+} from 'firebase/firestore';
 
 /**
  *
@@ -358,7 +377,7 @@ class Combination extends AudioCalibrator {
         this.componentIR['Gain'] = res['ir'];
         this.componentIR['Freq'] = res['frequencies'];
         this.componentIRPhase = res['component_angle'];
-        this.systemIRPhase = res['system_angle']
+        this.systemIRPhase = res['system_angle'];
         this.componentIROrigin['Freq'] = res['frequencies'];
         this.componentIROrigin['Gain'] = res['irOrigin'];
         this.componentConvolution = res['convolution'];
@@ -1876,8 +1895,8 @@ class Combination extends AudioCalibrator {
     }
 
     const data = {Freq: sampledFrq, Gain: sampledGain};
-    // update Microphone/OEM/speakerID/default/linear
-    const docRef = doc(database, 'Microphone', OEM, speakerID, documentID);
+
+    const docRef = doc(database, 'Microphones', documentID);
     await updateDoc(docRef, {
       linear: data,
     });
@@ -1900,16 +1919,20 @@ class Combination extends AudioCalibrator {
 
   // Function to Read frq and gain from firebase database given speakerID
   // returns an array of frq and gain if speakerID exists, returns null otherwise
-  readFrqGainFromFirestore = async (speakerID, OEM, documentID) => {
-    const docRef = doc(database, 'Microphone', OEM, speakerID, documentID);
-
-    const docSnap = await getDoc(docRef);
-
-    if (docSnap.exists()) {
-      return docSnap.data().linear;
-    } else {
-      return null;
+  readFrqGainFromFirestore = async (speakerID, OEM, isDefault) => {
+    const collectionRef = collection(database, 'Microphones');
+    const q = query(
+      collectionRef,
+      where('ID', '==', speakerID),
+      where('lowercaseOEM', '==', OEM),
+      where('isDefault', '==', isDefault)
+    );
+    const querySnapshot = await getDocs(q);
+    // if exists return the linear field of the first document
+    if (querySnapshot.size > 0) {
+      return querySnapshot.docs[0].data().linear;
     }
+    return null;
   };
   readFrqGain = async (speakerID, OEM) => {
     const dbRef = ref(database);
@@ -1919,15 +1942,20 @@ class Combination extends AudioCalibrator {
     }
     return null;
   };
-  readGainat1000HzFromFirestore = async (speakerID, OEM, documentID) => {
-    const docRef = doc(database, 'Microphone', OEM, speakerID, documentID);
-    const docSnap = await getDoc(docRef);
-
-    if (docSnap.exists()) {
-      return docSnap.data().Gain1000;
-    } else {
-      return null;
+  readGainat1000HzFromFirestore = async (speakerID, OEM, isDefault) => {
+    const collectionRef = collection(database, 'Microphones');
+    const q = query(
+      collectionRef,
+      where('ID', '==', speakerID),
+      where('lowercaseOEM', '==', OEM),
+      where('isDefault', '==', isDefault)
+    );
+    const querySnapshot = await getDocs(q);
+    // if exists return the Gain1000 field of the first document
+    if (querySnapshot.size > 0) {
+      return querySnapshot.docs[0].data().Gain1000;
     }
+    return null;
   };
 
   readGainat1000Hz = async (speakerID, OEM) => {
@@ -1940,8 +1968,7 @@ class Combination extends AudioCalibrator {
   };
 
   writeGainat1000HzToFirestore = async (speakerID, gain, OEM, documentID) => {
-    const docRef = doc(database, 'Microphone', OEM, speakerID, documentID);
-
+    const docRef = doc(database, 'Microphones', documentID);
     await updateDoc(docRef, {
       Gain1000: gain,
     });
@@ -1952,30 +1979,20 @@ class Combination extends AudioCalibrator {
   };
 
   writeIsSmartPhoneToFirestore = async (speakerID, isSmartPhone, OEM) => {
-    // if Microphone/OEM/speakerID/default exists, leave it alone and create a new document at Microphone/OEM/speakerID and return the id of the new document
-    const OEMdocRef = doc(database, 'Microphone', OEM);
-    const OEMdocSnap = await getDoc(OEMdocRef);
-    // if OEM does not exist, create it with dummy field
-    if (!OEMdocSnap.exists()) {
-      await setDoc(OEMdocRef, {dummy: 'dummy'});
-    }
-    // save the collectionIDs in the OEM document as a field. If the field already exists, add the new collectionID to the array
-    await updateDoc(OEMdocRef, {
-      collectionIDs: arrayUnion(speakerID),
-    });
-    const docRef = doc(database, 'Microphone', OEM, speakerID, 'default');
-    const docSnap = await getDoc(docRef);
-
-    if (docSnap.exists()) {
-      // add new document
-      const collectionRef = collection(database, 'Microphone', OEM, speakerID);
-      // add the new document and return the id
-      const docRef = await addDoc(collectionRef, {isSmartPhone: isSmartPhone});
+    const collectionRef = collection(database, 'Microphones');
+    const q = query(
+      collectionRef,
+      where('ID', '==', speakerID),
+      where('lowercaseOEM', '==', OEM),
+      where('isDefault', '==', true)
+    );
+    const querySnapshot = await getDocs(q);
+    if (querySnapshot.size > 0) {
+      const docRef = await addDoc(collectionRef, {isSmartPhone: isSmartPhone, isDefault: false});
       return docRef.id;
     } else {
-      // create document at Microphone/OEM/speakerID/default
-      await setDoc(docRef, {isSmartPhone: isSmartPhone});
-      return 'default';
+      const docRef = await addDoc(collectionRef, {isSmartPhone: isSmartPhone, isDefault: true});
+      return docRef.id;
     }
   };
 
@@ -1985,10 +2002,8 @@ class Combination extends AudioCalibrator {
   };
 
   writeMicrophoneInfoToFirestore = async (speakerID, micInfo, OEM, documentID) => {
-    const docRef = doc(database, 'Microphone', OEM, speakerID, documentID);
-    await updateDoc(docRef, {
-      info: micInfo,
-    });
+    const docRef = doc(database, 'Microphones', documentID);
+    await setDoc(docRef, micInfo, {merge: true});
   };
 
   doesMicrophoneExistInFirestore = async (speakerID, OEM, documentID) => {
@@ -2069,22 +2084,24 @@ class Combination extends AudioCalibrator {
       .then(result => {
         if (result) {
           this.recordingChecks[this.soundCheck].push(result);
-        if (result['sd'] > this._calibrateSoundPowerDbSDToleratedDb) {
-          console.log('filtered recording sd too high');
-        } else {
-          if (this.numSuccessfulCaptured < 1) {
-            this.numSuccessfulCaptured += 1;
-            this.stepNum += 1;
-            this.incrementStatusBar();
-            console.log('after mls w iir record for some reason add numSucc capt ' + this.stepNum);
-            this.status =
-              `All Hz Calibration: ${this.numSuccessfulCaptured} recording of convolved MLS captured`.toString() +
-              this.generateTemplate().toString();
-            this.emit('update', {
-              message: this.status,
-            });
+          if (result['sd'] > this._calibrateSoundPowerDbSDToleratedDb) {
+            console.log('filtered recording sd too high');
+          } else {
+            if (this.numSuccessfulCaptured < 1) {
+              this.numSuccessfulCaptured += 1;
+              this.stepNum += 1;
+              this.incrementStatusBar();
+              console.log(
+                'after mls w iir record for some reason add numSucc capt ' + this.stepNum
+              );
+              this.status =
+                `All Hz Calibration: ${this.numSuccessfulCaptured} recording of convolved MLS captured`.toString() +
+                this.generateTemplate().toString();
+              this.emit('update', {
+                message: this.status,
+              });
+            }
           }
-        }
         }
       });
   };
@@ -2215,7 +2232,7 @@ class Combination extends AudioCalibrator {
     if (componentIR == null) {
       //mode 'ir'
       //global variable this.componentIR must be set
-      this.componentIR = await this.readFrqGainFromFirestore(ID, OEM, 'default').then(data => {
+      this.componentIR = await this.readFrqGainFromFirestore(ID, OEM, true).then(data => {
         return data;
       });
       // await this.readFrqGain(ID, OEM).then(data => {
@@ -2223,7 +2240,7 @@ class Combination extends AudioCalibrator {
       // });
 
       // lCalib = await this.readGainat1000Hz(ID, OEM);
-      lCalib = await this.readGainat1000HzFromFirestore(ID, OEM, 'default');
+      lCalib = await this.readGainat1000HzFromFirestore(ID, OEM, true);
       micInfo['gainDBSPL'] = lCalib;
       // this.componentGainDBSPL = this.convertToDB(lCalib);
       this.componentGainDBSPL = lCalib;
@@ -2254,29 +2271,20 @@ class Combination extends AudioCalibrator {
     let impulseResponseResults = await this.startCalibrationImpulseResponse(stream);
     impulseResponseResults['background_noise'] = this.background_noise;
     if (componentIR != null) {
-      // I corrected microphone/loudpeaker IR scale in easyeyes, 
+      // I corrected microphone/loudpeaker IR scale in easyeyes,
       // but since we write microphone IR to firestore here
-      // we need to correct microphone IR here 
-      let correctGain = Math.round(
-        (volumeResults.parameters.gainDBSPL -
-          this.componentGainDBSPL) *
-          10
-      ) / 10;
+      // we need to correct microphone IR here
+      let correctGain =
+        Math.round((volumeResults.parameters.gainDBSPL - this.componentGainDBSPL) * 10) / 10;
 
-      let IrFreq = impulseResponseResults?.component.ir.Freq.map((freq) => Math.round(freq));
+      let IrFreq = impulseResponseResults?.component.ir.Freq.map(freq => Math.round(freq));
       let IrGain = impulseResponseResults?.component?.ir.Gain;
-      const IrGainAt1000Hz = IrGain[IrFreq.findIndex((freq) => freq === 1000)];
+      const IrGainAt1000Hz = IrGain[IrFreq.findIndex(freq => freq === 1000)];
       const difference = Math.round(10 * (IrGainAt1000Hz - correctGain)) / 10;
-      IrGain = IrGain.map((gain) => gain - difference);
+      IrGain = IrGain.map(gain => gain - difference);
       const id = await this.writeIsSmartPhoneToFirestore(ID, isSmartPhone, OEM);
       await this.writeMicrophoneInfoToFirestore(ID, micInfo, OEM, id);
-      await this.writeFrqGainToFirestore(
-        ID,
-        IrFreq,
-        IrGain,
-        OEM,
-        id
-      );
+      await this.writeFrqGainToFirestore(ID, IrFreq, IrGain, OEM, id);
       micInfo['gainDBSPL'] = impulseResponseResults.component.gainDBSPL;
       await this.writeGainat1000HzToFirestore(ID, micInfo['gainDBSPL'], OEM, id);
       // await this.writeGainat1000Hz(ID, micInfo['gainDBSPL'], OEM);
