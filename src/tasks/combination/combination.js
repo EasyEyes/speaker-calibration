@@ -1970,20 +1970,38 @@ class Combination extends AudioCalibrator {
 
   writeFrqGainToFirestore = async (speakerID, frq, gain, OEM, documentID) => {
     // freq and gain are too large to take samples 1 in every 100 samples
+    // const sampledFrq = [];
+    // const sampledGain = [];
+    // for (let i = 0; i < frq.length; i += 100) {
+    //   sampledFrq.push(frq[i]);
+    //   sampledGain.push(gain[i]);
+    // }
 
-    const sampledFrq = [];
-    const sampledGain = [];
-    for (let i = 0; i < frq.length; i += 100) {
-      sampledFrq.push(frq[i]);
-      sampledGain.push(gain[i]);
-    }
-
-    const data = {Freq: sampledFrq, Gain: sampledGain};
+    const data = {Freq: frq, Gain: gain};
 
     const docRef = doc(database, 'Microphones', documentID);
     await updateDoc(docRef, {
       linear: data,
     });
+
+    // divide frq and gain into smaller chunks and write to firestore one chunk at a time
+    // use arrayUnion to append to the array
+    // const chunkSize = 600;
+    // const chunkedFrq = [];
+    // const chunkedGain = [];
+    // for (let i = 0; i < frq.length; i += chunkSize) {
+    //   chunkedFrq.push(frq.slice(i, i + chunkSize));
+    //   chunkedGain.push(gain.slice(i, i + chunkSize));
+    // }
+    // const docRef = doc(database, 'Microphones', documentID);
+    // for (let i = 0; i < chunkedFrq.length; i++) {
+    //   await updateDoc(docRef, {
+    //     linear: {
+    //       Freq: arrayUnion(...chunkedFrq[i]),
+    //       Gain: arrayUnion(...chunkedGain[i]),
+    //     },
+    //   });
+    // }
   };
   // function to write frq and gain to firebase database given speakerID
   writeFrqGain = async (speakerID, frq, gain, OEM) => {
