@@ -102,4 +102,34 @@ export const getCurrentTimeString = () => {
   return dateString.replace("at ", "");
 };
 
-export {sleep, saveToCSV, saveToJSON, csvToArray,findMinValue,findMaxValue};
+const standardDeviation = (values) => {
+  const avg = average(values);
+
+  const squareDiffs = values.map((value) => {
+    const diff = value - avg;
+    const sqrDiff = diff * diff;
+    return sqrDiff;
+  });
+
+  const avgSquareDiff = average(squareDiffs);
+
+  const stdDev = Math.sqrt(avgSquareDiff);
+  // only 1 digit after the decimal place
+  const std = Math.round(stdDev * 10) / 10;
+  return std.toFixed(1);
+};
+
+const average = (data) => {
+  const sum = data.reduce((sum, value) => {
+    return sum + value;
+  }, 0);
+
+  const avg = sum / data.length;
+  return avg;
+};
+
+function interpolate(x, x0, x1, y0, y1) {
+  return y0 + (y1 - y0) * (x - x0) / (x1 - x0);
+}
+
+export {sleep, saveToCSV, saveToJSON, csvToArray,findMinValue,findMaxValue, standardDeviation, interpolate};

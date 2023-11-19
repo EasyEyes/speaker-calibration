@@ -8,6 +8,8 @@ import {
   findMinValue,
   findMaxValue,
   getCurrentTimeString,
+  standardDeviation,
+  interpolate
 } from '../../utils';
 import database from '../../config/firebase';
 import {ref, set, get, child} from 'firebase/database';
@@ -205,6 +207,13 @@ class Combination extends AudioCalibrator {
 
   _calibrateSoundBurstDb;
 
+  SDofFilteredRange = {
+    component: undefined,
+    system: undefined
+  };
+
+  transducerType = "Loudspeaker";
+
   componentIRPhase = [];
 
   systemIRPhase = [];
@@ -244,10 +253,22 @@ class Combination extends AudioCalibrator {
     if (this.percent_complete > 100) {
       this.percent_complete = 100;
     }
+    let MLSsd = "";
+    let componentSD = "";
+    let systemSD = "";
     const reportWebAudioNames = `<br>${this.webAudioDeviceNames.loudspeakerText} <br> ${this.webAudioDeviceNames.microphoneText}`;
     const reportParameters = `<br> Sampling: Loudspeaker ${this.sourceSamplingRate} Hz, Microphone ${this.sinkSamplingRate} Hz, ${this.sampleSize} bits`;
+    if (this.recordingChecks["unfiltered"].length > 0) {
+      MLSsd = `<br> Recorded MLS power SD: ${this.recordingChecks["unfiltered"][0].sd} dB`
+    }
+    if (this.SDofFilteredRange['system']) {
+      systemSD = `<br> Loudspeaker+Microphone  correction SD: ${this.SDofFilteredRange['system']} dB`
+    }
+    if (this.SDofFilteredRange['component']) {
+      componentSD = `<br> ${this.transducerType} correction SD: ${this.SDofFilteredRange['component']} dB`
+    }
     const template = `<div style="display: flex; justify-content: center; margin-top:12px;"><div style="width: 800px; height: 20px; border: 2px solid #000; border-radius: 10px;"><div style="width: ${this.percent_complete}%; height: 100%; background-color: #00aaff; border-radius: 8px;"></div></div></div>`;
-    return reportWebAudioNames + reportParameters + template;
+    return reportWebAudioNames + reportParameters + MLSsd + systemSD + componentSD + template;
   };
 
   /** increment numerator and percent for status bar */
@@ -453,8 +474,8 @@ class Combination extends AudioCalibrator {
       })
       .then(result => {
         if (result) {
-          this.recordingChecks['unfiltered'].push(result);
           if (result['sd'] < this._calibrateSoundPowerDbSDToleratedDb) {
+            this.recordingChecks['unfiltered'].push(result);
             this.impulseResponses.push(
               this.pyServerAPI
                 .getImpulseResponse({
@@ -821,6 +842,23 @@ class Combination extends AudioCalibrator {
     let component_conv_rec_psd = await this.pyServerAPI
       .getSubtractedPSDWithRetry(conv_rec, knownGain, knownFreq, sampleRate)
       .then(res => {
+        let interpolatedGain = res.x.map((freq, index) => {
+          let i = 0;
+          while (i < knownFreq.length && knownFreq[i] < freq) {
+            i++;
+          }
+          if (i === 0 || i === knownFreq.length) {
+            return knownGain[i];
+          }
+          return interpolate(freq, knownFreq[i - 1], knownFreq[i], knownGain[i - 1], knownGain[i]);
+        });
+        console.log(interpolatedGain);
+        let correctedGain = res.y.map((gain, index) => 10 * Math.log10(gain) - interpolatedGain[index]);
+    
+        let filtered_psd = correctedGain
+          .filter((value, index) => res.x[index] >= this.#lowHz && res.x[index] <= this.#highHz)
+      
+        this.SDofFilteredRange['component'] = standardDeviation(filtered_psd);
         this.incrementStatusBar();
         this.status =
           `All Hz Calibration: done computing the PSD graphs...`.toString() +
@@ -842,6 +880,12 @@ class Combination extends AudioCalibrator {
         sampleRate: this.sourceSamplingRate || 96000,
       })
       .then(res => {
+        console.log(res);
+        let filtered_psd = res.y_conv
+          .filter((value, index) => res.x_conv[index] >= this.#lowHz && res.x_conv[index] <= this.#highHz)
+          .map((value) => 10 * Math.log10(value))
+      
+        this.SDofFilteredRange['system'] = standardDeviation(filtered_psd);
         this.incrementStatusBar();
         this.status =
           `All Hz Calibration: done computing the PSD graphs...`.toString() +
@@ -1071,6 +1115,23 @@ class Combination extends AudioCalibrator {
       let conv_results = await this.pyServerAPI
         .getSubtractedPSDWithRetry(conv_rec, knownGain, knownFreq, sampleRate)
         .then(res => {
+          let interpolatedGain = res.x.map((freq, index) => {
+            let i = 0;
+            while (i < knownFreq.length && knownFreq[i] < freq) {
+              i++;
+            }
+            if (i === 0 || i === knownFreq.length) {
+              return knownGain[i];
+            }
+            return interpolate(freq, knownFreq[i - 1], knownFreq[i], knownGain[i - 1], knownGain[i]);
+          });
+
+          console.log(interpolatedGain);
+          let correctedGain = res.y.map((gain, index) => 10 * Math.log10(gain) - interpolatedGain[index]);
+          let filtered_psd = correctedGain
+          .filter((value, index) => res.x[index] >= this.#lowHz && res.x[index] <= this.#highHz)
+      
+          this.SDofFilteredRange['component'] = standardDeviation(filtered_psd);
           this.incrementStatusBar();
           this.status =
             `All Hz Calibration: done computing the PSD graphs...`.toString() +
@@ -1231,6 +1292,12 @@ class Combination extends AudioCalibrator {
           sampleRate: this.sourceSamplingRate || 96000,
         })
         .then(res => {
+          console.log(res);
+          let filtered_psd = res.y_conv
+          .filter((value, index) => res.x_conv[index] >= this.#lowHz && res.x_conv[index] <= this.#highHz)
+          .map((value) => 10 * Math.log10(value))
+      
+          this.SDofFilteredRange['system'] = standardDeviation(filtered_psd);
           this.incrementStatusBar();
           this.status =
             `All Hz Calibration: done computing the PSD graphs...`.toString() +
@@ -2083,10 +2150,10 @@ class Combination extends AudioCalibrator {
       })
       .then(result => {
         if (result) {
-          this.recordingChecks[this.soundCheck].push(result);
           if (result['sd'] > this._calibrateSoundPowerDbSDToleratedDb) {
             console.log('filtered recording sd too high');
           } else {
+            this.recordingChecks[this.soundCheck].push(result);
             if (this.numSuccessfulCaptured < 1) {
               this.numSuccessfulCaptured += 1;
               this.stepNum += 1;
@@ -2153,7 +2220,7 @@ class Combination extends AudioCalibrator {
     micModelName = '',
     calibrateMicrophonesBool,
     authorEmails,
-    webAudioDeviceNames = {loudspeaker: '', microphone: '', microphoneText: 'xxxXXX'},
+    webAudioDeviceNames = {loudspeaker: 'loudspeaker', microphone: 'microphone', microphoneText: 'xxx XXX'},
     userIDs
   ) => {
     this._calibrateSoundBurstDb = _calibrateSoundBurstDb;
@@ -2176,7 +2243,7 @@ class Combination extends AudioCalibrator {
     this.webAudioDeviceNames = webAudioDeviceNames;
     if (isSmartPhone) this.webAudioDeviceNames.microphone = this.deviceInfo.microphoneFromAPI;
     this.webAudioDeviceNames.microphoneText = this.webAudioDeviceNames.microphoneText
-      .replace('xxx', this.webAudioDeviceNames.microphone)
+      .replace('xxx', this.webAudioDeviceNames.loudspeaker)
       .replace('XXX', this.webAudioDeviceNames.microphone);
     //feed calibration goal here
     this._calibrateSoundCheck = _calibrateSoundCheck;
@@ -2252,6 +2319,7 @@ class Combination extends AudioCalibrator {
         return false;
       }
     } else {
+      this.transducerType = "Microphone"
       this.componentIR = componentIR;
       lCalib = this.findGainatFrequency(this.componentIR.Freq, this.componentIR.Gain, 1000);
       // this.componentGainDBSPL = this.convertToDB(lCalib);
