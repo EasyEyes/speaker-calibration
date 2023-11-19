@@ -2275,16 +2275,16 @@ class Combination extends AudioCalibrator {
     //based on zeroing of 1000hz, search for "*1000Hz"
     const ID = isSmartPhone ? micModelNumber : micSerialNumber;
     const OEM = isSmartPhone
-      ? micModelName === 'umik-1' || micModelName === 'umik-2'
+      ? micModelName === 'UMIK-1' || micModelName === 'UMIK-2'
         ? 'minidsp'
         : this.deviceInfo.OEM.toLowerCase().split(' ').join('')
-      : micManufacturer;
+      : micManufacturer.toLowerCase().split(' ').join('');
     // const ID = "712-5669";
     // const OEM = "minidsp";
     const micInfo = {
       micModelName: isSmartPhone ? micModelName : microphoneName,
       OEM: isSmartPhone
-        ? micModelName === 'umik-1' || micModelName === 'umik-2'
+        ? micModelName === 'UMIK-1' || micModelName === 'UMIK-2'
           ? 'miniDSP'
           : this.deviceInfo.OEM
         : micManufacturer,
@@ -2304,6 +2304,7 @@ class Combination extends AudioCalibrator {
         microphone: this.webAudioDeviceNames.microphone,
       },
       userIDs: userIDs,
+      lowercaseOEM: OEM.toLowerCase().split(' ').join(''),
     };
     if (calibrateMicrophonesBool) {
       micInfo['authorEmails'] = authorEmails;
