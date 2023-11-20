@@ -2390,6 +2390,9 @@ class Combination extends AudioCalibrator {
       const IrGainAt1000Hz = IrGain[IrFreq.findIndex(freq => freq === 1000)];
       const difference = Math.round(10 * (IrGainAt1000Hz - correctGain)) / 10;
       IrGain = IrGain.map(gain => gain - difference);
+      micInfo['mlsSD'] = this.recordingChecks.unfiltered[0].sd;
+      micInfo['systemCorrectionSD'] = this.SDofFilteredRange['system'];
+      micInfo['componentCorrectionSD'] = this.SDofFilteredRange['component'];
       const id = await this.writeIsSmartPhoneToFirestore(ID, isSmartPhone, OEM);
       await this.writeMicrophoneInfoToFirestore(ID, micInfo, OEM, id);
       await this.writeFrqGainToFirestore(ID, IrFreq, IrGain, OEM, id);
