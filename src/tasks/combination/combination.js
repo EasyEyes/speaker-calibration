@@ -2367,7 +2367,7 @@ class Combination extends AudioCalibrator {
       // await this.writeIsSmartPhone(ID, isSmartPhone, OEM);
     }
 
-    this.oldComponentIR = this.componentIR;
+    this.oldComponentIR = JSON.parse(JSON.stringify(this.componentIR));
 
     let volumeResults = await this.startCalibrationVolume(
       stream,
