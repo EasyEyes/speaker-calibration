@@ -2412,6 +2412,10 @@ class Combination extends AudioCalibrator {
     total_results['recordingChecks'] = this.recordingChecks;
     total_results['component']['phase'] = this.componentIRPhase;
     total_results['system']['phase'] = this.systemIRPhase;
+    total_results['qualityMetrics'] = {
+      mlsSD: this.recordingChecks.unfiltered[0].sd,
+      correctionSD: this.SDofFilteredRange,
+    };
     console.log('total results');
     console.log(total_results);
     console.log('Time Stamps');
