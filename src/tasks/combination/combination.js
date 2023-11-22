@@ -252,6 +252,9 @@ class Combination extends AudioCalibrator {
 
   /**generate string template that gets reevaluated as variable increases */
   generateTemplate = () => {
+    if (this.isCalibrating) {
+      return '';
+    }
     if (this.percent_complete > 100) {
       this.percent_complete = 100;
     }
@@ -2438,6 +2441,7 @@ class Combination extends AudioCalibrator {
           this.stopCalibrationAudio();
           this.isCalibrating = true;
           restartButton.style.display = 'none';
+          this.emit('update', {message: 'Restarting calibration...'});
           resolve('restart');
         });
       }
