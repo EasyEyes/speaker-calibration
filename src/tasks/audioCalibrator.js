@@ -26,7 +26,7 @@ class AudioCalibrator extends AudioRecorder {
   }
 
   /** @private */
-  #isCalibrating = false;
+  isCalibrating = false;
 
   /** @private */
   sourceAudioContext;
@@ -65,7 +65,7 @@ class AudioCalibrator extends AudioRecorder {
     targetElement.appendChild(this.localAudio);
   };
 
-  recordBackground = async(
+  recordBackground = async (
     stream,
     loopCondition = () => false,
     duringRecord = async () => {},
@@ -75,28 +75,28 @@ class AudioCalibrator extends AudioRecorder {
   ) => {
     this.numSuccesfulCaptures = 0;
     console.warn('before recording background noise');
-        // calibration loop
-        while (loopCondition()) {
-          // start recording
-          console.warn('startRecording');
-          await this.startRecording(stream);
+    // calibration loop
+    while (loopCondition()) {
+      // start recording
+      console.warn('startRecording');
+      await this.startRecording(stream);
 
-          // do something during the recording such as sleep n amount of time
-          console.warn('duringRecord');
-          await duringRecord();
+      // do something during the recording such as sleep n amount of time
+      console.warn('duringRecord');
+      await duringRecord();
 
-          // when done, stop recording
-          console.warn('stopRecording');
-          await this.stopRecording(mode,checkRec);
+      // when done, stop recording
+      console.warn('stopRecording');
+      await this.stopRecording(mode, checkRec);
 
-          // do something after recording such as start processing values
-          console.warn('afterRecord');
-          await afterRecord();
+      // do something after recording such as start processing values
+      console.warn('afterRecord');
+      await afterRecord();
 
-          // eslint-disable-next-line no-await-in-loop
-          await sleep(1);
-        }
-  }
+      // eslint-disable-next-line no-await-in-loop
+      await sleep(1);
+    }
+  };
 
   /**
    *
@@ -135,18 +135,22 @@ class AudioCalibrator extends AudioRecorder {
 
     // calibration loop
     while (loopCondition()) {
+      if (this.isCalibrating) break;
       // start recording
       console.warn('startRecording');
       await this.startRecording(stream);
 
+      if (this.isCalibrating) break;
       // do something during the recording such as sleep n amount of time
       console.warn('duringRecord');
       await duringRecord();
 
+      if (this.isCalibrating) break;
       // when done, stop recording
       console.warn('stopRecording');
-      await this.stopRecording(mode,checkRec);
+      await this.stopRecording(mode, checkRec);
 
+      if (this.isCalibrating) break;
       // do something after recording such as start processing values
       console.warn('afterRecord');
       await afterRecord();
@@ -176,21 +180,22 @@ class AudioCalibrator extends AudioRecorder {
     this.numCalibratingRoundsCompleted = 0;
 
     // calibration loop
-    while (!this.#isCalibrating && this.numCalibratingRoundsCompleted < this.numCalibratingRounds) {
+    while (!this.isCalibrating && this.numCalibratingRoundsCompleted < this.numCalibratingRounds) {
+      if (this.isCalibrating) break;
       // before recording
       await beforeRecord(gainValue);
-
+      if (this.isCalibrating) break;
       // start recording
       await this.startRecording(stream);
-
+      if (this.isCalibrating) break;
       // play calibration audio
       console.log(`Calibration Round ${this.numCalibratingRoundsCompleted}`);
       await playCalibrationAudio();
-
+      if (this.isCalibrating) break;
       // when done, stop recording
       console.log('Calibration Round Complete');
-      await this.stopRecording('volume',checkRec);
-
+      await this.stopRecording('volume', checkRec);
+      if (this.isCalibrating) break;
       // after recording
       await afterRecord(lCalib);
 
@@ -209,7 +214,7 @@ class AudioCalibrator extends AudioRecorder {
    * @returns - True if the audio is being calibrated, false otherwise.
    * @example
    */
-  getCalibrationStatus = () => this.#isCalibrating;
+  getCalibrationStatus = () => this.isCalibrating;
 
   /** .
    * .
@@ -238,9 +243,8 @@ class AudioCalibrator extends AudioRecorder {
   };
 
   addCalibrationNodeConvolved = node => {
-    
     this.calibrationNodesConvolved.push(node);
-  }
+  };
 
   makeNewSourceAudioContext = () => {
     const options = {
@@ -266,8 +270,6 @@ class AudioCalibrator extends AudioRecorder {
     return this.sourceAudioContextConvolved;
   };
 
-
-
   /** .
    * .
    * .
@@ -282,24 +284,24 @@ class AudioCalibrator extends AudioRecorder {
   };
   downloadSingleUnfilteredRecording = () => {
     const recordings = this.getAllUnfilteredRecordedSignals();
-    saveToCSV(recordings[recordings.length-1], `recordedMLSignal_unconvolved.csv`);
-  }
+    saveToCSV(recordings[recordings.length - 1], `recordedMLSignal_unconvolved.csv`);
+  };
   downloadSingleFilteredRecording = () => {
     const recordings = this.getAllFilteredRecordedSignals();
-    console.log("Single filtered recording should be of length: " + recordings[0].length);
+    console.log('Single filtered recording should be of length: ' + recordings[0].length);
     saveToCSV(recordings[0], `recordedMLSignal_convolved.csv`);
-  }
+  };
   downloadUnfilteredRecordings = () => {
     const recordings = this.getAllRecordedSignals();
-    console.log("unfilterd download?");
-    for (let i = 0; i < recordings.length; i++){
+    console.log('unfilterd download?');
+    for (let i = 0; i < recordings.length; i++) {
       console.log(i);
       saveToCSV(recordings[i], `recordedMLSignal_${i}_unconvolved.csv`);
     }
   };
   downloadFilteredRecordings = () => {
     const recordings = this.getAllFilteredRecordedSignals();
-    for (let i = 0; i < recordings.length; i++){
+    for (let i = 0; i < recordings.length; i++) {
       saveToCSV(recordings[i], `recordedMLSignal_${i}_convolved.csv`);
     }
   };
