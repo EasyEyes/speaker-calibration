@@ -248,8 +248,13 @@ class Combination extends AudioCalibrator {
   /** @private */
   startTime;
 
+  restartCalibration = false;
+
   /**generate string template that gets reevaluated as variable increases */
   generateTemplate = () => {
+    if (this.isCalibrating) {
+      return '';
+    }
     if (this.percent_complete > 100) {
       this.percent_complete = 100;
     }
@@ -465,6 +470,7 @@ class Combination extends AudioCalibrator {
       `All Hz Calibration Step: computing the IR of the last recording...`.toString() +
       this.generateTemplate().toString();
     this.emit('update', {message: this.status});
+    if (this.isCalibrating) return null;
     await this.pyServerAPI
       .allHzPowerCheck({
         payload,
@@ -753,10 +759,13 @@ class Combination extends AudioCalibrator {
    *
    * @example
    */
-  #stopCalibrationAudio = () => {
+  stopCalibrationAudio = () => {
+    if (this.calibrationNodes.length === 0) {
+      return;
+    }
     this.calibrationNodes[0].stop(0);
     this.calibrationNodes = [];
-    this.sourceNode.disconnect();
+    if (this.sourceNode) this.sourceNode.disconnect();
     this.stepNum += 1;
     console.log('stop calibration audio ' + this.stepNum);
     this.status =
@@ -791,8 +800,9 @@ class Combination extends AudioCalibrator {
     this.filteredMLSRange.component.Max = findMaxValue(this.#currentConvolution);
     this.addTimeStamp('Play MLS with component IIR');
     this.soundCheck = 'component';
+    if (this.isCalibrating) return null;
     await this.playMLSwithIIR(stream, this.#currentConvolution);
-    this.#stopCalibrationAudio();
+    this.stopCalibrationAudio();
     let component_conv_recs = this.getAllFilteredRecordedSignals();
     let return_component_conv_rec = component_conv_recs[component_conv_recs.length - 1];
     this.clearAllFilteredRecordedSignals();
@@ -803,9 +813,10 @@ class Combination extends AudioCalibrator {
     this.filteredMLSRange.system.Max = findMaxValue(this.#currentConvolution);
     this.soundCheck = 'system';
     this.addTimeStamp('Play MLS with system IIR');
+    if (this.isCalibrating) return null;
     await this.playMLSwithIIR(stream, this.#currentConvolution);
 
-    this.#stopCalibrationAudio();
+    this.stopCalibrationAudio();
 
     let system_conv_recs = this.getAllFilteredRecordedSignals();
     let return_system_conv_rec = system_conv_recs[system_conv_recs.length - 1];
@@ -824,6 +835,7 @@ class Combination extends AudioCalibrator {
     let knownFreq = this.oldComponentIR.Freq;
     let sampleRate = this.sourceSamplingRate || 96000;
     this.addTimeStamp('Get PSD of mls recording');
+    if (this.isCalibrating) return null;
     let component_unconv_rec_psd = await this.pyServerAPI
       .getSubtractedPSDWithRetry(unconv_rec, knownGain, knownFreq, sampleRate)
       .then(res => {
@@ -839,6 +851,7 @@ class Combination extends AudioCalibrator {
       });
 
     this.addTimeStamp('Get PSD of filtered recording (component)');
+    if (this.isCalibrating) return null;
     let component_conv_rec_psd = await this.pyServerAPI
       .getSubtractedPSDWithRetry(conv_rec, knownGain, knownFreq, sampleRate)
       .then(res => {
@@ -876,6 +889,7 @@ class Combination extends AudioCalibrator {
     conv_rec = system_conv_recs[system_conv_recs.length - 1];
     //psd of system
     this.addTimeStamp('Get PSD of filtered recording (system) and unfiltered recording');
+    if (this.isCalibrating) return null;
     let system_recs_psd = await this.pyServerAPI
       .getPSDWithRetry({
         unconv_rec,
@@ -906,6 +920,7 @@ class Combination extends AudioCalibrator {
     unconv_rec = this.componentInvertedImpulseResponseNoBandpass;
     conv_rec = this.componentInvertedImpulseResponse;
     this.addTimeStamp('Get PSD of component iir and component iir no band pass');
+    if (this.isCalibrating) return null;
     let component_iir_psd = await this.pyServerAPI
       .getPSDWithRetry({
         unconv_rec,
@@ -926,6 +941,7 @@ class Combination extends AudioCalibrator {
     unconv_rec = this.systemInvertedImpulseResponseNoBandpass;
     conv_rec = this.systemInvertedImpulseResponse;
     this.addTimeStamp('Get PSD of system iir and system iir no band pass');
+    if (this.isCalibrating) return null;
     let system_iir_psd = await this.pyServerAPI
       .getPSDWithRetry({
         unconv_rec,
@@ -945,6 +961,7 @@ class Combination extends AudioCalibrator {
       });
 
     this.addTimeStamp('Get PSD of mls sequence');
+    if (this.isCalibrating) return null;
     let mls_psd = await this.pyServerAPI
       .getMLSPSDWithRetry({mls: this.#mlsBufferView, sampleRate: this.sourceSamplingRate || 96000})
       .then(res => {
@@ -960,6 +977,7 @@ class Combination extends AudioCalibrator {
       });
 
     this.addTimeStamp('Get PSD of filered mls (system)');
+    if (this.isCalibrating) return null;
     let system_filtered_mls_psd = await this.pyServerAPI
       .getMLSPSDWithRetry({
         mls: this.systemConvolution,
@@ -978,6 +996,7 @@ class Combination extends AudioCalibrator {
       });
 
     this.addTimeStamp('Get PSD of filered mls (component)');
+    if (this.isCalibrating) return null;
     let component_filtered_mls_psd = await this.pyServerAPI
       .getMLSPSDWithRetry({
         mls: this.componentConvolution,
@@ -1076,16 +1095,18 @@ class Combination extends AudioCalibrator {
       this.filteredMLSRange.component.Max = findMaxValue(this.#currentConvolution);
       this.addTimeStamp('Play MLS with component IIR');
       this.soundCheck = 'component';
+      if (this.isCalibrating) return null;
       await this.playMLSwithIIR(stream, this.#currentConvolution);
-      this.#stopCalibrationAudio();
+      this.stopCalibrationAudio();
     } else {
       this.#currentConvolution = this.systemConvolution;
       this.filteredMLSRange.system.Min = findMinValue(this.#currentConvolution);
       this.filteredMLSRange.system.Max = findMaxValue(this.#currentConvolution);
       this.addTimeStamp('Play MLS with system IIR');
       this.soundCheck = 'systen';
+      if (this.isCalibrating) return null;
       await this.playMLSwithIIR(stream, this.#currentConvolution);
-      this.#stopCalibrationAudio();
+      this.stopCalibrationAudio();
     }
     let conv_recs = this.getAllFilteredRecordedSignals();
     let recs = this.getAllUnfilteredRecordedSignals();
@@ -1102,6 +1123,7 @@ class Combination extends AudioCalibrator {
       let knownFreq = this.oldComponentIR.Freq;
       let sampleRate = this.sourceSamplingRate || 96000;
       this.addTimeStamp('Get PSD of mls recording');
+      if (this.isCalibrating) return null;
       let unconv_results = await this.pyServerAPI
         .getSubtractedPSDWithRetry(unconv_rec, knownGain, knownFreq, sampleRate)
         .then(res => {
@@ -1117,6 +1139,7 @@ class Combination extends AudioCalibrator {
         });
 
       this.addTimeStamp('Get PSD recording of filtered recording (component)');
+      if (this.isCalibrating) return null;
       let conv_results = await this.pyServerAPI
         .getSubtractedPSDWithRetry(conv_rec, knownGain, knownFreq, sampleRate)
         .then(res => {
@@ -1160,6 +1183,7 @@ class Combination extends AudioCalibrator {
       unconv_rec = this.componentInvertedImpulseResponseNoBandpass;
       conv_rec = this.componentInvertedImpulseResponse;
       this.addTimeStamp('Get PSD of component iir and component iir no bandpass');
+      if (this.isCalibrating) return null;
       let component_iir_psd = await this.pyServerAPI
         .getPSDWithRetry({
           unconv_rec,
@@ -1180,6 +1204,7 @@ class Combination extends AudioCalibrator {
       unconv_rec = this.systemInvertedImpulseResponseNoBandpass;
       conv_rec = this.systemInvertedImpulseResponse;
       this.addTimeStamp('Get PSD of system iir and system iir no bandpass');
+      if (this.isCalibrating) return null;
       let system_iir_psd = await this.pyServerAPI
         .getPSDWithRetry({
           unconv_rec,
@@ -1199,6 +1224,7 @@ class Combination extends AudioCalibrator {
         });
 
       this.addTimeStamp('Get PSD of mls sequence');
+      if (this.isCalibrating) return null;
       let mls_psd = await this.pyServerAPI
         .getMLSPSDWithRetry({
           mls: this.#mlsBufferView,
@@ -1217,6 +1243,7 @@ class Combination extends AudioCalibrator {
         });
 
       this.addTimeStamp('Get PSD of filtered mls (component)');
+      if (this.isCalibrating) return null;
       let filtered_mls_psd = await this.pyServerAPI
         .getMLSPSDWithRetry({
           mls: this.componentConvolution,
@@ -1299,6 +1326,7 @@ class Combination extends AudioCalibrator {
       };
     } else {
       this.addTimeStamp('Get PSD of filtered recording (system) and unfiltered recording');
+      if (this.isCalibrating) return null;
       let results = await this.pyServerAPI
         .getPSDWithRetry({
           unconv_rec,
@@ -1330,6 +1358,7 @@ class Combination extends AudioCalibrator {
       unconv_rec = this.componentInvertedImpulseResponseNoBandpass;
       conv_rec = this.componentInvertedImpulseResponse;
       this.addTimeStamp('Get PSD of component iir and component iir no band pass');
+      if (this.isCalibrating) return null;
       let component_iir_psd = await this.pyServerAPI
         .getPSDWithRetry({
           unconv_rec,
@@ -1350,6 +1379,7 @@ class Combination extends AudioCalibrator {
       unconv_rec = this.systemInvertedImpulseResponseNoBandpass;
       conv_rec = this.systemInvertedImpulseResponse;
       this.addTimeStamp('Get PSD of system iir and system iir no band pass');
+      if (this.isCalibrating) return null;
       let system_iir_psd = await this.pyServerAPI
         .getPSDWithRetry({
           unconv_rec,
@@ -1369,6 +1399,7 @@ class Combination extends AudioCalibrator {
         });
 
       this.addTimeStamp('Get PSD of mls sequence');
+      if (this.isCalibrating) return null;
       let mls_psd = await this.pyServerAPI
         .getMLSPSDWithRetry({
           mls: this.#mlsBufferView,
@@ -1387,6 +1418,7 @@ class Combination extends AudioCalibrator {
         });
 
       this.addTimeStamp('Get PSD of filtered mls (system)');
+      if (this.isCalibrating) return null;
       let filtered_mls_psd = await this.pyServerAPI
         .getMLSPSDWithRetry({
           mls: this.systemConvolution,
@@ -1468,6 +1500,7 @@ class Combination extends AudioCalibrator {
         impulseResponses: [],
       };
     }
+    if (this.isCalibrating) return null;
     await Promise.all(this.impulseResponses).then(res => {
       for (let i = 0; i < res.length; i++) {
         if (res[i] != undefined) {
@@ -1518,6 +1551,7 @@ class Combination extends AudioCalibrator {
     //get mls here
     const calibrateSoundBurstDb = this._calibrateSoundBurstDb;
     this.addTimeStamp('Get MLS sequence');
+    if (this.isCalibrating) return null;
     await this.pyServerAPI
       .getMLSWithRetry({length, calibrateSoundBurstDb})
       .then(res => {
@@ -1536,6 +1570,7 @@ class Combination extends AudioCalibrator {
         `All Hz Calibration: sampling the background noise...`.toString() +
         this.generateTemplate().toString();
       this.emit('update', {message: this.status});
+      if (this.isCalibrating) return null;
       await this.recordBackground(
         stream, //stream
         () => this.numSuccessfulBackgroundCaptured < 1, //loop condition
@@ -1549,6 +1584,7 @@ class Combination extends AudioCalibrator {
     this.mode = 'unfiltered';
     this.numSuccessfulCaptured = 0;
 
+    if (this.isCalibrating) return null;
     await this.calibrationSteps(
       stream,
       this.#playCalibrationAudio, // play audio func (required)
@@ -1559,14 +1595,16 @@ class Combination extends AudioCalibrator {
       this.#afterMLSRecord, // after record
       this.mode,
       checkRec
-    ),
-      this.#stopCalibrationAudio();
+    );
+    this.stopCalibrationAudio();
     checkRec = false;
 
     // at this stage we've captured all the required signals,
     // and have received IRs for each one
     // so let's send all the IRs to the server to be converted to a single IIR
+    if (this.isCalibrating) return null;
     await this.sendSystemImpulseResponsesToServerForProcessing();
+    if (this.isCalibrating) return null;
     await this.sendComponentImpulseResponsesToServerForProcessing();
 
     this.numSuccessfulCaptured = 0;
@@ -1575,14 +1613,19 @@ class Combination extends AudioCalibrator {
     if (this._calibrateSoundCheck != 'none') {
       //do single check
       if (this._calibrateSoundCheck == 'goal' || this._calibrateSoundCheck == 'system') {
+        if (this.isCalibrating) return null;
         iir_ir_and_plots = await this.singleSoundCheck(stream);
+        if (this.isCalibrating) return null;
       } else {
         //both
+        if (this.isCalibrating) return null;
         iir_ir_and_plots = await this.bothSoundCheck(stream);
+        if (this.isCalibrating) return null;
       }
     } else {
       let unconv_rec = this.componentInvertedImpulseResponseNoBandpass;
       let conv_rec = this.componentInvertedImpulseResponse;
+      if (this.isCalibrating) return null;
       let component_iir_psd = await this.pyServerAPI
         .getPSDWithRetry({
           unconv_rec,
@@ -1602,6 +1645,7 @@ class Combination extends AudioCalibrator {
         });
       unconv_rec = this.systemInvertedImpulseResponseNoBandpass;
       conv_rec = this.systemInvertedImpulseResponse;
+      if (this.isCalibrating) return null;
       let system_iir_psd = await this.pyServerAPI
         .getPSDWithRetry({
           unconv_rec,
@@ -1673,6 +1717,7 @@ class Combination extends AudioCalibrator {
         autocorrelations: this.autocorrelations,
         impulseResponses: [],
       };
+      if (this.isCalibrating) return null;
       await Promise.all(this.impulseResponses).then(res => {
         for (let i = 0; i < res.length; i++) {
           if (res[i] != undefined) {
@@ -1699,9 +1744,8 @@ class Combination extends AudioCalibrator {
         });
       }
     }
-
+    if (this.isCalibrating) return null;
     this.percent_complete = 100;
-
     this.status = `All Hz Calibration: Finished`.toString() + this.generateTemplate().toString();
     this.emit('update', {message: this.status});
 
@@ -1827,11 +1871,18 @@ class Combination extends AudioCalibrator {
     await sleep(totalDuration);
   };
 
+  stopCalibrationAudioVolume = () => {
+    if (this.calibrationNodes.length > 0) {
+      this.calibrationNodes[0].stop();
+    }
+  };
+
   #sendToServerForProcessing = lCalib => {
     console.log('Sending data to server');
     this.addTimeStamp('Send volume data to server');
     let left = this.calibrateSound1000HzPreSec;
     let right = this.calibrateSound1000HzPreSec + this.calibrateSound1000HzSec;
+    if (this.isCalibrating) return null;
     this.pyServerAPI
       .getVolumeCalibration({
         sampleRate: this.sourceSamplingRate,
@@ -1866,6 +1917,7 @@ class Combination extends AudioCalibrator {
   };
 
   startCalibrationVolume = async (stream, gainValues, lCalib, componentGainDBSPL) => {
+    if (this.isCalibrating) return null;
     const trialIterations = gainValues.length;
     this.status_denominator += trialIterations;
     const thdValues = [];
@@ -1887,6 +1939,11 @@ class Combination extends AudioCalibrator {
     this.startTime = new Date().getTime();
 
     do {
+      console.log('while loop');
+      if (this.isCalibrating) {
+        console.log('restart calibration');
+        return null;
+      }
       // eslint-disable-next-line no-await-in-loop
       await this.volumeCalibrationSteps(
         stream,
@@ -1923,6 +1980,10 @@ class Combination extends AudioCalibrator {
         this.generateTemplate().toString();
       this.emit('update', {message: this.status});
       do {
+        if (this.isCalibrating) {
+          console.log('restart calibration');
+          return null;
+        }
         // eslint-disable-next-line no-await-in-loop
         await this.volumeCalibrationSteps(
           stream,
@@ -1942,7 +2003,7 @@ class Combination extends AudioCalibrator {
       this.outDBSPL1000 = null;
       this.THD = null;
     }
-
+    if (this.isCalibrating) return null;
     // get the volume calibration parameters from the server
     this.addTimeStamp('Get Volume Calibration Parameters');
 
@@ -1957,6 +2018,7 @@ class Combination extends AudioCalibrator {
         this.incrementStatusBar();
         return res;
       });
+    if (this.isCalibrating) return null;
     const result = {
       parameters: parameters,
       inDBValues: inDBValues,
@@ -2260,7 +2322,8 @@ class Combination extends AudioCalibrator {
       microphone: 'microphone',
       microphoneText: 'xxx XXX',
     },
-    userIDs
+    userIDs,
+    restartButton
   ) => {
     this._calibrateSoundBurstDb = _calibrateSoundBurstDb;
     this.CALIBRATION_TONE_DURATION =
@@ -2369,60 +2432,76 @@ class Combination extends AudioCalibrator {
 
     this.oldComponentIR = JSON.parse(JSON.stringify(this.componentIR));
 
-    let volumeResults = await this.startCalibrationVolume(
-      stream,
-      gainValues,
-      lCalib,
-      this.componentGainDBSPL
-    );
+    return await new Promise(async (resolve, reject) => {
+      // add event listner to params.restartButton to resolve the promise with a string: 'restart'
 
-    let impulseResponseResults = await this.startCalibrationImpulseResponse(stream);
-    impulseResponseResults['background_noise'] = this.background_noise;
-    if (componentIR != null) {
-      // I corrected microphone/loudpeaker IR scale in easyeyes,
-      // but since we write microphone IR to firestore here
-      // we need to correct microphone IR here
-      let correctGain =
-        Math.round((volumeResults.parameters.gainDBSPL - this.componentGainDBSPL) * 10) / 10;
+      if (restartButton) {
+        restartButton.style.display = '';
+        restartButton.addEventListener('click', () => {
+          this.stopCalibrationAudio();
+          this.isCalibrating = true;
+          restartButton.style.display = 'none';
+          this.emit('update', {message: 'Restarting calibration...'});
+          resolve('restart');
+        });
+      }
+      let volumeResults = await this.startCalibrationVolume(
+        stream,
+        gainValues,
+        lCalib,
+        this.componentGainDBSPL
+      );
+      if (!volumeResults) return;
+      let impulseResponseResults = await this.startCalibrationImpulseResponse(stream);
+      if (!impulseResponseResults) return;
+      impulseResponseResults['background_noise'] = this.background_noise;
+      if (componentIR != null) {
+        // I corrected microphone/loudpeaker IR scale in easyeyes,
+        // but since we write microphone IR to firestore here
+        // we need to correct microphone IR here
+        let correctGain =
+          Math.round((volumeResults.parameters.gainDBSPL - this.componentGainDBSPL) * 10) / 10;
 
-      let IrFreq = impulseResponseResults?.component.ir.Freq.map(freq => Math.round(freq));
-      let IrGain = impulseResponseResults?.component?.ir.Gain;
-      const IrGainAt1000Hz = IrGain[IrFreq.findIndex(freq => freq === 1000)];
-      const difference = Math.round(10 * (IrGainAt1000Hz - correctGain)) / 10;
-      IrGain = IrGain.map(gain => gain - difference);
-      micInfo['mlsSD'] = this.recordingChecks.unfiltered[0].sd;
-      micInfo['systemCorrectionSD'] = Number(this.SDofFilteredRange['system']);
-      micInfo['componentCorrectionSD'] = Number(this.SDofFilteredRange['component']);
-  
-      // const id = await this.writeIsSmartPhoneToFirestore(ID, isSmartPhone, OEM);
-      // await this.writeMicrophoneInfoToFirestore(ID, micInfo, OEM, id);
-      // await this.writeFrqGainToFirestore(ID, IrFreq, IrGain, OEM, id);
-      // micInfo['gainDBSPL'] = impulseResponseResults.component.gainDBSPL;
-      // await this.writeGainat1000HzToFirestore(ID, micInfo['gainDBSPL'], OEM, id);
-      // await this.writeGainat1000Hz(ID, micInfo['gainDBSPL'], OEM);
-    }
-    const total_results = {...volumeResults, ...impulseResponseResults};
-    total_results['filteredMLSRange'] = this.filteredMLSRange;
-    total_results['micInfo'] = micInfo;
-    total_results['audioInfo'] = {};
-    total_results['audioInfo']['sinkSampleRate'] = this.sinkSamplingRate;
-    total_results['audioInfo']['sourceSampleRate'] = this.sourceSamplingRate;
-    total_results['audioInfo']['bitsPerSample'] = this.sampleSize;
-    const timeStampresult = [...this.timeStamp].join('\n');
-    total_results['timeStamps'] = timeStampresult;
-    total_results['recordingChecks'] = this.recordingChecks;
-    total_results['component']['phase'] = this.componentIRPhase;
-    total_results['system']['phase'] = this.systemIRPhase;
-    total_results['qualityMetrics'] = {
-      mlsSD: this.recordingChecks.unfiltered[0].sd,
-      correctionSD: this.SDofFilteredRange,
-    };
-    console.log('total results');
-    console.log(total_results);
-    console.log('Time Stamps');
-    console.log(timeStampresult);
+        let IrFreq = impulseResponseResults?.component.ir.Freq.map(freq => Math.round(freq));
+        let IrGain = impulseResponseResults?.component?.ir.Gain;
+        const IrGainAt1000Hz = IrGain[IrFreq.findIndex(freq => freq === 1000)];
+        const difference = Math.round(10 * (IrGainAt1000Hz - correctGain)) / 10;
+        IrGain = IrGain.map(gain => gain - difference);
+        micInfo['mlsSD'] = this.recordingChecks.unfiltered[0].sd;
+        console.log(typeof micInfo['componentCorrectionSD']);
+        micInfo['systemCorrectionSD'] = Number(this.SDofFilteredRange['system']);
+        micInfo['componentCorrectionSD'] = Number(this.SDofFilteredRange['component']);
+        console.log(typeof micInfo['componentCorrectionSD']);
+        // const id = await this.writeIsSmartPhoneToFirestore(ID, isSmartPhone, OEM);
+        // await this.writeMicrophoneInfoToFirestore(ID, micInfo, OEM, id);
+        // await this.writeFrqGainToFirestore(ID, IrFreq, IrGain, OEM, id);
+        // micInfo['gainDBSPL'] = impulseResponseResults.component.gainDBSPL;
+        // await this.writeGainat1000HzToFirestore(ID, micInfo['gainDBSPL'], OEM, id);
+        // await this.writeGainat1000Hz(ID, micInfo['gainDBSPL'], OEM);
+      }
+      const total_results = {...volumeResults, ...impulseResponseResults};
+      total_results['filteredMLSRange'] = this.filteredMLSRange;
+      total_results['micInfo'] = micInfo;
+      total_results['audioInfo'] = {};
+      total_results['audioInfo']['sinkSampleRate'] = this.sinkSamplingRate;
+      total_results['audioInfo']['sourceSampleRate'] = this.sourceSamplingRate;
+      total_results['audioInfo']['bitsPerSample'] = this.sampleSize;
+      const timeStampresult = [...this.timeStamp].join('\n');
+      total_results['timeStamps'] = timeStampresult;
+      total_results['recordingChecks'] = this.recordingChecks;
+      total_results['component']['phase'] = this.componentIRPhase;
+      total_results['system']['phase'] = this.systemIRPhase;
+      total_results['qualityMetrics'] = {
+        mlsSD: this.recordingChecks.unfiltered[0].sd,
+        correctionSD: this.SDofFilteredRange,
+      };
+      console.log('total results');
+      console.log(total_results);
+      console.log('Time Stamps');
+      console.log(timeStampresult);
 
-    return total_results;
+      resolve(total_results);
+    });
   };
 }
 

@@ -43,7 +43,7 @@ class Speaker extends AudioPeer {
     /* Set up callbacks that handle any events related to our peer object. */
     this.peer.on('open', this.#onPeerOpen);
     this.peer.on('connection', this.#onPeerConnection);
-    this.peer.on('close', this.#onPeerClose);
+    this.peer.on('close', this.onPeerClose);
     this.peer.on('disconnected', this.#onPeerDisconnected);
     this.peer.on('error', this.#onPeerError);
   }
@@ -82,6 +82,11 @@ class Speaker extends AudioPeer {
             console.log('SinkSamplingRate is undefined, sleeping');
             await sleep(1);
           }
+
+          if (params.displayUpdate) {
+            params.displayUpdate.style.display = '';
+          }
+
           // resolve when we have a result
           speaker.result = await speaker.ac.startCalibration(
             stream,
@@ -112,7 +117,8 @@ class Speaker extends AudioPeer {
             params.calibrateMicrophonesBool,
             params.authorEmails,
             params.webAudioDeviceNames,
-            params.IDsToSaveInSoundProfileLibrary
+            params.IDsToSaveInSoundProfileLibrary,
+            params.restartButton
           );
           speaker.#removeUIElems();
           resolve(speaker.result);
@@ -359,7 +365,12 @@ class Speaker extends AudioPeer {
    * @private
    * @example
    */
-  #onPeerClose = () => {
+  onPeerClose = () => {
+    this.conn = null;
+    console.log('Connection destroyed');
+  };
+
+  static closeConnection = () => {
     this.conn = null;
     console.log('Connection destroyed');
   };
