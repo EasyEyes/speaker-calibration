@@ -251,6 +251,15 @@ class Combination extends AudioCalibrator {
 
   restartCalibration = false;
 
+  calibrateSoundLimit = 1;
+
+  filteredMLSAttenuation = {
+    component: 1,
+    system: 1,
+    maxAbsSystem: 1,
+    maxAbsComponent: 1,
+  };
+
   /**generate string template that gets reevaluated as variable increases */
   generateTemplate = () => {
     if (this.isCalibrating) {
@@ -343,6 +352,17 @@ class Combination extends AudioCalibrator {
         this.systemIR = res['ir'];
         this.systemConvolution = res['convolution'];
         this.systemInvertedImpulseResponseNoBandpass = res['iirNoBandpass'];
+
+        // attenuate the system convolution if the amplitude is greater than this.calibrateSoundLimit
+        // find max of absolute value of system convolution
+        const max = Math.max(...this.systemConvolution.map(Math.abs));
+        if (max > this.calibrateSoundLimit) {
+          const gain = this.calibrateSoundLimit / max;
+          // apply gain to system convolution
+          this.systemConvolution = this.systemConvolution.map(value => value * gain);
+          this.filteredMLSAttenuation.system = gain;
+          this.filteredMLSAttenuation.maxAbsSystem = max;
+        }
       })
       .catch(err => {
         console.error(err);
@@ -410,6 +430,17 @@ class Combination extends AudioCalibrator {
         this.componentConvolution = res['convolution'];
         this.componentInvertedImpulseResponseNoBandpass = res['iirNoBandpass'];
         this.componentIRInTimeDomain = res['irTime'];
+
+        // attenuate the component convolution if the amplitude is greater than this.calibrateSoundLimit
+        // find max of absolute value of component convolution
+        const max = Math.max(...this.componentConvolution.map(Math.abs));
+        if (max > this.calibrateSoundLimit) {
+          const gain = this.calibrateSoundLimit / max;
+          // apply gain to component convolution
+          this.componentConvolution = this.componentConvolution.map(value => value * gain);
+          this.filteredMLSAttenuation.component = gain;
+          this.filteredMLSAttenuation.maxAbsComponent = max;
+        }
       })
       .catch(err => {
         // this.emit('InvertedImpulseResponse', {res: false});
@@ -805,6 +836,10 @@ class Combination extends AudioCalibrator {
     await this.playMLSwithIIR(stream, this.#currentConvolution);
     this.stopCalibrationAudio();
     let component_conv_recs = this.getAllFilteredRecordedSignals();
+    //remove the filteredMLSAttenuation from the recorded signals
+    component_conv_recs = component_conv_recs.map(rec => {
+      return rec.map(value => value / this.filteredMLSAttenuation.component);
+    });
     let return_component_conv_rec = component_conv_recs[component_conv_recs.length - 1];
     this.clearAllFilteredRecordedSignals();
     // await this.checkPowerVariation(return_component_conv_rec);
@@ -820,6 +855,10 @@ class Combination extends AudioCalibrator {
     this.stopCalibrationAudio();
 
     let system_conv_recs = this.getAllFilteredRecordedSignals();
+    //remove the filteredMLSAttenuation from the recorded signals
+    system_conv_recs = system_conv_recs.map(rec => {
+      return rec.map(value => value / this.filteredMLSAttenuation.system);
+    });
     let return_system_conv_rec = system_conv_recs[system_conv_recs.length - 1];
     // await this.checkPowerVariation(return_system_conv_rec);
 
@@ -904,13 +943,14 @@ class Combination extends AudioCalibrator {
             (value, index) => res.x_conv[index] >= this.#lowHz && res.x_conv[index] <= this.#highHz
           )
           .map(value => 10 * Math.log10(value));
-        
+
         let mls_psd = res.y_unconv
           .filter(
-            (value, index) => res.x_unconv[index] >= this.#lowHz && res.x_conv[index] <= this.#highHz
+            (value, index) =>
+              res.x_unconv[index] >= this.#lowHz && res.x_conv[index] <= this.#highHz
           )
           .map(value => 10 * Math.log10(value));
-        
+
         this.SDofFilteredRange['mls'] = standardDeviation(mls_psd);
         this.SDofFilteredRange['system'] = standardDeviation(filtered_psd);
         this.incrementStatusBar();
@@ -1111,12 +1151,20 @@ class Combination extends AudioCalibrator {
       this.filteredMLSRange.system.Min = findMinValue(this.#currentConvolution);
       this.filteredMLSRange.system.Max = findMaxValue(this.#currentConvolution);
       this.addTimeStamp('Play MLS with system IIR');
-      this.soundCheck = 'systen';
+      this.soundCheck = 'system';
       if (this.isCalibrating) return null;
       await this.playMLSwithIIR(stream, this.#currentConvolution);
       this.stopCalibrationAudio();
     }
     let conv_recs = this.getAllFilteredRecordedSignals();
+    //remove the filteredMLSAttenuation from the recorded signals
+    conv_recs = conv_recs.map(rec => {
+      if (this.soundCheck === 'component') {
+        return rec.map(value => value / this.filteredMLSAttenuation.component);
+      }
+      return rec.map(value => value / this.filteredMLSAttenuation.system);
+    });
+
     let recs = this.getAllUnfilteredRecordedSignals();
     this.clearAllFilteredRecordedSignals();
     console.log('Obtaining unfiltered recording from #allHzUnfilteredRecordings to calculate PSD');
@@ -1349,7 +1397,7 @@ class Combination extends AudioCalibrator {
             )
             .map(value => 10 * Math.log10(value));
 
-            let mls_psd = res.y_unconv
+          let mls_psd = res.y_unconv
             .filter(
               (value, index) =>
                 res.x_unconv[index] >= this.#lowHz && res.x_conv[index] <= this.#highHz
@@ -2338,8 +2386,10 @@ class Combination extends AudioCalibrator {
       microphoneText: 'xxx XXX',
     },
     userIDs,
-    restartButton
+    restartButton,
+    calibrateSoundLimit
   ) => {
+    this.calibrateSoundLimit = calibrateSoundLimit;
     this._calibrateSoundBurstDb = _calibrateSoundBurstDb;
     this.CALIBRATION_TONE_DURATION =
       calibrateSound1000HzPreSec + calibrateSound1000HzSec + calibrateSound1000HzPostSec;
@@ -2495,6 +2545,7 @@ class Combination extends AudioCalibrator {
       }
       const total_results = {...volumeResults, ...impulseResponseResults};
       total_results['filteredMLSRange'] = this.filteredMLSRange;
+      total_results['filteredMLSAttenuation'] = this.filteredMLSAttenuation;
       total_results['micInfo'] = micInfo;
       total_results['audioInfo'] = {};
       total_results['audioInfo']['sinkSampleRate'] = this.sinkSamplingRate;

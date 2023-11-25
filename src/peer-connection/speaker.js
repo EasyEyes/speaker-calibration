@@ -118,7 +118,8 @@ class Speaker extends AudioPeer {
             params.authorEmails,
             params.webAudioDeviceNames,
             params.IDsToSaveInSoundProfileLibrary,
-            params.restartButton
+            params.restartButton,
+            params.calibrateSoundLimit
           );
           speaker.#removeUIElems();
           resolve(speaker.result);
