@@ -2298,7 +2298,15 @@ class Combination extends AudioCalibrator {
   };
 
   checkPowerVariation = async () => {
-    const recordings = this.getAllFilteredRecordedSignals();
+    let recordings = this.getAllFilteredRecordedSignals();
+    // remove filteredMLSAttenuation from the recordings
+    recordings = recordings.map(recording => {
+      if (this.soundCheck == 'component') {
+        return recording.map(value => value / this.filteredMLSAttenuation.component);
+      }
+      return recording.map(value => value / this.filteredMLSAttenuation.system);
+    });
+
     const rec = recordings[recordings.length - 1];
     console.log(rec);
     await this.pyServerAPI
