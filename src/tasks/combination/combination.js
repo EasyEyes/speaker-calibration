@@ -208,6 +208,7 @@ class Combination extends AudioCalibrator {
   _calibrateSoundBurstDb;
 
   SDofFilteredRange = {
+    mls: undefined,
     component: undefined,
     system: undefined,
   };
@@ -263,8 +264,8 @@ class Combination extends AudioCalibrator {
     let systemSD = '';
     const reportWebAudioNames = `<br>${this.webAudioDeviceNames.loudspeakerText} <br> ${this.webAudioDeviceNames.microphoneText}`;
     const reportParameters = `<br> Sampling: Loudspeaker ${this.sourceSamplingRate} Hz, Microphone ${this.sinkSamplingRate} Hz, ${this.sampleSize} bits`;
-    if (this.recordingChecks['unfiltered'].length > 0) {
-      MLSsd = `<br> Recorded MLS power SD: ${this.recordingChecks['unfiltered'][0].sd} dB`;
+    if (this.SDofFilteredRange['mls']) {
+      MLSsd = `<br> Recorded MLS power SD: ${this.SDofFilteredRange['mls']} dB`;
     }
     if (this.SDofFilteredRange['system']) {
       systemSD = `<br> Loudspeaker+Microphone  correction SD: ${this.SDofFilteredRange['system']} dB`;
@@ -903,7 +904,14 @@ class Combination extends AudioCalibrator {
             (value, index) => res.x_conv[index] >= this.#lowHz && res.x_conv[index] <= this.#highHz
           )
           .map(value => 10 * Math.log10(value));
-
+        
+        let mls_psd = res.y_unconv
+          .filter(
+            (value, index) => res.x_unconv[index] >= this.#lowHz && res.x_conv[index] <= this.#highHz
+          )
+          .map(value => 10 * Math.log10(value));
+        
+        this.SDofFilteredRange['mls'] = standardDeviation(mls_psd);
         this.SDofFilteredRange['system'] = standardDeviation(filtered_psd);
         this.incrementStatusBar();
         this.status =
@@ -1334,7 +1342,6 @@ class Combination extends AudioCalibrator {
           sampleRate: this.sourceSamplingRate || 96000,
         })
         .then(res => {
-          console.log(res);
           let filtered_psd = res.y_conv
             .filter(
               (value, index) =>
@@ -1342,7 +1349,15 @@ class Combination extends AudioCalibrator {
             )
             .map(value => 10 * Math.log10(value));
 
+            let mls_psd = res.y_unconv
+            .filter(
+              (value, index) =>
+                res.x_unconv[index] >= this.#lowHz && res.x_conv[index] <= this.#highHz
+            )
+            .map(value => 10 * Math.log10(value));
+
           this.SDofFilteredRange['system'] = standardDeviation(filtered_psd);
+          this.SDofFilteredRange['unfiltered'] = standardDeviation(mls_psd);
           this.incrementStatusBar();
           this.status =
             `All Hz Calibration: done computing the PSD graphs...`.toString() +
@@ -2467,8 +2482,7 @@ class Combination extends AudioCalibrator {
         const IrGainAt1000Hz = IrGain[IrFreq.findIndex(freq => freq === 1000)];
         const difference = Math.round(10 * (IrGainAt1000Hz - correctGain)) / 10;
         IrGain = IrGain.map(gain => gain - difference);
-        micInfo['mlsSD'] = this.recordingChecks.unfiltered[0].sd;
-        console.log(typeof micInfo['componentCorrectionSD']);
+        micInfo['mls'] = Number(this.SDofFilteredRange['mls']);
         micInfo['systemCorrectionSD'] = Number(this.SDofFilteredRange['system']);
         micInfo['componentCorrectionSD'] = Number(this.SDofFilteredRange['component']);
         console.log(typeof micInfo['componentCorrectionSD']);
@@ -2491,10 +2505,7 @@ class Combination extends AudioCalibrator {
       total_results['recordingChecks'] = this.recordingChecks;
       total_results['component']['phase'] = this.componentIRPhase;
       total_results['system']['phase'] = this.systemIRPhase;
-      total_results['qualityMetrics'] = {
-        mlsSD: this.recordingChecks.unfiltered[0].sd,
-        correctionSD: this.SDofFilteredRange,
-      };
+      total_results['qualityMetrics'] = this.SDofFilteredRange;
       console.log('total results');
       console.log(total_results);
       console.log('Time Stamps');
