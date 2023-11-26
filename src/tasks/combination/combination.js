@@ -361,8 +361,8 @@ class Combination extends AudioCalibrator {
           // apply gain to system convolution
           this.systemConvolution = this.systemConvolution.map(value => value * gain);
           this.filteredMLSAttenuation.system = gain;
-          this.filteredMLSAttenuation.maxAbsSystem = max;
         }
+        this.filteredMLSAttenuation.maxAbsSystem = max;
       })
       .catch(err => {
         console.error(err);
@@ -439,8 +439,8 @@ class Combination extends AudioCalibrator {
           // apply gain to component convolution
           this.componentConvolution = this.componentConvolution.map(value => value * gain);
           this.filteredMLSAttenuation.component = gain;
-          this.filteredMLSAttenuation.maxAbsComponent = max;
         }
+        this.filteredMLSAttenuation.maxAbsComponent = max;
       })
       .catch(err => {
         // this.emit('InvertedImpulseResponse', {res: false});
