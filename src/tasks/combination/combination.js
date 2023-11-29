@@ -2316,7 +2316,7 @@ class Combination extends AudioCalibrator {
         sampleRate: this.sourceSamplingRate || 96000,
         binDesiredSec: this._calibrateSoundPowerBinDesiredSec,
         burstSec: this.desired_time_per_mls,
-        repeats: this.numMLSPerCapture - 1,
+        repeats: this.numMLSPerCapture,
       })
       .then(result => {
         if (result) {
