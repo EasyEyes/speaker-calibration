@@ -601,7 +601,8 @@ class PythonServerAPI {
     payload, 
     sampleRate, 
     binDesiredSec,
-    burstSec
+    burstSec,
+    repeats
   }) => {
     const task = 'all-hz-check';
     let res = null;
@@ -610,7 +611,8 @@ class PythonServerAPI {
       payload, 
       sampleRate, 
       binDesiredSec,
-      burstSec
+      burstSec,
+      repeats
     });
 
     await axios({
