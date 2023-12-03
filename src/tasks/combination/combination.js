@@ -340,7 +340,6 @@ class Combination extends AudioCalibrator {
         calibrateSoundBurstDb: this._calibrateSoundBurstDb,
       })
       .then(res => {
-        console.log(res);
         this.stepNum += 1;
         console.log('got impulse response ' + this.stepNum);
         this.incrementStatusBar();
@@ -412,7 +411,6 @@ class Combination extends AudioCalibrator {
         calibrateSoundSmoothOctaves: this._calibrateSoundSmoothOctaves,
       })
       .then(res => {
-        console.log(res);
         this.stepNum += 1;
         console.log('got impulse response ' + this.stepNum);
         this.incrementStatusBar();
@@ -906,7 +904,7 @@ class Combination extends AudioCalibrator {
           }
           return interpolate(freq, knownFreq[i - 1], knownFreq[i], knownGain[i - 1], knownGain[i]);
         });
-        console.log(interpolatedGain);
+
         let correctedGain = res.y.map(
           (gain, index) => 10 * Math.log10(gain) - interpolatedGain[index]
         );
@@ -938,7 +936,6 @@ class Combination extends AudioCalibrator {
         sampleRate: this.sourceSamplingRate || 96000,
       })
       .then(res => {
-        console.log(res);
         let filtered_psd = res.y_conv
           .filter(
             (value, index) => res.x_conv[index] >= this.#lowHz && res.x_conv[index] <= this.#highHz
@@ -2309,7 +2306,7 @@ class Combination extends AudioCalibrator {
     });
 
     const rec = recordings[recordings.length - 1];
-    console.log(rec);
+
     await this.pyServerAPI
       .allHzPowerCheck({
         payload: rec,
@@ -2455,6 +2452,8 @@ class Combination extends AudioCalibrator {
       DeviceType: isSmartPhone ? this.deviceInfo.devicetype : 'N/A',
       ID_from_51Degrees: isSmartPhone ? this.deviceInfo.DeviceId : 'N/A',
       calibrateMicrophonesBool: calibrateMicrophonesBool,
+      screenHeight:this.deviceInfo.screenHeight,
+      screenWidth:this.deviceInfo.screenWidth,
       webAudioDeviceNames: {
         loudspeaker: this.webAudioDeviceNames.loudspeaker,
         microphone: this.webAudioDeviceNames.microphone,
