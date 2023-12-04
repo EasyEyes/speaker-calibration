@@ -152,14 +152,19 @@ class AudioRecorder extends MyEventEmitter {
    * @example
    */
   startRecording = async stream => {
-    // Create a fresh audio context
-    this.#setAudioContext();
-    // Set up media recorder if needed
-    if (!this.#mediaRecorder) this.#setMediaRecorder(stream);
-    // clear recorded chunks
-    this.#recordedChunks = [];
-    // start recording
-    this.#mediaRecorder.start();
+    try {
+      // Create a fresh audio context
+      this.#setAudioContext();
+      // Set up media recorder if needed
+      if (!this.#mediaRecorder) this.#setMediaRecorder(stream);
+      // clear recorded chunks
+      this.#recordedChunks = [];
+      // start recording
+      this.#mediaRecorder.start();
+    } catch (error) {
+      console.error('Error in startRecording:', error);
+      // Handle the error as needed, e.g., throw it or perform error-specific actions
+    }
   };
 
   /**
@@ -169,20 +174,25 @@ class AudioRecorder extends MyEventEmitter {
    * @example
    */
   stopRecording = async (mode, checkRec) => {
-    // Stop the media recorder, and wait for the data to be available
-    await new Promise(resolve => {
-      this.#mediaRecorder.onstop = () => {
-        // when the stop event is triggered, resolve the promise
-        this.#audioBlob = new Blob(this.#recordedChunks, {
-          type: 'audio/wav; codecs=opus',
-        });
-        resolve(this.#audioBlob);
-      };
-      // call stop
-      this.#mediaRecorder.stop();
-    });
-    // Now that we have data, save it
-    await this.#saveRecording(mode,checkRec);
+    try {
+      // Stop the media recorder, and wait for the data to be available
+      await new Promise(resolve => {
+        this.#mediaRecorder.onstop = () => {
+          // when the stop event is triggered, resolve the promise
+          this.#audioBlob = new Blob(this.#recordedChunks, {
+            type: 'audio/wav; codecs=opus',
+          });
+          resolve(this.#audioBlob);
+        };
+        // call stop
+        this.#mediaRecorder.stop();
+      });
+      // Now that we have data, save it
+      await this.#saveRecording(mode, checkRec);
+    } catch (error) {
+      console.error('Error in stopRecording:', error);
+      // Handle the error as needed, e.g., throw it or perform error-specific actions
+    }
   };
 
   /** .

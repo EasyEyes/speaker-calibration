@@ -501,6 +501,7 @@ class Combination extends AudioCalibrator {
       this.generateTemplate().toString();
     this.emit('update', {message: this.status});
     if (this.isCalibrating) return null;
+    console.log(payload);
     await this.pyServerAPI
       .allHzPowerCheck({
         payload,
@@ -1943,6 +1944,8 @@ class Combination extends AudioCalibrator {
     this.addTimeStamp('Send volume data to server');
     let left = this.calibrateSound1000HzPreSec;
     let right = this.calibrateSound1000HzPreSec + this.calibrateSound1000HzSec;
+    console.log("truncated signal",this.#getTruncatedSignal(left, right));
+    console.log("complete signal", this.getLastVolumeRecordedSignal());
     if (this.isCalibrating) return null;
     this.pyServerAPI
       .getVolumeCalibration({
@@ -1986,7 +1989,7 @@ class Combination extends AudioCalibrator {
     let inDB = 0;
     const outDBSPLValues = [];
     const outDBSPL1000Values = [];
-    let checkRec = false;
+    let checkRec = "loudest";
 
     // do one calibration that will be discarded
     const soundLevelToDiscard = -60;
