@@ -61,8 +61,10 @@ switch (isSmartPhone) {
       const externalMicList = ['UMIK', 'Airpods', 'Bluetooth'];
       try {
         const stream = await navigator.mediaDevices.getUserMedia({audio: true});
+        console.log(stream);
         if (stream) {
           const devices = await navigator.mediaDevices.enumerateDevices();
+          console.log(devices);
           const mics = devices.filter(device => device.kind === 'audioinput');
           mics.forEach(mic => {
             if (externalMicList.some(externalMic => mic.label.includes(externalMic))) {
@@ -88,7 +90,9 @@ switch (isSmartPhone) {
       } catch (err) {
         console.log(err);
       }
+      console.log(lock);
       window.listener = new speakerCalibrator.Listener(listenerParameters);
+      console.log(window.listener);
       if (lock) {
         lock.release();
       }

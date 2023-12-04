@@ -213,7 +213,7 @@ class AudioRecorder extends MyEventEmitter {
    * @returns
    * @example
    */
-  getLastVolumeRecordedSignal = () => this.#allVolumeRecordings[this.#allVolumeRecordings.length - 1];
+  getLastVolumeRecordedSignal = () => Array.from(this.#allVolumeRecordings[this.#allVolumeRecordings.length - 1]);
 
   /** .
    * .
