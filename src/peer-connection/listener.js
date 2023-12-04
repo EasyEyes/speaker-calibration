@@ -294,7 +294,7 @@ class Listener extends AudioPeer {
         this.applyHQTrackConstraints(stream)
           .then(settings => {
             console.log(settings);
-            this.sendSamplingRate(sampleRate);
+            this.sendSamplingRate(settings.sampleRate);
             let sampleSize = settings.sampleSize;
             if (!sampleSize){
               sampleSize = this.calibrateSoundSamplingDesiredBits;
