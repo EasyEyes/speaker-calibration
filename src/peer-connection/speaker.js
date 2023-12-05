@@ -73,7 +73,6 @@ class Speaker extends AudioPeer {
         speaker.ac.createLocalAudio(document.getElementById(speaker.targetElement));
         // when we start receiving audio
         call.on('stream', async stream => {
-          console.log(stream);
           window.localStream = stream;
           window.localAudio.srcObject = stream;
           window.localAudio.autoplay = false;

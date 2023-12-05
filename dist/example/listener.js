@@ -61,7 +61,6 @@ switch (isSmartPhone) {
       const externalMicList = ['UMIK', 'Airpods', 'Bluetooth'];
       try {
         const stream = await navigator.mediaDevices.getUserMedia({audio: true});
-        console.log(stream);
         if (stream) {
           const devices = await navigator.mediaDevices.enumerateDevices();
           console.log(devices);

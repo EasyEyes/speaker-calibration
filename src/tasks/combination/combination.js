@@ -1859,9 +1859,17 @@ class Combination extends AudioCalibrator {
           'The last capture failed, all recorded signal is zero',
           this.getAllVolumeRecordedSignals()
         );
+        this.stopCalibrationAudio();
+        this.isCalibrating = true;
+          // restartButton.style.display = 'none';
+        this.emit('update', {message: 'Connection failed, hit restart button to reconnect'});
       }
       if (setItem.size === 0) {
         console.warn('The last capture failed, no recorded signal');
+        this.stopCalibrationAudio();
+          this.isCalibrating = true;
+          // restartButton.style.display = 'none';
+          this.emit('update', {message: 'Connection failed, hit restart button to reconnect'});
       }
     };
     checkResult(result);
@@ -1939,13 +1947,11 @@ class Combination extends AudioCalibrator {
     }
   };
 
-  #sendToServerForProcessing = lCalib => {
+  #sendToServerForProcessing = async (lCalib) => {
     console.log('Sending data to server');
     this.addTimeStamp('Send volume data to server');
     let left = this.calibrateSound1000HzPreSec;
     let right = this.calibrateSound1000HzPreSec + this.calibrateSound1000HzSec;
-    console.log("truncated signal",this.#getTruncatedSignal(left, right));
-    console.log("complete signal", this.getLastVolumeRecordedSignal());
     if (this.isCalibrating) return null;
     this.pyServerAPI
       .getVolumeCalibration({
@@ -1965,7 +1971,7 @@ class Combination extends AudioCalibrator {
         console.warn(err);
       });
 
-    this.pyServerAPI
+    await this.pyServerAPI
       .volumePowerCheck({
         payload: this.getLastVolumeRecordedSignal(),
         sampleRate: this.sourceSamplingRate || 96000,

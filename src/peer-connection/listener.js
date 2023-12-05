@@ -190,8 +190,9 @@ class Listener extends AudioPeer {
 
   applyHQTrackConstraints = async stream => {
     // Contraint the incoming audio to the sampling rate we want
-
+    stream.getAudioTracks().forEach(track => {console.log(track, track.enabled)});
     const track = stream.getAudioTracks()[0];
+    console.log(track);
     const capabilities = track.getCapabilities();
 
     this.displayUpdate(
