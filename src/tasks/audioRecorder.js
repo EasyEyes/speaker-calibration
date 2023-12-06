@@ -46,6 +46,7 @@ class AudioRecorder extends MyEventEmitter {
    */
   #saveRecording = async (mode, checkRec) => {
     const arrayBuffer = await this.#audioBlob.arrayBuffer();
+    console.log(arrayBuffer);
     const audioBuffer = await this.#audioContext.decodeAudioData(arrayBuffer);
     const data = audioBuffer.getChannelData(0);
     const dataArray = Array.from(data);

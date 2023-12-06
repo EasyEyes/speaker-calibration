@@ -501,7 +501,6 @@ class Combination extends AudioCalibrator {
       this.generateTemplate().toString();
     this.emit('update', {message: this.status});
     if (this.isCalibrating) return null;
-    console.log(payload);
     await this.pyServerAPI
       .allHzPowerCheck({
         payload,
@@ -646,9 +645,9 @@ class Combination extends AudioCalibrator {
    *
    * @example
    */
-  #afterMLSRecord = () => {
+  #afterMLSRecord = async () => {
     console.log('after record');
-    this.sendRecordingToServerForProcessing();
+    await this.sendRecordingToServerForProcessing();
   };
 
   #afterMLSwIIRRecord = async () => {
@@ -2414,7 +2413,6 @@ class Combination extends AudioCalibrator {
     this.calibrateSound1000HzPostSec = calibrateSound1000HzPostSec;
     this.iirLength = Math.floor(_calibrateSoundIIRSec * this.sourceSamplingRate);
     this.irLength = Math.floor(_calibrateSoundIRSec * this.sourceSamplingRate);
-    console.log('device info:', this.deviceInfo);
     this.numMLSPerCapture = _calibrateSoundBurstRepeats + 1;
     this.desired_time_per_mls = _calibrateSoundBurstSec;
     this.num_mls_to_skip = _calibrateSoundBurstsWarmup;
