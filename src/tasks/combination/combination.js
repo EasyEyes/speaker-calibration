@@ -246,8 +246,7 @@ class Combination extends AudioCalibrator {
   /** @private */
   timeStamp = [];
 
-  /** @private */
-  startTime;
+  
 
   restartCalibration = false;
 
@@ -759,8 +758,6 @@ class Combination extends AudioCalibrator {
     this.calibrationNodes[0].start(0);
     this.status = ``;
     if (this.mode === 'unfiltered') {
-      console.log('mls', this.#mls); // before multiplied by calibrateSoundBurstDb
-      console.log('mls buffer view', this.#mlsBufferView); // after multiplied by calibrateSoundBurstDb
       console.log('play calibration audio ' + this.stepNum);
       this.status =
         `All Hz Calibration: playing the calibration tone...`.toString() +
@@ -1095,6 +1092,7 @@ class Combination extends AudioCalibrator {
       },
       component: {
         iir: this.componentInvertedImpulseResponse,
+        iir_no_bandpass: this.componentInvertedImpulseResponseNoBandpass,
         ir: this.componentIR,
         ir_origin: this.componentIROrigin,
         ir_in_time_domain: this.componentIRInTimeDomain,
@@ -1214,7 +1212,6 @@ class Combination extends AudioCalibrator {
             );
           });
 
-          console.log(interpolatedGain);
           let correctedGain = res.y.map(
             (gain, index) => 10 * Math.log10(gain) - interpolatedGain[index]
           );
@@ -1344,6 +1341,7 @@ class Combination extends AudioCalibrator {
         },
         component: {
           iir: this.componentInvertedImpulseResponse,
+          iir_no_bandpass: this.componentInvertedImpulseResponseNoBandpass,
           ir: this.componentIR,
           ir_origin: this.componentIROrigin,
           ir_in_time_domain: this.componentIRInTimeDomain,
@@ -1529,6 +1527,7 @@ class Combination extends AudioCalibrator {
         },
         component: {
           iir: this.componentInvertedImpulseResponse,
+          iir_no_bandpass: this.componentInvertedImpulseResponseNoBandpass,
           ir: this.componentIR,
           ir_origin: this.componentIROrigin,
           ir_in_time_domain: this.componentIRInTimeDomain,
@@ -1753,6 +1752,7 @@ class Combination extends AudioCalibrator {
         },
         component: {
           iir: this.componentInvertedImpulseResponse,
+          iir_no_bandpass: this.componentInvertedImpulseResponseNoBandpass,
           ir: this.componentIR,
           ir_in_time_domain: this.componentIRInTimeDomain,
           iir_psd: {
@@ -2297,11 +2297,6 @@ class Combination extends AudioCalibrator {
     }
   };
 
-  // add time stamp
-  addTimeStamp = taskName => {
-    let startTaskTime = (new Date().getTime() - this.startTime) / 1000;
-    this.timeStamp.push(`SOUND ${Number(startTaskTime.toFixed(1))} s. ${taskName}`);
-  };
 
   checkPowerVariation = async () => {
     let recordings = this.getAllFilteredRecordedSignals();
@@ -2378,7 +2373,7 @@ class Combination extends AudioCalibrator {
     _calibrateSoundBurstDb = 0.1,
     _calibrateSoundBurstRepeats = 3,
     _calibrateSoundBurstSec = 1,
-    _calibrateSoundBurstsWarmup = 0,
+    _calibrateSoundBurstsWarmup = 1,
     _calibrateSoundHz = 48000,
     _calibrateSoundIIRSec = 0.2,
     _calibrateSoundIRSec = 0.2,

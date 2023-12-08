@@ -52,6 +52,9 @@ class AudioCalibrator extends AudioRecorder {
   /** @protected */
   localAudio;
 
+  /** @private */
+  startTime;
+
   /**
    * Called when a call is received.
    * Creates a local audio DOM element and attaches it to the page.
@@ -63,6 +66,11 @@ class AudioCalibrator extends AudioRecorder {
     this.localAudio = document.createElement('audio');
     this.localAudio.setAttribute('id', 'localAudio');
     targetElement.appendChild(this.localAudio);
+  };
+
+  addTimeStamp = taskName => {
+    let startTaskTime = (new Date().getTime() - this.startTime) / 1000;
+    this.timeStamp.push(`SOUND ${Number(startTaskTime.toFixed(1))} s. ${taskName}`);
   };
 
   recordBackground = async (
@@ -132,6 +140,7 @@ class AudioCalibrator extends AudioRecorder {
     // do something before recording such as awaiting a certain amount of time
     console.warn('beforeRecord');
     await beforeRecord();
+    this.addTimeStamp('start recording');
 
     // calibration loop
     while (loopCondition()) {

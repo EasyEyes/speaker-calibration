@@ -46,8 +46,8 @@ class AudioRecorder extends MyEventEmitter {
    */
   #saveRecording = async (mode, checkRec) => {
     const arrayBuffer = await this.#audioBlob.arrayBuffer();
-    console.log(arrayBuffer);
     const audioBuffer = await this.#audioContext.decodeAudioData(arrayBuffer);
+    console.log(audioBuffer);
     const data = audioBuffer.getChannelData(0);
     const dataArray = Array.from(data);
 
@@ -177,6 +177,8 @@ class AudioRecorder extends MyEventEmitter {
   stopRecording = async (mode, checkRec) => {
     try {
       // Stop the media recorder, and wait for the data to be available
+      console.log("check stream status", stream.active);
+      console.log("check audio track status",stream.getAudioTracks()[0].readyState);
       await new Promise(resolve => {
         this.#mediaRecorder.onstop = () => {
           // when the stop event is triggered, resolve the promise
