@@ -177,8 +177,6 @@ class AudioRecorder extends MyEventEmitter {
   stopRecording = async (mode, checkRec) => {
     try {
       // Stop the media recorder, and wait for the data to be available
-      console.log("check stream status", stream.active);
-      console.log("check audio track status",stream.getAudioTracks()[0].readyState);
       await new Promise(resolve => {
         this.#mediaRecorder.onstop = () => {
           // when the stop event is triggered, resolve the promise
