@@ -1067,6 +1067,7 @@ class Combination extends AudioCalibrator {
       unfiltered_recording: this.getAllUnfilteredRecordedSignals()[0],
       system: {
         iir: this.systemInvertedImpulseResponse,
+        iir_no_bandpass: this.systemInvertedImpulseResponseNoBandpass,
         ir: this.systemIR,
         iir_psd: {
           y: system_iir_psd['y_conv'],
@@ -1318,6 +1319,7 @@ class Combination extends AudioCalibrator {
         filtered_recording: return_conv_rec,
         system: {
           iir: this.systemInvertedImpulseResponse,
+          iir_no_bandpass: this.systemInvertedImpulseResponseNoBandpass,
           ir: this.systemIR,
           iir_psd: {
             y: system_iir_psd['y_conv'],
@@ -1501,6 +1503,7 @@ class Combination extends AudioCalibrator {
         filtered_recording: return_conv_rec,
         system: {
           iir: this.systemInvertedImpulseResponse,
+          iir_no_bandpass: this.systemInvertedImpulseResponseNoBandpass,
           ir: this.systemIR,
           iir_psd: {
             y: system_iir_psd['y_conv'],
@@ -1730,6 +1733,7 @@ class Combination extends AudioCalibrator {
         filtered_recording: return_conv_rec,
         system: {
           iir: this.systemInvertedImpulseResponse,
+          iir_no_bandpass: this.systemInvertedImpulseResponseNoBandpass,
           ir: this.systemIR,
           iir_psd: {
             y: system_iir_psd['y_conv'],
