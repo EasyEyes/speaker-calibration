@@ -475,14 +475,14 @@ class Speaker extends AudioPeer {
     this.ac.downloadData();
   };
 
-  repeatCalibration = async (CalibratorInstance) => {
+  repeatCalibration = async (stream, CalibratorInstance) => {
     this.ac = CalibratorInstance;
     this.#removeUIElems();
     this.#showSpinner();
 
     // wrap the calibration process in a promise so we can await it
     return new Promise(async (resolve, reject) => {
-      const result = await window.speaker.ac.startCalibration(
+      const result = await this.ac.startCalibration(
         stream,
         params.gainValues,
         params.ICalib,
