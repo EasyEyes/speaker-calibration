@@ -475,7 +475,7 @@ class Speaker extends AudioPeer {
     this.ac.downloadData();
   };
 
-  repeatCalibration = async (stream, CalibratorInstance) => {
+  repeatCalibration = async (params, stream, CalibratorInstance) => {
     this.ac = CalibratorInstance;
     this.#removeUIElems();
     this.#showSpinner();
