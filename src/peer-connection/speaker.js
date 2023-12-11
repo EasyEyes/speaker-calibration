@@ -474,6 +474,51 @@ class Speaker extends AudioPeer {
   downloadData = () => {
     this.ac.downloadData();
   };
+
+  repeatCalibration = async (CalibratorInstance) => {
+    this.ac = CalibratorInstance;
+    this.#removeUIElems();
+    this.#showSpinner();
+
+    // wrap the calibration process in a promise so we can await it
+    return new Promise(async (resolve, reject) => {
+      const result = await window.speaker.ac.startCalibration(
+        stream,
+        params.gainValues,
+        params.ICalib,
+        params.knownIR,
+        params.microphoneName,
+        params.calibrateSoundCheck,
+        params.isSmartPhone,
+        params.calibrateSoundBurstDb,
+        params.calibrateSoundBurstRepeats,
+        params.calibrateSoundBurstSec,
+        params.calibrateSoundBurstsWarmup,
+        params.calibrateSoundHz,
+        params.calibrateSoundIRSec,
+        params.calibrateSoundIIRSec,
+        params.calibrateSound1000HzPreSec,
+        params.calibrateSound1000HzSec,
+        params.calibrateSound1000HzPostSec,
+        params.calibrateSoundBackgroundSecs,
+        params.calibrateSoundSmoothOctaves,
+        params.calibrateSoundPowerBinDesiredSec,
+        params.calibrateSoundPowerDbSDToleratedDb,
+        params.micManufacturer,
+        params.micSerialNumber,
+        params.micModelNumber,
+        params.micModelName,
+        params.calibrateMicrophonesBool,
+        params.authorEmails,
+        params.webAudioDeviceNames,
+        params.IDsToSaveInSoundProfileLibrary,
+        params.restartButton,
+        params.calibrateSoundLimit
+      );
+      this.#removeUIElems();
+      resolve(result);
+    });
+  };
 }
 
 /* 
