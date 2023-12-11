@@ -480,6 +480,7 @@ class Speaker extends AudioPeer {
     this.#removeUIElems();
     this.#showSpinner();
 
+    console.log("This is a repeat");
     // wrap the calibration process in a promise so we can await it
     return new Promise(async (resolve, reject) => {
       const result = await this.ac.startCalibration(

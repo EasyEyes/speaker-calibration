@@ -1990,6 +1990,7 @@ class Combination extends AudioCalibrator {
   };
 
   startCalibrationVolume = async (stream, gainValues, lCalib, componentGainDBSPL) => {
+    console.log(stream);
     if (this.isCalibrating) return null;
     const trialIterations = gainValues.length;
     this.status_denominator += trialIterations;
@@ -2403,6 +2404,7 @@ class Combination extends AudioCalibrator {
     restartButton,
     calibrateSoundLimit
   ) => {
+    console.log(stream);
     this.calibrateSoundLimit = calibrateSoundLimit;
     this._calibrateSoundBurstDb = _calibrateSoundBurstDb;
     this.CALIBRATION_TONE_DURATION =
