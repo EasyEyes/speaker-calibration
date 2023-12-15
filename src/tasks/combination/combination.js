@@ -207,6 +207,8 @@ class Combination extends AudioCalibrator {
 
   _calibrateSoundBurstDb;
 
+  _calibrateSoundBurstLevelReTBool;
+
   SDofFilteredRange = {
     mls: undefined,
     component: undefined,
@@ -336,7 +338,7 @@ class Combination extends AudioCalibrator {
         iirLength,
         num_periods,
         sampleRate: this.sourceSamplingRate || 96000,
-        calibrateSoundBurstDb: this._calibrateSoundBurstDb,
+        calibrateSoundBurstDb: Math.pow(10, this._calibrateSoundBurstDb / 20),
       })
       .then(res => {
         this.stepNum += 1;
@@ -405,7 +407,7 @@ class Combination extends AudioCalibrator {
         componentIRFreqs,
         num_periods,
         sampleRate: this.sourceSamplingRate || 96000,
-        calibrateSoundBurstDb: this._calibrateSoundBurstDb,
+        calibrateSoundBurstDb: Math.pow(10, this._calibrateSoundBurstDb / 20),
         irLength,
         calibrateSoundSmoothOctaves: this._calibrateSoundSmoothOctaves,
       })
@@ -1612,7 +1614,7 @@ class Combination extends AudioCalibrator {
 
     length = this.sourceSamplingRate * desired_time;
     //get mls here
-    const calibrateSoundBurstDb = this._calibrateSoundBurstDb;
+    const calibrateSoundBurstDb = Math.pow(10, this._calibrateSoundBurstDb / 20);
     this.addTimeStamp('Get MLS sequence');
     if (this.isCalibrating) return null;
     await this.pyServerAPI
@@ -2374,7 +2376,8 @@ class Combination extends AudioCalibrator {
     microphoneName = 'MiniDSP-UMIK1-711-4754-vertical',
     _calibrateSoundCheck = 'goal', //GOAL PASSed in by default
     isSmartPhone = false,
-    _calibrateSoundBurstDb = 0.1,
+    _calibrateSoundBurstDb = -18,
+    _calibrateSoundBurstLevelReTBool = false,
     _calibrateSoundBurstRepeats = 3,
     _calibrateSoundBurstSec = 1,
     _calibrateSoundBurstsWarmup = 1,
@@ -2406,6 +2409,7 @@ class Combination extends AudioCalibrator {
   ) => {
     this.calibrateSoundLimit = calibrateSoundLimit;
     this._calibrateSoundBurstDb = _calibrateSoundBurstDb;
+    this._calibrateSoundBurstLevelReTBool = _calibrateSoundBurstLevelReTBool;
     this.CALIBRATION_TONE_DURATION =
       calibrateSound1000HzPreSec + calibrateSound1000HzSec + calibrateSound1000HzPostSec;
     this.calibrateSound1000HzPreSec = calibrateSound1000HzPreSec;
