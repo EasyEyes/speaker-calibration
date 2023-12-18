@@ -64,14 +64,14 @@ class PythonServerAPI {
     return res.data[task];
   };
 
-  getMLS = async ({length,calibrateSoundBurstDb}) => {
+  getMLS = async ({length,amplitude}) => {
     const task = 'mls';
     let res = null;
 
     const data = JSON.stringify({
       task,
       length: length,
-      calibrateSoundBurstDb: calibrateSoundBurstDb
+      amplitude: amplitude
     });
 
     await axios({
@@ -92,13 +92,13 @@ class PythonServerAPI {
 
     return res.data[task];
   };
-  getMLSWithRetry = async ({length,calibrateSoundBurstDb}) => {
+  getMLSWithRetry = async ({length,amplitude}) => {
     let retryCount = 0;
     let response = null;
 
     while (retryCount < this.MAX_RETRY_COUNT) {
       try {
-        response = await this.getMLS({length,calibrateSoundBurstDb});
+        response = await this.getMLS({length,amplitude});
         // If the request is successful, break out of the loop
         break;
       } catch (error) {
@@ -281,7 +281,7 @@ class PythonServerAPI {
     componentIRFreqs,
     num_periods,
     sampleRate,
-    calibrateSoundBurstDb,
+    mlsAmplitude,
     irLength,
     calibrateSoundSmoothOctaves
   }) => {
@@ -301,7 +301,7 @@ class PythonServerAPI {
       componentIRFreqs,
       num_periods,
       sampleRate,
-      calibrateSoundBurstDb,
+      mlsAmplitude,
       irLength,
       calibrateSoundSmoothOctaves
     });
@@ -332,7 +332,7 @@ class PythonServerAPI {
     iirLength,
     num_periods,
     sampleRate,
-    calibrateSoundBurstDb
+    mlsAmplitude
   }) => {
     const task = 'system-inverse-impulse-response';
     let res = null;
@@ -348,7 +348,7 @@ class PythonServerAPI {
       highHz,
       num_periods,
       sampleRate,
-      calibrateSoundBurstDb
+      mlsAmplitude
     });
 
     await axios({
@@ -434,7 +434,7 @@ class PythonServerAPI {
     componentIRFreqs,
     num_periods,
     sampleRate,
-    calibrateSoundBurstDb,
+    mlsAmplitude,
     irLength,
     calibrateSoundSmoothOctaves
   }) => {
@@ -453,7 +453,7 @@ class PythonServerAPI {
           componentIRFreqs,
           num_periods,
           sampleRate,
-          calibrateSoundBurstDb,
+          mlsAmplitude,
           irLength,
           calibrateSoundSmoothOctaves
         });
@@ -483,7 +483,7 @@ class PythonServerAPI {
     iirLength,
     num_periods,
     sampleRate,
-    calibrateSoundBurstDb
+    mlsAmplitude
   }) => {
     let retryCount = 0;
     let response = null;
@@ -498,7 +498,7 @@ class PythonServerAPI {
           iirLength,
           num_periods,
           sampleRate,
-          calibrateSoundBurstDb
+          mlsAmplitude
         });
         // If the request is successful, break out of the loop
         break;
