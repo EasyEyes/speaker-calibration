@@ -261,6 +261,21 @@ class Combination extends AudioCalibrator {
     maxAbsComponent: 1,
   };
 
+  //parameter result from volume calibration
+  T = 0;
+  //gainDBSPL result from volume calibration
+  gainDBSPL = 0;
+  //not always just using _calibrateSoundBurstDb for MLS so created a new parameter
+  power_dB = 0;
+
+  //system
+  systemAttenuatorGainDB = 0;
+  systemFMaxHz = 0;
+
+  //component
+  componentAttentuatorGainDB = 0;
+  componentFMaxHz = 0;
+
   /**generate string template that gets reevaluated as variable increases */
   generateTemplate = () => {
     if (this.isCalibrating) {
@@ -338,7 +353,7 @@ class Combination extends AudioCalibrator {
         iirLength,
         num_periods,
         sampleRate: this.sourceSamplingRate || 96000,
-        calibrateSoundBurstDb: Math.pow(10, this._calibrateSoundBurstDb / 20),
+        mlsAmplitude: Math.pow(10, this.power_dB / 20),
       })
       .then(res => {
         this.stepNum += 1;
@@ -352,16 +367,19 @@ class Combination extends AudioCalibrator {
         this.systemIR = res['ir'];
         this.systemConvolution = res['convolution'];
         this.systemInvertedImpulseResponseNoBandpass = res['iirNoBandpass'];
+        this.systemAttenuatorGainDB = res['attenuatorGain_dB'];
+        this.systemFMaxHz = res['fMaxHz'];
 
         // attenuate the system convolution if the amplitude is greater than this.calibrateSoundLimit
         // find max of absolute value of system convolution
+
         const max = Math.max(...this.systemConvolution.map(Math.abs));
-        if (max > this.calibrateSoundLimit) {
-          const gain = this.calibrateSoundLimit / max;
-          // apply gain to system convolution
-          this.systemConvolution = this.systemConvolution.map(value => value * gain);
-          this.filteredMLSAttenuation.system = gain;
-        }
+        // if (max > this.calibrateSoundLimit) {
+        //   const gain = this.calibrateSoundLimit / max;
+        //   // apply gain to system convolution
+        //   this.systemConvolution = this.systemConvolution.map(value => value * gain);
+        //   this.filteredMLSAttenuation.system = gain;
+        // }
         this.filteredMLSAttenuation.maxAbsSystem = max;
       })
       .catch(err => {
@@ -407,7 +425,7 @@ class Combination extends AudioCalibrator {
         componentIRFreqs,
         num_periods,
         sampleRate: this.sourceSamplingRate || 96000,
-        calibrateSoundBurstDb: Math.pow(10, this._calibrateSoundBurstDb / 20),
+        mlsAmplitude: Math.pow(10, this.power_dB / 20),
         irLength,
         calibrateSoundSmoothOctaves: this._calibrateSoundSmoothOctaves,
       })
@@ -429,16 +447,18 @@ class Combination extends AudioCalibrator {
         this.componentConvolution = res['convolution'];
         this.componentInvertedImpulseResponseNoBandpass = res['iirNoBandpass'];
         this.componentIRInTimeDomain = res['irTime'];
+        this.componentAttenuatorGainDB = res['attenuatorGain_dB'];
+        this.componentFMaxHz = res['fMaxHz'];
 
         // attenuate the component convolution if the amplitude is greater than this.calibrateSoundLimit
         // find max of absolute value of component convolution
         const max = Math.max(...this.componentConvolution.map(Math.abs));
-        if (max > this.calibrateSoundLimit) {
-          const gain = this.calibrateSoundLimit / max;
-          // apply gain to component convolution
-          this.componentConvolution = this.componentConvolution.map(value => value * gain);
-          this.filteredMLSAttenuation.component = gain;
-        }
+        // if (max > this.calibrateSoundLimit) {
+        //   const gain = this.calibrateSoundLimit / max;
+        //   // apply gain to component convolution
+        //   this.componentConvolution = this.componentConvolution.map(value => value * gain);
+        //   this.filteredMLSAttenuation.component = gain;
+        // }
         this.filteredMLSAttenuation.maxAbsComponent = max;
       })
       .catch(err => {
@@ -834,10 +854,14 @@ class Combination extends AudioCalibrator {
     await this.playMLSwithIIR(stream, this.#currentConvolution);
     this.stopCalibrationAudio();
     let component_conv_recs = this.getAllFilteredRecordedSignals();
-    //remove the filteredMLSAttenuation from the recorded signals
-    component_conv_recs = component_conv_recs.map(rec => {
-      return rec.map(value => value / this.filteredMLSAttenuation.component);
-    });
+
+    if (this.componentAttentuatorGainDB != 0){
+      let linearScaleAttenuation = Math.pow(10,this.componentAttentuatorGainDB/20);
+      component_conv_recs = component_conv_recs.map(rec => {
+        return rec.map(value => value / this.linearScaleAttenuation);
+      });
+    }
+
     let return_component_conv_rec = component_conv_recs[component_conv_recs.length - 1];
     this.clearAllFilteredRecordedSignals();
     // await this.checkPowerVariation(return_component_conv_rec);
@@ -853,10 +877,14 @@ class Combination extends AudioCalibrator {
     this.stopCalibrationAudio();
 
     let system_conv_recs = this.getAllFilteredRecordedSignals();
-    //remove the filteredMLSAttenuation from the recorded signals
-    system_conv_recs = system_conv_recs.map(rec => {
-      return rec.map(value => value / this.filteredMLSAttenuation.system);
-    });
+
+    if (this.systemAttenuatorGainDB != 0){
+      let linearScaleAttenuation = Math.pow(10,this.systemAttenuatorGainDB/20);
+      system_conv_recs = system_conv_recs.map(rec => {
+        return rec.map(value => value / linearScaleAttenuation);
+      });
+    }
+
     let return_system_conv_rec = system_conv_recs[system_conv_recs.length - 1];
     // await this.checkPowerVariation(return_system_conv_rec);
 
@@ -1614,11 +1642,22 @@ class Combination extends AudioCalibrator {
 
     length = this.sourceSamplingRate * desired_time;
     //get mls here
-    const calibrateSoundBurstDb = Math.pow(10, this._calibrateSoundBurstDb / 20);
+    // const calibrateSoundBurstDb = Math.pow(10, this._calibrateSoundBurstDb / 20);
+
+    this.power_dB = 0;
+
+    if (!this._calibrateSoundBurstLevelReTBool){
+      this.power_dB =this._calibrateSoundBurstDb;
+    }else{
+      this.power_dB = this._calibrateSoundBurstDb+(this.T-this.gainDbSPL);
+    }
+
+    const amplitude = Math.pow(10,this.power_dB / 20);
+    //MLSpower = Math.pow(10,this.power_dB/20);
     this.addTimeStamp('Get MLS sequence');
     if (this.isCalibrating) return null;
     await this.pyServerAPI
-      .getMLSWithRetry({length, calibrateSoundBurstDb})
+      .getMLSWithRetry({length, amplitude})
       .then(res => {
         console.log(res);
         this.#mlsBufferView = res['mls'];
@@ -2543,9 +2582,39 @@ class Combination extends AudioCalibrator {
         this.componentGainDBSPL
       );
       if (!volumeResults) return;
+
+      this.T = volumeResults["parameters"]["T"];
+      this.gainDBSPL = volumeResults["parameters"]["gainDBSPL"];
+
+      // console.log("VOLUME RESULTS");
+      // console.log(volumeResults);
       let impulseResponseResults = await this.startCalibrationImpulseResponse(stream);
       if (!impulseResponseResults) return;
       impulseResponseResults['background_noise'] = this.background_noise;
+      impulseResponseResults['system']['background_noise'] = this.background_noise;
+      impulseResponseResults['component']['background_noise'] = this.background_noise;
+
+      //attenuate system background noise
+      if (this.systemAttenuatorGainDB != 0){
+        let linearScaleAttenuation = Math.pow(10,this.systemAttenuatorGainDB/20);
+        let linearScalePowerAttenuation = Math.pow(10,this.systemAttenuatorGainDB/10);
+        impulseResponseResults['system']['background_noise']['recording'] = impulseResponseResults['background_noise']['recording'].map(value => value/linearScaleAttenuation);
+        impulseResponseResults['system']['background_noise']['x_background'] = impulseResponseResults['background_noise']['x_background'];
+        impulseResponseResults['system']['background_noise']['y_background'] = impulseResponseResults['background_noise']['y_background'].map(value => value/linearScalePowerAttenuation);
+      }
+      //attenuate component background noise
+      if (this.componentAttentuatorGainDB != 0){
+        let linearScaleAttenuation = Math.pow(10,this.componentAttenuatorGainDB/20);
+        let linearScalePowerAttenuation = Math.pow(10,this.componentAttenuatorGainDB/10);
+        impulseResponseResults['component']['background_noise']['recording'] = impulseResponseResults['background_noise']['recording'].map(value => value/linearScaleAttenuation);
+        impulseResponseResults['component']['background_noise']['x_background'] = impulseResponseResults['background_noise']['x_background'];
+        impulseResponseResults['component']['background_noise']['y_background'] = impulseResponseResults['background_noise']['y_background'].map(value => value/linearScalePowerAttenuation);
+      }
+      impulseResponseResults['system']['attenuatorGainDB'] = this.systemAttenuatorGainDB;
+      impulseResponseResults['component']['attuatorGainDB'] = this.componentAttenuatorGainDB;
+      impulseResponseResults['system']['fMaxHz'] = this.systemFMaxHz;
+      impulseResponseResults['component']['fMaxHz'] = this.componentFMaxHz;
+
       if (componentIR != null) {
         // I corrected microphone/loudpeaker IR scale in easyeyes,
         // but since we write microphone IR to firestore here
