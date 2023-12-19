@@ -207,6 +207,8 @@ class Combination extends AudioCalibrator {
 
   _calibrateSoundBurstDb;
 
+  _calibrateSoundBurstFilteredExtraDb;
+
   _calibrateSoundBurstLevelReTBool;
 
   SDofFilteredRange = {
@@ -2455,6 +2457,7 @@ class Combination extends AudioCalibrator {
     _calibrateSoundCheck = 'goal', //GOAL PASSed in by default
     isSmartPhone = false,
     _calibrateSoundBurstDb = -18,
+    _calibrateSoundBurstFilteredExtraDb = 6,
     _calibrateSoundBurstLevelReTBool = false,
     _calibrateSoundBurstRepeats = 3,
     _calibrateSoundBurstSec = 1,
@@ -2487,6 +2490,7 @@ class Combination extends AudioCalibrator {
   ) => {
     this.calibrateSoundLimit = calibrateSoundLimit;
     this._calibrateSoundBurstDb = _calibrateSoundBurstDb;
+    this._calibrateSoundBurstFilteredExtraDb = _calibrateSoundBurstFilteredExtraDb;
     this._calibrateSoundBurstLevelReTBool = _calibrateSoundBurstLevelReTBool;
     this.CALIBRATION_TONE_DURATION =
       calibrateSound1000HzPreSec + calibrateSound1000HzSec + calibrateSound1000HzPostSec;
