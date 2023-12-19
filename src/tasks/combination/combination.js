@@ -356,6 +356,7 @@ class Combination extends AudioCalibrator {
         num_periods,
         sampleRate: this.sourceSamplingRate || 96000,
         mlsAmplitude: Math.pow(10, this.power_dB / 20),
+        calibrateSoundBurstFilteredExtraDb: this._calibrateSoundBurstFilteredExtraDb,
       })
       .then(res => {
         this.stepNum += 1;
@@ -430,6 +431,7 @@ class Combination extends AudioCalibrator {
         mlsAmplitude: Math.pow(10, this.power_dB / 20),
         irLength,
         calibrateSoundSmoothOctaves: this._calibrateSoundSmoothOctaves,
+        calibrateSoundBurstFilteredExtraDb: this._calibrateSoundBurstFilteredExtraDb,
       })
       .then(res => {
         this.stepNum += 1;
