@@ -283,7 +283,8 @@ class PythonServerAPI {
     sampleRate,
     mlsAmplitude,
     irLength,
-    calibrateSoundSmoothOctaves
+    calibrateSoundSmoothOctaves,
+    calibrateSoundBurstFilteredExtraDb
   }) => {
     const task = 'component-inverse-impulse-response';
     let res = null;
@@ -303,7 +304,8 @@ class PythonServerAPI {
       sampleRate,
       mlsAmplitude,
       irLength,
-      calibrateSoundSmoothOctaves
+      calibrateSoundSmoothOctaves,
+      calibrateSoundBurstFilteredExtraDb
     });
 
     await axios({
@@ -332,7 +334,8 @@ class PythonServerAPI {
     iirLength,
     num_periods,
     sampleRate,
-    mlsAmplitude
+    mlsAmplitude,
+    calibrateSoundBurstFilteredExtraDb
   }) => {
     const task = 'system-inverse-impulse-response';
     let res = null;
@@ -348,7 +351,8 @@ class PythonServerAPI {
       highHz,
       num_periods,
       sampleRate,
-      mlsAmplitude
+      mlsAmplitude,
+      calibrateSoundBurstFilteredExtraDb
     });
 
     await axios({
@@ -436,7 +440,8 @@ class PythonServerAPI {
     sampleRate,
     mlsAmplitude,
     irLength,
-    calibrateSoundSmoothOctaves
+    calibrateSoundSmoothOctaves,
+    calibrateSoundBurstFilteredExtraDb
   }) => {
     let retryCount = 0;
     let response = null;
@@ -455,7 +460,8 @@ class PythonServerAPI {
           sampleRate,
           mlsAmplitude,
           irLength,
-          calibrateSoundSmoothOctaves
+          calibrateSoundSmoothOctaves,
+          calibrateSoundBurstFilteredExtraDb
         });
         // If the request is successful, break out of the loop
         break;
@@ -483,7 +489,8 @@ class PythonServerAPI {
     iirLength,
     num_periods,
     sampleRate,
-    mlsAmplitude
+    mlsAmplitude,
+    calibrateSoundBurstFilteredExtraDb
   }) => {
     let retryCount = 0;
     let response = null;
@@ -498,7 +505,8 @@ class PythonServerAPI {
           iirLength,
           num_periods,
           sampleRate,
-          mlsAmplitude
+          mlsAmplitude,
+          calibrateSoundBurstFilteredExtraDb
         });
         // If the request is successful, break out of the loop
         break;
