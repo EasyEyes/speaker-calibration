@@ -892,6 +892,12 @@ class Combination extends AudioCalibrator {
 
     this.sourceAudioContext.close();
     let recs = this.getAllUnfilteredRecordedSignals();
+    if (this.componentAttentuatorGainDB != 0){
+      let linearScaleAttenuation = Math.pow(10,this.componentAttentuatorGainDB/20);
+      recs = recs.map(rec => {
+        return rec.map(value => value / this.linearScaleAttenuation);
+      });
+    }
     let unconv_rec = recs[0];
     let return_unconv_rec = unconv_rec;
     let conv_rec = component_conv_recs[component_conv_recs.length - 1];
@@ -1184,15 +1190,47 @@ class Combination extends AudioCalibrator {
       this.stopCalibrationAudio();
     }
     let conv_recs = this.getAllFilteredRecordedSignals();
-    //remove the filteredMLSAttenuation from the recorded signals
-    conv_recs = conv_recs.map(rec => {
-      if (this.soundCheck === 'component') {
-        return rec.map(value => value / this.filteredMLSAttenuation.component);
+    if (this._calibrateSoundCheck == 'goal'){
+      if (this.componentAttentuatorGainDB != 0){
+        let linearScaleAttenuation = Math.pow(10,this.componentAttentuatorGainDB/20);
+        conv_recs = conv_recs.map(rec => {
+          return rec.map(value => value / this.linearScaleAttenuation);
+        });
       }
-      return rec.map(value => value / this.filteredMLSAttenuation.system);
-    });
+    }else if (this._calibrateSoundCheck == 'system'){
+      if (this.systemAttentuatorGainDB != 0){
+        let linearScaleAttenuation = Math.pow(10,this.systemAttentuatorGainDB/20);
+        conv_recs = conv_recs.map(rec => {
+          return rec.map(value => value / this.linearScaleAttenuation);
+        });
+      }
+    }
+
+    //remove the filteredMLSAttenuation from the recorded signals
+    // conv_recs = conv_recs.map(rec => {
+    //   if (this.soundCheck === 'component') {
+    //     return rec.map(value => value / this.filteredMLSAttenuation.component);
+    //   }
+    //   return rec.map(value => value / this.filteredMLSAttenuation.system);
+    // });
+
 
     let recs = this.getAllUnfilteredRecordedSignals();
+    if (this._calibrateSoundCheck == 'goal'){
+      if (this.componentAttentuatorGainDB != 0){
+        let linearScaleAttenuation = Math.pow(10,this.componentAttentuatorGainDB/20);
+        recs = recs.map(rec => {
+          return rec.map(value => value / this.linearScaleAttenuation);
+        });
+      }
+    }else if (this._calibrateSoundCheck == 'system'){
+      if (this.systemAttentuatorGainDB != 0){
+        let linearScaleAttenuation = Math.pow(10,this.systemAttentuatorGainDB/20);
+        recs = recs.map(rec => {
+          return rec.map(value => value / this.linearScaleAttenuation);
+        });
+      }
+    }
     this.clearAllFilteredRecordedSignals();
     console.log('Obtaining unfiltered recording from #allHzUnfilteredRecordings to calculate PSD');
     console.log('Obtaining filtered recording from #allHzFilteredRecordings to calculate PSD');
@@ -2346,12 +2384,13 @@ class Combination extends AudioCalibrator {
   checkPowerVariation = async () => {
     let recordings = this.getAllFilteredRecordedSignals();
     // remove filteredMLSAttenuation from the recordings
-    recordings = recordings.map(recording => {
-      if (this.soundCheck == 'component') {
-        return recording.map(value => value / this.filteredMLSAttenuation.component);
-      }
-      return recording.map(value => value / this.filteredMLSAttenuation.system);
-    });
+
+    // recordings = recordings.map(recording => {
+    //   if (this.soundCheck == 'component') {
+    //     return recording.map(value => value / this.filteredMLSAttenuation.component);
+    //   }
+    //   return recording.map(value => value / this.filteredMLSAttenuation.system);
+    // });
 
     const rec = recordings[recordings.length - 1];
 
@@ -2611,7 +2650,7 @@ class Combination extends AudioCalibrator {
         impulseResponseResults['component']['background_noise']['y_background'] = impulseResponseResults['background_noise']['y_background'].map(value => value/linearScalePowerAttenuation);
       }
       impulseResponseResults['system']['attenuatorGainDB'] = this.systemAttenuatorGainDB;
-      impulseResponseResults['component']['attuatorGainDB'] = this.componentAttenuatorGainDB;
+      impulseResponseResults['component']['attenuatorGainDB'] = this.componentAttenuatorGainDB;
       impulseResponseResults['system']['fMaxHz'] = this.systemFMaxHz;
       impulseResponseResults['component']['fMaxHz'] = this.componentFMaxHz;
 
