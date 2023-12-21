@@ -1691,7 +1691,7 @@ class Combination extends AudioCalibrator {
     if (!this._calibrateSoundBurstLevelReTBool){
       this.power_dB =this._calibrateSoundBurstDb;
     }else{
-      this.power_dB = this._calibrateSoundBurstDb+(this.T-this.gainDbSPL);
+      this.power_dB = this._calibrateSoundBurstDb+(this.T-this.gainDBSPL);
     }
 
     const amplitude = Math.pow(10,this.power_dB / 20);
