@@ -383,6 +383,8 @@ class Combination extends AudioCalibrator {
         //   this.systemConvolution = this.systemConvolution.map(value => value * gain);
         //   this.filteredMLSAttenuation.system = gain;
         // }
+        this.filteredMLSAttenuation.system = 
+        this.systemConvolution.reduce((a, b) => a + b**2, 0) / this.systemConvolution.length;
         this.filteredMLSAttenuation.maxAbsSystem = max;
       })
       .catch(err => {
@@ -463,6 +465,8 @@ class Combination extends AudioCalibrator {
         //   this.componentConvolution = this.componentConvolution.map(value => value * gain);
         //   this.filteredMLSAttenuation.component = gain;
         // }
+        this.filteredMLSAttenuation.component = 
+        this.componentConvolution.reduce((a, b) => a + b**2, 0) / this.componentConvolution.length;
         this.filteredMLSAttenuation.maxAbsComponent = max;
       })
       .catch(err => {
