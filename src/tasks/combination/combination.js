@@ -2701,6 +2701,7 @@ class Combination extends AudioCalibrator {
       total_results['component']['phase'] = this.componentIRPhase;
       total_results['system']['phase'] = this.systemIRPhase;
       total_results['qualityMetrics'] = this.SDofFilteredRange;
+      total_results['flags'] = this.flags;
       console.log('total results');
       console.log(total_results);
       console.log('Time Stamps');

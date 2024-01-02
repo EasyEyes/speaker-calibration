@@ -38,6 +38,9 @@ class AudioRecorder extends MyEventEmitter {
   /** @private */
   #allVolumeRecordings = [];
 
+  /** @private */
+  flags = {};
+
   /**
    * Decode the audio data from the recorded audio blob.
    *

@@ -245,6 +245,10 @@ class AudioCalibrator extends AudioRecorder {
     this.sampleSize = sampleSize;
   };
 
+  setFlags = flags => {
+    this.flags = flags;
+  }
+
   sampleRatesSet = () => this.sourceSamplingRate && this.sinkSamplingRate;
 
   addCalibrationNode = node => {
