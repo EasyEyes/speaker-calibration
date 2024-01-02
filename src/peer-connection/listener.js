@@ -155,6 +155,14 @@ class Listener extends AudioPeer {
     });
   };
 
+  sendFlags = flags => {
+    this.displayUpdate('Listener - sendFlags');
+    this.conn.send({
+      name: 'flags',
+      payload: flags
+    });
+  }
+
   getDeviceInfo = async () => {
     try {
       const deviceInfo = {};
@@ -301,6 +309,11 @@ class Listener extends AudioPeer {
               sampleSize = this.calibrateSoundSamplingDesiredBits;
             }
             this.sendSampleSize(sampleSize);
+            this.sendFlags({
+              'autoGainControl':settings.autoGainControl,
+              'noiseSuppression':settings.noiseSuppression,
+              'echoCancellation':settings.echoCancellation
+            });
             this.peer.call(this.speakerPeerId, stream); // one-way call
             this.displayUpdate('Listener - openAudioStream');
           })
