@@ -278,6 +278,8 @@ class Combination extends AudioCalibrator {
   componentAttentuatorGainDB = 0;
   componentFMaxHz = 0;
 
+  L_new_n;
+
   /**generate string template that gets reevaluated as variable increases */
   generateTemplate = () => {
     if (this.isCalibrating) {
@@ -565,6 +567,7 @@ class Combination extends AudioCalibrator {
                       message: this.status,
                     });
                     this.autocorrelations.push(res['autocorrelation']);
+                    this.L_new_n = res['L_new_n'];
                     return res['ir'];
                   }
                 })
@@ -951,7 +954,7 @@ class Combination extends AudioCalibrator {
         );
 
         let filtered_psd = correctedGain.filter(
-          (value, index) => res.x[index] >= this.#lowHz && res.x[index] <= this.#highHz
+          (value, index) => res.x[index] >= this.#lowHz && res.x[index] <= this.componentFMaxHz
         );
 
         this.SDofFilteredRange['component'] = standardDeviation(filtered_psd);
@@ -1467,14 +1470,14 @@ class Combination extends AudioCalibrator {
           let filtered_psd = res.y_conv
             .filter(
               (value, index) =>
-                res.x_conv[index] >= this.#lowHz && res.x_conv[index] <= this.#highHz
+                res.x_conv[index] >= this.#lowHz && res.x_conv[index] <= this.systemFMaxHz
             )
             .map(value => 10 * Math.log10(value));
 
           let mls_psd = res.y_unconv
             .filter(
               (value, index) =>
-                res.x_unconv[index] >= this.#lowHz && res.x_conv[index] <= this.#highHz
+                res.x_unconv[index] >= this.#lowHz && res.x_conv[index] <= this.systemFMaxHz
             )
             .map(value => 10 * Math.log10(value));
 
@@ -2663,6 +2666,7 @@ class Combination extends AudioCalibrator {
       impulseResponseResults['component']['attenuatorGainDB'] = this.componentAttenuatorGainDB;
       impulseResponseResults['system']['fMaxHz'] = this.systemFMaxHz;
       impulseResponseResults['component']['fMaxHz'] = this.componentFMaxHz;
+      impulseResponseResults['L_new_n'] = this.L_new_n;
 
       if (componentIR != null) {
         // I corrected microphone/loudpeaker IR scale in easyeyes,
