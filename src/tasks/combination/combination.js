@@ -279,6 +279,7 @@ class Combination extends AudioCalibrator {
   componentFMaxHz = 0;
 
   L_new_n;
+  fs2;
 
   /**generate string template that gets reevaluated as variable increases */
   generateTemplate = () => {
@@ -568,6 +569,7 @@ class Combination extends AudioCalibrator {
                     });
                     this.autocorrelations.push(res['autocorrelation']);
                     this.L_new_n = res['L_new_n'];
+                    this.fs2 = res['fs2'];
                     return res['ir'];
                   }
                 })
@@ -2667,6 +2669,7 @@ class Combination extends AudioCalibrator {
       impulseResponseResults['system']['fMaxHz'] = this.systemFMaxHz;
       impulseResponseResults['component']['fMaxHz'] = this.componentFMaxHz;
       impulseResponseResults['L_new_n'] = this.L_new_n;
+      impulseResponseResults['fs2'] = this.fs2;
 
       if (componentIR != null) {
         // I corrected microphone/loudpeaker IR scale in easyeyes,
