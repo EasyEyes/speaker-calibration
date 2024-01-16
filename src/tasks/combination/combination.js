@@ -2470,6 +2470,7 @@ class Combination extends AudioCalibrator {
     _calibrateSoundBurstDb = -18,
     _calibrateSoundBurstFilteredExtraDb = 6,
     _calibrateSoundBurstLevelReTBool = false,
+    _calibrateSoundBurstUses1000HzGainBool = false,
     _calibrateSoundBurstRepeats = 3,
     _calibrateSoundBurstSec = 1,
     _calibrateSoundBurstsWarmup = 1,
@@ -2517,6 +2518,7 @@ class Combination extends AudioCalibrator {
     this._calibrateSoundBackgroundSecs = _calibrateSoundBackgroundSecs;
     this._calibrateSoundSmoothOctaves = _calibrateSoundSmoothOctaves;
     this._calibrateSoundPowerBinDesiredSec = _calibrateSoundPowerBinDesiredSec;
+    this._calibrateSoundBurstUses1000HzGainBool = _calibrateSoundBurstUses1000HzGainBool;
     this._calibrateSoundPowerDbSDToleratedDb = _calibrateSoundPowerDbSDToleratedDb;
     this.webAudioDeviceNames = webAudioDeviceNames;
     if (isSmartPhone) this.webAudioDeviceNames.microphone = this.deviceInfo.microphoneFromAPI;
