@@ -112,6 +112,9 @@ class Combination extends AudioCalibrator {
   componentConvolution;
 
   /** @private */
+  componentConvolutionNoBandpass;
+
+  /** @private */
   componentIROrigin = {
     Freq: [],
     Gain: [],
@@ -119,6 +122,9 @@ class Combination extends AudioCalibrator {
 
   /** @private */
   systemConvolution;
+
+  /** @private */
+  systemConvolutionNoBandpass;
 
   ////////////////////////volume
   /** @private */
@@ -375,6 +381,7 @@ class Combination extends AudioCalibrator {
         this.systemInvertedImpulseResponseNoBandpass = res['iirNoBandpass'];
         this.systemAttenuatorGainDB = res['attenuatorGain_dB'];
         this.systemFMaxHz = res['fMaxHz'];
+        this.systemConvolutionNoBandpass = res['convolutionNoBandpass'];
 
         // attenuate the system convolution if the amplitude is greater than this.calibrateSoundLimit
         // find max of absolute value of system convolution
@@ -454,6 +461,7 @@ class Combination extends AudioCalibrator {
         this.componentIROrigin['Freq'] = res['frequencies'];
         this.componentIROrigin['Gain'] = res['irOrigin'];
         this.componentConvolution = res['convolution'];
+        this.componentConvolutionNoBandpass = res['convolutionNoBandpass'];
         this.componentInvertedImpulseResponseNoBandpass = res['iirNoBandpass'];
         this.componentIRInTimeDomain = res['irTime'];
         this.componentAttenuatorGainDB = res['attenuatorGain_dB'];
@@ -1087,11 +1095,45 @@ class Combination extends AudioCalibrator {
         console.error(err);
       });
 
+    let system_no_bandpass_filtered_mls_psd = await this.pyServerAPI
+      .getMLSPSDWithRetry({
+        mls: this.systemConvolution,
+        sampleRate: this.sourceSamplingRate || 96000,
+      })
+      .then(res => {
+        this.incrementStatusBar();
+        this.status =
+          `All Hz Calibration: done computing the PSD graphs...`.toString() +
+          this.generateTemplate().toString();
+        this.emit('update', {message: this.status});
+        return res;
+      })
+      .catch(err => {
+        console.error(err);
+      });
+
     this.addTimeStamp('Get PSD of filered mls (component)');
     if (this.isCalibrating) return null;
     let component_filtered_mls_psd = await this.pyServerAPI
       .getMLSPSDWithRetry({
         mls: this.componentConvolution,
+        sampleRate: this.sourceSamplingRate || 96000,
+      })
+      .then(res => {
+        this.incrementStatusBar();
+        this.status =
+          `All Hz Calibration: done computing the PSD graphs...`.toString() +
+          this.generateTemplate().toString();
+        this.emit('update', {message: this.status});
+        return res;
+      })
+      .catch(err => {
+        console.error(err);
+      });
+
+    let component_no_bandpass_filtered_mls_psd = await this.pyServerAPI
+      .getMLSPSDWithRetry({
+        mls: this.componentConvolutionNoBandpass,
         sampleRate: this.sourceSamplingRate || 96000,
       })
       .then(res => {
@@ -1128,7 +1170,12 @@ class Combination extends AudioCalibrator {
           x: system_filtered_mls_psd['x_mls'],
           y: system_filtered_mls_psd['y_mls'],
         },
+        filtered_no_bandpass_mls_psd: {
+          x: system_no_bandpass_filtered_mls_psd['x_mls'],
+          y: system_no_bandpass_filtered_mls_psd['y_mls'],
+        },
         convolution: this.systemConvolution,
+        convolutionNoBandpass: this.systemConvolutionNoBandpass,
         psd: {
           unconv: {
             x: system_recs_psd['x_unconv'],
@@ -1156,7 +1203,12 @@ class Combination extends AudioCalibrator {
           x: component_filtered_mls_psd['x_mls'],
           y: component_filtered_mls_psd['y_mls'],
         },
+        filtered_no_bandpass_mls_psd: {
+          x: component_no_bandpass_filtered_mls_psd['x_mls'],
+          y: component_no_bandpass_filtered_mls_psd['y_mls'],
+        },
         convolution: this.componentConvolution,
+        convolutionNoBandpass: this.componentConvolutionNoBandpass,
         psd: {
           unconv: {
             x: component_unconv_rec_psd['x'],
@@ -1394,6 +1446,23 @@ class Combination extends AudioCalibrator {
           console.error(err);
         });
 
+      let filtered_no_bandpass_mls_psd = await this.pyServerAPI
+        .getMLSPSDWithRetry({
+          mls: this.componentConvolutionNoBandpass,
+          sampleRate: this.sourceSamplingRate || 96000,
+        })
+        .then(res => {
+          this.incrementStatusBar();
+          this.status =
+            `All Hz Calibration: done computing the PSD graphs...`.toString() +
+            this.generateTemplate().toString();
+          this.emit('update', {message: this.status});
+          return res;
+        })
+        .catch(err => {
+          console.error(err);
+        });
+
       let gainValue = this.getGainDBSPL();
       iir_ir_and_plots = {
         unfiltered_recording: return_unconv_rec,
@@ -1410,7 +1479,9 @@ class Combination extends AudioCalibrator {
           },
           filtered_recording: [],
           filtered_mls_psd: {},
+          filtered_no_bandpass_mls_psd: {},
           convolution: this.systemConvolution,
+          convolutionNoBandpass: this.systemConvolutionNoBandpass,
           psd: {
             unconv: {
               x: [],
@@ -1438,7 +1509,12 @@ class Combination extends AudioCalibrator {
             x: filtered_mls_psd['x_mls'],
             y: filtered_mls_psd['y_mls'],
           },
+          filtered_no_bandpass_mls_psd: {
+            x: filtered_no_bandpass_mls_psd['x_mls'],
+            y: filtered_no_bandpass_mls_psd['y_mls'],
+          },
           convolution: this.componentConvolution,
+          convolutionNoBandpass: this.componentConvolutionNoBandpass,
           psd: {
             unconv: {
               x: unconv_results['x'],
@@ -1578,6 +1654,23 @@ class Combination extends AudioCalibrator {
           console.error(err);
         });
 
+        let filtered_no_bandpass_mls_psd = await this.pyServerAPI
+        .getMLSPSDWithRetry({
+          mls: this.systemConvolutionNoBandpass,
+          sampleRate: this.sourceSamplingRate || 96000,
+        })
+        .then(res => {
+          this.incrementStatusBar();
+          this.status =
+            `All Hz Calibration: done computing the PSD graphs...`.toString() +
+            this.generateTemplate().toString();
+          this.emit('update', {message: this.status});
+          return res;
+        })
+        .catch(err => {
+          console.error(err);
+        });
+
       let gainValue = this.getGainDBSPL();
       iir_ir_and_plots = {
         unfiltered_recording: return_unconv_rec,
@@ -1597,7 +1690,12 @@ class Combination extends AudioCalibrator {
             x: filtered_mls_psd['x_mls'],
             y: filtered_mls_psd['y_mls'],
           },
+          filtered_no_bandpass_mls_psd: {
+            x: filtered_no_bandpass_mls_psd['x_mls'],
+            y: filtered_no_bandpass_mls_psd['y_mls'],
+          },
           convolution: this.systemConvolution,
+          convolutionNoBandpass: this.systemConvolutionNoBandpass,
           psd: {
             unconv: {
               x: results['x_unconv'],
@@ -1622,7 +1720,9 @@ class Combination extends AudioCalibrator {
             x_no_bandpass: component_iir_psd['x_unconv'],
           },
           filtered_mls_psd: {},
+          filtered_no_bandpass_mls_psd: {},
           convolution: this.componentConvolution,
+          convolutionNoBandpass: this.componentConvolutionNoBandpass,
           psd: {
             unconv: {
               x: [],
@@ -1835,6 +1935,7 @@ class Combination extends AudioCalibrator {
           },
           filtered_recording: [],
           convolution: this.systemConvolution,
+          convolutionNoBandpass: this.systemConvolutionNoBandpass,
           psd: {
             unconv: {
               x: [],
@@ -1858,6 +1959,7 @@ class Combination extends AudioCalibrator {
             x_no_bandpass: component_iir_psd['x_unconv'],
           },
           convolution: this.componentConvolution,
+          convolutionNoBandpass: this.componentConvolutionNoBandpass,
           psd: {
             unconv: {
               x: [],
