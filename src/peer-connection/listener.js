@@ -229,6 +229,7 @@ class Listener extends AudioPeer {
 
     // await the promise
     try {
+      this.displayUpdate(`Listener Track settings before applied constraints - ${JSON.stringify(track.getSettings(), undefined, 2)}`);
       await track.applyConstraints(constraints);
     } catch (err) {
       console.error(err);
