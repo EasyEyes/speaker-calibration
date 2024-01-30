@@ -229,7 +229,6 @@ class Listener extends AudioPeer {
 
     // await the promise
     try {
-      this.displayUpdate(`Listener Track settings before applied constraints - ${JSON.stringify(track.getSettings(), undefined, 2)}`);
       await track.applyConstraints(constraints);
     } catch (err) {
       console.error(err);
@@ -297,10 +296,12 @@ class Listener extends AudioPeer {
 
     navigator.mediaDevices
       .getUserMedia({
-        audio: this.getMediaDevicesAudioContraints(),
+        // audio: this.getMediaDevicesAudioContraints(),
+        audio: {echoCancellation: false},
         video: false,
       })
       .then(stream => {
+        this.displayUpdate(`Listener Track settings before applied constraints - ${JSON.stringify(stream.getAudioTracks()[0].getSettings(), undefined, 2)}`);
         this.applyHQTrackConstraints(stream)
           .then(settings => {
             console.log(settings);
