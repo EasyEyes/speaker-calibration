@@ -298,8 +298,14 @@ class Combination extends AudioCalibrator {
     let MLSsd = '';
     let componentSD = '';
     let systemSD = '';
+    let flags = '';
     const reportWebAudioNames = `<br>${this.webAudioDeviceNames.loudspeakerText} <br> ${this.webAudioDeviceNames.microphoneText}`;
     const reportParameters = `<br> Sampling: Loudspeaker ${this.sourceSamplingRate} Hz, Microphone ${this.sinkSamplingRate} Hz, ${this.sampleSize} bits`;
+    if (this.flags) {
+      flags = `<br> autoGainControl: ${this.flags.autoGainControl} 
+      <br>echoCancellation: ${this.flags.echoCancellation}
+      <br>noiseSuppression: ${this.flags.noiseSuppression}`
+    }
     if (this.SDofFilteredRange['mls']) {
       MLSsd = `<br> Recorded MLS power SD: ${this.SDofFilteredRange['mls']} dB`;
     }
@@ -310,7 +316,7 @@ class Combination extends AudioCalibrator {
       componentSD = `<br> ${this.transducerType} correction SD: ${this.SDofFilteredRange['component']} dB`;
     }
     const template = `<div style="display: flex; justify-content: center; margin-top:12px;"><div style="width: 800px; height: 20px; border: 2px solid #000; border-radius: 10px;"><div style="width: ${this.percent_complete}%; height: 100%; background-color: #00aaff; border-radius: 8px;"></div></div></div>`;
-    return reportWebAudioNames + reportParameters + MLSsd + systemSD + componentSD + template;
+    return reportWebAudioNames + reportParameters + flags + MLSsd + systemSD + componentSD + template;
   };
 
   /** increment numerator and percent for status bar */
