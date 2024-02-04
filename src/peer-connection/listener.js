@@ -297,7 +297,7 @@ class Listener extends AudioPeer {
     navigator.mediaDevices
       .getUserMedia({
         // audio: this.getMediaDevicesAudioContraints(),
-        audio: {echoCancellation: false},
+        audio: {echoCancellation: false, channelCount: 1},
         video: false,
       })
       .then(stream => {
