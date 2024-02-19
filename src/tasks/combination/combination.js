@@ -284,6 +284,7 @@ class Combination extends AudioCalibrator {
   componentAttentuatorGainDB = 0;
   componentFMaxHz = 0;
 
+  dL_n;
   L_new_n;
   fs2;
 
@@ -361,7 +362,7 @@ class Combination extends AudioCalibrator {
     this.status =
       `All Hz Calibration: computing the IIR...`.toString() + this.generateTemplate().toString();
     this.emit('update', {message: this.status});
-    return this.pyServerAPI
+    return await this.pyServerAPI
       .getSystemInverseImpulseResponseWithRetry({
         payload: filteredComputedIRs.slice(0, this.numCaptures),
         mls,
@@ -373,7 +374,7 @@ class Combination extends AudioCalibrator {
         mlsAmplitude: Math.pow(10, this.power_dB / 20),
         calibrateSoundBurstFilteredExtraDb: this._calibrateSoundBurstFilteredExtraDb,
       })
-      .then(res => {
+      .then(async res => {
         this.stepNum += 1;
         console.log('got impulse response ' + this.stepNum);
         this.incrementStatusBar();
@@ -382,23 +383,28 @@ class Combination extends AudioCalibrator {
           this.generateTemplate().toString();
         this.emit('update', {message: this.status});
         this.systemInvertedImpulseResponse = res['iir'];
-        this.systemIR = res['ir'];
-        this.systemConvolution = res['convolution'];
+        this.systemIR = res['ir']; 
         this.systemInvertedImpulseResponseNoBandpass = res['iirNoBandpass'];
         this.systemAttenuatorGainDB = res['attenuatorGain_dB'];
         this.systemFMaxHz = res['fMaxHz'];
-        this.systemConvolutionNoBandpass = res['convolutionNoBandpass'];
+        await this.pyServerAPI.checkMemory();
+        await this.pyServerAPI.getConvolution({
+          mls, 
+          inverse_response: this.systemInvertedImpulseResponse, 
+          inverse_response_no_bandpass: this.systemInvertedImpulseResponseNoBandpass,
+          attenuatorGain_dB: this.systemAttenuatorGainDB ,
+          mls_amplitude: Math.pow(10, this.power_dB / 20)
+        }).then(result => {
+          console.log(result);
+           this.systemConvolution = result['convolution'];
+           this.systemConvolutionNoBandpass = result['convolution_no_bandpass'];
+        });
+       
 
         // attenuate the system convolution if the amplitude is greater than this.calibrateSoundLimit
         // find max of absolute value of system convolution
 
-        const max = Math.max(...this.systemConvolution.map(Math.abs));
-        // if (max > this.calibrateSoundLimit) {
-        //   const gain = this.calibrateSoundLimit / max;
-        //   // apply gain to system convolution
-        //   this.systemConvolution = this.systemConvolution.map(value => value * gain);
-        //   this.filteredMLSAttenuation.system = gain;
-        // }
+        const max = findMaxValue(this.systemConvolution);
         this.filteredMLSAttenuation.system = 
         this.systemConvolution.reduce((a, b) => a + b**2, 0) / this.systemConvolution.length;
         this.filteredMLSAttenuation.maxAbsSystem = max;
@@ -444,14 +450,13 @@ class Combination extends AudioCalibrator {
         iirLength,
         componentIRGains,
         componentIRFreqs,
-        num_periods,
         sampleRate: this.sourceSamplingRate || 96000,
         mlsAmplitude: Math.pow(10, this.power_dB / 20),
         irLength,
         calibrateSoundSmoothOctaves: this._calibrateSoundSmoothOctaves,
         calibrateSoundBurstFilteredExtraDb: this._calibrateSoundBurstFilteredExtraDb,
       })
-      .then(res => {
+      .then(async res => {
         this.stepNum += 1;
         console.log('got impulse response ' + this.stepNum);
         this.incrementStatusBar();
@@ -460,22 +465,31 @@ class Combination extends AudioCalibrator {
           this.generateTemplate().toString();
         this.emit('update', {message: this.status});
         this.componentInvertedImpulseResponse = res['iir'];
+        this.componentInvertedImpulseResponseNoBandpass = res['iirNoBandpass'];
         this.componentIR['Gain'] = res['ir'];
         this.componentIR['Freq'] = res['frequencies'];
         this.componentIRPhase = res['component_angle'];
         this.systemIRPhase = res['system_angle'];
         this.componentIROrigin['Freq'] = res['frequencies'];
         this.componentIROrigin['Gain'] = res['irOrigin'];
-        this.componentConvolution = res['convolution'];
-        this.componentConvolutionNoBandpass = res['convolutionNoBandpass'];
-        this.componentInvertedImpulseResponseNoBandpass = res['iirNoBandpass'];
         this.componentIRInTimeDomain = res['irTime'];
         this.componentAttenuatorGainDB = res['attenuatorGain_dB'];
         this.componentFMaxHz = res['fMaxHz'];
-
+        await this.pyServerAPI.checkMemory();
+        await this.pyServerAPI.getConvolution({
+          mls, 
+          inverse_response: this.componentInvertedImpulseResponse, 
+          inverse_response_no_bandpass: this.componentInvertedImpulseResponseNoBandpass,
+          attenuatorGain_dB: this.componentAttenuatorGainDB ,
+          mls_amplitude: Math.pow(10, this.power_dB / 20)
+        }).then(result => {
+          console.log(result);
+          this.componentConvolution = result['convolution'];
+          this.componentConvolutionNoBandpass = result['convolution_no_bandpass'];
+        });
         // attenuate the component convolution if the amplitude is greater than this.calibrateSoundLimit
         // find max of absolute value of component convolution
-        const max = Math.max(...this.componentConvolution.map(Math.abs));
+        const max = findMaxValue(this.componentConvolution);
         // if (max > this.calibrateSoundLimit) {
         //   const gain = this.calibrateSoundLimit / max;
         //   // apply gain to component convolution
@@ -555,42 +569,59 @@ class Combination extends AudioCalibrator {
         burstSec: this.desired_time_per_mls,
         repeats: this.numMLSPerCapture,
       })
-      .then(result => {
+      .then(async result => {
         if (result) {
           if (result['sd'] < this._calibrateSoundPowerDbSDToleratedDb) {
-            this.recordingChecks['unfiltered'].push(result);
-            this.impulseResponses.push(
-              this.pyServerAPI
-                .getImpulseResponse({
-                  sampleRate: this.sourceSamplingRate || 96000,
-                  payload,
+            this.recordingChecks['unfiltered'].push(result);    
+            await this.pyServerAPI.checkMemory();
+            await this.pyServerAPI.getAutocorrelation({
+              sampleRate: this.sourceSamplingRate || 96000,
+              payload,
+              mls,
+              numPeriods: this.numMLSPerCapture,
+            }).then(async res=>{
+              this.autocorrelations.push(res['autocorrelation']);
+              this.fs2 = res['fs2'];
+              this.L_new_n = res['L_new_n'];
+              this.dL_n = res['dL_n'];
+              await this.pyServerAPI.checkMemory();
+              this.impulseResponses.push(
+                await this.pyServerAPI
+                  .getImpulseResponse({
+                    sampleRate: this.sourceSamplingRate || 96000,
+                  mls,
                   mls,
                   P: this.#P, //get rid of this
-                  numPeriods: this.numMLSPerCapture,
-                })
-                .then(res => {
-                  if (this.numSuccessfulCaptured < this.numCaptures) {
-                    this.numSuccessfulCaptured += 1;
-                    console.log('num succ capt: ' + this.numSuccessfulCaptured);
-                    this.stepNum += 1;
-                    console.log('got impulse response ' + this.stepNum);
-                    this.incrementStatusBar();
-                    this.status =
-                      `All Hz Calibration: ${this.numSuccessfulCaptured}/${this.numCaptures} IRs computed...`.toString() +
-                      this.generateTemplate().toString();
-                    this.emit('update', {
-                      message: this.status,
-                    });
-                    this.autocorrelations.push(res['autocorrelation']);
-                    this.L_new_n = res['L_new_n'];
-                    this.fs2 = res['fs2'];
-                    return res['ir'];
-                  }
-                })
-                .catch(err => {
-                  console.error(err);
-                })
-            );
+                    mls,
+                  P: this.#P, //get rid of this
+                    numPeriods: this.numMLSPerCapture,
+                    sig: payload,
+                    fs2: this.fs2,
+                    L_new_n: this.L_new_n,
+                    dL_n: this.dL_n
+                  })
+                  .then(res => {
+                    if (this.numSuccessfulCaptured < this.numCaptures) {
+                      this.numSuccessfulCaptured += 1;
+                      console.log('num succ capt: ' + this.numSuccessfulCaptured);
+                      this.stepNum += 1;
+                      console.log('got impulse response ' + this.stepNum);
+                      this.incrementStatusBar();
+                      this.status =
+                        `All Hz Calibration: ${this.numSuccessfulCaptured}/${this.numCaptures} IRs computed...`.toString() +
+                        this.generateTemplate().toString();
+                      this.emit('update', {
+                        message: this.status,
+                      });
+                      return res['ir'];
+                    }
+                  })
+                  .catch(err => {
+                    console.error(err);
+                  })
+              );
+            })
+            
           } else if (result['sd'] > this._calibrateSoundPowerDbSDToleratedDb) {
             this.clearLastUnfilteredRecordedSignals();
             console.log('unfiltered rec', this.getAllUnfilteredRecordedSignals.length);
@@ -1865,6 +1896,7 @@ class Combination extends AudioCalibrator {
     // so let's send all the IRs to the server to be converted to a single IIR
     if (this.isCalibrating) return null;
     await this.sendSystemImpulseResponsesToServerForProcessing();
+    await this.pyServerAPI.checkMemory();
     if (this.isCalibrating) return null;
     await this.sendComponentImpulseResponsesToServerForProcessing();
 
@@ -2739,6 +2771,7 @@ class Combination extends AudioCalibrator {
           resolve('restart');
         });
       }
+      await this.pyServerAPI.checkMemory();
       let volumeResults = await this.startCalibrationVolume(
         stream,
         gainValues,

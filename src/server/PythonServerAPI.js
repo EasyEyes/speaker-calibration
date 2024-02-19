@@ -1,4 +1,7 @@
 import axios from 'axios';
+import {
+  sleep
+} from '../utils';
 /**
  *
  */
@@ -27,23 +30,97 @@ class PythonServerAPI {
    */
   getImpulseResponse = async ({
     mls, 
-    payload, 
     sampleRate, 
-    P, 
-    numPeriods
+    numPeriods,
+    sig,
+    fs2,
+    L_new_n,
+    dL_n
   }) => {
     const task = 'impulse-response';
     let res = null;
 
-    console.log({payload});
+    const data = JSON.stringify({
+      task,
+      'sample-rate': sampleRate,
+      mls,
+      numPeriods,
+      sig,
+      fs2,
+      L_new_n,
+      dL_n
+    });
+
+    await axios({
+      method: 'post',
+      baseURL: PythonServerAPI.PYTHON_SERVER_URL,
+      url: `/task/${task}`,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      data,
+    })
+      .then(response => {
+        res = response;
+      })
+      .catch(error => {
+        throw error;
+      });
+    return res.data[task];
+  };
+
+  getAutocorrelation = async ({
+    mls, 
+    payload, 
+    sampleRate, 
+    numPeriods
+  }) => {
+    const task = 'autocorrelation';
+    let res = null;
 
     const data = JSON.stringify({
       task,
       payload,
       'sample-rate': sampleRate,
       mls,
-      P,
       numPeriods,
+    });
+
+    await axios({
+      method: 'post',
+      baseURL: PythonServerAPI.PYTHON_SERVER_URL,
+      url: `/task/${task}`,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      data,
+    })
+      .then(response => {
+        res = response;
+      })
+      .catch(error => {
+        throw error;
+      });
+    return res.data[task];
+  };
+
+  getConvolution = async ({
+    mls, 
+    inverse_response, 
+    inverse_response_no_bandpass,
+    attenuatorGain_dB,
+    mls_amplitude
+  }) => {
+    const task = 'convolution';
+    let res = null;
+
+    const data = JSON.stringify({
+      task,
+      mls, 
+      inverse_response, 
+      inverse_response_no_bandpass,
+      attenuatorGain_dB,
+      mls_amplitude
     });
 
     await axios({
@@ -92,6 +169,41 @@ class PythonServerAPI {
 
     return res.data[task];
   };
+
+  getMemory = async () => {
+    let res;
+    await axios({
+      method: 'post',
+      baseURL: PythonServerAPI.PYTHON_SERVER_URL,
+      url: `/memory`,
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    })
+      .then(response => {
+        console.log("memory used:", Math.round(response.data['memory']), "mb");
+        res = response.data['memory'];
+      })
+      .catch(error => {
+        throw error;
+      });
+      return res;
+  };
+
+
+  checkMemory = async () => {
+    console.log("wait for memory under 500 mb to continue calibration");
+    await this.getMemory();
+    // let memory = await this.getMemory();
+    // while (memory >= 500) {
+    //   console.log("sleep 30s");
+    //   await sleep(30);
+    //   memory = await this.getMemory();
+    // }
+    
+  };
+
+
   getMLSWithRetry = async ({length,amplitude}) => {
     let retryCount = 0;
     let response = null;
@@ -279,7 +391,6 @@ class PythonServerAPI {
     componentIRGains,
     iirLength,
     componentIRFreqs,
-    num_periods,
     sampleRate,
     mlsAmplitude,
     irLength,
@@ -300,7 +411,6 @@ class PythonServerAPI {
       iirLength,
       componentIRGains,
       componentIRFreqs,
-      num_periods,
       sampleRate,
       mlsAmplitude,
       irLength,
@@ -332,7 +442,6 @@ class PythonServerAPI {
     lowHz,
     highHz,
     iirLength,
-    num_periods,
     sampleRate,
     mlsAmplitude,
     calibrateSoundBurstFilteredExtraDb
@@ -349,7 +458,6 @@ class PythonServerAPI {
       lowHz,
       iirLength,
       highHz,
-      num_periods,
       sampleRate,
       mlsAmplitude,
       calibrateSoundBurstFilteredExtraDb
@@ -436,7 +544,6 @@ class PythonServerAPI {
     componentIRGains,
     iirLength,
     componentIRFreqs,
-    num_periods,
     sampleRate,
     mlsAmplitude,
     irLength,
@@ -456,7 +563,6 @@ class PythonServerAPI {
           componentIRGains,
           iirLength,
           componentIRFreqs,
-          num_periods,
           sampleRate,
           mlsAmplitude,
           irLength,
@@ -487,7 +593,6 @@ class PythonServerAPI {
     lowHz,
     highHz,
     iirLength,
-    num_periods,
     sampleRate,
     mlsAmplitude,
     calibrateSoundBurstFilteredExtraDb
@@ -503,7 +608,6 @@ class PythonServerAPI {
           lowHz,
           highHz,
           iirLength,
-          num_periods,
           sampleRate,
           mlsAmplitude,
           calibrateSoundBurstFilteredExtraDb
