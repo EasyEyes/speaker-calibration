@@ -31,6 +31,7 @@
   "license": "MIT",
   "repository": "git://github.com/EasyEyes/speaker-calibration.git",
   "dependencies": {
+    "@tensorflow/tfjs": "^4.17.0",
     "axios": "^0.27.2",
     "fftw-js": "^0.1.4",
     "firebase": "^9.23.0",

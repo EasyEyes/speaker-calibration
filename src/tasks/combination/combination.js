@@ -1,5 +1,7 @@
 import AudioCalibrator from '../audioCalibrator';
 
+// import * as tf from '../../../node_modules/@tensorflow/tfjs';
+
 import {
   sleep,
   csvToArray,
@@ -571,9 +573,22 @@ class Combination extends AudioCalibrator {
       })
       .then(async result => {
         if (result) {
+          console.log("JS used memory:", performance.memory.usedJSHeapSize/1024/1024, "mb");
           if (result['sd'] < this._calibrateSoundPowerDbSDToleratedDb) {
             this.recordingChecks['unfiltered'].push(result);    
             await this.pyServerAPI.checkMemory();
+            // let start = new Date().getTime() / 1000;
+          //   const payloadT = tf.tensor1d(payload);
+          //   payloadT.print();
+          //   const xfft = payloadT.rfft();  // tf.spe
+          //   xfft.array().then(array => {
+          //     console.log("fft:", array);
+          //     let setItem = new Set(array);
+          //     console.log("all zero", setItem.size === 1 && setItem.has(0));
+          // });
+        // console.log("dimention:", xfft.shape);
+            // let end = new Date().getTime() / 1000;
+            // console.log("Time taken:", end - start, "seconds");
             await this.pyServerAPI.getAutocorrelation({
               sampleRate: this.sourceSamplingRate || 96000,
               payload,
@@ -588,12 +603,8 @@ class Combination extends AudioCalibrator {
               this.impulseResponses.push(
                 await this.pyServerAPI
                   .getImpulseResponse({
-                    sampleRate: this.sourceSamplingRate || 96000,
-                  mls,
-                  mls,
-                  P: this.#P, //get rid of this
                     mls,
-                  P: this.#P, //get rid of this
+                    sampleRate: this.sourceSamplingRate || 96000,
                     numPeriods: this.numMLSPerCapture,
                     sig: payload,
                     fs2: this.fs2,
@@ -1823,6 +1834,7 @@ class Combination extends AudioCalibrator {
    * @example
    */
   startCalibrationImpulseResponse = async stream => {
+    console.log("JS used memory:", performance.memory.usedJSHeapSize/1024/1024, "mb");
     let desired_time = this.desired_time_per_mls;
     let checkRec = 'allhz';
 
@@ -2222,6 +2234,7 @@ class Combination extends AudioCalibrator {
   };
 
   startCalibrationVolume = async (stream, gainValues, lCalib, componentGainDBSPL) => {
+    console.log("JS used memory:", performance.memory.usedJSHeapSize/1024/1024, "mb");
     if (this.isCalibrating) return null;
     const trialIterations = gainValues.length;
     this.status_denominator += trialIterations;
@@ -2231,7 +2244,6 @@ class Combination extends AudioCalibrator {
     const outDBSPLValues = [];
     const outDBSPL1000Values = [];
     let checkRec = "loudest";
-
     // do one calibration that will be discarded
     const soundLevelToDiscard = -60;
     const gainToDiscard = Math.pow(10, soundLevelToDiscard / 20);
@@ -2783,8 +2795,6 @@ class Combination extends AudioCalibrator {
       this.T = volumeResults["parameters"]["T"];
       this.gainDBSPL = volumeResults["parameters"]["gainDBSPL"];
 
-      // console.log("VOLUME RESULTS");
-      // console.log(volumeResults);
       let impulseResponseResults = await this.startCalibrationImpulseResponse(stream);
       if (!impulseResponseResults) return;
       impulseResponseResults['background_noise'] = this.background_noise;
