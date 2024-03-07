@@ -6,10 +6,10 @@ import {
  *
  */
 class PythonServerAPI {
-  static PYTHON_SERVER_URL = 'https://easyeyes-python-flask-server.herokuapp.com';
+  // static PYTHON_SERVER_URL = 'https://easyeyes-python-flask-server.herokuapp.com';
 
   static TEST_SERVER_URL = 'http://127.0.0.1:5000';
-  // static PYTHON_SERVER_URL ='http://127.0.0.1:5000';
+  static PYTHON_SERVER_URL ='http://127.0.0.1:5000';
 
   /** @private */
   MAX_RETRY_COUNT = 3;
@@ -141,14 +141,15 @@ class PythonServerAPI {
     return res.data[task];
   };
 
-  getMLS = async ({length,amplitude}) => {
+  getMLS = async ({length,amplitude,calibrateSoundBurstMLSVersions}) => {
     const task = 'mls';
     let res = null;
 
     const data = JSON.stringify({
       task,
       length: length,
-      amplitude: amplitude
+      amplitude: amplitude,
+      calibrateSoundBurstMLSVersions: calibrateSoundBurstMLSVersions,
     });
 
     await axios({
@@ -204,13 +205,13 @@ class PythonServerAPI {
   };
 
 
-  getMLSWithRetry = async ({length,amplitude}) => {
+  getMLSWithRetry = async ({length,amplitude,calibrateSoundBurstMLSVersions}) => {
     let retryCount = 0;
     let response = null;
 
     while (retryCount < this.MAX_RETRY_COUNT) {
       try {
-        response = await this.getMLS({length,amplitude});
+        response = await this.getMLS({length,amplitude, calibrateSoundBurstMLSVersions});
         // If the request is successful, break out of the loop
         break;
       } catch (error) {

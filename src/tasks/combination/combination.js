@@ -1,7 +1,5 @@
 import AudioCalibrator from '../audioCalibrator';
 
-// import * as tf from '../../../node_modules/@tensorflow/tfjs';
-
 import {
   sleep,
   csvToArray,
@@ -289,6 +287,7 @@ class Combination extends AudioCalibrator {
   dL_n;
   L_new_n;
   fs2;
+  icapture = 0;
 
   /**generate string template that gets reevaluated as variable increases */
   generateTemplate = () => {
@@ -354,7 +353,8 @@ class Combination extends AudioCalibrator {
     const filteredComputedIRs = computedIRs.filter(element => {
       return element != undefined;
     }); //log any errors that are found in this step
-    const mls = this.#mls;
+    console.log("filteredComputedIRs", filteredComputedIRs);
+    const mls = this.#mls[this.icapture];
     const lowHz = this.#lowHz; //gain of 1 below cutoff, need gain of 0
     const highHz = this.#highHz; //check error for anything other than 10 kHz
     const iirLength = this.iirLength;
@@ -432,7 +432,7 @@ class Combination extends AudioCalibrator {
     });
     const componentIRGains = this.componentIR['Gain'];
     const componentIRFreqs = this.componentIR['Freq'];
-    const mls = this.#mls;
+    const mls = this.#mls[this.icapture];
     const lowHz = this.#lowHz;
     const iirLength = this.iirLength;
     const irLength = this.irLength;
@@ -552,7 +552,7 @@ class Combination extends AudioCalibrator {
       'Obtaining last all hz unfiltered recording from #allHzUnfilteredRecordings to send to server for processing'
     );
     const numSignals = allSignals.length;
-    const mls = this.#mlsBufferView;
+    const mls = this.#mlsBufferView[this.icapture];
     const payload =
       signalCsv && signalCsv.length > 0 ? csvToArray(signalCsv) : allSignals[numSignals - 1];
     console.log('sending rec');
@@ -665,7 +665,7 @@ class Combination extends AudioCalibrator {
     let time_to_wait = 0;
     if (this.mode === 'unfiltered') {
       //unfiltered
-      time_to_wait = (this.#mls.length / this.sourceSamplingRate) * this.numMLSPerCapture;
+      time_to_wait = (this.#mls[0].length / this.sourceSamplingRate) * this.numMLSPerCapture;
       time_to_wait = time_to_wait * 1.1;
     } else if (this.mode === 'filtered') {
       //filtered
@@ -715,7 +715,7 @@ class Combination extends AudioCalibrator {
     let number_of_bursts_to_skip = this.num_mls_to_skip;
     let time_to_sleep = 0;
     if (this.mode === 'unfiltered') {
-      time_to_sleep = (this.#mls.length / this.sourceSamplingRate) * number_of_bursts_to_skip;
+      time_to_sleep = (this.#mls[0].length / this.sourceSamplingRate) * number_of_bursts_to_skip;
     } else if (this.mode === 'filtered') {
       console.log(this.#currentConvolution.length);
       // time_to_sleep =
@@ -829,7 +829,7 @@ class Combination extends AudioCalibrator {
    * @param {*} dataBufferArray
    * @example
    */
-  #setCalibrationNodesFromBuffer = (dataBufferArray = [this.#mlsBufferView]) => {
+  #setCalibrationNodesFromBuffer = (dataBufferArray = [this.#mlsBufferView[this.icapture]]) => {
     if (dataBufferArray.length === 1) {
       this.#createCalibrationNodeFromBuffer(dataBufferArray[0]);
     } else {
@@ -1052,6 +1052,7 @@ class Combination extends AudioCalibrator {
           .map(value => 10 * Math.log10(value));
 
         this.SDofFilteredRange['mls'] = standardDeviation(mls_psd);
+        console.log('mls_psd', this.SDofFilteredRange['mls']);
         this.SDofFilteredRange['system'] = standardDeviation(filtered_psd);
         this.incrementStatusBar();
         this.status =
@@ -1111,7 +1112,7 @@ class Combination extends AudioCalibrator {
     this.addTimeStamp('Get PSD of mls sequence');
     if (this.isCalibrating) return null;
     let mls_psd = await this.pyServerAPI
-      .getMLSPSDWithRetry({mls: this.#mlsBufferView, sampleRate: this.sourceSamplingRate || 96000})
+      .getMLSPSDWithRetry({mls: this.#mlsBufferView[0], sampleRate: this.sourceSamplingRate || 96000})
       .then(res => {
         this.incrementStatusBar();
         this.status =
@@ -1361,6 +1362,15 @@ class Combination extends AudioCalibrator {
       let unconv_results = await this.pyServerAPI
         .getSubtractedPSDWithRetry(unconv_rec, knownGain, knownFreq, sampleRate)
         .then(res => {
+          console.log(res);
+          let mls_psd = res.y
+            .filter(
+              (value, index) =>
+                res.x[index] >= this.#lowHz && res.x[index] <= this.systemFMaxHz
+            )
+            .map(value => 10 * Math.log10(value));
+          this.SDofFilteredRange['mls'] = standardDeviation(mls_psd);
+          console.log('mls sd', this.SDofFilteredRange['mls']);
           this.incrementStatusBar();
           this.status =
             `All Hz Calibration: done computing the PSD graphs...`.toString() +
@@ -1460,7 +1470,7 @@ class Combination extends AudioCalibrator {
       if (this.isCalibrating) return null;
       let mls_psd = await this.pyServerAPI
         .getMLSPSDWithRetry({
-          mls: this.#mlsBufferView,
+          mls: this.#mlsBufferView[this.icapture],
           sampleRate: this.sourceSamplingRate || 96000,
         })
         .then(res => {
@@ -1606,9 +1616,8 @@ class Combination extends AudioCalibrator {
                 res.x_unconv[index] >= this.#lowHz && res.x_conv[index] <= this.systemFMaxHz
             )
             .map(value => 10 * Math.log10(value));
-
+          this.SDofFilteredRange['mls'] = standardDeviation(mls_psd);
           this.SDofFilteredRange['system'] = standardDeviation(filtered_psd);
-          this.SDofFilteredRange['unfiltered'] = standardDeviation(mls_psd);
           this.incrementStatusBar();
           this.status =
             `All Hz Calibration: done computing the PSD graphs...`.toString() +
@@ -1668,7 +1677,7 @@ class Combination extends AudioCalibrator {
       if (this.isCalibrating) return null;
       let mls_psd = await this.pyServerAPI
         .getMLSPSDWithRetry({
-          mls: this.#mlsBufferView,
+          mls: this.#mlsBufferView[this.icapture],
           sampleRate: this.sourceSamplingRate || 96000,
         })
         .then(res => {
@@ -1857,7 +1866,11 @@ class Combination extends AudioCalibrator {
     this.addTimeStamp('Get MLS sequence');
     if (this.isCalibrating) return null;
     await this.pyServerAPI
-      .getMLSWithRetry({length, amplitude})
+      .getMLSWithRetry({
+        length, 
+        amplitude,
+        calibrateSoundBurstMLSVersions: this.numCaptures
+      })
       .then(res => {
         console.log(res);
         this.#mlsBufferView = res['mls'];
@@ -1889,18 +1902,21 @@ class Combination extends AudioCalibrator {
     this.numSuccessfulCaptured = 0;
 
     if (this.isCalibrating) return null;
-    await this.calibrationSteps(
-      stream,
-      this.#playCalibrationAudio, // play audio func (required)
-      this.#createCalibrationNodeFromBuffer(this.#mlsBufferView), // before play func
-      this.#awaitSignalOnset, // before record
-      () => this.numSuccessfulCaptured < this.numCaptures, // loop while true
-      this.#awaitDesiredMLSLength, // during record
-      this.#afterMLSRecord, // after record
-      this.mode,
-      checkRec
-    );
-    this.stopCalibrationAudio();
+    for (var i = 0; i < this.numCaptures; i++) {
+      this.icapture = i;
+      await this.calibrationSteps(
+        stream,
+        this.#playCalibrationAudio, // play audio func (required)
+        this.#createCalibrationNodeFromBuffer(this.#mlsBufferView[this.icapture]), // before play func
+        this.#awaitSignalOnset, // before record
+          () => this.numSuccessfulCaptured < 1, // loop while true
+          this.#awaitDesiredMLSLength, // during record
+        this.#afterMLSRecord, // after record
+        this.mode,
+        checkRec
+      );
+      this.stopCalibrationAudio();
+    }
     checkRec = false;
 
     // at this stage we've captured all the required signals,
@@ -2784,16 +2800,16 @@ class Combination extends AudioCalibrator {
         });
       }
       await this.pyServerAPI.checkMemory();
-      let volumeResults = await this.startCalibrationVolume(
-        stream,
-        gainValues,
-        lCalib,
-        this.componentGainDBSPL
-      );
-      if (!volumeResults) return;
+      // let volumeResults = await this.startCalibrationVolume(
+      //   stream,
+      //   gainValues,
+      //   lCalib,
+      //   this.componentGainDBSPL
+      // );
+      // if (!volumeResults) return;
 
-      this.T = volumeResults["parameters"]["T"];
-      this.gainDBSPL = volumeResults["parameters"]["gainDBSPL"];
+      // this.T = volumeResults["parameters"]["T"];
+      // this.gainDBSPL = volumeResults["parameters"]["gainDBSPL"];
 
       let impulseResponseResults = await this.startCalibrationImpulseResponse(stream);
       if (!impulseResponseResults) return;
