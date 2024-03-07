@@ -2800,16 +2800,16 @@ class Combination extends AudioCalibrator {
         });
       }
       await this.pyServerAPI.checkMemory();
-      // let volumeResults = await this.startCalibrationVolume(
-      //   stream,
-      //   gainValues,
-      //   lCalib,
-      //   this.componentGainDBSPL
-      // );
-      // if (!volumeResults) return;
+      let volumeResults = await this.startCalibrationVolume(
+        stream,
+        gainValues,
+        lCalib,
+        this.componentGainDBSPL
+      );
+      if (!volumeResults) return;
 
-      // this.T = volumeResults["parameters"]["T"];
-      // this.gainDBSPL = volumeResults["parameters"]["gainDBSPL"];
+      this.T = volumeResults["parameters"]["T"];
+      this.gainDBSPL = volumeResults["parameters"]["gainDBSPL"];
 
       let impulseResponseResults = await this.startCalibrationImpulseResponse(stream);
       if (!impulseResponseResults) return;
