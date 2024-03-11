@@ -2648,7 +2648,7 @@ class Combination extends AudioCalibrator {
     _calibrateSoundBurstsWarmup = 1,
     _calibrateSoundHz = 48000,
     _calibrateSoundIIRSec = 0.2,
-    _calibrateSoundIIRPhase = 'minimum',
+    _calibrateSoundIIRPhase = 'linear',
     _calibrateSoundIRSec = 0.2,
     calibrateSound1000HzPreSec = 3.5,
     calibrateSound1000HzSec = 1.0,
@@ -2656,7 +2656,7 @@ class Combination extends AudioCalibrator {
     _calibrateSoundBackgroundSecs = 0,
     _calibrateSoundSmoothOctaves = 0.33,
     _calibrateSoundPowerBinDesiredSec = 0.2,
-    _calibrateSoundPowerDbSDToleratedDb = 10,
+    _calibrateSoundPowerDbSDToleratedDb = 1,
     micManufacturer = '',
     micSerialNumber = '',
     micModelNumber = '',
@@ -2684,6 +2684,7 @@ class Combination extends AudioCalibrator {
     this.calibrateSound1000HzPostSec = calibrateSound1000HzPostSec;
     this.iirLength = Math.floor(_calibrateSoundIIRSec * this.sourceSamplingRate);
     this.irLength = Math.floor(_calibrateSoundIRSec * this.sourceSamplingRate);
+    console.log(irLength);
     this.calibrateSoundIIRPhase = _calibrateSoundIIRPhase;
     this.numMLSPerCapture = _calibrateSoundBurstRepeats + 1;
     this.desired_time_per_mls = _calibrateSoundBurstSec;

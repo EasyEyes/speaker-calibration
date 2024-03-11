@@ -88,6 +88,8 @@ class Speaker extends AudioPeer {
           }
 
           // resolve when we have a result
+          console.log(params.calibrateSoundIRSec);
+          console.log(params);
           speaker.result = await speaker.ac.startCalibration(
             stream,
             params.gainValues,
