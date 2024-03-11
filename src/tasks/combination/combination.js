@@ -2684,7 +2684,7 @@ class Combination extends AudioCalibrator {
     this.calibrateSound1000HzPostSec = calibrateSound1000HzPostSec;
     this.iirLength = Math.floor(_calibrateSoundIIRSec * this.sourceSamplingRate);
     this.irLength = Math.floor(_calibrateSoundIRSec * this.sourceSamplingRate);
-    console.log(irLength);
+    console.log(this.irLength);
     this.calibrateSoundIIRPhase = _calibrateSoundIIRPhase;
     this.numMLSPerCapture = _calibrateSoundBurstRepeats + 1;
     this.desired_time_per_mls = _calibrateSoundBurstSec;
