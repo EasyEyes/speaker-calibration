@@ -197,6 +197,8 @@ class Combination extends AudioCalibrator {
 
   irLength = 0;
 
+  calibrateSoundIIRPhase = 'linear';
+
   componentInvertedImpulseResponseNoBandpass = [];
 
   componentIRInTimeDomain = [];
@@ -375,6 +377,7 @@ class Combination extends AudioCalibrator {
         sampleRate: this.sourceSamplingRate || 96000,
         mlsAmplitude: Math.pow(10, this.power_dB / 20),
         calibrateSoundBurstFilteredExtraDb: this._calibrateSoundBurstFilteredExtraDb,
+        calibrateSoundIIRPhase: this.calibrateSoundIIRPhase
       })
       .then(async res => {
         this.stepNum += 1;
@@ -457,6 +460,7 @@ class Combination extends AudioCalibrator {
         irLength,
         calibrateSoundSmoothOctaves: this._calibrateSoundSmoothOctaves,
         calibrateSoundBurstFilteredExtraDb: this._calibrateSoundBurstFilteredExtraDb,
+        calibrateSoundIIRPhase: this.calibrateSoundIIRPhase
       })
       .then(async res => {
         this.stepNum += 1;
@@ -2644,6 +2648,7 @@ class Combination extends AudioCalibrator {
     _calibrateSoundBurstsWarmup = 1,
     _calibrateSoundHz = 48000,
     _calibrateSoundIIRSec = 0.2,
+    _calibrateSoundIIRPhase = 'minimum',
     _calibrateSoundIRSec = 0.2,
     calibrateSound1000HzPreSec = 3.5,
     calibrateSound1000HzSec = 1.0,
@@ -2651,7 +2656,7 @@ class Combination extends AudioCalibrator {
     _calibrateSoundBackgroundSecs = 0,
     _calibrateSoundSmoothOctaves = 0.33,
     _calibrateSoundPowerBinDesiredSec = 0.2,
-    _calibrateSoundPowerDbSDToleratedDb = 1,
+    _calibrateSoundPowerDbSDToleratedDb = 10,
     micManufacturer = '',
     micSerialNumber = '',
     micModelNumber = '',
@@ -2679,6 +2684,7 @@ class Combination extends AudioCalibrator {
     this.calibrateSound1000HzPostSec = calibrateSound1000HzPostSec;
     this.iirLength = Math.floor(_calibrateSoundIIRSec * this.sourceSamplingRate);
     this.irLength = Math.floor(_calibrateSoundIRSec * this.sourceSamplingRate);
+    this.calibrateSoundIIRPhase = _calibrateSoundIIRPhase;
     this.numMLSPerCapture = _calibrateSoundBurstRepeats + 1;
     this.desired_time_per_mls = _calibrateSoundBurstSec;
     this.num_mls_to_skip = _calibrateSoundBurstsWarmup;
@@ -2800,6 +2806,8 @@ class Combination extends AudioCalibrator {
         });
       }
       await this.pyServerAPI.checkMemory();
+      // calibrate volume 
+
       let volumeResults = await this.startCalibrationVolume(
         stream,
         gainValues,
@@ -2807,9 +2815,10 @@ class Combination extends AudioCalibrator {
         this.componentGainDBSPL
       );
       if (!volumeResults) return;
-
       this.T = volumeResults["parameters"]["T"];
       this.gainDBSPL = volumeResults["parameters"]["gainDBSPL"];
+      
+      // end calibrate volume
 
       let impulseResponseResults = await this.startCalibrationImpulseResponse(stream);
       if (!impulseResponseResults) return;

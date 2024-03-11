@@ -396,7 +396,8 @@ class PythonServerAPI {
     mlsAmplitude,
     irLength,
     calibrateSoundSmoothOctaves,
-    calibrateSoundBurstFilteredExtraDb
+    calibrateSoundBurstFilteredExtraDb,
+    calibrateSoundIIRPhase
   }) => {
     const task = 'component-inverse-impulse-response';
     let res = null;
@@ -416,7 +417,8 @@ class PythonServerAPI {
       mlsAmplitude,
       irLength,
       calibrateSoundSmoothOctaves,
-      calibrateSoundBurstFilteredExtraDb
+      calibrateSoundBurstFilteredExtraDb,
+      calibrateSoundIIRPhase
     });
 
     await axios({
@@ -445,7 +447,8 @@ class PythonServerAPI {
     iirLength,
     sampleRate,
     mlsAmplitude,
-    calibrateSoundBurstFilteredExtraDb
+    calibrateSoundBurstFilteredExtraDb,
+    calibrateSoundIIRPhase
   }) => {
     const task = 'system-inverse-impulse-response';
     let res = null;
@@ -461,7 +464,8 @@ class PythonServerAPI {
       highHz,
       sampleRate,
       mlsAmplitude,
-      calibrateSoundBurstFilteredExtraDb
+      calibrateSoundBurstFilteredExtraDb,
+      calibrateSoundIIRPhase
     });
 
     await axios({
@@ -549,7 +553,8 @@ class PythonServerAPI {
     mlsAmplitude,
     irLength,
     calibrateSoundSmoothOctaves,
-    calibrateSoundBurstFilteredExtraDb
+    calibrateSoundBurstFilteredExtraDb,
+    calibrateSoundIIRPhase
   }) => {
     let retryCount = 0;
     let response = null;
@@ -568,7 +573,8 @@ class PythonServerAPI {
           mlsAmplitude,
           irLength,
           calibrateSoundSmoothOctaves,
-          calibrateSoundBurstFilteredExtraDb
+          calibrateSoundBurstFilteredExtraDb,
+          calibrateSoundIIRPhase
         });
         // If the request is successful, break out of the loop
         break;
@@ -596,7 +602,8 @@ class PythonServerAPI {
     iirLength,
     sampleRate,
     mlsAmplitude,
-    calibrateSoundBurstFilteredExtraDb
+    calibrateSoundBurstFilteredExtraDb,
+    calibrateSoundIIRPhase
   }) => {
     let retryCount = 0;
     let response = null;
@@ -611,7 +618,8 @@ class PythonServerAPI {
           iirLength,
           sampleRate,
           mlsAmplitude,
-          calibrateSoundBurstFilteredExtraDb
+          calibrateSoundBurstFilteredExtraDb,
+          calibrateSoundIIRPhase
         });
         // If the request is successful, break out of the loop
         break;
