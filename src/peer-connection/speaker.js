@@ -39,6 +39,8 @@ class Speaker extends AudioPeer {
     this.soundMessageId = params?.soundMessageId ?? '';
     this.titleDisplayId = params?.titleDisplayId ?? '';
     this.timeToCalibrate = params?.timeToCalibrate ?? 10;
+    this.isParticipant = params?.isParticipant ?? false;
+    this.isLoudspeakerCalibration = params?.isLoudspeakerCalibration ?? false;
 
     /* Set up callbacks that handle any events related to our peer object. */
     this.peer.on('open', this.#onPeerOpen);
@@ -303,10 +305,32 @@ class Speaker extends AudioPeer {
     // Update title - titleDisplayId
     const titleDisplay = document.getElementById(this.titleDisplayId);
     if (titleDisplay) {
-      // replace 5 with 6
-      titleDisplay.innerHTML = this.isSmartPhone
-        ? titleDisplay.innerHTML.replace('2', '3')
-        : titleDisplay.innerHTML.replace('4', '5');
+      // if (this.isParticipant) {
+      //     titleDisplay.innerHTML = titleDisplay.innerHTML.replace('3', '4');
+      // } else if (this.isSmartPhone) {
+      //     if (this.isLoudspeakerCalibration) {
+      //         titleDisplay.innerHTML = titleDisplay.innerHTML.replace('6', '7');
+      //     } else {
+      //         titleDisplay.innerHTML = titleDisplay.innerHTML.replace('5', '6');
+      //     }
+      // } else {
+      //     titleDisplay.innerHTML = titleDisplay.innerHTML.replace('5', '6');
+      // }
+      if (this.isLoudspeakerCalibration) {
+        if (this.isParticipant) {
+          titleDisplay.innerHTML = titleDisplay.innerHTML.replace('3', '4');
+        } else if (this.isSmartPhone) {
+          titleDisplay.innerHTML = titleDisplay.innerHTML.replace('6', '7');
+        } else {
+          titleDisplay.innerHTML = titleDisplay.innerHTML.replace('5', '6');
+        }
+      } else {
+        if (this.isSmartPhone) {
+          titleDisplay.innerHTML = titleDisplay.innerHTML.replace('5', '6');
+        } else {
+          titleDisplay.innerHTML = titleDisplay.innerHTML.replace('4', '5');
+        }
+      }
     }
   };
 
@@ -444,7 +468,7 @@ class Speaker extends AudioPeer {
         break;
       case 'flags':
         //this.ac.setDeviceName(data.payload);
-        console.log("FLAGS");
+        console.log('FLAGS');
         console.log(data.payload);
         this.ac.setFlags(data.payload);
         break;
@@ -493,7 +517,7 @@ class Speaker extends AudioPeer {
     this.#removeUIElems();
     this.#showSpinner();
 
-    console.log("This is a repeat");
+    console.log('This is a repeat');
     // wrap the calibration process in a promise so we can await it
     return new Promise(async (resolve, reject) => {
       const result = await this.ac.startCalibration(
