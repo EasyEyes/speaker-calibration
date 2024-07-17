@@ -41,17 +41,19 @@ hr {
 
 .phrases {
   transform: rotate(180deg);
-  margin-top: 100vh;
+  /* margin-top: 100vh; */
   position: absolute;
   bottom: 0;
   right: 10px;
+  overflow-y: scroll;
+  max-height: 70vh;
 }
 
 .updateDisplay {
   transform: rotate(180deg);
-  position: absolute;
+  /* position: absolute;
   bottom: 20vh;
-  right: 10px;
+  right: 10px; */
   overflow-y: scroll;
   overflow-x: hidden;
 }
@@ -60,11 +62,13 @@ hr {
   position: absolute;
   top: 20px;
   font-size: larger;
+  max-height: 25vh;
+  overflow-y: scroll;
 }
 
 #calibrationBeginButton {
-  margin-top: 5vh;
-  margin-bottom: 5vh;
+  margin-top: 2vh;
+  margin-bottom: 2vh;
 }
 
 .container {
