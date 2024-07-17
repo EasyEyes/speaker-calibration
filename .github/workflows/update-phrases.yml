@@ -1,0 +1,37 @@
+name: Update International Phrases
+
+on: workflow_dispatch
+
+jobs:
+  phrases:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 16
+      - name: Set commit account information
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+      - name: Installs
+        run: |
+          npm install
+      - name: Decrypt credentials
+        run: |
+          gpg --quiet --batch --yes --passphrase="${{secrets.google_api_pw}}" \
+          --output dist/example/credentials.json \
+          --decrypt dist/example/credentials.json.gpg
+      - name: Fetch and update phrases
+        run: |
+          npm run phrases
+      - name: Remove credentials
+        run: |
+          rm dist/example/credentials.json
+      - name: Commit and push changes
+        run: |
+          git status
+          git add -A
+          git commit -m 'github action: update phrases' --no-verify
+          git remote set-url origin https://x-access-token:${{secrets.ci_token}}@github.com/EasyEyes/speaker-calibration
+          git push
