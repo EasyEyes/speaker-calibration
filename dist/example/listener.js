@@ -37,7 +37,11 @@ switch (isSmartPhone) {
     container.style.display = 'block';
     // event listener for id calibrationBeginButton
     const calibrationBeginButton = document.getElementById('calibrationBeginButton');
+    const intervalId = setInterval(() => {
+      console.log(calibrationBeginButton);
+    }, 10000);
     calibrationBeginButton.addEventListener('click', async () => {
+      clearInterval(intervalId);
       // remove the button
       calibrationBeginButton.remove();
       // remove turn message
