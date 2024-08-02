@@ -753,17 +753,20 @@ class Combination extends AudioCalibrator {
    * .
    * Created an S Curver Buffer to taper the signal onset
    *
-   * @param {*} length
-   * @param {*} phase
+   * @param {*} onSetBool
    * @returns
    * @example
    */
-  static createSCurveBuffer = (length, phase) => {
-    const curve = new Float32Array(length);
-    let i;
-    for (i = 0; i < length; i += 1) {
-      // scale the curve to be between 0-1
-      curve[i] = Math.sin((Math.PI * i) / length - phase) / 2 + 0.5;
+  createSCurveBuffer = (onSetBool = true) => {
+    const curve = new Float32Array(this.TAPER_SECS * this.sourceSamplingRate + 1);
+    const frequency = 1 / (4 * this.TAPER_SECS);
+    let j = 0;
+    for (let i = 0; i < this.TAPER_SECS * this.sourceSamplingRate + 1; i += 1) {
+      const phase = 2 * Math.PI * frequency * j;
+      const onsetTaper = Math.pow(Math.sin(phase), 2);
+      const offsetTaper = Math.pow(Math.cos(phase), 2);
+      curve[i] = onSetBool ? onsetTaper : offsetTaper;
+      j += 1 / this.sourceSamplingRate;
     }
     return curve;
   };
@@ -2095,19 +2098,7 @@ class Combination extends AudioCalibrator {
     }
   };
   
-  createSCurveBuffer = (onSetBool = true) => {
-    const curve = new Float32Array(this.TAPER_SECS * this.sourceSamplingRate + 1);
-    const frequency = 1 / (4 * this.TAPER_SECS);
-    let j = 0;
-    for (let i = 0; i < this.TAPER_SECS * this.sourceSamplingRate + 1; i += 1) {
-      const phase = 2 * Math.PI * frequency * j;
-      const onsetTaper = Math.pow(Math.sin(phase), 2);
-      const offsetTaper = Math.pow(Math.cos(phase), 2);
-      curve[i] = onSetBool ? onsetTaper : offsetTaper;
-      j += 1 / this.sourceSamplingRate;
-    }
-    return curve;
-  };
+
 
   #getTruncatedSignal = (left = 3.5, right = 4.5) => {
     const start = Math.floor(left * this.sourceSamplingRate);
@@ -2708,14 +2699,14 @@ class Combination extends AudioCalibrator {
 
     //new lCalib found at top of calibration files *1000hz, make sure to correct
     //based on zeroing of 1000hz, search for "*1000Hz"
-    const ID = isSmartPhone ? micModelNumber : micSerialNumber;
-    const OEM = isSmartPhone
-      ? micModelName === 'UMIK-1' || micModelName === 'UMIK-2'
-        ? 'minidsp'
-        : this.deviceInfo.OEM.toLowerCase().split(' ').join('')
-      : micManufacturer.toLowerCase().split(' ').join('');
-    // const ID = "712-5669";
-    // const OEM = "minidsp";
+    // const ID = isSmartPhone ? micModelNumber : micSerialNumber;
+    // const OEM = isSmartPhone
+    //   ? micModelName === 'UMIK-1' || micModelName === 'UMIK-2'
+    //     ? 'minidsp'
+    //     : this.deviceInfo.OEM.toLowerCase().split(' ').join('')
+    //   : micManufacturer.toLowerCase().split(' ').join('');
+    const ID = "712-5669";
+    const OEM = "minidsp";
     const micInfo = {
       micModelName: isSmartPhone ? micModelName : microphoneName,
       OEM: isSmartPhone
