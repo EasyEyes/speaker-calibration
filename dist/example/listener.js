@@ -142,21 +142,20 @@ const turnMessageElement = document.getElementById('turnMeToReadBelow');
 //     });
 //     break;
 // }
-// allowMicrophoneElement.innerHTML = placeSmartphoneMicrophone;
-// turnMessageElement.innerHTML = turnMeToReadBelow;
+allowMicrophoneElement.innerHTML = placeSmartphoneMicrophone;
+turnMessageElement.innerHTML = turnMeToReadBelow;
 // show the html upsidedown
 const phrasesContainer = document.getElementById('phrases');
 // add class
-// phrasesContainer.classList.add('phrases');
-// const html = document.querySelector('html');
-// html.style.overflow = 'hidden';
-// const display = document.getElementById('updateDisplay');
-// display.classList.add('updateDisplay');
+phrasesContainer.classList.add('phrases');
+const html = document.querySelector('html');
+html.style.overflow = 'hidden';
+const display = document.getElementById('updateDisplay');
+display.classList.add('updateDisplay');
 container.style.display = 'block';
 // event listener for id calibrationBeginButton
 const calibrationBeginButton = document.getElementById('calibrationBeginButton');
 console.log('Waiting for proceed button click');
 calibrationBeginButton.addEventListener('click', async () => {
-  allowMicrophoneElement.innerHTML = placeSmartphoneMicrophone;
   console.log('Proceed button clicked');
 });
