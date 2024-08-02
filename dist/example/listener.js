@@ -29,6 +29,7 @@ switch (isSmartPhone) {
   case 'true':
     allowMicrophoneElement.innerHTML = placeSmartphoneMicrophone;
     allowMicrophoneElement.style.lineHeight = '1.2rem';
+    allowMicrophoneElement.style.fontSize = '14px';
     turnMessageElement.innerHTML = turnMeToReadBelow;
     // show the html upsidedown
     const phrasesContainer = document.getElementById('phrases');

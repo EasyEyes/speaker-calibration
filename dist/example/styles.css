@@ -63,9 +63,10 @@ hr {
 .turnMeToReadBelow {
   position: absolute;
   top: 20px;
-  font-size: larger;
-  max-height: 25vh;
+  /* font-size: larger; */
+  /* max-height: 25vh; */
   overflow-y: scroll;
+  line-height: 1.2rem;
 }
 
 #calibrationBeginButton {
