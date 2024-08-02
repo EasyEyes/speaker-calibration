@@ -20,7 +20,7 @@ const placeSmartphoneMicrophone = phrases.RC_placeSmartphoneMicrophone['en-US'].
   /\n/g,
   '<br>'
 );
-const turnMeToReadBelow = phrases.RC_turnMeToReadBelow['en-US'];
+const turnMeToReadBelow = phrases.RC_turnMeToReadBelow['en-US'].replace(/\n/g, '<br>');
 const recordingInProgressElement = document.getElementById('recordingInProgress');
 const allowMicrophoneElement = document.getElementById('allowMicrophone');
 const turnMessageElement = document.getElementById('turnMeToReadBelow');
@@ -31,6 +31,8 @@ switch (isSmartPhone) {
     allowMicrophoneElement.style.lineHeight = '1.2rem';
     allowMicrophoneElement.style.fontSize = '14px';
     turnMessageElement.innerHTML = turnMeToReadBelow;
+    turnMessageElement.style.lineHeight = '1.2rem';
+    turnMessageElement.style.fontSize = '14px';
     // show the html upsidedown
     const phrasesContainer = document.getElementById('phrases');
     // add class
