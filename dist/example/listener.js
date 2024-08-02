@@ -15,8 +15,11 @@ const listenerParameters = {
 const container = document.getElementById('listenerContainer');
 const recordingInProgress = phrases.RC_soundRecording['en-US'];
 const backToExperimentWindow = phrases.RC_backToExperimentWindow['en-US'];
-const allowMicrophone = phrases.RC_allowMicrophoneUse['en-US'];
-const placeSmartphoneMicrophone = phrases.RC_placeSmartphoneMicrophone['en-US'];
+const allowMicrophone = phrases.RC_allowMicrophoneUse['en-US'].replace(/\n/g, '<br>');
+const placeSmartphoneMicrophone = phrases.RC_placeSmartphoneMicrophone['en-US'].replace(
+  /\n/g,
+  '<br>'
+);
 const turnMeToReadBelow = phrases.RC_turnMeToReadBelow['en-US'];
 const recordingInProgressElement = document.getElementById('recordingInProgress');
 const allowMicrophoneElement = document.getElementById('allowMicrophone');
@@ -25,6 +28,7 @@ const turnMessageElement = document.getElementById('turnMeToReadBelow');
 switch (isSmartPhone) {
   case 'true':
     allowMicrophoneElement.innerHTML = placeSmartphoneMicrophone;
+    allowMicrophoneElement.style.lineHeight = '1.2rem';
     turnMessageElement.innerHTML = turnMeToReadBelow;
     // show the html upsidedown
     const phrasesContainer = document.getElementById('phrases');
@@ -38,12 +42,10 @@ switch (isSmartPhone) {
     // event listener for id calibrationBeginButton
     const calibrationBeginButton = document.getElementById('calibrationBeginButton');
     console.log('Waiting for proceed button click');
-    const intervalId = setInterval(() => {
-      console.log(calibrationBeginButton);
-    }, 10000);
+
     calibrationBeginButton.addEventListener('click', async () => {
       console.log('Proceed button clicked');
-      clearInterval(intervalId);
+
       // remove the button
       calibrationBeginButton.remove();
       // remove turn message
