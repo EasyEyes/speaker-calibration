@@ -577,7 +577,7 @@ class Combination extends AudioCalibrator {
       })
       .then(async result => {
         if (result) {
-          console.log("JS used memory:", performance.memory.usedJSHeapSize/1024/1024, "mb");
+          // console.log("JS used memory:", performance.memory.usedJSHeapSize/1024/1024, "mb");
           if (result['sd'] < this._calibrateSoundPowerDbSDToleratedDb) {
             this.recordingChecks['unfiltered'].push(result);    
             await this.pyServerAPI.checkMemory();
@@ -2094,6 +2094,7 @@ class Combination extends AudioCalibrator {
       throw new Error(`Unknown data type: ${data.type}`);
     }
   };
+  
   createSCurveBuffer = (onSetBool = true) => {
     const curve = new Float32Array(this.TAPER_SECS * this.sourceSamplingRate + 1);
     const frequency = 1 / (4 * this.TAPER_SECS);
