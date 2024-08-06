@@ -2699,14 +2699,14 @@ class Combination extends AudioCalibrator {
 
     //new lCalib found at top of calibration files *1000hz, make sure to correct
     //based on zeroing of 1000hz, search for "*1000Hz"
-    // const ID = isSmartPhone ? micModelNumber : micSerialNumber;
-    // const OEM = isSmartPhone
-    //   ? micModelName === 'UMIK-1' || micModelName === 'UMIK-2'
-    //     ? 'minidsp'
-    //     : this.deviceInfo.OEM.toLowerCase().split(' ').join('')
-    //   : micManufacturer.toLowerCase().split(' ').join('');
-    const ID = "712-5669";
-    const OEM = "minidsp";
+    const ID = isSmartPhone ? micModelNumber : micSerialNumber;
+    const OEM = isSmartPhone
+      ? micModelName === 'UMIK-1' || micModelName === 'UMIK-2'
+        ? 'minidsp'
+        : this.deviceInfo.OEM.toLowerCase().split(' ').join('')
+      : micManufacturer.toLowerCase().split(' ').join('');
+    // const ID = "712-5669";
+    // const OEM = "minidsp";
     const micInfo = {
       micModelName: isSmartPhone ? micModelName : microphoneName,
       OEM: isSmartPhone
