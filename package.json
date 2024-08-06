@@ -1,6 +1,6 @@
 {
   "name": "speaker-calibration",
-  "version": "2.2.164",
+  "version": "2.2.165",
   "description": "Speaker calibration library for auditory testing",
   "main": "dist/main.js",
   "directories": {
