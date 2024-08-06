@@ -23,6 +23,7 @@
     />
     <!--<script src="https://www.unpkg.com/sound-check">  </script>-->
     <script src="../main.js"></script>
+    <script src="../example/NoSleep.min.js"></script>
   </head>
 
   <body>
@@ -65,5 +66,14 @@
       crossorigin="anonymous"
     ></script>
     <script crossorigin src="https://cloud.51degrees.com/api/v4/AQSjtocCemq9y6-T20g.js"></script>
+    <script>
+      var noSleep = new NoSleep();
+      var wakeLockEnabled = false;
+      var calibrationBeginButton = document.getElementById('calibrationBeginButton');
+      calibrationBeginButton.addEventListener('click', function() {
+        console.log('enable no sleep!');
+        noSleep.enable();
+      });
+    </script>
   </body>
 </html>
