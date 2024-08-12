@@ -102,8 +102,6 @@ class Combination extends AudioCalibrator {
   /** @private */
   #audioContext;
 
-  /** @private */
-  TAPER_SECS = 5;
 
   /** @private */
   offsetGainNode;
@@ -2649,6 +2647,7 @@ class Combination extends AudioCalibrator {
     _calibrateSoundSmoothOctaves = 0.33,
     _calibrateSoundPowerBinDesiredSec = 0.2,
     _calibrateSoundPowerDbSDToleratedDb = 1,
+    _calibrateSoundTaperSec = 0.01,
     micManufacturer = '',
     micSerialNumber = '',
     micModelNumber = '',
@@ -2665,6 +2664,7 @@ class Combination extends AudioCalibrator {
     reminder,
     calibrateSoundLimit,
   ) => {
+    this.TAPER_SECS = _calibrateSoundTaperSec;
     this.calibrateSoundLimit = calibrateSoundLimit;
     this._calibrateSoundBurstDb = _calibrateSoundBurstDb;
     this._calibrateSoundBurstFilteredExtraDb = _calibrateSoundBurstFilteredExtraDb;
