@@ -231,6 +231,10 @@ class Combination extends AudioCalibrator {
 
   webAudioDeviceNames = {loudspeaker: '', microphone: '', loudspeakerText: '', microphoneText: ''};
 
+  waveforms = {
+    volume: {}
+  };
+
   recordingChecks = {
     volume: {},
     unfiltered: [],
@@ -2143,6 +2147,7 @@ class Combination extends AudioCalibrator {
     const audioContext = this.makeNewSourceAudioContext();
     const oscilator = audioContext.createOscillator();
     const gainNode = audioContext.createGain();
+    console.log(gainValue);
     const taperGainNode = audioContext.createGain();
     const offsetGainNode = audioContext.createGain();
     const totalDuration = this.CALIBRATION_TONE_DURATION * 1.2;
@@ -2163,6 +2168,32 @@ class Combination extends AudioCalibrator {
       this.TAPER_SECS
     );
     offsetGainNode.connect(audioContext.destination);
+
+    const gainValuesOverTime = [];
+    const sampleRate = this.#CALIBRATION_TONE_FREQUENCY; // Number of samples per second
+    const interval = 1 / sampleRate; // Time between samples
+
+    for (let t = 0; t <= totalDuration; t += interval) {
+
+      let gainValueAtTime = gainValue;
+
+      // Apply the onset curve
+      if (t < this.TAPER_SECS) {
+          const onsetIndex = Math.floor((t / this.TAPER_SECS) * onsetCurve.length);
+          gainValueAtTime *= onsetCurve[onsetIndex];
+      }
+
+      // Apply the offset curve
+      if (t > totalDuration - this.TAPER_SECS) {
+          const offsetTime = t - (totalDuration - this.TAPER_SECS);
+          const offsetIndex = Math.floor((offsetTime / this.TAPER_SECS) * offsetCurve.length);
+          gainValueAtTime *= offsetCurve[offsetIndex];
+      }
+
+      gainValuesOverTime.push(gainValueAtTime);
+  }
+
+  this.waveforms['volume'][this.inDB] = gainValuesOverTime;
 
     this.addCalibrationNode(oscilator);
   };
@@ -2244,7 +2275,7 @@ class Combination extends AudioCalibrator {
   };
 
   startCalibrationVolume = async (stream, gainValues, lCalib, componentGainDBSPL) => {
-    console.log("JS used memory:", performance.memory.usedJSHeapSize/1024/1024, "mb");
+
     if (this.isCalibrating) return null;
     const trialIterations = gainValues.length;
     this.status_denominator += trialIterations;
@@ -2876,6 +2907,7 @@ class Combination extends AudioCalibrator {
       const timeStampresult = [...this.timeStamp].join('\n');
       total_results['timeStamps'] = timeStampresult;
       total_results['recordingChecks'] = this.recordingChecks;
+      total_results['waveforms'] = this.waveforms;
       total_results['component']['phase'] = this.componentIRPhase;
       total_results['system']['phase'] = this.systemIRPhase;
       total_results['qualityMetrics'] = this.SDofFilteredRange;
