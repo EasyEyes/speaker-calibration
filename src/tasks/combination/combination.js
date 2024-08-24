@@ -743,6 +743,7 @@ class Combination extends AudioCalibrator {
    */
   #afterMLSRecord = async () => {
     console.log('after record');
+    this.addTimeStamp(`After record unfiltered mls version ${this.icapture}`);
     await this.sendRecordingToServerForProcessing();
   };
 
@@ -854,11 +855,11 @@ class Combination extends AudioCalibrator {
    * @example
    */
   #playCalibrationAudio = () => {
-    this.addTimeStamp('Play unfiltered mls');
     this.calibrationNodes[0].start(0);
     this.status = ``;
     if (this.mode === 'unfiltered') {
       console.log('play calibration audio ' + this.stepNum);
+      this.addTimeStamp(`Start recording MLS version ${this.icapture}`);
       this.status =
         `All Hz Calibration: playing the calibration tone...`.toString() +
         this.generateTemplate().toString();
@@ -2147,7 +2148,6 @@ class Combination extends AudioCalibrator {
     const audioContext = this.makeNewSourceAudioContext();
     const oscilator = audioContext.createOscillator();
     const gainNode = audioContext.createGain();
-    console.log(gainValue);
     const taperGainNode = audioContext.createGain();
     const offsetGainNode = audioContext.createGain();
     const totalDuration = this.CALIBRATION_TONE_DURATION * 1.2;
