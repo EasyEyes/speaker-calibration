@@ -41,6 +41,7 @@ class Speaker extends AudioPeer {
     this.timeToCalibrate = params?.timeToCalibrate ?? 10;
     this.isParticipant = params?.isParticipant ?? false;
     this.isLoudspeakerCalibration = params?.isLoudspeakerCalibration ?? false;
+    this.buttonsContainer = params?.buttonsContainer ?? document.createElement('div');
 
     /* Set up callbacks that handle any events related to our peer object. */
     this.peer.on('open', this.#onPeerOpen);
@@ -49,6 +50,9 @@ class Speaker extends AudioPeer {
     this.peer.on('disconnected', this.#onPeerDisconnected);
     this.peer.on('error', this.#onPeerError);
   }
+
+  uri = '';
+  qrImage;
   /**
    * Async factory method that creates the Speaker object, and returns a promise that resolves to the result of the calibration.
    *
@@ -196,6 +200,7 @@ class Speaker extends AudioPeer {
    * @private
    * @example
    */
+
   #showQRCode = () => {
     // Get query string, the URL parameters to specify a Listener
     const queryStringParameters = {
@@ -206,15 +211,20 @@ class Speaker extends AudioPeer {
       lang: this.language,
     };
     const queryString = this.queryStringFromObject(queryStringParameters);
-    const uri = this.siteUrl + queryString;
+    this.uri = this.siteUrl + queryString;
     if (this.isSmartPhone) {
       // Display QR code for the participant to scan
       const qrCanvas = document.createElement('canvas');
       qrCanvas.setAttribute('id', 'qrCanvas');
-      console.log(uri);
-      QRCode.toCanvas(qrCanvas, uri, error => {
+      QRCode.toCanvas(qrCanvas, this.uri, error => {
         if (error) console.error(error);
       });
+      const explanation = document.createElement("p");
+      explanation.id = "skipQRExplanation";
+      explanation.innerHTML = phrases.RC_skipQR_ExplanationWithoutPreferNot[this.language]
+        .replace("xxx", `<b>${this.uri}</b>`)
+        .replace("XXX", `<b>${this.uri}</b>`);
+    
       const qrImage = new Image(400, 400);
       qrImage.setAttribute('id', 'compatibilityCheckQRImage');
       qrImage.style.zIndex = Infinity;
@@ -224,7 +234,21 @@ class Speaker extends AudioPeer {
       qrImage.src = qrCanvas.toDataURL();
       qrImage.style.maxHeight = '150px';
       qrImage.style.maxWidth = '150px';
-      document.getElementById(this.targetElement).appendChild(qrImage);
+
+      this.qrImage = qrImage;
+
+      const container = document.createElement("div");
+      container.style.display = "flex";
+      container.style.justifyContent = "space-between";
+      container.style.alignItems = "center";
+      container.id = "skipQRContainer";
+      container.appendChild(qrImage);
+      container.appendChild(explanation);
+      const qrContainer = document.createElement("div");
+      qrContainer.appendChild(container);
+      qrContainer.appendChild(this.buttonsContainer);
+      
+      document.getElementById(this.targetElement).appendChild(qrContainer);
     } else {
       // show the link to the user
       // If specified HTML Id is available, show QR code there
@@ -250,7 +274,7 @@ class Speaker extends AudioPeer {
       }
     }
     // or just print it to console
-    console.log('TEST: Peer reachable at: ', uri);
+    console.log('TEST: Peer reachable at: ', this.uri);
   };
 
   #showSpinner = () => {

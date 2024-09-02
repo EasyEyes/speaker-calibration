@@ -859,7 +859,7 @@ class Combination extends AudioCalibrator {
     this.status = ``;
     if (this.mode === 'unfiltered') {
       console.log('play calibration audio ' + this.stepNum);
-      this.addTimeStamp(`Start recording MLS version ${this.icapture}`);
+      this.addTimeStamp(`Play MLS version ${this.icapture}`);
       this.status =
         `All Hz Calibration: playing the calibration tone...`.toString() +
         this.generateTemplate().toString();
