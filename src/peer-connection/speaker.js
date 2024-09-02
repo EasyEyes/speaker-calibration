@@ -221,6 +221,10 @@ class Speaker extends AudioPeer {
       });
       const explanation = document.createElement("p");
       explanation.id = "skipQRExplanation";
+      explanation.style = `
+      word-break: break-all; /* Break long words or URLs */
+      overflow-wrap: break-word; /* Ensure long URLs or text break properly */
+     `;
       explanation.innerHTML = phrases.RC_skipQR_ExplanationWithoutPreferNot[this.language]
         .replace("xxx", `<b>${this.uri}</b>`)
         .replace("XXX", `<b>${this.uri}</b>`);
@@ -266,7 +270,7 @@ class Speaker extends AudioPeer {
         proceedButton.innerHTML = 'Proceed';
         proceedButton.onclick = () => {
           // open the link in a new tab
-          window.open(uri, '_blank');
+          window.open(this.uri, '_blank');
           // remove the button
           document.getElementById('calibrationProceedButton').remove();
         };
