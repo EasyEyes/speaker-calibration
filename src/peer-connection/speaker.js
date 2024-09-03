@@ -212,7 +212,7 @@ class Speaker extends AudioPeer {
     };
     const queryString = this.queryStringFromObject(queryStringParameters);
     this.uri = this.siteUrl + queryString;
-    if (true) {
+    if (this.isSmartphone) {
       // Display QR code for the participant to scan
       const qrCanvas = document.createElement('canvas');
       qrCanvas.setAttribute('id', 'qrCanvas');
