@@ -212,7 +212,7 @@ class Speaker extends AudioPeer {
     };
     const queryString = this.queryStringFromObject(queryStringParameters);
     this.uri = this.siteUrl + queryString;
-    if (this.isSmartPhone) {
+    if (true) {
       // Display QR code for the participant to scan
       const qrCanvas = document.createElement('canvas');
       qrCanvas.setAttribute('id', 'qrCanvas');
@@ -222,12 +222,13 @@ class Speaker extends AudioPeer {
       const explanation = document.createElement("p");
       explanation.id = "skipQRExplanation";
       explanation.style = `
-      word-break: break-all; /* Break long words or URLs */
       overflow-wrap: break-word; /* Ensure long URLs or text break properly */
+      user-select: text;
      `;
+
       explanation.innerHTML = phrases.RC_skipQR_ExplanationWithoutPreferNot[this.language]
-        .replace("xxx", `<b>${this.uri}</b>`)
-        .replace("XXX", `<b>${this.uri}</b>`);
+        .replace("xxx", `<b style="user-select: text">${this.uri}</b>`)
+        .replace("XXX", `<b style="user-select: text">${this.uri}</b>`);
     
       const qrImage = new Image(400, 400);
       qrImage.setAttribute('id', 'compatibilityCheckQRImage');
