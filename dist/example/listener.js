@@ -4,7 +4,7 @@ import {phrases} from './i18n.js';
 const urlParams = new URLSearchParams(window.location.search);
 
 // get isSmartPhone query parameter
-const isSmartPhone = urlParams.get('isSmartPhone');
+const isSmartPhone = urlParams.get('sp'); // previous isSmartPhone
 
 const listenerParameters = {
   targetElementId: 'display',

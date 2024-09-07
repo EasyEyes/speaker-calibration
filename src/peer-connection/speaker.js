@@ -44,15 +44,83 @@ class Speaker extends AudioPeer {
     this.buttonsContainer = params?.buttonsContainer ?? document.createElement('div');
 
     /* Set up callbacks that handle any events related to our peer object. */
+  }
+
+  uri = '';
+  qrImage;
+
+
+  initPeer = async () => {
+    const id = await this.generateTimeBasedPeerID();
+    this.peer = new Peer(id, {
+      secure: true,
+      host: 'easyeyes-peer-server.herokuapp.com',
+      port: 443,
+      config: {
+        iceServers: [
+          {
+            urls: "stun:stun.relay.metered.ca:80",
+          },
+          {
+            urls: "turn:global.relay.metered.ca:80",
+            username: "de884cfc34189cdf1a5dd616",
+            credential: "IcOpouU9/TYBmpHU",
+          },
+          {
+            urls: "turn:global.relay.metered.ca:80?transport=tcp",
+            username: "de884cfc34189cdf1a5dd616",
+            credential: "IcOpouU9/TYBmpHU",
+          },
+          {
+            urls: "turn:global.relay.metered.ca:443",
+            username: "de884cfc34189cdf1a5dd616",
+            credential: "IcOpouU9/TYBmpHU",
+          },
+          {
+            urls: "turns:global.relay.metered.ca:443?transport=tcp",
+            username: "de884cfc34189cdf1a5dd616",
+            credential: "IcOpouU9/TYBmpHU",
+          },
+        ],
+      },
+    });
     this.peer.on('open', this.#onPeerOpen);
     this.peer.on('connection', this.#onPeerConnection);
     this.peer.on('close', this.onPeerClose);
     this.peer.on('disconnected', this.#onPeerDisconnected);
     this.peer.on('error', this.#onPeerError);
   }
+  generateTimeBasedPeerID = async () => {
+    const now = new Date().getTime();
+    const randomBuffer = new Uint8Array(10);
+    crypto.getRandomValues(randomBuffer);
+    const randomPart = Array.from(randomBuffer)
+      .map((b) => b.toString(36))
+      .join("");
+    const toHash = `${now}-${randomPart}`;
+    const encoder = new TextEncoder();
+    const data = encoder.encode(toHash);
+    const hash = await crypto.subtle.digest("SHA-256", data);
+    const hashArray = Array.from(new Uint8Array(hash)); // Convert buffer to byte array
+    const hashString = hashArray
+      .map((b) => b.toString(16).padStart(2, "0"))
+      .join("");
+    const shortHash = hashString.substring(0, 12); // Use more of the hash for a longer ID
+    //   return shortHash; // Consider converting this to Base62
+    return this.encodeBase62(parseInt(shortHash, 16));
+  };
 
-  uri = '';
-  qrImage;
+  encodeBase62 = (num) => {
+    const base = 36;
+    const characters = "0123456789abcdefghijklmnopqrstuvwxyz";
+    let result = "";
+    while (num > 0) {
+      result = characters[num % base] + result;
+      num = Math.floor(num / base);
+    }
+    return result;
+  };
+
   /**
    * Async factory method that creates the Speaker object, and returns a promise that resolves to the result of the calibration.
    *
@@ -66,7 +134,7 @@ class Speaker extends AudioPeer {
   static startCalibration = async (params, CalibratorInstance, timeOut = 180000) => {
     window.speaker = new Speaker(params, CalibratorInstance);
     const {speaker} = window;
-
+    await speaker.initPeer();
     // wrap the calibration process in a promise so we can await it
     return new Promise((resolve, reject) => {
       // when a call is received
@@ -153,7 +221,7 @@ class Speaker extends AudioPeer {
   static testIIR = async (params, CalibratorInstance, IIR, timeOut = 180000) => {
     window.speaker = new Speaker(params, CalibratorInstance);
     const {speaker} = window;
-
+    speaker.initPeer();
     // wrap the calibration process in a promise so we can await it
     return new Promise((resolve, reject) => {
       // when a call is received
@@ -205,9 +273,9 @@ class Speaker extends AudioPeer {
     // Get query string, the URL parameters to specify a Listener
     const queryStringParameters = {
       speakerPeerId: this.peer.id,
-      isSmartPhone: this.isSmartPhone,
-      calibrateSoundHz: this.calibrateSoundHz,
-      calibrateSoundSamplingDesiredBits: this.calibrateSoundSamplingDesiredBits,
+      sp: this.isSmartPhone,
+      hz: this.calibrateSoundHz,
+      bits: this.calibrateSoundSamplingDesiredBits,
       lang: this.language,
     };
     const queryString = this.queryStringFromObject(queryStringParameters);
