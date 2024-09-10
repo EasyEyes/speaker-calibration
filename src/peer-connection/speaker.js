@@ -48,6 +48,7 @@ class Speaker extends AudioPeer {
 
   uri = '';
   qrImage;
+  shortURL;
 
 
   initPeer = async () => {
@@ -290,13 +291,42 @@ class Speaker extends AudioPeer {
       const explanation = document.createElement("p");
       explanation.id = "skipQRExplanation";
       explanation.style = `
-      overflow-wrap: break-word; /* Ensure long URLs or text break properly */
       user-select: text;
      `;
 
-      explanation.innerHTML = phrases.RC_skipQR_ExplanationWithoutPreferNot[this.language]
-        .replace("xxx", `<b style="user-select: text">${this.uri}</b>`)
-        .replace("XXX", `<b style="user-select: text">${this.uri}</b>`);
+     // Define the URL and options for the request
+      const url = 'https://api.short.io/links';
+      const options = {
+      method: 'POST',
+      headers: {
+    'Accept': 'application/json',
+    'Content-Type': 'application/json',
+    'Authorization': 'sk_7Y58e7P68nyqOQ0J'
+  },
+  body: JSON.stringify({
+    domain: 'listeners.link', // Ensure this domain is valid for your account
+    originalURL: this.uri
+  })
+};
+
+// Make the request using fetch
+fetch(url, options)
+  .then(response => {
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+    return response.json(); // Parse the JSON response
+  })
+  .then(data => {
+    explanation.innerHTML = phrases.RC_skipQR_ExplanationWithoutPreferNot[this.language]
+        .replace("xxx", `<b style="user-select: text">${data.shortURL}</b>`)
+        .replace("XXX", `<b style="user-select: text">${data.shortURL}</b>`);
+  })
+  .catch(error => {
+    console.error('Error:', error.message); // Handle errors
+  });
+
+      
     
       const qrImage = new Image(400, 400);
       qrImage.setAttribute('id', 'compatibilityCheckQRImage');
