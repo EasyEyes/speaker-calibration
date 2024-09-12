@@ -270,7 +270,7 @@ class Speaker extends AudioPeer {
    * @example
    */
 
-  #showQRCode = () => {
+  #showQRCode = async () => {
     // Get query string, the URL parameters to specify a Listener
     const queryStringParameters = {
       speakerPeerId: this.peer.id,
@@ -282,6 +282,7 @@ class Speaker extends AudioPeer {
     const queryString = this.queryStringFromObject(queryStringParameters);
     this.uri = this.siteUrl + queryString;
     if (this.isSmartPhone) {
+    // if (true) { // test smartphone QR
       // Display QR code for the participant to scan
       const qrCanvas = document.createElement('canvas');
       qrCanvas.setAttribute('id', 'qrCanvas');
@@ -293,38 +294,18 @@ class Speaker extends AudioPeer {
       explanation.style = `
       user-select: text;
      `;
-
-     // Define the URL and options for the request
-      const url = 'https://api.short.io/links';
-      const options = {
-      method: 'POST',
-      headers: {
-    'Accept': 'application/json',
-    'Content-Type': 'application/json',
-    'Authorization': 'sk_7Y58e7P68nyqOQ0J'
-  },
-  body: JSON.stringify({
-    domain: 'listeners.link', // Ensure this domain is valid for your account
-    originalURL: this.uri
-  })
-};
-
-// Make the request using fetch
-fetch(url, options)
-  .then(response => {
-    if (!response.ok) {
-      throw new Error(`HTTP error! Status: ${response.status}`);
-    }
-    return response.json(); // Parse the JSON response
-  })
-  .then(data => {
-    explanation.innerHTML = phrases.RC_skipQR_ExplanationWithoutPreferNot[this.language]
-        .replace("xxx", `<b style="user-select: text">${data.shortURL}</b>`)
-        .replace("XXX", `<b style="user-select: text">${data.shortURL}</b>`);
-  })
-  .catch(error => {
-    console.error('Error:', error.message); // Handle errors
-  });
+     await this.ac.pyServerAPI.getShortURL(this.uri)
+     .then(response =>{
+      return response.shortURL;
+    })
+    .then(shortURL => {
+      explanation.innerHTML = phrases.RC_skipQR_ExplanationWithoutPreferNot[this.language]
+        .replace("xxx", `<b style="user-select: text">${shortURL}</b>`)
+        .replace("XXX", `<b style="user-select: text">${shortURL}</b>`);
+      })
+      .catch(error => {
+        console.error('Error:', error.message); // Handle errors
+        });
 
       
     

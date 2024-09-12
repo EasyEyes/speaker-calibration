@@ -171,6 +171,36 @@ class PythonServerAPI {
     return res.data[task];
   };
 
+  getShortURL = async (originalURL) => {
+    const task = 'url';
+    let res = null;
+    console.log(originalURL);
+    const data = JSON.stringify({
+      'URL': originalURL
+    });
+
+    console.log(data);
+
+    await axios({
+      method: 'post',
+      baseURL: PythonServerAPI.PYTHON_SERVER_URL,
+      url: `/task/${task}`,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      data,
+    })
+      .then(response => {
+        res = response;
+        console.log(res.data[task]);
+      })
+      .catch(error => {
+        throw error;
+      });
+
+    return res.data[task];
+  };
+
   getMemory = async () => {
     let res;
     await axios({
