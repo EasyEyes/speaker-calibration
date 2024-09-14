@@ -294,18 +294,37 @@ class Speaker extends AudioPeer {
       explanation.style = `
       user-select: text;
      `;
-     await this.ac.pyServerAPI.getShortURL(this.uri)
-     .then(response =>{
-      return response.shortURL;
-    })
-    .then(shortURL => {
-      explanation.innerHTML = phrases.RC_skipQR_ExplanationWithoutPreferNot[this.language]
-        .replace("xxx", `<b style="user-select: text">${shortURL}</b>`)
-        .replace("XXX", `<b style="user-select: text">${shortURL}</b>`);
-      })
-      .catch(error => {
-        console.error('Error:', error.message); // Handle errors
-        });
+     // Define the URL and options for the request
+     const url = 'https://api.short.io/links/public';
+     const options = {
+     method: 'POST',
+     headers: {
+   'Accept': 'application/json',
+   'Content-Type': 'application/json',
+   'Authorization': 'pk_fysLKGj3legZz4XZ'
+ },
+ body: JSON.stringify({
+   domain: 'listeners.link', // Ensure this domain is valid for your account
+   originalURL: this.uri
+ })
+};
+
+// Make the request using fetch
+await fetch(url, options)
+ .then(response => {
+   if (!response.ok) {
+     throw new Error(`HTTP error! Status: ${response.status}`);
+   }
+   return response.json(); // Parse the JSON response
+ })
+ .then(data => {
+   explanation.innerHTML = phrases.RC_skipQR_ExplanationWithoutPreferNot[this.language]
+       .replace("xxx", `<b style="user-select: text">${data.shortURL}</b>`)
+       .replace("XXX", `<b style="user-select: text">${data.shortURL}</b>`);
+ })
+ .catch(error => {
+   console.error('Error:', error.message); // Handle errors
+ });
 
       
     
@@ -324,13 +343,13 @@ class Speaker extends AudioPeer {
       const container = document.createElement("div");
       container.style.display = "flex";
       container.style.justifyContent = "space-between";
-      container.style.alignItems = "center";
+      container.style.alignItems = "top";
       container.id = "skipQRContainer";
       container.appendChild(qrImage);
       container.appendChild(explanation);
-      const qrContainer = document.createElement("div");
+      container.appendChild(this.buttonsContainer);
+      const qrContainer = document.createElement("h2");
       qrContainer.appendChild(container);
-      qrContainer.appendChild(this.buttonsContainer);
       
       document.getElementById(this.targetElement).appendChild(qrContainer);
     } else {
