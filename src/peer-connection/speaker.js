@@ -289,24 +289,26 @@ class Speaker extends AudioPeer {
       QRCode.toCanvas(qrCanvas, this.uri, error => {
         if (error) console.error(error);
       });
-      const explanation = document.createElement("p");
+      const explanation = document.createElement("h2");
       explanation.id = "skipQRExplanation";
       explanation.style = `
       user-select: text;
+      margin-top: 9px;
+      font-size: 1.1rem;
      `;
      // Define the URL and options for the request
      const url = 'https://api.short.io/links/public';
      const options = {
-     method: 'POST',
-     headers: {
-   'Accept': 'application/json',
-   'Content-Type': 'application/json',
-   'Authorization': 'pk_fysLKGj3legZz4XZ'
- },
- body: JSON.stringify({
-   domain: 'listeners.link', // Ensure this domain is valid for your account
-   originalURL: this.uri
- })
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'Authorization': 'pk_fysLKGj3legZz4XZ'
+      },
+      body: JSON.stringify({
+      domain: 'listeners.link', // Ensure this domain is valid for your account
+      originalURL: this.uri
+    })
 };
 
 // Make the request using fetch
@@ -348,7 +350,7 @@ await fetch(url, options)
       container.appendChild(qrImage);
       container.appendChild(explanation);
       container.appendChild(this.buttonsContainer);
-      const qrContainer = document.createElement("h2");
+      const qrContainer = document.createElement("div");
       qrContainer.appendChild(container);
       
       document.getElementById(this.targetElement).appendChild(qrContainer);
