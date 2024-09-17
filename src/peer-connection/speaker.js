@@ -1,6 +1,10 @@
 import QRCode from 'qrcode';
 import AudioPeer from './audioPeer';
-import {sleep} from '../utils';
+import {
+  sleep,
+  formatLineBreak,
+  createAndShowPopup
+} from '../utils';
 import {
   UnsupportedDeviceError,
   MissingSpeakerIdError,
@@ -320,13 +324,29 @@ await fetch(url, options)
    return response.json(); // Parse the JSON response
  })
  .then(data => {
-   explanation.innerHTML = phrases.RC_skipQR_ExplanationWithoutPreferNot[this.language]
+   explanation.innerHTML =formatLineBreak( 
+    phrases.RC_skipQR_ExplanationWithoutPreferNot[this.language]
        .replace("xxx", `<b style="user-select: text">${data.shortURL}</b>`)
-       .replace("XXX", `<b style="user-select: text">${data.shortURL}</b>`);
+       .replace("XXX", `<b style="user-select: text">${data.shortURL}</b>`),
+       phrases.RC_checkInternetConnection[this.language]
+      );
+      const checkConnection = document.createElement('a');
+      checkConnection.id = 'check-connection';
+      checkConnection.href = '#';
+      checkConnection.innerHTML = 'check the phone\'s internet connection';
+      const lang = this.language;
+      checkConnection.addEventListener('click', function(event,) {
+        console.log('clicked');
+        event.preventDefault(); // Prevent the default link action
+        createAndShowPopup(lang);
+     });
+     explanation.querySelector('a#check-connection').replaceWith(checkConnection);
  })
  .catch(error => {
    console.error('Error:', error.message); // Handle errors
  });
+
+ 
 
       
     

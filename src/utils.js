@@ -1,3 +1,5 @@
+import Swal from "sweetalert2";
+import {phrases} from '../dist/example/i18n.js';
 /** .
  * .
  * .
@@ -131,5 +133,72 @@ const average = (data) => {
 function interpolate(x, x0, x1, y0, y1) {
   return y0 + (y1 - y0) * (x - x0) / (x1 - x0);
 }
+
+export const formatLineBreak =(inputStr,checkInternetConnection) => {
+  let finalStr = inputStr
+  .replace(/\n/g, '<br>')
+  .replace('LLL',
+    `<a href="#" id="check-connection">${checkInternetConnection}</a>`);
+  
+  console.log(finalStr);
+
+  return finalStr;
+}
+
+
+  
+export const createAndShowPopup = (lang) => {
+  console.log(`
+    <div style="text-align: left;"> 
+    ${convertAsterisksToList(phrases.RC_NeedInternetConnectedPhone[lang].replace(/\n/g, '<br>'))}
+    </div>
+      <div class="col-3" style="margin-top:10px;">
+        <button id="okaybtn" class="btn btn-lg btn-dark">
+          ${phrases.EE_ok[lang]}
+        </button>
+      </div>`);
+  Swal.fire({
+    html: `
+    <div style="text-align: left;"> 
+    ${convertAsterisksToList(phrases.RC_NeedInternetConnectedPhone[lang].replace(/\n/g, '<br>'))}
+    </div>
+      <div class="col-3" style="margin-top:10px;">
+        <button id="okaybtn" class="btn btn-lg btn-dark">
+          ${phrases.EE_ok[lang]}
+        </button>
+      </div>`,
+    showConfirmButton: false,
+    position: 'bottom',
+    customClass: {
+      container:'no-background',
+    },
+    showClass: {
+      popup: "fade-in",
+    },
+    hideClass: {
+      popup: "",
+    },
+    didOpen: () => {
+      const okayBtn = document.getElementById("okaybtn");
+      okayBtn.style.display = "flex"; 
+      okayBtn.addEventListener('click', () => {
+        Swal.close(); // Close the Swal popup
+      });
+    }
+  });
+};
+
+export function convertAsterisksToList(content) {
+  // Replace * with <li> and convert line breaks to </li><li>
+  console.log(content);
+  let result = content
+      .replace(/\* (.*?)(<br>|$)/g, '<li>$1</li>')
+      .replace(/(<li>)(<\/li>)\s*$/, '') // Remove trailing </li>
+      .replace('<li>', '<ul style="padding-left:40px"> <br> <li>');
+  result = result.replace('</li>5', '</li></ul>5');
+  return result;
+}
+
+
 
 export {sleep, saveToCSV, saveToJSON, csvToArray,findMinValue,findMaxValue, standardDeviation, interpolate};
