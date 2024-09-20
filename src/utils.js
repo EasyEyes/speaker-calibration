@@ -169,6 +169,7 @@ export const createAndShowPopup = (lang) => {
       </div>`,
     showConfirmButton: false,
     position: 'bottom',
+    width: "40%",
     customClass: {
       container:'no-background',
     },
