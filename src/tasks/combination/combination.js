@@ -2452,7 +2452,11 @@ class Combination extends AudioCalibrator {
     const querySnapshot = await getDocs(q);
     // if exists return the linear field of the first document
     if (querySnapshot.size > 0) {
-      return querySnapshot.docs[0].data().linear;
+      return {
+        ir: querySnapshot.docs[0].data().linear,
+        createDate: querySnapshot.docs[0].data().createDate,
+        jsonFileName: querySnapshot.docs[0].data().jsonFileName
+      };
     }
     return null;
   };
@@ -2736,8 +2740,8 @@ class Combination extends AudioCalibrator {
         ? 'minidsp'
         : this.deviceInfo.OEM.toLowerCase().split(' ').join('')
       : micManufacturer.toLowerCase().split(' ').join('');
-    // const ID = "712-5669";
-    // const OEM = "minidsp";
+    // const ID = "A2484";
+    // const OEM = "apple";
     const micInfo = {
       micModelName: isSmartPhone ? micModelName : microphoneName,
       OEM: isSmartPhone
@@ -2780,9 +2784,14 @@ class Combination extends AudioCalibrator {
     if (componentIR == null) {
       //mode 'ir'
       //global variable this.componentIR must be set
-      this.componentIR = await this.readFrqGainFromFirestore(ID, OEM, true).then(data => {
-        return data;
+      await this.readFrqGainFromFirestore(ID, OEM, true).then(data => {
+        if (data !== null) {
+          this.componentIR = data.ir;
+          micInfo['parentTimestamp'] = data.createDate;
+          micInfo['parentFilenameJSON'] = data.jsonFileName;
+        }
       });
+      
       // await this.readFrqGain(ID, OEM).then(data => {
       //   return data;
       // });

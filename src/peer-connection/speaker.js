@@ -388,7 +388,7 @@ await fetch(url, options)
         const proceedButton = document.createElement('button');
         proceedButton.setAttribute('id', 'calibrationProceedButton');
         proceedButton.setAttribute('class', 'btn btn-success');
-        proceedButton.innerHTML = 'Proceed';
+        proceedButton.innerHTML = phrases.T_PROCEED[this.language];
         proceedButton.onclick = () => {
           // open the link in a new tab
           window.open(this.uri, '_blank');
