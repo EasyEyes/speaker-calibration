@@ -17576,7 +17576,7 @@ export const phrases = {
   },
   RC_Again: {
     'en-US': 'Again',
-    ar: 'مرة أخرى',
+    ar: '#ERROR!',
     hy: 'Կրկին',
     bg: 'Отново',
     'zh-CN': '再次',
