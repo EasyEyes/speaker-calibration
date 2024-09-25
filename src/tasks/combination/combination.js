@@ -461,6 +461,7 @@ class Combination extends AudioCalibrator {
         mlsAmplitude: Math.pow(10, this.power_dB / 20),
         irLength,
         calibrateSoundSmoothOctaves: this._calibrateSoundSmoothOctaves,
+        calibrateSoundSmoothMinBandwidthHz: this._calibrateSoundSmoothMinBandwidthHz,
         calibrateSoundBurstFilteredExtraDb: this._calibrateSoundBurstFilteredExtraDb,
         calibrateSoundIIRPhase: this.calibrateSoundIIRPhase
       })
@@ -2680,6 +2681,7 @@ class Combination extends AudioCalibrator {
     calibrateSound1000HzPostSec = 0.5,
     _calibrateSoundBackgroundSecs = 0,
     _calibrateSoundSmoothOctaves = 0.33,
+    _calibrateSoundSmoothMinBandwidthHz = 200,
     _calibrateSoundPowerBinDesiredSec = 0.2,
     _calibrateSoundPowerDbSDToleratedDb = 1,
     _calibrateSoundTaperSec = 0.01,
@@ -2697,7 +2699,7 @@ class Combination extends AudioCalibrator {
     userIDs,
     restartButton,
     reminder,
-    calibrateSoundLimit,
+    calibrateSoundLimit
   ) => {
     this.TAPER_SECS = _calibrateSoundTaperSec;
     this.calibrateSoundLimit = calibrateSoundLimit;
@@ -2719,6 +2721,7 @@ class Combination extends AudioCalibrator {
     this.desired_sampling_rate = _calibrateSoundHz;
     this._calibrateSoundBackgroundSecs = _calibrateSoundBackgroundSecs;
     this._calibrateSoundSmoothOctaves = _calibrateSoundSmoothOctaves;
+    this._calibrateSoundSmoothMinBandwidthHz = _calibrateSoundSmoothMinBandwidthHz;
     this._calibrateSoundPowerBinDesiredSec = _calibrateSoundPowerBinDesiredSec;
     this._calibrateSoundBurstUses1000HzGainBool = _calibrateSoundBurstUses1000HzGainBool;
     this._calibrateSoundPowerDbSDToleratedDb = _calibrateSoundPowerDbSDToleratedDb;
@@ -2787,8 +2790,8 @@ class Combination extends AudioCalibrator {
       await this.readFrqGainFromFirestore(ID, OEM, true).then(data => {
         if (data !== null) {
           this.componentIR = data.ir;
-          micInfo['parentTimestamp'] = data.createDate;
-          micInfo['parentFilenameJSON'] = data.jsonFileName;
+          micInfo['parentTimestamp'] = data.createDate ? data.createDate : new Date();
+          micInfo['parentFilenameJSON'] = data.jsonFileName ? data.jsonFileName : '';
         }
       });
       

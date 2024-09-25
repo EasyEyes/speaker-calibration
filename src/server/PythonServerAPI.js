@@ -426,6 +426,7 @@ class PythonServerAPI {
     mlsAmplitude,
     irLength,
     calibrateSoundSmoothOctaves,
+    calibrateSoundSmoothMinBandwidthHz,
     calibrateSoundBurstFilteredExtraDb,
     calibrateSoundIIRPhase
   }) => {
@@ -447,6 +448,7 @@ class PythonServerAPI {
       mlsAmplitude,
       irLength,
       calibrateSoundSmoothOctaves,
+      calibrateSoundSmoothMinBandwidthHz,
       calibrateSoundBurstFilteredExtraDb,
       calibrateSoundIIRPhase
     });
@@ -583,6 +585,7 @@ class PythonServerAPI {
     mlsAmplitude,
     irLength,
     calibrateSoundSmoothOctaves,
+    calibrateSoundSmoothMinBandwidthHz,
     calibrateSoundBurstFilteredExtraDb,
     calibrateSoundIIRPhase
   }) => {
@@ -603,6 +606,7 @@ class PythonServerAPI {
           mlsAmplitude,
           irLength,
           calibrateSoundSmoothOctaves,
+          calibrateSoundSmoothMinBandwidthHz,
           calibrateSoundBurstFilteredExtraDb,
           calibrateSoundIIRPhase
         });
