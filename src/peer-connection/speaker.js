@@ -1,10 +1,6 @@
 import QRCode from 'qrcode';
 import AudioPeer from './audioPeer';
-import {
-  sleep,
-  formatLineBreak,
-  createAndShowPopup
-} from '../utils';
+import {sleep, formatLineBreak, createAndShowPopup} from '../utils';
 import {
   UnsupportedDeviceError,
   MissingSpeakerIdError,
@@ -54,7 +50,6 @@ class Speaker extends AudioPeer {
   qrImage;
   shortURL;
 
-
   initPeer = async () => {
     const id = await this.generateTimeBasedPeerID();
     this.peer = new Peer(id, {
@@ -64,27 +59,27 @@ class Speaker extends AudioPeer {
       config: {
         iceServers: [
           {
-            urls: "stun:stun.relay.metered.ca:80",
+            urls: 'stun:stun.relay.metered.ca:80',
           },
           {
-            urls: "turn:global.relay.metered.ca:80",
-            username: "de884cfc34189cdf1a5dd616",
-            credential: "IcOpouU9/TYBmpHU",
+            urls: 'turn:global.relay.metered.ca:80',
+            username: 'de884cfc34189cdf1a5dd616',
+            credential: 'IcOpouU9/TYBmpHU',
           },
           {
-            urls: "turn:global.relay.metered.ca:80?transport=tcp",
-            username: "de884cfc34189cdf1a5dd616",
-            credential: "IcOpouU9/TYBmpHU",
+            urls: 'turn:global.relay.metered.ca:80?transport=tcp',
+            username: 'de884cfc34189cdf1a5dd616',
+            credential: 'IcOpouU9/TYBmpHU',
           },
           {
-            urls: "turn:global.relay.metered.ca:443",
-            username: "de884cfc34189cdf1a5dd616",
-            credential: "IcOpouU9/TYBmpHU",
+            urls: 'turn:global.relay.metered.ca:443',
+            username: 'de884cfc34189cdf1a5dd616',
+            credential: 'IcOpouU9/TYBmpHU',
           },
           {
-            urls: "turns:global.relay.metered.ca:443?transport=tcp",
-            username: "de884cfc34189cdf1a5dd616",
-            credential: "IcOpouU9/TYBmpHU",
+            urls: 'turns:global.relay.metered.ca:443?transport=tcp',
+            username: 'de884cfc34189cdf1a5dd616',
+            credential: 'IcOpouU9/TYBmpHU',
           },
         ],
       },
@@ -94,31 +89,29 @@ class Speaker extends AudioPeer {
     this.peer.on('close', this.onPeerClose);
     this.peer.on('disconnected', this.#onPeerDisconnected);
     this.peer.on('error', this.#onPeerError);
-  }
+  };
   generateTimeBasedPeerID = async () => {
     const now = new Date().getTime();
     const randomBuffer = new Uint8Array(10);
     crypto.getRandomValues(randomBuffer);
     const randomPart = Array.from(randomBuffer)
-      .map((b) => b.toString(36))
-      .join("");
+      .map(b => b.toString(36))
+      .join('');
     const toHash = `${now}-${randomPart}`;
     const encoder = new TextEncoder();
     const data = encoder.encode(toHash);
-    const hash = await crypto.subtle.digest("SHA-256", data);
+    const hash = await crypto.subtle.digest('SHA-256', data);
     const hashArray = Array.from(new Uint8Array(hash)); // Convert buffer to byte array
-    const hashString = hashArray
-      .map((b) => b.toString(16).padStart(2, "0"))
-      .join("");
+    const hashString = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
     const shortHash = hashString.substring(0, 12); // Use more of the hash for a longer ID
     //   return shortHash; // Consider converting this to Base62
     return this.encodeBase62(parseInt(shortHash, 16));
   };
 
-  encodeBase62 = (num) => {
+  encodeBase62 = num => {
     const base = 36;
-    const characters = "0123456789abcdefghijklmnopqrstuvwxyz";
-    let result = "";
+    const characters = '0123456789abcdefghijklmnopqrstuvwxyz';
+    let result = '';
     while (num > 0) {
       result = characters[num % base] + result;
       num = Math.floor(num / base);
@@ -287,70 +280,66 @@ class Speaker extends AudioPeer {
     const queryString = this.queryStringFromObject(queryStringParameters);
     this.uri = this.siteUrl + queryString;
     if (this.isSmartPhone) {
-    // if (true) { // test smartphone QR
+      // if (true) { // test smartphone QR
       // Display QR code for the participant to scan
       const qrCanvas = document.createElement('canvas');
       qrCanvas.setAttribute('id', 'qrCanvas');
       QRCode.toCanvas(qrCanvas, this.uri, error => {
         if (error) console.error(error);
       });
-      const explanation = document.createElement("h2");
-      explanation.id = "skipQRExplanation";
+      const explanation = document.createElement('h2');
+      explanation.id = 'skipQRExplanation';
       explanation.style = `
       user-select: text;
       margin-top: 9px;
       font-size: 1.1rem;
      `;
-     // Define the URL and options for the request
-     const url = 'https://api.short.io/links/public';
-     const options = {
-      method: 'POST',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'Authorization': 'pk_fysLKGj3legZz4XZ'
-      },
-      body: JSON.stringify({
-      domain: 'listeners.link', // Ensure this domain is valid for your account
-      originalURL: this.uri
-    })
-};
+      // Define the URL and options for the request
+      const url = 'https://api.short.io/links/public';
+      const options = {
+        method: 'POST',
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+          Authorization: 'pk_fysLKGj3legZz4XZ',
+        },
+        body: JSON.stringify({
+          domain: 'listeners.link', // Ensure this domain is valid for your account
+          originalURL: this.uri,
+        }),
+      };
 
-// Make the request using fetch
-await fetch(url, options)
- .then(response => {
-   if (!response.ok) {
-     throw new Error(`HTTP error! Status: ${response.status}`);
-   }
-   return response.json(); // Parse the JSON response
- })
- .then(data => {
-   explanation.innerHTML =formatLineBreak( 
-    phrases.RC_skipQR_ExplanationWithoutPreferNot[this.language]
-       .replace("xxx", `<b style="user-select: text">${data.shortURL}</b>`)
-       .replace("XXX", `<b style="user-select: text">${data.shortURL}</b>`),
-       phrases.RC_checkInternetConnection[this.language]
-      );
-      const checkConnection = document.createElement('a');
-      checkConnection.id = 'check-connection';
-      checkConnection.href = '#';
-      checkConnection.innerHTML = 'check the phone\'s internet connection';
-      const lang = this.language;
-      checkConnection.addEventListener('click', function(event,) {
-        console.log('clicked');
-        event.preventDefault(); // Prevent the default link action
-        createAndShowPopup(lang);
-     });
-     explanation.querySelector('a#check-connection').replaceWith(checkConnection);
- })
- .catch(error => {
-   console.error('Error:', error.message); // Handle errors
- });
+      // Make the request using fetch
+      await fetch(url, options)
+        .then(response => {
+          if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+          }
+          return response.json(); // Parse the JSON response
+        })
+        .then(data => {
+          explanation.innerHTML = formatLineBreak(
+            phrases.RC_skipQR_ExplanationWithoutPreferNot[this.language]
+              .replace('xxx', `<b style="user-select: text">${data.shortURL}</b>`)
+              .replace('XXX', `<b style="user-select: text">${data.shortURL}</b>`),
+            phrases.RC_checkInternetConnection[this.language]
+          );
+          const checkConnection = document.createElement('a');
+          checkConnection.id = 'check-connection';
+          checkConnection.href = '#';
+          checkConnection.innerHTML = "check the phone's internet connection";
+          const lang = this.language;
+          checkConnection.addEventListener('click', function (event) {
+            console.log('clicked');
+            event.preventDefault(); // Prevent the default link action
+            createAndShowPopup(lang);
+          });
+          explanation.querySelector('a#check-connection').replaceWith(checkConnection);
+        })
+        .catch(error => {
+          console.error('Error:', error.message); // Handle errors
+        });
 
- 
-
-      
-    
       const qrImage = new Image(400, 400);
       qrImage.setAttribute('id', 'compatibilityCheckQRImage');
       qrImage.style.zIndex = Infinity;
@@ -363,17 +352,17 @@ await fetch(url, options)
 
       this.qrImage = qrImage;
 
-      const container = document.createElement("div");
-      container.style.display = "flex";
-      container.style.justifyContent = "space-between";
-      container.style.alignItems = "top";
-      container.id = "skipQRContainer";
+      const container = document.createElement('div');
+      container.style.display = 'flex';
+      container.style.justifyContent = 'space-between';
+      container.style.alignItems = 'top';
+      container.id = 'skipQRContainer';
       container.appendChild(qrImage);
       container.appendChild(explanation);
       container.appendChild(this.buttonsContainer);
-      const qrContainer = document.createElement("div");
+      const qrContainer = document.createElement('div');
       qrContainer.appendChild(container);
-      
+
       document.getElementById(this.targetElement).appendChild(qrContainer);
     } else {
       // show the link to the user
@@ -687,7 +676,7 @@ await fetch(url, options)
         params.calibrateSoundHz,
         params.calibrateSoundIRSec,
         params.calibrateSoundIIRSec,
-        params.params.calibrateSoundIIRPhase,
+        params.calibrateSoundIIRPhase,
         params.calibrateSound1000HzPreSec,
         params.calibrateSound1000HzSec,
         params.calibrateSound1000HzPostSec,
