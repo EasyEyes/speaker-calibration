@@ -24,6 +24,7 @@ import {
   getDocs,
   query,
   where,
+  Timestamp,
 } from 'firebase/firestore';
 
 /**
@@ -101,7 +102,6 @@ class Combination extends AudioCalibrator {
 
   /** @private */
   #audioContext;
-
 
   /** @private */
   offsetGainNode;
@@ -232,7 +232,7 @@ class Combination extends AudioCalibrator {
   webAudioDeviceNames = {loudspeaker: '', microphone: '', loudspeakerText: '', microphoneText: ''};
 
   waveforms = {
-    volume: {}
+    volume: {},
   };
 
   recordingChecks = {
@@ -259,8 +259,6 @@ class Combination extends AudioCalibrator {
 
   /** @private */
   timeStamp = [];
-
-  
 
   restartCalibration = false;
 
@@ -310,7 +308,7 @@ class Combination extends AudioCalibrator {
     if (this.flags) {
       flags = `<br> autoGainControl: ${this.flags.autoGainControl} 
       <br>echoCancellation: ${this.flags.echoCancellation}
-      <br>noiseSuppression: ${this.flags.noiseSuppression}`
+      <br>noiseSuppression: ${this.flags.noiseSuppression}`;
     }
     if (this.SDofFilteredRange['mls']) {
       MLSsd = `<br> Recorded MLS power SD: ${this.SDofFilteredRange['mls']} dB`;
@@ -322,7 +320,9 @@ class Combination extends AudioCalibrator {
       componentSD = `<br> ${this.transducerType} correction SD: ${this.SDofFilteredRange['component']} dB`;
     }
     const template = `<div style="display: flex; justify-content: center; margin-top:12px;"><div style="width: 800px; height: 20px; border: 2px solid #000; border-radius: 10px;"><div style="width: ${this.percent_complete}%; height: 100%; background-color: #00aaff; border-radius: 8px;"></div></div></div>`;
-    return reportWebAudioNames + reportParameters + flags + MLSsd + systemSD + componentSD + template;
+    return (
+      reportWebAudioNames + reportParameters + flags + MLSsd + systemSD + componentSD + template
+    );
   };
 
   /** increment numerator and percent for status bar */
@@ -357,7 +357,7 @@ class Combination extends AudioCalibrator {
     const filteredComputedIRs = computedIRs.filter(element => {
       return element != undefined;
     }); //log any errors that are found in this step
-    console.log("filteredComputedIRs", filteredComputedIRs);
+    console.log('filteredComputedIRs', filteredComputedIRs);
     const mls = this.#mls[this.icapture];
     const lowHz = this.#lowHz; //gain of 1 below cutoff, need gain of 0
     const highHz = this.#highHz; //check error for anything other than 10 kHz
@@ -379,7 +379,7 @@ class Combination extends AudioCalibrator {
         sampleRate: this.sourceSamplingRate || 96000,
         mlsAmplitude: Math.pow(10, this.power_dB / 20),
         calibrateSoundBurstFilteredExtraDb: this._calibrateSoundBurstFilteredExtraDb,
-        calibrateSoundIIRPhase: this.calibrateSoundIIRPhase
+        calibrateSoundIIRPhase: this.calibrateSoundIIRPhase,
       })
       .then(async res => {
         this.stepNum += 1;
@@ -390,30 +390,31 @@ class Combination extends AudioCalibrator {
           this.generateTemplate().toString();
         this.emit('update', {message: this.status});
         this.systemInvertedImpulseResponse = res['iir'];
-        this.systemIR = res['ir']; 
+        this.systemIR = res['ir'];
         this.systemInvertedImpulseResponseNoBandpass = res['iirNoBandpass'];
         this.systemAttenuatorGainDB = res['attenuatorGain_dB'];
         this.systemFMaxHz = res['fMaxHz'];
         await this.pyServerAPI.checkMemory();
-        await this.pyServerAPI.getConvolution({
-          mls, 
-          inverse_response: this.systemInvertedImpulseResponse, 
-          inverse_response_no_bandpass: this.systemInvertedImpulseResponseNoBandpass,
-          attenuatorGain_dB: this.systemAttenuatorGainDB ,
-          mls_amplitude: Math.pow(10, this.power_dB / 20)
-        }).then(result => {
-          console.log(result);
-           this.systemConvolution = result['convolution'];
-           this.systemConvolutionNoBandpass = result['convolution_no_bandpass'];
-        });
-       
+        await this.pyServerAPI
+          .getConvolution({
+            mls,
+            inverse_response: this.systemInvertedImpulseResponse,
+            inverse_response_no_bandpass: this.systemInvertedImpulseResponseNoBandpass,
+            attenuatorGain_dB: this.systemAttenuatorGainDB,
+            mls_amplitude: Math.pow(10, this.power_dB / 20),
+          })
+          .then(result => {
+            console.log(result);
+            this.systemConvolution = result['convolution'];
+            this.systemConvolutionNoBandpass = result['convolution_no_bandpass'];
+          });
 
         // attenuate the system convolution if the amplitude is greater than this.calibrateSoundLimit
         // find max of absolute value of system convolution
 
         const max = findMaxValue(this.systemConvolution);
-        this.filteredMLSAttenuation.system = 
-        this.systemConvolution.reduce((a, b) => a + b**2, 0) / this.systemConvolution.length;
+        this.filteredMLSAttenuation.system =
+          this.systemConvolution.reduce((a, b) => a + b ** 2, 0) / this.systemConvolution.length;
         this.filteredMLSAttenuation.maxAbsSystem = max;
       })
       .catch(err => {
@@ -463,7 +464,7 @@ class Combination extends AudioCalibrator {
         calibrateSoundSmoothOctaves: this._calibrateSoundSmoothOctaves,
         calibrateSoundSmoothMinBandwidthHz: this._calibrateSoundSmoothMinBandwidthHz,
         calibrateSoundBurstFilteredExtraDb: this._calibrateSoundBurstFilteredExtraDb,
-        calibrateSoundIIRPhase: this.calibrateSoundIIRPhase
+        calibrateSoundIIRPhase: this.calibrateSoundIIRPhase,
       })
       .then(async res => {
         this.stepNum += 1;
@@ -485,17 +486,19 @@ class Combination extends AudioCalibrator {
         this.componentAttenuatorGainDB = res['attenuatorGain_dB'];
         this.componentFMaxHz = res['fMaxHz'];
         await this.pyServerAPI.checkMemory();
-        await this.pyServerAPI.getConvolution({
-          mls, 
-          inverse_response: this.componentInvertedImpulseResponse, 
-          inverse_response_no_bandpass: this.componentInvertedImpulseResponseNoBandpass,
-          attenuatorGain_dB: this.componentAttenuatorGainDB ,
-          mls_amplitude: Math.pow(10, this.power_dB / 20)
-        }).then(result => {
-          console.log(result);
-          this.componentConvolution = result['convolution'];
-          this.componentConvolutionNoBandpass = result['convolution_no_bandpass'];
-        });
+        await this.pyServerAPI
+          .getConvolution({
+            mls,
+            inverse_response: this.componentInvertedImpulseResponse,
+            inverse_response_no_bandpass: this.componentInvertedImpulseResponseNoBandpass,
+            attenuatorGain_dB: this.componentAttenuatorGainDB,
+            mls_amplitude: Math.pow(10, this.power_dB / 20),
+          })
+          .then(result => {
+            console.log(result);
+            this.componentConvolution = result['convolution'];
+            this.componentConvolutionNoBandpass = result['convolution_no_bandpass'];
+          });
         // attenuate the component convolution if the amplitude is greater than this.calibrateSoundLimit
         // find max of absolute value of component convolution
         const max = findMaxValue(this.componentConvolution);
@@ -505,8 +508,9 @@ class Combination extends AudioCalibrator {
         //   this.componentConvolution = this.componentConvolution.map(value => value * gain);
         //   this.filteredMLSAttenuation.component = gain;
         // }
-        this.filteredMLSAttenuation.component = 
-        this.componentConvolution.reduce((a, b) => a + b**2, 0) / this.componentConvolution.length;
+        this.filteredMLSAttenuation.component =
+          this.componentConvolution.reduce((a, b) => a + b ** 2, 0) /
+          this.componentConvolution.length;
         this.filteredMLSAttenuation.maxAbsComponent = max;
       })
       .catch(err => {
@@ -582,64 +586,65 @@ class Combination extends AudioCalibrator {
         if (result) {
           // console.log("JS used memory:", performance.memory.usedJSHeapSize/1024/1024, "mb");
           if (result['sd'] < this._calibrateSoundPowerDbSDToleratedDb) {
-            this.recordingChecks['unfiltered'].push(result);    
+            this.recordingChecks['unfiltered'].push(result);
             await this.pyServerAPI.checkMemory();
             // let start = new Date().getTime() / 1000;
-          //   const payloadT = tf.tensor1d(payload);
-          //   payloadT.print();
-          //   const xfft = payloadT.rfft();  // tf.spe
-          //   xfft.array().then(array => {
-          //     console.log("fft:", array);
-          //     let setItem = new Set(array);
-          //     console.log("all zero", setItem.size === 1 && setItem.has(0));
-          // });
-        // console.log("dimention:", xfft.shape);
+            //   const payloadT = tf.tensor1d(payload);
+            //   payloadT.print();
+            //   const xfft = payloadT.rfft();  // tf.spe
+            //   xfft.array().then(array => {
+            //     console.log("fft:", array);
+            //     let setItem = new Set(array);
+            //     console.log("all zero", setItem.size === 1 && setItem.has(0));
+            // });
+            // console.log("dimention:", xfft.shape);
             // let end = new Date().getTime() / 1000;
             // console.log("Time taken:", end - start, "seconds");
-            await this.pyServerAPI.getAutocorrelation({
-              sampleRate: this.sourceSamplingRate || 96000,
-              payload,
-              mls,
-              numPeriods: this.numMLSPerCapture,
-            }).then(async res=>{
-              this.autocorrelations.push(res['autocorrelation']);
-              this.fs2 = res['fs2'];
-              this.L_new_n = res['L_new_n'];
-              this.dL_n = res['dL_n'];
-              await this.pyServerAPI.checkMemory();
-              this.impulseResponses.push(
-                await this.pyServerAPI
-                  .getImpulseResponse({
-                    mls,
-                    sampleRate: this.sourceSamplingRate || 96000,
-                    numPeriods: this.numMLSPerCapture,
-                    sig: payload,
-                    fs2: this.fs2,
-                    L_new_n: this.L_new_n,
-                    dL_n: this.dL_n
-                  })
-                  .then(res => {
-                    if (this.numSuccessfulCaptured < this.numCaptures) {
-                      this.numSuccessfulCaptured += 1;
-                      console.log('num succ capt: ' + this.numSuccessfulCaptured);
-                      this.stepNum += 1;
-                      console.log('got impulse response ' + this.stepNum);
-                      this.incrementStatusBar();
-                      this.status =
-                        `All Hz Calibration: ${this.numSuccessfulCaptured}/${this.numCaptures} IRs computed...`.toString() +
-                        this.generateTemplate().toString();
-                      this.emit('update', {
-                        message: this.status,
-                      });
-                      return res['ir'];
-                    }
-                  })
-                  .catch(err => {
-                    console.error(err);
-                  })
-              );
-            })
-            
+            await this.pyServerAPI
+              .getAutocorrelation({
+                sampleRate: this.sourceSamplingRate || 96000,
+                payload,
+                mls,
+                numPeriods: this.numMLSPerCapture,
+              })
+              .then(async res => {
+                this.autocorrelations.push(res['autocorrelation']);
+                this.fs2 = res['fs2'];
+                this.L_new_n = res['L_new_n'];
+                this.dL_n = res['dL_n'];
+                await this.pyServerAPI.checkMemory();
+                this.impulseResponses.push(
+                  await this.pyServerAPI
+                    .getImpulseResponse({
+                      mls,
+                      sampleRate: this.sourceSamplingRate || 96000,
+                      numPeriods: this.numMLSPerCapture,
+                      sig: payload,
+                      fs2: this.fs2,
+                      L_new_n: this.L_new_n,
+                      dL_n: this.dL_n,
+                    })
+                    .then(res => {
+                      if (this.numSuccessfulCaptured < this.numCaptures) {
+                        this.numSuccessfulCaptured += 1;
+                        console.log('num succ capt: ' + this.numSuccessfulCaptured);
+                        this.stepNum += 1;
+                        console.log('got impulse response ' + this.stepNum);
+                        this.incrementStatusBar();
+                        this.status =
+                          `All Hz Calibration: ${this.numSuccessfulCaptured}/${this.numCaptures} IRs computed...`.toString() +
+                          this.generateTemplate().toString();
+                        this.emit('update', {
+                          message: this.status,
+                        });
+                        return res['ir'];
+                      }
+                    })
+                    .catch(err => {
+                      console.error(err);
+                    })
+                );
+              });
           } else if (result['sd'] > this._calibrateSoundPowerDbSDToleratedDb) {
             this.clearLastUnfilteredRecordedSignals();
             console.log('unfiltered rec', this.getAllUnfilteredRecordedSignals.length);
@@ -935,8 +940,8 @@ class Combination extends AudioCalibrator {
     this.stopCalibrationAudio();
     let component_conv_recs = this.getAllFilteredRecordedSignals();
 
-    if (this.componentAttentuatorGainDB != 0){
-      let linearScaleAttenuation = Math.pow(10,this.componentAttentuatorGainDB/20);
+    if (this.componentAttentuatorGainDB != 0) {
+      let linearScaleAttenuation = Math.pow(10, this.componentAttentuatorGainDB / 20);
       component_conv_recs = component_conv_recs.map(rec => {
         return rec.map(value => value / this.linearScaleAttenuation);
       });
@@ -958,8 +963,8 @@ class Combination extends AudioCalibrator {
 
     let system_conv_recs = this.getAllFilteredRecordedSignals();
 
-    if (this.systemAttenuatorGainDB != 0){
-      let linearScaleAttenuation = Math.pow(10,this.systemAttenuatorGainDB/20);
+    if (this.systemAttenuatorGainDB != 0) {
+      let linearScaleAttenuation = Math.pow(10, this.systemAttenuatorGainDB / 20);
       system_conv_recs = system_conv_recs.map(rec => {
         return rec.map(value => value / linearScaleAttenuation);
       });
@@ -972,8 +977,8 @@ class Combination extends AudioCalibrator {
 
     this.sourceAudioContext.close();
     let recs = this.getAllUnfilteredRecordedSignals();
-    if (this.componentAttentuatorGainDB != 0){
-      let linearScaleAttenuation = Math.pow(10,this.componentAttentuatorGainDB/20);
+    if (this.componentAttentuatorGainDB != 0) {
+      let linearScaleAttenuation = Math.pow(10, this.componentAttentuatorGainDB / 20);
       recs = recs.map(rec => {
         return rec.map(value => value / this.linearScaleAttenuation);
       });
@@ -1123,7 +1128,10 @@ class Combination extends AudioCalibrator {
     this.addTimeStamp('Get PSD of mls sequence');
     if (this.isCalibrating) return null;
     let mls_psd = await this.pyServerAPI
-      .getMLSPSDWithRetry({mls: this.#mlsBufferView[0], sampleRate: this.sourceSamplingRate || 96000})
+      .getMLSPSDWithRetry({
+        mls: this.#mlsBufferView[0],
+        sampleRate: this.sourceSamplingRate || 96000,
+      })
       .then(res => {
         this.incrementStatusBar();
         this.status =
@@ -1315,16 +1323,16 @@ class Combination extends AudioCalibrator {
       this.stopCalibrationAudio();
     }
     let conv_recs = this.getAllFilteredRecordedSignals();
-    if (this._calibrateSoundCheck == 'goal'){
-      if (this.componentAttentuatorGainDB != 0){
-        let linearScaleAttenuation = Math.pow(10,this.componentAttentuatorGainDB/20);
+    if (this._calibrateSoundCheck == 'goal') {
+      if (this.componentAttentuatorGainDB != 0) {
+        let linearScaleAttenuation = Math.pow(10, this.componentAttentuatorGainDB / 20);
         conv_recs = conv_recs.map(rec => {
           return rec.map(value => value / this.linearScaleAttenuation);
         });
       }
-    }else if (this._calibrateSoundCheck == 'system'){
-      if (this.systemAttentuatorGainDB != 0){
-        let linearScaleAttenuation = Math.pow(10,this.systemAttentuatorGainDB/20);
+    } else if (this._calibrateSoundCheck == 'system') {
+      if (this.systemAttentuatorGainDB != 0) {
+        let linearScaleAttenuation = Math.pow(10, this.systemAttentuatorGainDB / 20);
         conv_recs = conv_recs.map(rec => {
           return rec.map(value => value / this.linearScaleAttenuation);
         });
@@ -1339,18 +1347,17 @@ class Combination extends AudioCalibrator {
     //   return rec.map(value => value / this.filteredMLSAttenuation.system);
     // });
 
-
     let recs = this.getAllUnfilteredRecordedSignals();
-    if (this._calibrateSoundCheck == 'goal'){
-      if (this.componentAttentuatorGainDB != 0){
-        let linearScaleAttenuation = Math.pow(10,this.componentAttentuatorGainDB/20);
+    if (this._calibrateSoundCheck == 'goal') {
+      if (this.componentAttentuatorGainDB != 0) {
+        let linearScaleAttenuation = Math.pow(10, this.componentAttentuatorGainDB / 20);
         recs = recs.map(rec => {
           return rec.map(value => value / this.linearScaleAttenuation);
         });
       }
-    }else if (this._calibrateSoundCheck == 'system'){
-      if (this.systemAttentuatorGainDB != 0){
-        let linearScaleAttenuation = Math.pow(10,this.systemAttentuatorGainDB/20);
+    } else if (this._calibrateSoundCheck == 'system') {
+      if (this.systemAttentuatorGainDB != 0) {
+        let linearScaleAttenuation = Math.pow(10, this.systemAttentuatorGainDB / 20);
         recs = recs.map(rec => {
           return rec.map(value => value / this.linearScaleAttenuation);
         });
@@ -1376,8 +1383,7 @@ class Combination extends AudioCalibrator {
           console.log(res);
           let mls_psd = res.y
             .filter(
-              (value, index) =>
-                res.x[index] >= this.#lowHz && res.x[index] <= this.systemFMaxHz
+              (value, index) => res.x[index] >= this.#lowHz && res.x[index] <= this.systemFMaxHz
             )
             .map(value => 10 * Math.log10(value));
           this.SDofFilteredRange['mls'] = standardDeviation(mls_psd);
@@ -1722,7 +1728,7 @@ class Combination extends AudioCalibrator {
           console.error(err);
         });
 
-        let filtered_no_bandpass_mls_psd = await this.pyServerAPI
+      let filtered_no_bandpass_mls_psd = await this.pyServerAPI
         .getMLSPSDWithRetry({
           mls: this.systemConvolutionNoBandpass,
           sampleRate: this.sourceSamplingRate || 96000,
@@ -1854,7 +1860,7 @@ class Combination extends AudioCalibrator {
    * @example
    */
   startCalibrationImpulseResponse = async stream => {
-    console.log("JS used memory:", performance.memory.usedJSHeapSize/1024/1024, "mb");
+    console.log('JS used memory:', performance.memory.usedJSHeapSize / 1024 / 1024, 'mb');
     let desired_time = this.desired_time_per_mls;
     let checkRec = 'allhz';
 
@@ -1866,21 +1872,21 @@ class Combination extends AudioCalibrator {
 
     this.power_dB = 0;
 
-    if (!this._calibrateSoundBurstLevelReTBool){
-      this.power_dB =this._calibrateSoundBurstDb;
-    }else{
-      this.power_dB = this._calibrateSoundBurstDb+(this.T-this.gainDBSPL);
+    if (!this._calibrateSoundBurstLevelReTBool) {
+      this.power_dB = this._calibrateSoundBurstDb;
+    } else {
+      this.power_dB = this._calibrateSoundBurstDb + (this.T - this.gainDBSPL);
     }
 
-    const amplitude = Math.pow(10,this.power_dB / 20);
+    const amplitude = Math.pow(10, this.power_dB / 20);
     //MLSpower = Math.pow(10,this.power_dB/20);
     this.addTimeStamp('Get MLS sequence');
     if (this.isCalibrating) return null;
     await this.pyServerAPI
       .getMLSWithRetry({
-        length, 
+        length,
         amplitude,
-        calibrateSoundBurstMLSVersions: this.numCaptures
+        calibrateSoundBurstMLSVersions: this.numCaptures,
       })
       .then(res => {
         console.log(res);
@@ -1920,8 +1926,8 @@ class Combination extends AudioCalibrator {
         this.#playCalibrationAudio, // play audio func (required)
         this.#createCalibrationNodeFromBuffer(this.#mlsBufferView[this.icapture]), // before play func
         this.#awaitSignalOnset, // before record
-          () => this.numSuccessfulCaptured < 1, // loop while true
-          this.#awaitDesiredMLSLength, // during record
+        () => this.numSuccessfulCaptured < 1, // loop while true
+        this.#awaitDesiredMLSLength, // during record
         this.#afterMLSRecord, // after record
         this.mode,
         checkRec
@@ -2101,8 +2107,6 @@ class Combination extends AudioCalibrator {
       throw new Error(`Unknown data type: ${data.type}`);
     }
   };
-  
-
 
   #getTruncatedSignal = (left = 3.5, right = 4.5) => {
     const start = Math.floor(left * this.sourceSamplingRate);
@@ -2124,15 +2128,15 @@ class Combination extends AudioCalibrator {
         );
         this.stopCalibrationAudio();
         this.isCalibrating = true;
-          // restartButton.style.display = 'none';
+        // restartButton.style.display = 'none';
         this.emit('update', {message: 'Connection failed, hit restart button to reconnect'});
       }
       if (setItem.size === 0) {
         console.warn('The last capture failed, no recorded signal');
         this.stopCalibrationAudio();
-          this.isCalibrating = true;
-          // restartButton.style.display = 'none';
-          this.emit('update', {message: 'Connection failed, hit restart button to reconnect'});
+        this.isCalibrating = true;
+        // restartButton.style.display = 'none';
+        this.emit('update', {message: 'Connection failed, hit restart button to reconnect'});
       }
     };
     checkResult(result);
@@ -2175,26 +2179,25 @@ class Combination extends AudioCalibrator {
     const interval = 1 / sampleRate; // Time between samples
 
     for (let t = 0; t <= totalDuration; t += interval) {
-
       let gainValueAtTime = gainValue;
 
       // Apply the onset curve
       if (t < this.TAPER_SECS) {
-          const onsetIndex = Math.floor((t / this.TAPER_SECS) * onsetCurve.length);
-          gainValueAtTime *= onsetCurve[onsetIndex];
+        const onsetIndex = Math.floor((t / this.TAPER_SECS) * onsetCurve.length);
+        gainValueAtTime *= onsetCurve[onsetIndex];
       }
 
       // Apply the offset curve
       if (t > totalDuration - this.TAPER_SECS) {
-          const offsetTime = t - (totalDuration - this.TAPER_SECS);
-          const offsetIndex = Math.floor((offsetTime / this.TAPER_SECS) * offsetCurve.length);
-          gainValueAtTime *= offsetCurve[offsetIndex];
+        const offsetTime = t - (totalDuration - this.TAPER_SECS);
+        const offsetIndex = Math.floor((offsetTime / this.TAPER_SECS) * offsetCurve.length);
+        gainValueAtTime *= offsetCurve[offsetIndex];
       }
 
       gainValuesOverTime.push(gainValueAtTime);
-  }
+    }
 
-  this.waveforms['volume'][this.inDB] = gainValuesOverTime;
+    this.waveforms['volume'][this.inDB] = gainValuesOverTime;
 
     this.addCalibrationNode(oscilator);
   };
@@ -2236,7 +2239,7 @@ class Combination extends AudioCalibrator {
     }
   };
 
-  #sendToServerForProcessing = async (lCalib) => {
+  #sendToServerForProcessing = async lCalib => {
     console.log('Sending data to server');
     this.addTimeStamp('Send volume data to server');
     let left = this.calibrateSound1000HzPreSec;
@@ -2276,7 +2279,6 @@ class Combination extends AudioCalibrator {
   };
 
   startCalibrationVolume = async (stream, gainValues, lCalib, componentGainDBSPL) => {
-
     if (this.isCalibrating) return null;
     const trialIterations = gainValues.length;
     this.status_denominator += trialIterations;
@@ -2285,7 +2287,7 @@ class Combination extends AudioCalibrator {
     let inDB = 0;
     const outDBSPLValues = [];
     const outDBSPL1000Values = [];
-    let checkRec = "loudest";
+    let checkRec = 'loudest';
     // do one calibration that will be discarded
     const soundLevelToDiscard = -60;
     const gainToDiscard = Math.pow(10, soundLevelToDiscard / 20);
@@ -2453,10 +2455,14 @@ class Combination extends AudioCalibrator {
     const querySnapshot = await getDocs(q);
     // if exists return the linear field of the first document
     if (querySnapshot.size > 0) {
+      const timestamp = new Timestamp(
+        querySnapshot.docs[0].data().createDate.seconds,
+        querySnapshot.docs[0].data().createDate.nanoseconds
+      );
       return {
         ir: querySnapshot.docs[0].data().linear,
-        createDate: querySnapshot.docs[0].data().createDate,
-        jsonFileName: querySnapshot.docs[0].data().jsonFileName
+        createDate: timestamp.toDate(),
+        jsonFileName: querySnapshot.docs[0].data().jsonFileName,
       };
     }
     return null;
@@ -2590,7 +2596,6 @@ class Combination extends AudioCalibrator {
       return this.interpolate(targetFrequency, x0, y0, x1, y1);
     }
   };
-
 
   checkPowerVariation = async () => {
     let recordings = this.getAllFilteredRecordedSignals();
@@ -2763,8 +2768,8 @@ class Combination extends AudioCalibrator {
       DeviceType: isSmartPhone ? this.deviceInfo.devicetype : 'N/A',
       ID_from_51Degrees: isSmartPhone ? this.deviceInfo.DeviceId : 'N/A',
       calibrateMicrophonesBool: calibrateMicrophonesBool,
-      screenHeight:this.deviceInfo.screenHeight,
-      screenWidth:this.deviceInfo.screenWidth,
+      screenHeight: this.deviceInfo.screenHeight,
+      screenWidth: this.deviceInfo.screenWidth,
       webAudioDeviceNames: {
         loudspeaker: this.webAudioDeviceNames.loudspeaker,
         microphone: this.webAudioDeviceNames.microphone,
@@ -2794,7 +2799,7 @@ class Combination extends AudioCalibrator {
           micInfo['parentFilenameJSON'] = data.jsonFileName ? data.jsonFileName : '';
         }
       });
-      
+
       // await this.readFrqGain(ID, OEM).then(data => {
       //   return data;
       // });
@@ -2842,7 +2847,7 @@ class Combination extends AudioCalibrator {
         });
       }
       await this.pyServerAPI.checkMemory();
-      // calibrate volume 
+      // calibrate volume
 
       let volumeResults = await this.startCalibrationVolume(
         stream,
@@ -2851,9 +2856,9 @@ class Combination extends AudioCalibrator {
         this.componentGainDBSPL
       );
       if (!volumeResults) return;
-      this.T = volumeResults["parameters"]["T"];
-      this.gainDBSPL = volumeResults["parameters"]["gainDBSPL"];
-      
+      this.T = volumeResults['parameters']['T'];
+      this.gainDBSPL = volumeResults['parameters']['gainDBSPL'];
+
       // end calibrate volume
 
       let impulseResponseResults = await this.startCalibrationImpulseResponse(stream);
@@ -2863,20 +2868,33 @@ class Combination extends AudioCalibrator {
       impulseResponseResults['component']['background_noise'] = this.background_noise;
 
       //attenuate system background noise
-      if (this.systemAttenuatorGainDB != 0){
-        let linearScaleAttenuation = Math.pow(10,this.systemAttenuatorGainDB/20);
-        let linearScalePowerAttenuation = Math.pow(10,this.systemAttenuatorGainDB/10);
-        impulseResponseResults['system']['background_noise']['recording'] = impulseResponseResults['background_noise']['recording'].map(value => value/linearScaleAttenuation);
-        impulseResponseResults['system']['background_noise']['x_background'] = impulseResponseResults['background_noise']['x_background'];
-        impulseResponseResults['system']['background_noise']['y_background'] = impulseResponseResults['background_noise']['y_background'].map(value => value/linearScalePowerAttenuation);
+      if (this.systemAttenuatorGainDB != 0) {
+        let linearScaleAttenuation = Math.pow(10, this.systemAttenuatorGainDB / 20);
+        let linearScalePowerAttenuation = Math.pow(10, this.systemAttenuatorGainDB / 10);
+        impulseResponseResults['system']['background_noise']['recording'] = impulseResponseResults[
+          'background_noise'
+        ]['recording'].map(value => value / linearScaleAttenuation);
+        impulseResponseResults['system']['background_noise']['x_background'] =
+          impulseResponseResults['background_noise']['x_background'];
+        impulseResponseResults['system']['background_noise']['y_background'] =
+          impulseResponseResults['background_noise']['y_background'].map(
+            value => value / linearScalePowerAttenuation
+          );
       }
       //attenuate component background noise
-      if (this.componentAttentuatorGainDB != 0){
-        let linearScaleAttenuation = Math.pow(10,this.componentAttenuatorGainDB/20);
-        let linearScalePowerAttenuation = Math.pow(10,this.componentAttenuatorGainDB/10);
-        impulseResponseResults['component']['background_noise']['recording'] = impulseResponseResults['background_noise']['recording'].map(value => value/linearScaleAttenuation);
-        impulseResponseResults['component']['background_noise']['x_background'] = impulseResponseResults['background_noise']['x_background'];
-        impulseResponseResults['component']['background_noise']['y_background'] = impulseResponseResults['background_noise']['y_background'].map(value => value/linearScalePowerAttenuation);
+      if (this.componentAttentuatorGainDB != 0) {
+        let linearScaleAttenuation = Math.pow(10, this.componentAttenuatorGainDB / 20);
+        let linearScalePowerAttenuation = Math.pow(10, this.componentAttenuatorGainDB / 10);
+        impulseResponseResults['component']['background_noise']['recording'] =
+          impulseResponseResults['background_noise']['recording'].map(
+            value => value / linearScaleAttenuation
+          );
+        impulseResponseResults['component']['background_noise']['x_background'] =
+          impulseResponseResults['background_noise']['x_background'];
+        impulseResponseResults['component']['background_noise']['y_background'] =
+          impulseResponseResults['background_noise']['y_background'].map(
+            value => value / linearScalePowerAttenuation
+          );
       }
       impulseResponseResults['system']['attenuatorGainDB'] = this.systemAttenuatorGainDB;
       impulseResponseResults['component']['attenuatorGainDB'] = this.componentAttenuatorGainDB;
