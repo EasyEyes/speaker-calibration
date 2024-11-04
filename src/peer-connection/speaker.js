@@ -198,7 +198,9 @@ class Speaker extends AudioPeer {
             params.IDsToSaveInSoundProfileLibrary,
             params.restartButton,
             params.reminder,
-            params.calibrateSoundLimit
+            params.calibrateSoundLimit,
+            params.calibrateSoundBurstNormalizeBy1000HzGainBool,
+            params.calibrateSoundBurstScalarDB
           );
           speaker.#removeUIElems();
           resolve(speaker.result);

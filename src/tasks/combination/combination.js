@@ -436,8 +436,18 @@ class Combination extends AudioCalibrator {
     const filteredComputedIRs = computedIRs.filter(element => {
       return element != undefined;
     });
-    const componentIRGains = this.componentIR['Gain'];
+    let componentIRGains = this.componentIR['Gain'];
     const componentIRFreqs = this.componentIR['Freq'];
+    //normalize the component IR gains
+    componentIRGains = componentIRGains.map(value => {
+      return value + this._calibrateSoundBurstScalarDB - this._calibrateSoundBurstDb;
+    });
+    if (this._calibrateSoundBurstNormalizeBy1000HzGainBool) {
+      const sineGainAt1000Hz_dB = this.gainDBSPL;
+      componentIRGains = componentIRGains.map(value => {
+        return value - sineGainAt1000Hz_dB;
+      });
+    }
     const mls = this.#mls[this.icapture];
     const lowHz = this.#lowHz;
     const iirLength = this.iirLength;
@@ -2704,7 +2714,9 @@ class Combination extends AudioCalibrator {
     userIDs,
     restartButton,
     reminder,
-    calibrateSoundLimit
+    calibrateSoundLimit,
+    _calibrateSoundBurstNormalizeBy1000HzGainBool,
+    _calibrateSoundBurstScalarDB
   ) => {
     this.TAPER_SECS = _calibrateSoundTaperSec;
     this.calibrateSoundLimit = calibrateSoundLimit;
@@ -2730,6 +2742,9 @@ class Combination extends AudioCalibrator {
     this._calibrateSoundPowerBinDesiredSec = _calibrateSoundPowerBinDesiredSec;
     this._calibrateSoundBurstUses1000HzGainBool = _calibrateSoundBurstUses1000HzGainBool;
     this._calibrateSoundPowerDbSDToleratedDb = _calibrateSoundPowerDbSDToleratedDb;
+    this._calibrateSoundBurstNormalizeBy1000HzGainBool =
+      _calibrateSoundBurstNormalizeBy1000HzGainBool;
+    this._calibrateSoundBurstScalarDB = _calibrateSoundBurstScalarDB;
     this.webAudioDeviceNames = webAudioDeviceNames;
     if (isSmartPhone) this.webAudioDeviceNames.microphone = this.deviceInfo.microphoneFromAPI;
     this.webAudioDeviceNames.microphoneText = this.webAudioDeviceNames.microphoneText
