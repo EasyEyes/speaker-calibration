@@ -184,10 +184,12 @@ class AudioCalibrator extends AudioRecorder {
     afterRecord = () => {},
     gainValue,
     lCalib = 104.92978421490648,
-    checkRec
+    checkRec,
+    checkSD,
+    maxSD
   ) => {
     this.numCalibratingRoundsCompleted = 0;
-
+    this.numCalibratingRounds = 2;
     // calibration loop
     while (!this.isCalibrating && this.numCalibratingRoundsCompleted < this.numCalibratingRounds) {
       if (this.isCalibrating) break;
@@ -207,12 +209,19 @@ class AudioCalibrator extends AudioRecorder {
       if (this.isCalibrating) break;
       // after recording
       await afterRecord(lCalib);
-
+      const sd = await checkSD();
+      if (sd <= maxSD) {
+        console.log(`SD =${sd}, less than calibrateSound1000HzMaxSD_dB=${maxSD}`);
+        this.numCalibratingRoundsCompleted += 2;
+      } else {
+        // if exist the maxSD do it one more time and only one more time
+        console.log(`SD =${sd}, greater than calibrateSound1000HzMaxSD_dB=${maxSD}`);
+        this.numCalibratingRoundsCompleted += 1;
+      }
       this.calibrationNodes = [];
 
       // eslint-disable-next-line no-await-in-loop
       await sleep(2);
-      this.numCalibratingRoundsCompleted += 1;
     }
   };
 

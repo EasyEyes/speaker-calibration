@@ -433,8 +433,6 @@ class PythonServerAPI {
     const task = 'component-inverse-impulse-response';
     let res = null;
 
-    console.log({payload});
-
     const data = JSON.stringify({
       task,
       payload,
@@ -484,8 +482,6 @@ class PythonServerAPI {
   }) => {
     const task = 'system-inverse-impulse-response';
     let res = null;
-
-    console.log({payload});
 
     const data = JSON.stringify({
       task,

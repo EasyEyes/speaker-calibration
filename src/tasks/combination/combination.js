@@ -459,6 +459,7 @@ class Combination extends AudioCalibrator {
     this.status =
       `All Hz Calibration: computing the IIR...`.toString() + this.generateTemplate().toString();
     this.emit('update', {message: this.status});
+    console.log()
     return this.pyServerAPI
       .getComponentInverseImpulseResponseWithRetry({
         payload: filteredComputedIRs.slice(0, this.numCaptures),
@@ -594,8 +595,22 @@ class Combination extends AudioCalibrator {
       })
       .then(async result => {
         if (result) {
-          // console.log("JS used memory:", performance.memory.usedJSHeapSize/1024/1024, "mb");
-          if (result['sd'] < this._calibrateSoundPowerDbSDToleratedDb) {
+          if (result['sd'] > this._calibrateSoundBurstMaxSD_dB & 
+            this.numSuccesfulCaptures == 0) {
+              console.log('SD: ' + result['sd'] + ', greater than _calibrateSoundBurstMaxSD_dB: ' + this._calibrateSoundBurstMaxSD_dB);
+            this.recordingChecks['unfiltered'].push(result);
+            this.clearLastUnfilteredRecordedSignals();
+            this.numSuccesfulCaptures +=1;
+          } else {
+            if (result['sd'] < this._calibrateSoundBurstMaxSD_dB) {
+              console.log('SD: ' + result['sd'] + ', less than _calibrateSoundBurstMaxSD_dB: ' + this._calibrateSoundBurstMaxSD_dB);
+            } else {
+              console.log('SD: ' + result['sd'] + ', greater than _calibrateSoundBurstMaxSD_dB: ' + this._calibrateSoundBurstMaxSD_dB);
+            }
+            if (this.numSuccesfulCaptures == 1) {
+              console.log('pop last unfiltered mls volume check');
+              this.recordingChecks['unfiltered'].pop();
+            }
             this.recordingChecks['unfiltered'].push(result);
             await this.pyServerAPI.checkMemory();
             // let start = new Date().getTime() / 1000;
@@ -636,8 +651,7 @@ class Combination extends AudioCalibrator {
                     })
                     .then(res => {
                       if (this.numSuccessfulCaptured < this.numCaptures) {
-                        this.numSuccessfulCaptured += 1;
-                        console.log('num succ capt: ' + this.numSuccessfulCaptured);
+                        this.numSuccessfulCaptured += 2;
                         this.stepNum += 1;
                         console.log('got impulse response ' + this.stepNum);
                         this.incrementStatusBar();
@@ -655,10 +669,9 @@ class Combination extends AudioCalibrator {
                     })
                 );
               });
-          } else if (result['sd'] > this._calibrateSoundPowerDbSDToleratedDb) {
-            this.clearLastUnfilteredRecordedSignals();
-            console.log('unfiltered rec', this.getAllUnfilteredRecordedSignals.length);
           }
+          console.log('number of unfiltered recording checks:' +  this.recordingChecks['unfiltered'].length);
+          console.log('number of attemp: ' + this.numSuccesfulCaptures);
         }
       })
       .catch(err => {
@@ -930,7 +943,7 @@ class Combination extends AudioCalibrator {
       this.#playCalibrationAudio, // play audio func (required)
       this.#createCalibrationNodeFromBuffer(convolution), // before play func
       this.#awaitSignalOnset, // before record
-      () => this.numSuccessfulCaptured < 1,
+      () => this.numSuccessfulCaptured < 2,
       this.#awaitDesiredMLSLength, // during record
       this.#afterMLSwIIRRecord, // after record
       this.mode,
@@ -1936,7 +1949,7 @@ class Combination extends AudioCalibrator {
         this.#playCalibrationAudio, // play audio func (required)
         this.#createCalibrationNodeFromBuffer(this.#mlsBufferView[this.icapture]), // before play func
         this.#awaitSignalOnset, // before record
-        () => this.numSuccessfulCaptured < 1, // loop while true
+        () => this.numSuccessfulCaptured < 2, // loop while true
         this.#awaitDesiredMLSLength, // during record
         this.#afterMLSRecord, // after record
         this.mode,
@@ -2282,9 +2295,7 @@ class Combination extends AudioCalibrator {
         Sec: this.calibrateSound1000HzSec,
       })
       .then(res => {
-        if (res && res['sd'] < this._calibrateSoundPowerDbSDToleratedDb) {
-          this.recordingChecks['volume'][this.inDB] = res;
-        }
+        this.recordingChecks['volume'][this.inDB] = res;
       });
   };
 
@@ -2323,7 +2334,9 @@ class Combination extends AudioCalibrator {
         this.#sendToServerForProcessing,
         gainToDiscard,
         lCalib, //todo make this a class parameter
-        checkRec
+        checkRec,
+        () => {return this.recordingChecks['volume'][this.inDB]['sd']},
+        this.calibrateSound1000HzMaxSD_dB
       );
     } while (this.outDBSPL === null);
     //reset the values
@@ -2363,7 +2376,9 @@ class Combination extends AudioCalibrator {
           this.#sendToServerForProcessing,
           gainValues[i],
           lCalib, //todo make this a class parameter
-          checkRec
+          checkRec,
+          () => {return this.recordingChecks['volume'][this.inDB]['sd']},
+          this.calibrateSound1000HzMaxSD_dB
         );
       } while (this.outDBSPL === null);
       outDBSPL1000Values.push(this.outDBSPL1000);
@@ -2630,12 +2645,18 @@ class Combination extends AudioCalibrator {
       })
       .then(result => {
         if (result) {
-          if (result['sd'] > this._calibrateSoundPowerDbSDToleratedDb) {
+          if (result['sd'] > this._calibrateSoundBurstMaxSD_dB & this.numSuccessfulCaptured) {
             console.log('filtered recording sd too high');
+            // numSuccessfulCaptured no longer to count number of successful capture but count attemps
+            // is sd below _calibrateSoundBurstMaxSD_dB then count two attemps
+            // else count one attemp
+            this.numSuccessfulCaptured += 1;
           } else {
             this.recordingChecks[this.soundCheck].push(result);
-            if (this.numSuccessfulCaptured < 1) {
-              this.numSuccessfulCaptured += 1;
+            // Now we do at most 2 attempts if sd > _calibrateSoundBurstMaxSD_dB
+            // Second attempt is the final
+            if (this.numSuccessfulCaptured < 2) {
+              this.numSuccessfulCaptured += 2;
               this.stepNum += 1;
               this.incrementStatusBar();
               console.log(
@@ -2715,8 +2736,10 @@ class Combination extends AudioCalibrator {
     restartButton,
     reminder,
     calibrateSoundLimit,
-    _calibrateSoundBurstNormalizeBy1000HzGainBool,
-    _calibrateSoundBurstScalarDB
+    _calibrateSoundBurstNormalizeBy1000HzGainBool = false,
+    _calibrateSoundBurstScalarDB = 71,
+    calibrateSound1000HzMaxSD_dB = 4,
+    _calibrateSoundBurstMaxSD_dB = 4
   ) => {
     this.TAPER_SECS = _calibrateSoundTaperSec;
     this.calibrateSoundLimit = calibrateSoundLimit;
@@ -2730,7 +2753,6 @@ class Combination extends AudioCalibrator {
     this.calibrateSound1000HzPostSec = calibrateSound1000HzPostSec;
     this.iirLength = Math.floor(_calibrateSoundIIRSec * this.sourceSamplingRate);
     this.irLength = Math.floor(_calibrateSoundIRSec * this.sourceSamplingRate);
-    console.log(this.irLength);
     this.calibrateSoundIIRPhase = _calibrateSoundIIRPhase;
     this.numMLSPerCapture = _calibrateSoundBurstRepeats + 1;
     this.desired_time_per_mls = _calibrateSoundBurstSec;
@@ -2752,6 +2774,8 @@ class Combination extends AudioCalibrator {
       .replace('XXX', this.webAudioDeviceNames.microphone);
     //feed calibration goal here
     this._calibrateSoundCheck = _calibrateSoundCheck;
+    this.calibrateSound1000HzMaxSD_dB = calibrateSound1000HzMaxSD_dB;
+    this._calibrateSoundBurstMaxSD_dB = _calibrateSoundBurstMaxSD_dB;
     //check if a componentIR was given to the system, if it isn't check for the microphone. using dummy data here bc we need to
     //check the db based on the microphone currently connected
 
@@ -2763,8 +2787,8 @@ class Combination extends AudioCalibrator {
         ? 'minidsp'
         : this.deviceInfo.OEM.toLowerCase().split(' ').join('')
       : micManufacturer.toLowerCase().split(' ').join('');
-    // const ID = "A2484";
-    // const OEM = "apple";
+    // const ID = "712-5669";
+    // const OEM = "minidsp";
     const micInfo = {
       micModelName: isSmartPhone ? micModelName : microphoneName,
       OEM: isSmartPhone
