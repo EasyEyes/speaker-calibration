@@ -703,7 +703,7 @@ class Combination extends AudioCalibrator {
     if (this.mode === 'unfiltered') {
       //unfiltered
       time_to_wait = (this.#mls[0].length / this.sourceSamplingRate) * this.numMLSPerCapture;
-      time_to_wait = time_to_wait + this._calibrateSoundburstPostSec;
+      time_to_wait = time_to_wait + this._calibrateSoundBurstPostSec;
     } else if (this.mode === 'filtered') {
       //filtered
       // time_to_wait =
@@ -711,7 +711,7 @@ class Combination extends AudioCalibrator {
       //   (this.numMLSPerCapture / (this.num_mls_to_skip + this.numMLSPerCapture));
       time_to_wait =
         (this.#currentConvolution.length / this.sourceSamplingRate) * this.numMLSPerCapture;
-      time_to_wait = time_to_wait + this._calibrateSoundburstPostSec;
+      time_to_wait = time_to_wait + this._calibrateSoundBurstPostSec;
     } else {
       throw new Error('Mode broke in awaitDesiredMLSLength');
     }
@@ -2711,7 +2711,7 @@ class Combination extends AudioCalibrator {
     _calibrateSoundBurstRepeats = 3,
     _calibrateSoundBurstSec = 1,
     _calibrateSoundBurstPreSec = 1,
-    _calibrateSoundburstPostSec = 1,
+    _calibrateSoundBurstPostSec = 1,
     _calibrateSoundHz = 48000,
     _calibrateSoundIRSec = 0.2,
     _calibrateSoundIIRSec = 0.2,
@@ -2759,7 +2759,7 @@ class Combination extends AudioCalibrator {
     this.irLength = Math.floor(_calibrateSoundIRSec * this.sourceSamplingRate);
     this.calibrateSoundIIRPhase = _calibrateSoundIIRPhase;
     this.num_mls_to_skip = Math.ceil(_calibrateSoundBurstPreSec / _calibrateSoundBurstSec);
-    this._calibrateSoundburstPostSec = _calibrateSoundburstPostSec;
+    this._calibrateSoundBurstPostSec = _calibrateSoundBurstPostSec;
     this.numMLSPerCapture = _calibrateSoundBurstRepeats + this.num_mls_to_skip;
     this.desired_time_per_mls = _calibrateSoundBurstSec;
     this.desired_sampling_rate = _calibrateSoundHz;
