@@ -633,7 +633,7 @@ class Combination extends AudioCalibrator {
                 sampleRate: this.sourceSamplingRate || 96000,
                 payload,
                 mls,
-                numPeriods: this.numMLSPerCapture - this.num_mls_to_skip ,
+                numPeriods: this.numMLSPerCapture - this.num_mls_to_skip,
               })
               .then(async res => {
                 this.autocorrelations.push(res['autocorrelation']);
@@ -646,7 +646,7 @@ class Combination extends AudioCalibrator {
                     .getImpulseResponse({
                       mls,
                       sampleRate: this.sourceSamplingRate || 96000,
-                      numPeriods: this.numMLSPerCapture,
+                      numPeriods: this.numMLSPerCapture - this.num_mls_to_skip,
                       sig: payload_skipped_warmUp,
                       fs2: this.fs2,
                       L_new_n: this.L_new_n,
