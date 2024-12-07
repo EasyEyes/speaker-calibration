@@ -80,7 +80,7 @@ class PythonServerAPI {
 
     const data = JSON.stringify({
       task,
-      payload,
+      'payload': payload,
       'sample-rate': sampleRate,
       mls,
       numPeriods,

@@ -624,15 +624,12 @@ class Combination extends AudioCalibrator {
             // let end = new Date().getTime() / 1000;
             // console.log("Time taken:", end - start, "seconds");
             const usedPeriodStart = this.num_mls_to_skip  * this.sourceSamplingRate;
-            const usedPeriodEnd = this.numMLSPerCapture * this.sourceSamplingRate;
-            const payload_skipped_warmUp = payload.slice(usedPeriodStart, usedPeriodEnd);
-            console.log(payload.length);
-            console.log(payload_skipped_warmUp.length);
+            const payload_skipped_warmUp = payload.slice(usedPeriodStart);
             await this.pyServerAPI
               .getAutocorrelation({
+                mls:mls,
+                payload: payload_skipped_warmUp,
                 sampleRate: this.sourceSamplingRate || 96000,
-                payload,
-                mls,
                 numPeriods: this.numMLSPerCapture - this.num_mls_to_skip,
               })
               .then(async res => {
