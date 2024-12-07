@@ -6,10 +6,10 @@ import {
  *
  */
 class PythonServerAPI {
-  // static PYTHON_SERVER_URL = 'https://easyeyes-python-flask-server.herokuapp.com';
+  static PYTHON_SERVER_URL = 'https://easyeyes-python-flask-server.herokuapp.com';
 
   static TEST_SERVER_URL = 'http://127.0.0.1:5000';
-  static PYTHON_SERVER_URL ='http://127.0.0.1:5000';
+  // static PYTHON_SERVER_URL ='http://127.0.0.1:5000';
 
   /** @private */
   MAX_RETRY_COUNT = 3;
@@ -765,7 +765,7 @@ class PythonServerAPI {
       burstSec,
       repeats,
       warmUp});
-      
+
     const data = JSON.stringify({
       payload, 
       sampleRate, 
