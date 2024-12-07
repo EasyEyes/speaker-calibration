@@ -6,10 +6,10 @@ import {
  *
  */
 class PythonServerAPI {
-  static PYTHON_SERVER_URL = 'https://easyeyes-python-flask-server.herokuapp.com';
+  // static PYTHON_SERVER_URL = 'https://easyeyes-python-flask-server.herokuapp.com';
 
   static TEST_SERVER_URL = 'http://127.0.0.1:5000';
-  // static PYTHON_SERVER_URL ='http://127.0.0.1:5000';
+  static PYTHON_SERVER_URL ='http://127.0.0.1:5000';
 
   /** @private */
   MAX_RETRY_COUNT = 3;
@@ -753,17 +753,26 @@ class PythonServerAPI {
     sampleRate, 
     binDesiredSec,
     burstSec,
-    repeats
+    repeats,
+    warmUp
   }) => {
     const task = 'all-hz-check';
     let res = null;
 
+    console.log({payload, 
+      sampleRate, 
+      binDesiredSec,
+      burstSec,
+      repeats,
+      warmUp});
+      
     const data = JSON.stringify({
       payload, 
       sampleRate, 
       binDesiredSec,
       burstSec,
-      repeats
+      repeats,
+      warmUp
     });
 
     await axios({

@@ -362,7 +362,6 @@ class Combination extends AudioCalibrator {
     const lowHz = this.#lowHz; //gain of 1 below cutoff, need gain of 0
     const highHz = this.#highHz; //check error for anything other than 10 kHz
     const iirLength = this.iirLength;
-    const num_periods = this.numMLSPerCapture + this.num_mls_to_skip;
     this.stepNum += 1;
     console.log('send impulse responses to server: ' + this.stepNum);
     this.status =
@@ -375,7 +374,6 @@ class Combination extends AudioCalibrator {
         lowHz,
         highHz,
         iirLength,
-        num_periods,
         sampleRate: this.sourceSamplingRate || 96000,
         mlsAmplitude: Math.pow(10, this.power_dB / 20),
         calibrateSoundBurstFilteredExtraDb: this._calibrateSoundBurstFilteredExtraDb,
@@ -452,7 +450,6 @@ class Combination extends AudioCalibrator {
     const lowHz = this.#lowHz;
     const iirLength = this.iirLength;
     const irLength = this.irLength;
-    const num_periods = this.numMLSPerCapture + this.num_mls_to_skip;
     const highHz = this.#highHz;
     this.stepNum += 1;
     console.log('send impulse responses to server: ' + this.stepNum);
@@ -591,23 +588,24 @@ class Combination extends AudioCalibrator {
         sampleRate: this.sourceSamplingRate || 96000,
         binDesiredSec: this._calibrateSoundPowerBinDesiredSec,
         burstSec: this.desired_time_per_mls,
-        repeats: this.numMLSPerCapture,
+        repeats: this.numMLSPerCapture - this.num_mls_to_skip,
+        warmUp: this.num_mls_to_skip 
       })
       .then(async result => {
         if (result) {
           if (result['sd'] > this._calibrateSoundBurstMaxSD_dB & 
-            this.numSuccesfulCaptures == 0) {
+            this.numSuccessfulCaptured == 0) {
               console.log('SD: ' + result['sd'] + ', greater than _calibrateSoundBurstMaxSD_dB: ' + this._calibrateSoundBurstMaxSD_dB);
             this.recordingChecks['unfiltered'].push(result);
             this.clearLastUnfilteredRecordedSignals();
-            this.numSuccesfulCaptures +=1;
+            this.numSuccessfulCaptured +=1;
           } else {
             if (result['sd'] < this._calibrateSoundBurstMaxSD_dB) {
               console.log('SD: ' + result['sd'] + ', less than _calibrateSoundBurstMaxSD_dB: ' + this._calibrateSoundBurstMaxSD_dB);
             } else {
               console.log('SD: ' + result['sd'] + ', greater than _calibrateSoundBurstMaxSD_dB: ' + this._calibrateSoundBurstMaxSD_dB);
             }
-            if (this.numSuccesfulCaptures == 1) {
+            if (this.numSuccessfulCaptured == 1) {
               console.log('pop last unfiltered mls volume check');
               this.recordingChecks['unfiltered'].pop();
             }
@@ -625,12 +623,17 @@ class Combination extends AudioCalibrator {
             // console.log("dimention:", xfft.shape);
             // let end = new Date().getTime() / 1000;
             // console.log("Time taken:", end - start, "seconds");
+            const usedPeriodStart = this.num_mls_to_skip  * this.sourceSamplingRate;
+            const usedPeriodEnd = this.numMLSPerCapture * this.sourceSamplingRate;
+            const payload_skipped_warmUp = payload.slice(usedPeriodStart, usedPeriodEnd);
+            console.log(payload.length);
+            console.log(payload_skipped_warmUp.length);
             await this.pyServerAPI
               .getAutocorrelation({
                 sampleRate: this.sourceSamplingRate || 96000,
                 payload,
                 mls,
-                numPeriods: this.numMLSPerCapture,
+                numPeriods: this.numMLSPerCapture - this.num_mls_to_skip ,
               })
               .then(async res => {
                 this.autocorrelations.push(res['autocorrelation']);
@@ -644,7 +647,7 @@ class Combination extends AudioCalibrator {
                       mls,
                       sampleRate: this.sourceSamplingRate || 96000,
                       numPeriods: this.numMLSPerCapture,
-                      sig: payload,
+                      sig: payload_skipped_warmUp,
                       fs2: this.fs2,
                       L_new_n: this.L_new_n,
                       dL_n: this.dL_n,
@@ -671,7 +674,6 @@ class Combination extends AudioCalibrator {
               });
           }
           console.log('number of unfiltered recording checks:' +  this.recordingChecks['unfiltered'].length);
-          console.log('number of attemp: ' + this.numSuccesfulCaptures);
         }
       })
       .catch(err => {
@@ -701,7 +703,7 @@ class Combination extends AudioCalibrator {
     if (this.mode === 'unfiltered') {
       //unfiltered
       time_to_wait = (this.#mls[0].length / this.sourceSamplingRate) * this.numMLSPerCapture;
-      time_to_wait = time_to_wait * 1.1;
+      time_to_wait = time_to_wait + this._calibrateSoundburstPostSec;
     } else if (this.mode === 'filtered') {
       //filtered
       // time_to_wait =
@@ -709,7 +711,7 @@ class Combination extends AudioCalibrator {
       //   (this.numMLSPerCapture / (this.num_mls_to_skip + this.numMLSPerCapture));
       time_to_wait =
         (this.#currentConvolution.length / this.sourceSamplingRate) * this.numMLSPerCapture;
-      time_to_wait = time_to_wait * 1.1;
+      time_to_wait = time_to_wait + this._calibrateSoundburstPostSec;
     } else {
       throw new Error('Mode broke in awaitDesiredMLSLength');
     }
@@ -747,7 +749,7 @@ class Combination extends AudioCalibrator {
     this.emit('update', {
       message: this.status,
     });
-    let number_of_bursts_to_skip = this.num_mls_to_skip;
+    let number_of_bursts_to_skip = 0;
     let time_to_sleep = 0;
     if (this.mode === 'unfiltered') {
       time_to_sleep = (this.#mls[0].length / this.sourceSamplingRate) * number_of_bursts_to_skip;
@@ -972,7 +974,7 @@ class Combination extends AudioCalibrator {
 
     let return_component_conv_rec = component_conv_recs[component_conv_recs.length - 1];
     this.clearAllFilteredRecordedSignals();
-    // await this.checkPowerVariation(return_component_conv_rec);
+
     this.numSuccessfulCaptured = 0;
     this.#currentConvolution = this.systemConvolution;
     this.filteredMLSRange.system.Min = findMinValue(this.#currentConvolution);
@@ -2641,7 +2643,8 @@ class Combination extends AudioCalibrator {
         sampleRate: this.sourceSamplingRate || 96000,
         binDesiredSec: this._calibrateSoundPowerBinDesiredSec,
         burstSec: this.desired_time_per_mls,
-        repeats: this.numMLSPerCapture,
+        repeats: this.numMLSPerCapture - this.num_mls_to_skip ,
+        warmUp: this.num_mls_to_skip 
       })
       .then(result => {
         if (result) {
@@ -2707,13 +2710,14 @@ class Combination extends AudioCalibrator {
     _calibrateSoundBurstUses1000HzGainBool = false,
     _calibrateSoundBurstRepeats = 3,
     _calibrateSoundBurstSec = 1,
-    _calibrateSoundBurstsWarmup = 1,
+    _calibrateSoundBurstPreSec = 1,
+    _calibrateSoundburstPostSec = 1,
     _calibrateSoundHz = 48000,
     _calibrateSoundIRSec = 0.2,
     _calibrateSoundIIRSec = 0.2,
     _calibrateSoundIIRPhase = 'linear',
-    calibrateSound1000HzPreSec = 3.5,
-    calibrateSound1000HzSec = 1.0,
+    calibrateSound1000HzPreSec = 0.5,
+    calibrateSound1000HzSec = 0.5,
     calibrateSound1000HzPostSec = 0.5,
     _calibrateSoundBackgroundSecs = 0,
     _calibrateSoundSmoothOctaves = 0.33,
@@ -2754,9 +2758,10 @@ class Combination extends AudioCalibrator {
     this.iirLength = Math.floor(_calibrateSoundIIRSec * this.sourceSamplingRate);
     this.irLength = Math.floor(_calibrateSoundIRSec * this.sourceSamplingRate);
     this.calibrateSoundIIRPhase = _calibrateSoundIIRPhase;
-    this.numMLSPerCapture = _calibrateSoundBurstRepeats + 1;
+    this.num_mls_to_skip = Math.ceil(_calibrateSoundBurstPreSec / _calibrateSoundBurstSec);
+    this._calibrateSoundburstPostSec = _calibrateSoundburstPostSec;
+    this.numMLSPerCapture = _calibrateSoundBurstRepeats + this.num_mls_to_skip;
     this.desired_time_per_mls = _calibrateSoundBurstSec;
-    this.num_mls_to_skip = _calibrateSoundBurstsWarmup;
     this.desired_sampling_rate = _calibrateSoundHz;
     this._calibrateSoundBackgroundSecs = _calibrateSoundBackgroundSecs;
     this._calibrateSoundSmoothOctaves = _calibrateSoundSmoothOctaves;
