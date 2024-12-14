@@ -594,7 +594,7 @@ class Combination extends AudioCalibrator {
       })
       .then(async result => {
         if (result) {
-          if (result['sd'] > this._calibrateSoundBurstMaxSD_dB & 
+          if (result['sd'] > this._calibrateSoundBurstMaxSD_dB && 
             this.numSuccessfulCaptured == 0) {
               console.log('SD: ' + result['sd'] + ', greater than _calibrateSoundBurstMaxSD_dB: ' + this._calibrateSoundBurstMaxSD_dB);
             this.recordingChecks['unfiltered'].push(result);
@@ -609,6 +609,9 @@ class Combination extends AudioCalibrator {
               this.status =
               `Redoing all Hz recording because SD ${result['sd']} dB> ${this._calibrateSoundBurstMaxSD_dB} dB`.toString() +
               this.generateTemplate().toString();
+              this.emit('update', {
+                message: this.status,
+              });
             }
             if (this.numSuccessfulCaptured == 1) {
               console.log('pop last unfiltered mls volume check');
@@ -2256,6 +2259,9 @@ class Combination extends AudioCalibrator {
       this.status =
       `Redoing 1000 Hz recording because SD ${this.recordingChecks['volume'][this.inDB]} dB> ${this.calibrateSound1000HzMaxSD_dB} dB`.toString() +
       this.generateTemplate().toString();
+      this.emit('update', {
+        message: this.status,
+      });
     }
     const totalDuration = this.CALIBRATION_TONE_DURATION * 1.2;
 
@@ -2657,12 +2663,15 @@ class Combination extends AudioCalibrator {
       })
       .then(result => {
         if (result) {
-          if (result['sd'] > this._calibrateSoundBurstMaxSD_dB & this.numSuccessfulCaptured == 0) {
+          if (result['sd'] > this._calibrateSoundBurstMaxSD_dB && this.numSuccessfulCaptured == 0) {
             console.log('filtered recording sd too high');
             this.recordingChecks['warnings'].push(`Redo all Hz recording because SD ${result['sd']} dB> ${this._calibrateSoundBurstMaxSD_dB} dB`);
             this.status =
             `Redoing all Hz recording because SD ${result['sd']} dB> ${this._calibrateSoundBurstMaxSD_dB} dB`.toString() +
             this.generateTemplate().toString();
+            this.emit('update', {
+              message: this.status,
+            });
             // numSuccessfulCaptured no longer to count number of successful capture but count attemps
             // is sd below _calibrateSoundBurstMaxSD_dB then count two attemps
             // else count one attemp

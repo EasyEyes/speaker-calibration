@@ -128,7 +128,10 @@ class AudioCalibrator extends AudioRecorder {
     mode,
     checkRec
   ) => {
-    this.numSuccessfulCaptured = 0;
+    // if it finished 2 attempts, it move to next iteration so reset numSuccessfulCaptured
+    if (this.numSuccessfulCaptured >=2) {
+      this.numSuccessfulCaptured = 0;
+    }
 
     // do something before playing such as using the MLS to fill the buffers
     console.warn('beforePlay');
