@@ -55,6 +55,7 @@ class AudioCalibrator extends AudioRecorder {
   /** @private */
   startTime;
 
+  numCalibratingRoundsCompleted=0;
   /**
    * Called when a call is received.
    * Creates a local audio DOM element and attaches it to the page.

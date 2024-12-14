@@ -240,6 +240,7 @@ class Combination extends AudioCalibrator {
     unfiltered: [],
     system: [],
     component: [],
+    warnings:[]
   };
 
   inDB;
@@ -604,6 +605,10 @@ class Combination extends AudioCalibrator {
               console.log('SD: ' + result['sd'] + ', less than _calibrateSoundBurstMaxSD_dB: ' + this._calibrateSoundBurstMaxSD_dB);
             } else {
               console.log('SD: ' + result['sd'] + ', greater than _calibrateSoundBurstMaxSD_dB: ' + this._calibrateSoundBurstMaxSD_dB);
+              this.recordingChecks['warnings'].push(`Redo all Hz recording because SD ${result['sd']} dB> ${this._calibrateSoundBurstMaxSD_dB} dB`);
+              this.status =
+              `Redoing all Hz recording because SD ${result['sd']} dB> ${this._calibrateSoundBurstMaxSD_dB} dB`.toString() +
+              this.generateTemplate().toString();
             }
             if (this.numSuccessfulCaptured == 1) {
               console.log('pop last unfiltered mls volume check');
@@ -2246,6 +2251,12 @@ class Combination extends AudioCalibrator {
   };
 
   #playCalibrationAudioVolume = async () => {
+    if (this.numCalibratingRoundsCompleted==1) {
+      this.recordingChecks['warnings'].push(`Redo 1000 Hz, ${this.inDB} dB, recording because SD ${this.recordingChecks['volume'][this.inDB]['sd']} dB> ${this.calibrateSound1000HzMaxSD_dB} dB`);
+      this.status =
+      `Redoing 1000 Hz recording because SD ${this.recordingChecks['volume'][this.inDB]} dB> ${this.calibrateSound1000HzMaxSD_dB} dB`.toString() +
+      this.generateTemplate().toString();
+    }
     const totalDuration = this.CALIBRATION_TONE_DURATION * 1.2;
 
     this.calibrationNodes[0].start(0);
@@ -2341,6 +2352,7 @@ class Combination extends AudioCalibrator {
     //reset the values
     //this.incrementStatusBar();
 
+    console.log(this.recordingChecks['warnings']);
     this.outDBSPL = null;
     this.outDBSPL = null;
     this.outDBSPL1000 = null;
@@ -2647,6 +2659,10 @@ class Combination extends AudioCalibrator {
         if (result) {
           if (result['sd'] > this._calibrateSoundBurstMaxSD_dB & this.numSuccessfulCaptured) {
             console.log('filtered recording sd too high');
+            this.recordingChecks['warnings'].push(`Redo all Hz recording because SD ${result['sd']} dB> ${this._calibrateSoundBurstMaxSD_dB} dB`);
+            this.status =
+            `Redoing all Hz recording because SD ${result['sd']} dB> ${this._calibrateSoundBurstMaxSD_dB} dB`.toString() +
+            this.generateTemplate().toString();
             // numSuccessfulCaptured no longer to count number of successful capture but count attemps
             // is sd below _calibrateSoundBurstMaxSD_dB then count two attemps
             // else count one attemp
