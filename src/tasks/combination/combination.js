@@ -2657,7 +2657,7 @@ class Combination extends AudioCalibrator {
       })
       .then(result => {
         if (result) {
-          if (result['sd'] > this._calibrateSoundBurstMaxSD_dB & this.numSuccessfulCaptured) {
+          if (result['sd'] > this._calibrateSoundBurstMaxSD_dB & this.numSuccessfulCaptured == 0) {
             console.log('filtered recording sd too high');
             this.recordingChecks['warnings'].push(`Redo all Hz recording because SD ${result['sd']} dB> ${this._calibrateSoundBurstMaxSD_dB} dB`);
             this.status =
