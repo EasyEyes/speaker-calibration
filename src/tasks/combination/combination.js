@@ -601,7 +601,7 @@ class Combination extends AudioCalibrator {
             this.clearLastUnfilteredRecordedSignals();
             this.numSuccessfulCaptured +=1;
           } else {
-            if (result['sd'] < this._calibrateSoundBurstMaxSD_dB) {
+            if (result['sd'] <= this._calibrateSoundBurstMaxSD_dB) {
               console.log('SD: ' + result['sd'] + ', less than _calibrateSoundBurstMaxSD_dB: ' + this._calibrateSoundBurstMaxSD_dB);
             } else {
               console.log('SD: ' + result['sd'] + ', greater than _calibrateSoundBurstMaxSD_dB: ' + this._calibrateSoundBurstMaxSD_dB);
@@ -618,7 +618,6 @@ class Combination extends AudioCalibrator {
               this.recordingChecks['unfiltered'].pop();
             }
             this.recordingChecks['unfiltered'].push(result);
-            await this.pyServerAPI.checkMemory();
             // let start = new Date().getTime() / 1000;
             //   const payloadT = tf.tensor1d(payload);
             //   payloadT.print();
@@ -631,6 +630,7 @@ class Combination extends AudioCalibrator {
             // console.log("dimention:", xfft.shape);
             // let end = new Date().getTime() / 1000;
             // console.log("Time taken:", end - start, "seconds");
+            console.log('start calculate impulse response');
             const usedPeriodStart = this.num_mls_to_skip  * this.sourceSamplingRate;
             const payload_skipped_warmUp = payload.slice(usedPeriodStart);
             await this.pyServerAPI
@@ -645,7 +645,6 @@ class Combination extends AudioCalibrator {
                 this.fs2 = res['fs2'];
                 this.L_new_n = res['L_new_n'];
                 this.dL_n = res['dL_n'];
-                await this.pyServerAPI.checkMemory();
                 this.impulseResponses.push(
                   await this.pyServerAPI
                     .getImpulseResponse({
@@ -658,7 +657,6 @@ class Combination extends AudioCalibrator {
                       dL_n: this.dL_n,
                     })
                     .then(res => {
-                      if (this.numSuccessfulCaptured < this.numCaptures) {
                         this.numSuccessfulCaptured += 2;
                         this.stepNum += 1;
                         console.log('got impulse response ' + this.stepNum);
@@ -670,7 +668,6 @@ class Combination extends AudioCalibrator {
                           message: this.status,
                         });
                         return res['ir'];
-                      }
                     })
                     .catch(err => {
                       console.error(err);
@@ -2764,8 +2761,8 @@ class Combination extends AudioCalibrator {
     calibrateSoundLimit,
     _calibrateSoundBurstNormalizeBy1000HzGainBool = false,
     _calibrateSoundBurstScalarDB = 71,
-    calibrateSound1000HzMaxSD_dB = 4,
-    _calibrateSoundBurstMaxSD_dB = 4
+    calibrateSound1000HzMaxSD_dB = 0.1,
+    _calibrateSoundBurstMaxSD_dB = 0.1
   ) => {
     this.TAPER_SECS = _calibrateSoundTaperSec;
     this.calibrateSoundLimit = calibrateSoundLimit;
