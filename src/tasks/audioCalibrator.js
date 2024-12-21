@@ -82,7 +82,6 @@ class AudioCalibrator extends AudioRecorder {
     mode,
     checkRec
   ) => {
-    this.numSuccesfulCaptures = 0;
     console.warn('before recording background noise');
     // calibration loop
     while (loopCondition()) {
@@ -213,7 +212,7 @@ class AudioCalibrator extends AudioRecorder {
       if (this.isCalibrating) break;
       // after recording
       await afterRecord(lCalib);
-      const sd = await checkSD();
+      const sd = await checkSD() || Infinity;
       if (sd <= maxSD) {
         console.log(`SD =${sd}, less than calibrateSound1000HzMaxSD_dB=${maxSD}`);
         this.numCalibratingRoundsCompleted += 2;

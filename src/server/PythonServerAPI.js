@@ -830,6 +830,40 @@ class PythonServerAPI {
       });
     return res.data[task];
   };
+
+  volumePowerCheckWithRetry = async ({
+    payload, 
+    sampleRate, 
+    preSec,
+    Sec,
+    binDesiredSec
+  }) => {
+    let retryCount = 0;
+    let response = null;
+
+    while (retryCount < this.MAX_RETRY_COUNT) {
+      try {
+        response = await this.volumePowerCheck({
+          payload, 
+          sampleRate, 
+          preSec,
+          Sec,
+          binDesiredSec});
+        // If the request is successful, break out of the loop
+        break;
+      } catch (error) {
+        console.error(`Error occurred. Retrying... (${retryCount + 1}/${this.MAX_RETRY_COUNT})`);
+        retryCount++;
+        await new Promise(resolve => setTimeout(resolve, this.RETRY_DELAY_MS));
+      }
+    }
+
+    if (response) {
+      return response;
+    } else {
+      throw new Error(`Failed to get volume power check after ${this.MAX_RETRY_COUNT} attempts.`);
+    }
+  };
 }
 
 export default PythonServerAPI;
