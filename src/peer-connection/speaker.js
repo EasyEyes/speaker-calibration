@@ -203,7 +203,9 @@ class Speaker extends AudioPeer {
             params.calibrateSoundBurstNormalizeBy1000HzGainBool,
             params.calibrateSoundBurstScalarDB,
             params.calibrateSound1000HzMaxSD_dB,
-            params._calibrateSoundBurstMaxSD_dB
+            params._calibrateSoundBurstMaxSD_dB,
+            params.calibrateSoundSamplingDesiredBits,
+            params.language
           );
           speaker.#removeUIElems();
           resolve(speaker.result);
@@ -402,6 +404,7 @@ class Speaker extends AudioPeer {
     spinner.className = 'spinner-border ml-auto';
     spinner.role = 'status';
     spinner.ariaHidden = 'true';
+    spinner.style.marginTop = '0.8rem';
     document.getElementById(this.targetElement).appendChild(spinner);
 
     // clear instructionDisplay

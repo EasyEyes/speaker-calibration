@@ -32,6 +32,7 @@ import {
   where,
   Timestamp,
 } from 'firebase/firestore';
+import { phrases } from '../../../dist/example/i18n';
 
 /**
  *
@@ -299,7 +300,7 @@ class Combination extends AudioCalibrator {
   icapture = 0;
 
   /**generate string template that gets reevaluated as variable increases */
-  generateTemplate = () => {
+  generateTemplate = (status) => {
     if (this.isCalibrating) {
       return '';
     }
@@ -310,8 +311,9 @@ class Combination extends AudioCalibrator {
     let componentSD = '';
     let systemSD = '';
     let flags = '';
-    const reportWebAudioNames = `<br>${this.webAudioDeviceNames.loudspeakerText} <br> ${this.webAudioDeviceNames.microphoneText}`;
-    const reportParameters = `<br> Sampling: Loudspeaker ${this.sourceSamplingRate} Hz, Microphone ${this.sinkSamplingRate} Hz, ${this.sampleSize} bits`;
+    const reportWebAudioNames = `${this.webAudioDeviceNames.loudspeakerText} <br> ${this.webAudioDeviceNames.microphoneText}`;
+    const samplingParamText =  phrases.RC_SamplingHzBits[this.language].replace('111', this.sourceSamplingRate).replace('222',this.sinkSamplingRate).replace('333', this.calibrateSoundSamplingDesiredBits);
+    const reportParameters = `<br> ${samplingParamText}`;
     if (this.flags) {
       flags = `<br> autoGainControl: ${this.flags.autoGainControl} 
       <br>echoCancellation: ${this.flags.echoCancellation}
@@ -326,10 +328,16 @@ class Combination extends AudioCalibrator {
     if (this.SDofFilteredRange['component']) {
       componentSD = `<br> ${this.transducerType} correction SD: ${this.SDofFilteredRange['component']} dB`;
     }
-    const template = `<div style="display: flex; justify-content: center; margin-top:12px;"><div style="width: 800px; height: 20px; border: 2px solid #000; border-radius: 10px;"><div style="width: ${this.percent_complete}%; height: 100%; background-color: #00aaff; border-radius: 8px;"></div></div></div>`;
-    return (
-      reportWebAudioNames + reportParameters + flags + MLSsd + systemSD + componentSD + template
-    );
+    const template = `<div style="display: flex; justify-content: flex-start; margin-top:0.8rem;"><div style="width: 800px; height: 20px; border: 2px solid #000; border-radius: 10px;"><div style="width: ${this.percent_complete}%; height: 100%; background-color: #00aaff; border-radius: 8px;"></div></div></div>`;
+    return `
+        ${reportWebAudioNames}
+        ${reportParameters}
+        <br>${status}
+        ${MLSsd}
+        ${systemSD}
+        ${componentSD}
+        ${flags}
+        ${template }`;
   };
 
   /** increment numerator and percent for status bar */
@@ -371,8 +379,7 @@ class Combination extends AudioCalibrator {
     const iirLength = this.iirLength;
     this.stepNum += 1;
     console.log('send impulse responses to server: ' + this.stepNum);
-    this.status =
-      `All Hz Calibration: computing the IIR...`.toString() + this.generateTemplate().toString();
+    this.status = this.generateTemplate(`All Hz Calibration: computing the IIR...`.toString()).toString();
     this.emit('update', {message: this.status});
     return await this.pyServerAPI
       .getSystemInverseImpulseResponseWithRetry({
@@ -390,9 +397,7 @@ class Combination extends AudioCalibrator {
         this.stepNum += 1;
         console.log('got impulse response ' + this.stepNum);
         this.incrementStatusBar();
-        this.status =
-          `All Hz Calibration: done computing the IIR...`.toString() +
-          this.generateTemplate().toString();
+        this.status = this.generateTemplate(`All Hz Calibration: done computing the IIR...`.toString()).toString();
         this.emit('update', {message: this.status});
         this.systemInvertedImpulseResponse = res['iir'];
         this.systemIR = res['ir'];
@@ -460,8 +465,7 @@ class Combination extends AudioCalibrator {
     const highHz = this.#highHz;
     this.stepNum += 1;
     console.log('send impulse responses to server: ' + this.stepNum);
-    this.status =
-      `All Hz Calibration: computing the IIR...`.toString() + this.generateTemplate().toString();
+    this.status = this.generateTemplate(`All Hz Calibration: computing the IIR...`.toString()).toString();
     this.emit('update', {message: this.status});
     console.log()
     return this.pyServerAPI
@@ -485,9 +489,7 @@ class Combination extends AudioCalibrator {
         this.stepNum += 1;
         console.log('got impulse response ' + this.stepNum);
         this.incrementStatusBar();
-        this.status =
-          `All Hz Calibration: done computing the IIR...`.toString() +
-          this.generateTemplate().toString();
+        this.status = this.generateTemplate(`All Hz Calibration: done computing the IIR...`.toString()).toString();
         this.emit('update', {message: this.status});
         this.componentInvertedImpulseResponse = res['iir'];
         this.componentInvertedImpulseResponseNoBandpass = res['iirNoBandpass'];
@@ -584,9 +586,7 @@ class Combination extends AudioCalibrator {
     console.log('sending rec');
     this.stepNum += 1;
     console.log('send rec ' + this.stepNum);
-    this.status =
-      `All Hz Calibration Step: computing the IR of the last recording...`.toString() +
-      this.generateTemplate().toString();
+    this.status = this.generateTemplate(`All Hz Calibration Step: computing the IR of the last recording...`.toString()).toString();
     this.emit('update', {message: this.status});
     if (this.isCalibrating) return null;
     await this.pyServerAPI
@@ -612,9 +612,7 @@ class Combination extends AudioCalibrator {
             } else {
               console.log('SD: ' + result['sd'] + ', greater than _calibrateSoundBurstMaxSD_dB: ' + this._calibrateSoundBurstMaxSD_dB);
               this.recordingChecks['warnings'].push(`Redo all Hz recording because SD ${result['sd']} dB> ${this._calibrateSoundBurstMaxSD_dB} dB`);
-              this.status =
-              `Redoing all Hz recording because SD ${result['sd']} dB> ${this._calibrateSoundBurstMaxSD_dB} dB`.toString() +
-              this.generateTemplate().toString();
+              this.status = this.generateTemplate(`Redoing all Hz recording because SD ${result['sd']} dB> ${this._calibrateSoundBurstMaxSD_dB} dB`.toString()).toString();
               this.emit('update', {
                 message: this.status,
               });
@@ -667,9 +665,7 @@ class Combination extends AudioCalibrator {
                         this.stepNum += 1;
                         console.log('got impulse response ' + this.stepNum);
                         this.incrementStatusBar();
-                        this.status =
-                          `All Hz Calibration: ${this.numSuccessfulCaptured}/${this.numCaptures} IRs computed...`.toString() +
-                          this.generateTemplate().toString();
+                        this.status = this.generateTemplate(`All Hz Calibration: ${this.numSuccessfulCaptured}/${this.numCaptures} IRs computed...`.toString()).toString();
                         this.emit('update', {
                           message: this.status,
                         });
@@ -700,10 +696,8 @@ class Combination extends AudioCalibrator {
     // await N * P / SR
     this.stepNum += 1;
     console.log('await desired length ' + this.stepNum);
-    this.status =
-      `All Hz Calibration: sampling the calibration signal...`.toString() +
-      `\niteration ${this.stepNum}` +
-      this.generateTemplate();
+    this.status = this.generateTemplate(`All Hz Calibration: sampling the calibration signal...`.toString() +
+      `\niteration ${this.stepNum}`);
     this.emit('update', {
       message: this.status,
     });
@@ -752,9 +746,7 @@ class Combination extends AudioCalibrator {
   #awaitSignalOnset = async () => {
     this.stepNum += 1;
     console.log('await signal onset ' + this.stepNum);
-    this.status =
-      `All Hz Calibration: waiting for the signal to stabilize...`.toString() +
-      this.generateTemplate();
+    this.status = this.generateTemplate(`All Hz Calibration: waiting for the signal to stabilize...`.toString());
     this.emit('update', {
       message: this.status,
     });
@@ -900,14 +892,10 @@ class Combination extends AudioCalibrator {
     if (this.mode === 'unfiltered') {
       console.log('play calibration audio ' + this.stepNum);
       this.addTimeStamp(`Play MLS version ${this.icapture}`);
-      this.status =
-        `All Hz Calibration: playing the calibration tone...`.toString() +
-        this.generateTemplate().toString();
+      this.status = this.generateTemplate(`All Hz Calibration: playing the calibration tone...`.toString()).toString();
     } else if (this.mode === 'filtered') {
       console.log('play convolved audio ' + this.stepNum);
-      this.status =
-        `All Hz Calibration: playing the convolved calibration tone...`.toString() +
-        this.generateTemplate().toString();
+      this.status = this.generateTemplate().toString( `All Hz Calibration: playing the convolved calibration tone...`.toString());
     } else {
       throw new Error('Mode is incorrect');
     }
@@ -937,9 +925,7 @@ class Combination extends AudioCalibrator {
     if (this.sourceNode) this.sourceNode.disconnect();
     this.stepNum += 1;
     console.log('stop calibration audio ' + this.stepNum);
-    this.status =
-      `All Hz Calibration: stopping the calibration tone...`.toString() +
-      this.generateTemplate().toString();
+    this.status = this.generateTemplate(`All Hz Calibration: stopping the calibration tone...`.toString()).toString();
     this.emit('update', {message: this.status});
   };
 
@@ -1031,9 +1017,7 @@ class Combination extends AudioCalibrator {
       .getSubtractedPSDWithRetry(unconv_rec, knownGain, knownFreq, sampleRate)
       .then(res => {
         this.incrementStatusBar();
-        this.status =
-          `All Hz Calibration: done computing the PSD graphs...`.toString() +
-          this.generateTemplate().toString();
+        this.status = this.generateTemplate(`All Hz Calibration: done computing the PSD graphs...`.toString()).toString();
         this.emit('update', {message: this.status});
         return res;
       })
@@ -1067,9 +1051,7 @@ class Combination extends AudioCalibrator {
 
         this.SDofFilteredRange['component'] = standardDeviation(filtered_psd);
         this.incrementStatusBar();
-        this.status =
-          `All Hz Calibration: done computing the PSD graphs...`.toString() +
-          this.generateTemplate().toString();
+        this.status =this.generateTemplate(`All Hz Calibration: done computing the PSD graphs...`.toString()).toString();
         this.emit('update', {message: this.status});
         return res;
       })
@@ -1105,9 +1087,7 @@ class Combination extends AudioCalibrator {
         console.log('mls_psd', this.SDofFilteredRange['mls']);
         this.SDofFilteredRange['system'] = standardDeviation(filtered_psd);
         this.incrementStatusBar();
-        this.status =
-          `All Hz Calibration: done computing the PSD graphs...`.toString() +
-          this.generateTemplate().toString();
+        this.status = this.generateTemplate(`All Hz Calibration: done computing the PSD graphs...`.toString()).toString();
         this.emit('update', {message: this.status});
         return res;
       })
@@ -1128,9 +1108,7 @@ class Combination extends AudioCalibrator {
       })
       .then(res => {
         this.incrementStatusBar();
-        this.status =
-          `All Hz Calibration: done computing the PSD graphs...`.toString() +
-          this.generateTemplate().toString();
+        this.status = this.generateTemplate(`All Hz Calibration: done computing the PSD graphs...`.toString()).toString();
         this.emit('update', {message: this.status});
         return res;
       })
@@ -1149,9 +1127,7 @@ class Combination extends AudioCalibrator {
       })
       .then(res => {
         this.incrementStatusBar();
-        this.status =
-          `All Hz Calibration: done computing the PSD graphs...`.toString() +
-          this.generateTemplate().toString();
+        this.status = this.generateTemplate(`All Hz Calibration: done computing the PSD graphs...`.toString() ).toString();
         this.emit('update', {message: this.status});
         return res;
       })
@@ -1168,9 +1144,7 @@ class Combination extends AudioCalibrator {
       })
       .then(res => {
         this.incrementStatusBar();
-        this.status =
-          `All Hz Calibration: done computing the PSD graphs...`.toString() +
-          this.generateTemplate().toString();
+        this.status = this.generateTemplate(`All Hz Calibration: done computing the PSD graphs...`.toString()).toString();
         this.emit('update', {message: this.status});
         return res;
       })
@@ -1187,9 +1161,7 @@ class Combination extends AudioCalibrator {
       })
       .then(res => {
         this.incrementStatusBar();
-        this.status =
-          `All Hz Calibration: done computing the PSD graphs...`.toString() +
-          this.generateTemplate().toString();
+        this.status = this.generateTemplate(`All Hz Calibration: done computing the PSD graphs...`.toString() ).toString();
         this.emit('update', {message: this.status});
         return res;
       })
@@ -1204,9 +1176,7 @@ class Combination extends AudioCalibrator {
       })
       .then(res => {
         this.incrementStatusBar();
-        this.status =
-          `All Hz Calibration: done computing the PSD graphs...`.toString() +
-          this.generateTemplate().toString();
+        this.status =this.generateTemplate(`All Hz Calibration: done computing the PSD graphs...`.toString()).toString();
         this.emit('update', {message: this.status});
         return res;
       })
@@ -1223,9 +1193,7 @@ class Combination extends AudioCalibrator {
       })
       .then(res => {
         this.incrementStatusBar();
-        this.status =
-          `All Hz Calibration: done computing the PSD graphs...`.toString() +
-          this.generateTemplate().toString();
+        this.status = this.generateTemplate(`All Hz Calibration: done computing the PSD graphs...`.toString() ).toString();
         this.emit('update', {message: this.status});
         return res;
       })
@@ -1240,9 +1208,7 @@ class Combination extends AudioCalibrator {
       })
       .then(res => {
         this.incrementStatusBar();
-        this.status =
-          `All Hz Calibration: done computing the PSD graphs...`.toString() +
-          this.generateTemplate().toString();
+        this.status = this.generateTemplate(`All Hz Calibration: done computing the PSD graphs...`.toString() ).toString();
         this.emit('update', {message: this.status});
         return res;
       })
@@ -1423,9 +1389,7 @@ class Combination extends AudioCalibrator {
           this.SDofFilteredRange['mls'] = standardDeviation(mls_psd);
           console.log('mls sd', this.SDofFilteredRange['mls']);
           this.incrementStatusBar();
-          this.status =
-            `All Hz Calibration: done computing the PSD graphs...`.toString() +
-            this.generateTemplate().toString();
+          this.status = this.generateTemplate(`All Hz Calibration: done computing the PSD graphs...`.toString()).toString();
           this.emit('update', {message: this.status});
           return res;
         })
@@ -1464,9 +1428,7 @@ class Combination extends AudioCalibrator {
 
           this.SDofFilteredRange['component'] = standardDeviation(filtered_psd);
           this.incrementStatusBar();
-          this.status =
-            `All Hz Calibration: done computing the PSD graphs...`.toString() +
-            this.generateTemplate().toString();
+          this.status = this.generateTemplate(`All Hz Calibration: done computing the PSD graphs...`.toString()).toString();
           this.emit('update', {message: this.status});
           return res;
         })
@@ -1486,9 +1448,7 @@ class Combination extends AudioCalibrator {
         })
         .then(res => {
           this.incrementStatusBar();
-          this.status =
-            `All Hz Calibration: done computing the PSD graphs...`.toString() +
-            this.generateTemplate().toString();
+          this.status = this.generateTemplate(`All Hz Calibration: done computing the PSD graphs...`.toString()).toString();
           this.emit('update', {message: this.status});
           return res;
         })
@@ -1507,9 +1467,7 @@ class Combination extends AudioCalibrator {
         })
         .then(res => {
           this.incrementStatusBar();
-          this.status =
-            `All Hz Calibration: done computing the PSD graphs...`.toString() +
-            this.generateTemplate().toString();
+          this.status = this.generateTemplate(`All Hz Calibration: done computing the PSD graphs...`.toString()).toString();
           this.emit('update', {message: this.status});
           return res;
         })
@@ -1526,9 +1484,7 @@ class Combination extends AudioCalibrator {
         })
         .then(res => {
           this.incrementStatusBar();
-          this.status =
-            `All Hz Calibration: done computing the PSD graphs...`.toString() +
-            this.generateTemplate().toString();
+          this.status = this.generateTemplate(`All Hz Calibration: done computing the PSD graphs...`.toString()).toString();
           this.emit('update', {message: this.status});
           return res;
         })
@@ -1545,9 +1501,7 @@ class Combination extends AudioCalibrator {
         })
         .then(res => {
           this.incrementStatusBar();
-          this.status =
-            `All Hz Calibration: done computing the PSD graphs...`.toString() +
-            this.generateTemplate().toString();
+          this.status = this.generateTemplate(`All Hz Calibration: done computing the PSD graphs...`.toString()).toString();
           this.emit('update', {message: this.status});
           return res;
         })
@@ -1562,9 +1516,7 @@ class Combination extends AudioCalibrator {
         })
         .then(res => {
           this.incrementStatusBar();
-          this.status =
-            `All Hz Calibration: done computing the PSD graphs...`.toString() +
-            this.generateTemplate().toString();
+          this.status = this.generateTemplate(`All Hz Calibration: done computing the PSD graphs...`.toString()).toString();
           this.emit('update', {message: this.status});
           return res;
         })
@@ -1670,9 +1622,7 @@ class Combination extends AudioCalibrator {
           this.SDofFilteredRange['mls'] = standardDeviation(mls_psd);
           this.SDofFilteredRange['system'] = standardDeviation(filtered_psd);
           this.incrementStatusBar();
-          this.status =
-            `All Hz Calibration: done computing the PSD graphs...`.toString() +
-            this.generateTemplate().toString();
+          this.status = this.generateTemplate(`All Hz Calibration: done computing the PSD graphs...`.toString()).toString();
           this.emit('update', {message: this.status});
           return res;
         })
@@ -1693,9 +1643,7 @@ class Combination extends AudioCalibrator {
         })
         .then(res => {
           this.incrementStatusBar();
-          this.status =
-            `All Hz Calibration: done computing the PSD graphs...`.toString() +
-            this.generateTemplate().toString();
+          this.status = this.generateTemplate(`All Hz Calibration: done computing the PSD graphs...`.toString()).toString();
           this.emit('update', {message: this.status});
           return res;
         })
@@ -1714,9 +1662,7 @@ class Combination extends AudioCalibrator {
         })
         .then(res => {
           this.incrementStatusBar();
-          this.status =
-            `All Hz Calibration: done computing the PSD graphs...`.toString() +
-            this.generateTemplate().toString();
+          this.status = this.generateTemplate( `All Hz Calibration: done computing the PSD graphs...`.toString()).toString();
           this.emit('update', {message: this.status});
           return res;
         })
@@ -1733,9 +1679,7 @@ class Combination extends AudioCalibrator {
         })
         .then(res => {
           this.incrementStatusBar();
-          this.status =
-            `All Hz Calibration: done computing the PSD graphs...`.toString() +
-            this.generateTemplate().toString();
+          this.status = this.generateTemplate(`All Hz Calibration: done computing the PSD graphs...`.toString()).toString();
           this.emit('update', {message: this.status});
           return res;
         })
@@ -1752,9 +1696,7 @@ class Combination extends AudioCalibrator {
         })
         .then(res => {
           this.incrementStatusBar();
-          this.status =
-            `All Hz Calibration: done computing the PSD graphs...`.toString() +
-            this.generateTemplate().toString();
+          this.status = this.generateTemplate(`All Hz Calibration: done computing the PSD graphs...`.toString()).toString();
           this.emit('update', {message: this.status});
           return res;
         })
@@ -1769,9 +1711,7 @@ class Combination extends AudioCalibrator {
         })
         .then(res => {
           this.incrementStatusBar();
-          this.status =
-            `All Hz Calibration: done computing the PSD graphs...`.toString() +
-            this.generateTemplate().toString();
+          this.status = this.generateTemplate(`All Hz Calibration: done computing the PSD graphs...`.toString()).toString();
           this.emit('update', {message: this.status});
           return res;
         })
@@ -1934,9 +1874,7 @@ class Combination extends AudioCalibrator {
     this.numSuccessfulBackgroundCaptured = 0;
     if (this._calibrateSoundBackgroundSecs > 0) {
       this.mode = 'background';
-      this.status =
-        `All Hz Calibration: sampling the background noise...`.toString() +
-        this.generateTemplate().toString();
+      this.status = this.generateTemplate(`All Hz Calibration: sampling the background noise...`.toString()).toString();
       this.emit('update', {message: this.status});
       if (this.isCalibrating) return null;
       await this.recordBackground(
@@ -2006,9 +1944,7 @@ class Combination extends AudioCalibrator {
         })
         .then(res => {
           this.incrementStatusBar();
-          this.status =
-            `All Hz Calibration: done computing the PSD graphs...`.toString() +
-            this.generateTemplate().toString();
+          this.status = this.generateTemplate(`All Hz Calibration: done computing the PSD graphs...`.toString()).toString();
           this.emit('update', {message: this.status});
           return res;
         })
@@ -2026,9 +1962,7 @@ class Combination extends AudioCalibrator {
         })
         .then(res => {
           this.incrementStatusBar();
-          this.status =
-            `All Hz Calibration: done computing the PSD graphs...`.toString() +
-            this.generateTemplate().toString();
+          this.status = this.generateTemplate(`All Hz Calibration: done computing the PSD graphs...`.toString()).toString();
           this.emit('update', {message: this.status});
           return res;
         })
@@ -2122,7 +2056,7 @@ class Combination extends AudioCalibrator {
     }
     if (this.isCalibrating) return null;
     this.percent_complete = 100;
-    this.status = `All Hz Calibration: Finished`.toString() + this.generateTemplate().toString();
+    this.status =  this.generateTemplate(`All Hz Calibration: Finished`.toString()).toString();
     this.emit('update', {message: this.status});
 
     //here after calibration we have the component calibration (either loudspeaker or microphone) in the same form as the componentIR
@@ -2260,11 +2194,10 @@ class Combination extends AudioCalibrator {
   #playCalibrationAudioVolume = async () => {
     if (this.numCalibratingRoundsCompleted==1) {
       this.recordingChecks['warnings'].push(`Redo 1000 Hz, ${this.inDB} dB, recording because SD ${(this.recordingChecks['volume'][this.inDB]['sd'])} dB> ${this.calibrateSound1000HzMaxSD_dB} dB`);
-      this.status =
-      `Redoing 1000 Hz recording because SD 
+      const currentStatus =  `Redoing 1000 Hz recording because SD 
       ${this.recordingChecks['volume'][this.inDB]['sd']} dB> 
-      ${this.calibrateSound1000HzMaxSD_dB} dB`.toString() +
-      this.generateTemplate().toString();
+      ${this.calibrateSound1000HzMaxSD_dB} dB`.toString();
+      this.status = this.generateTemplate(currentStatus).toString();
       this.emit('update', {
         message: this.status,
       });
@@ -2342,9 +2275,7 @@ class Combination extends AudioCalibrator {
     const soundLevelToDiscard = -60;
     const gainToDiscard = Math.pow(10, soundLevelToDiscard / 20);
     this.inDB = soundLevelToDiscard;
-    this.status =
-      `1000 Hz Calibration: Sound Level ${soundLevelToDiscard} dB`.toString() +
-      this.generateTemplate().toString();
+    this.status = this.generateTemplate(`1000 Hz Calibration: Sound Level ${soundLevelToDiscard} dB`.toString()).toString();
     //this.emit('update', {message: `1000 Hz Calibration: Sound Level ${soundLevelToDiscard} dB`});
     this.emit('update', {message: this.status});
     this.startTime = new Date().getTime();
@@ -2388,9 +2319,7 @@ class Combination extends AudioCalibrator {
       this.inDB = inDB;
       inDBValues.push(inDB);
       console.log('next update');
-      this.status =
-        `1000 Hz Calibration: Sound Level ${inDB} dB`.toString() +
-        this.generateTemplate().toString();
+      this.status = this.generateTemplate(`1000 Hz Calibration: Sound Level ${inDB} dB`.toString()).toString();
       this.emit('update', {message: this.status});
       do {
         if (this.isCalibrating) {
@@ -2678,9 +2607,7 @@ class Combination extends AudioCalibrator {
           if (result['sd'] > this._calibrateSoundBurstMaxSD_dB && this.numSuccessfulCaptured == 0) {
             console.log('filtered recording sd too high');
             this.recordingChecks['warnings'].push(`Redo all Hz recording because SD ${result['sd']} dB> ${this._calibrateSoundBurstMaxSD_dB} dB`);
-            this.status =
-            `Redoing all Hz recording because SD ${result['sd']} dB> ${this._calibrateSoundBurstMaxSD_dB} dB`.toString() +
-            this.generateTemplate().toString();
+            this.status = this.generateTemplate(`Redoing all Hz recording because SD ${result['sd']} dB> ${this._calibrateSoundBurstMaxSD_dB} dB`.toString()).toString();
             this.emit('update', {
               message: this.status,
             });
@@ -2699,9 +2626,7 @@ class Combination extends AudioCalibrator {
               console.log(
                 'after mls w iir record for some reason add numSucc capt ' + this.stepNum
               );
-              this.status =
-                `All Hz Calibration: ${this.numSuccessfulCaptured} recording of convolved MLS captured`.toString() +
-                this.generateTemplate().toString();
+              this.status = this.generateTemplate(`All Hz Calibration: ${this.numSuccessfulCaptured} recording of convolved MLS captured`.toString()).toString();
               this.emit('update', {
                 message: this.status,
               });
@@ -2777,8 +2702,12 @@ class Combination extends AudioCalibrator {
     _calibrateSoundBurstNormalizeBy1000HzGainBool = false,
     _calibrateSoundBurstScalarDB = 71,
     calibrateSound1000HzMaxSD_dB = 4,
-    _calibrateSoundBurstMaxSD_dB = 4
+    _calibrateSoundBurstMaxSD_dB = 4,
+    calibrateSoundSamplingDesiredBits = 24,
+    language,
+
   ) => {
+    this.language = language;
     this.TAPER_SECS = _calibrateSoundTaperSec;
     this.calibrateSoundLimit = calibrateSoundLimit;
     this._calibrateSoundBurstDb = _calibrateSoundBurstDb;
@@ -2807,6 +2736,7 @@ class Combination extends AudioCalibrator {
       _calibrateSoundBurstNormalizeBy1000HzGainBool;
     this._calibrateSoundBurstScalarDB = _calibrateSoundBurstScalarDB;
     this.webAudioDeviceNames = webAudioDeviceNames;
+    this.calibrateSoundSamplingDesiredBits = calibrateSoundSamplingDesiredBits;
     if (isSmartPhone) this.webAudioDeviceNames.microphone = this.deviceInfo.microphoneFromAPI;
     this.webAudioDeviceNames.microphoneText = this.webAudioDeviceNames.microphoneText
       .replace('xxx', this.webAudioDeviceNames.microphone)
