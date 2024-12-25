@@ -315,9 +315,9 @@ class Combination extends AudioCalibrator {
     const samplingParamText =  phrases.RC_SamplingHzBits[this.language].replace('111', this.sourceSamplingRate).replace('222',this.sinkSamplingRate).replace('333', this.calibrateSoundSamplingDesiredBits);
     const reportParameters = `<br> ${samplingParamText}`;
     if (this.flags) {
-      flags = `<br> autoGainControl: ${this.flags.autoGainControl} 
-      <br>echoCancellation: ${this.flags.echoCancellation}
-      <br>noiseSuppression: ${this.flags.noiseSuppression}`;
+      flags = `<br> autoGainControl: ${this.flags.autoGainControl}; 
+      echoCancellation: ${this.flags.echoCancellation};
+      noiseSuppression: ${this.flags.noiseSuppression}`;
     }
     if (this.SDofFilteredRange['mls']) {
       MLSsd = `<br> Recorded MLS power SD: ${this.SDofFilteredRange['mls']} dB`;
@@ -328,7 +328,7 @@ class Combination extends AudioCalibrator {
     if (this.SDofFilteredRange['component']) {
       componentSD = `<br> ${this.transducerType} correction SD: ${this.SDofFilteredRange['component']} dB`;
     }
-    const template = `<div style="display: flex; justify-content: flex-start; margin-top:0.8rem;"><div style="width: 800px; height: 20px; border: 2px solid #000; border-radius: 10px;"><div style="width: ${this.percent_complete}%; height: 100%; background-color: #00aaff; border-radius: 8px;"></div></div></div>`;
+    const template = `<div style="display: flex; justify-content: flex-start; margin-top: 0.4rem;"><div style="width: 100%; height: 20px; border: 2px solid #000; border-radius: 10px;"><div style="width: ${this.percent_complete}%; height: 100%; background-color: #00aaff; border-radius: 8px;"></div></div></div>`;
     return `
         ${reportWebAudioNames}
         ${reportParameters}
@@ -2220,9 +2220,12 @@ class Combination extends AudioCalibrator {
   #sendToServerForProcessing = async lCalib => {
     console.log('Sending data to server');
     const total_dur = this.calibrateSound1000HzPreSec + this.calibrateSound1000HzSec + this.calibrateSound1000HzPostSec;
-    this.addTimeStamp(`Record ${total_dur.toFixed(1)} s of 1000 Hz at ${this.inDB} dB. 
-    (${this.calibrateSound1000HzPreSec.toFixed(1)} s pre + ${this.calibrateSound1000HzSec.toFixed(1)}
-       s used + ${this.calibrateSound1000HzPostSec.toFixed(1)} s post) ”`);
+    this.addTimeStamp("Record " + total_dur.toFixed(1) + " s of 1000 Hz at " + this.inDB + 
+      " dB. (" + this.calibrateSound1000HzPreSec.toFixed(1) + 
+      " s pre + " + this.calibrateSound1000HzSec.toFixed(1) + 
+      " s used + " + this.calibrateSound1000HzPostSec.toFixed(1) + 
+      " s post)"
+    );
     let left = this.calibrateSound1000HzPreSec;
     let right = this.calibrateSound1000HzPreSec + this.calibrateSound1000HzSec;
     if (this.isCalibrating) return null;
@@ -2705,8 +2708,11 @@ class Combination extends AudioCalibrator {
     _calibrateSoundBurstMaxSD_dB = 4,
     calibrateSoundSamplingDesiredBits = 24,
     language,
+    loudspeakerModelName='',
 
   ) => {
+    this.micModelName = micModelName,
+    this.loudspeakerModelName = loudspeakerModelName;
     this.language = language;
     this.TAPER_SECS = _calibrateSoundTaperSec;
     this.calibrateSoundLimit = calibrateSoundLimit;
@@ -2738,9 +2744,9 @@ class Combination extends AudioCalibrator {
     this.webAudioDeviceNames = webAudioDeviceNames;
     this.calibrateSoundSamplingDesiredBits = calibrateSoundSamplingDesiredBits;
     if (isSmartPhone) this.webAudioDeviceNames.microphone = this.deviceInfo.microphoneFromAPI;
-    this.webAudioDeviceNames.microphoneText = this.webAudioDeviceNames.microphoneText
-      .replace('xxx', this.webAudioDeviceNames.microphone)
-      .replace('XXX', this.webAudioDeviceNames.microphone);
+    // this.webAudioDeviceNames.microphoneText = this.webAudioDeviceNames.microphoneText
+    //   .replace('xxx', this.webAudioDeviceNames.microphone)
+    //   .replace('XXX', this.webAudioDeviceNames.microphone);
     //feed calibration goal here
     this._calibrateSoundCheck = _calibrateSoundCheck;
     this.calibrateSound1000HzMaxSD_dB = calibrateSound1000HzMaxSD_dB;

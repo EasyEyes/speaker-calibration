@@ -205,7 +205,8 @@ class Speaker extends AudioPeer {
             params.calibrateSound1000HzMaxSD_dB,
             params._calibrateSoundBurstMaxSD_dB,
             params.calibrateSoundSamplingDesiredBits,
-            params.language
+            params.language,
+            params.loudspeakerModelName,
           );
           speaker.#removeUIElems();
           resolve(speaker.result);
@@ -709,7 +710,10 @@ class Speaker extends AudioPeer {
         params.calibrateSoundBurstNormalizeBy1000HzGainBool,
         params.calibrateSoundBurstScalarDB,
         params.calibrateSound1000HzMaxSD_dB,
-        params._calibrateSoundBurstMaxSD_dB
+        params._calibrateSoundBurstMaxSD_dB,
+        params.calibrateSoundSamplingDesiredBits,
+        params.language,
+        params.loudspeakerModelName,
       );
       this.#removeUIElems();
       resolve(result);
