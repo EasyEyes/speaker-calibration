@@ -331,12 +331,12 @@ class Combination extends AudioCalibrator {
     const template = `<div style="display: flex; justify-content: flex-start; margin-top: 0.4rem;"><div style="width: 100%; height: 20px; border: 2px solid #000; border-radius: 10px;"><div style="width: ${this.percent_complete}%; height: 100%; background-color: #00aaff; border-radius: 8px;"></div></div></div>`;
     return `
         ${reportWebAudioNames}
-        ${reportParameters}
-        <br>${status}
+        ${reportParameters} 
         ${MLSsd}
         ${systemSD}
         ${componentSD}
         ${flags}
+        <br>${status}
         ${template }`;
   };
 
@@ -612,7 +612,7 @@ class Combination extends AudioCalibrator {
             } else {
               console.log('SD: ' + result['sd'] + ', greater than _calibrateSoundBurstMaxSD_dB: ' + this._calibrateSoundBurstMaxSD_dB);
               this.recordingChecks['warnings'].push(`Redo all Hz recording because SD ${result['sd']} dB> ${this._calibrateSoundBurstMaxSD_dB} dB`);
-              this.status = this.generateTemplate(`Redoing all Hz recording because SD ${result['sd']} dB> ${this._calibrateSoundBurstMaxSD_dB} dB`.toString()).toString();
+              this.status = this.generateTemplate(`All Hz: Re-recording at ${this.inDB} dB because SD ${result['sd']} > ${this._calibrateSoundBurstMaxSD_dB} dB`.toString()).toString();
               this.emit('update', {
                 message: this.status,
               });
@@ -2194,8 +2194,8 @@ class Combination extends AudioCalibrator {
   #playCalibrationAudioVolume = async () => {
     if (this.numCalibratingRoundsCompleted==1) {
       this.recordingChecks['warnings'].push(`Redo 1000 Hz, ${this.inDB} dB, recording because SD ${(this.recordingChecks['volume'][this.inDB]['sd'])} dB> ${this.calibrateSound1000HzMaxSD_dB} dB`);
-      const currentStatus =  `Redoing 1000 Hz recording because SD 
-      ${this.recordingChecks['volume'][this.inDB]['sd']} dB> 
+      const currentStatus =  `1000 Hz: Re-recording at ${this.inDB} dB because SD 
+      ${this.recordingChecks['volume'][this.inDB]['sd']} > 
       ${this.calibrateSound1000HzMaxSD_dB} dB`.toString();
       this.status = this.generateTemplate(currentStatus).toString();
       this.emit('update', {
@@ -2610,7 +2610,7 @@ class Combination extends AudioCalibrator {
           if (result['sd'] > this._calibrateSoundBurstMaxSD_dB && this.numSuccessfulCaptured == 0) {
             console.log('filtered recording sd too high');
             this.recordingChecks['warnings'].push(`Redo all Hz recording because SD ${result['sd']} dB> ${this._calibrateSoundBurstMaxSD_dB} dB`);
-            this.status = this.generateTemplate(`Redoing all Hz recording because SD ${result['sd']} dB> ${this._calibrateSoundBurstMaxSD_dB} dB`.toString()).toString();
+            this.status = this.generateTemplate(`All Hz: Re-recording  at ${this.inDB} dB because SD ${result['sd']} > ${this._calibrateSoundBurstMaxSD_dB} dB`.toString()).toString();
             this.emit('update', {
               message: this.status,
             });
