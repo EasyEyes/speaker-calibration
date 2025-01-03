@@ -143,7 +143,8 @@ class AudioCalibrator extends AudioRecorder {
     // do something before recording such as awaiting a certain amount of time
     console.warn('beforeRecord');
     await beforeRecord();
-    this.addTimeStamp('start recording');
+    const totalSec = this._calibrateSoundBurstPreSec + (this.numMLSPerCapture - this.num_mls_to_skip) * this._calibrateSoundBurstSec + this._calibrateSoundBurstPostSec;
+    this.addTimeStamp(`Record ${totalSec.toFixed(1)} s of MLS with speaker+microphone IIR.`);
 
     // calibration loop
     while (loopCondition()) {
