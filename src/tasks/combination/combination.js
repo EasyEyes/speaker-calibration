@@ -775,7 +775,7 @@ class Combination extends AudioCalibrator {
    */
   #afterMLSRecord = async () => {
     console.log('after record');
-    this.addTimeStamp(`After record unfiltered MLS version ${this.icapture}`);
+    this.addTimeStamp(`Send unfiltered MLS to the server`);
     await this.sendRecordingToServerForProcessing();
   };
 
