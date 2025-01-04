@@ -2245,8 +2245,9 @@ class Combination extends AudioCalibrator {
   #sendToServerForProcessing = async lCalib => {
     console.log('Sending data to server');
     const total_dur = this.calibrateSound1000HzPreSec + this.calibrateSound1000HzSec + this.calibrateSound1000HzPostSec;
-    this.addTimeStamp("Record " + total_dur.toFixed(1) + " s of 1000 Hz at " + this.inDB + 
-      " dB. (" + this.calibrateSound1000HzPreSec.toFixed(1) + 
+    this.addTimeStamp(
+      "1000 Hz: recorded at " + this.inDB + 
+      " dB (" + this.calibrateSound1000HzPreSec.toFixed(1) + 
       " s pre + " + this.calibrateSound1000HzSec.toFixed(1) + 
       " s used + " + this.calibrateSound1000HzPostSec.toFixed(1) + 
       " s post)"
