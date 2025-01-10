@@ -41,6 +41,7 @@ class Speaker extends AudioPeer {
     this.timeToCalibrate = params?.timeToCalibrate ?? 10;
     this.isParticipant = params?.isParticipant ?? false;
     this.isLoudspeakerCalibration = params?.isLoudspeakerCalibration ?? false;
+    this.deviceId = params?.micrpohoneIdFromWebAudioApi ?? '';
     this.buttonsContainer = params?.buttonsContainer ?? document.createElement('div');
 
     /* Set up callbacks that handle any events related to our peer object. */
@@ -284,6 +285,7 @@ class Speaker extends AudioPeer {
       hz: this.calibrateSoundHz,
       bits: this.calibrateSoundSamplingDesiredBits,
       lang: this.language,
+      deviceId: this.deviceId
     };
     const queryString = this.queryStringFromObject(queryStringParameters);
     this.uri = this.siteUrl + queryString;
