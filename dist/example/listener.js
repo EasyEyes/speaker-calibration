@@ -107,6 +107,7 @@ switch (isSmartPhone) {
       }
       console.log(lock);
       console.log('Starting Calibration');
+      console.log('Device id in example listenr:',listenerParameters.microphoneDeviceId);
       window.listener = new speakerCalibrator.Listener(listenerParameters);
       console.log(window.listener);
       if (lock) {
@@ -120,7 +121,7 @@ switch (isSmartPhone) {
     calibrationBeginButton2.remove();
     container.style.display = 'block';
     // event listener for when the page is loaded
-
+    
     window.addEventListener('load', () => {
       // set the text of the html elements
       recordingInProgressElement.innerHTML = recordingInProgress;
@@ -143,6 +144,7 @@ switch (isSmartPhone) {
       const p = document.createElement('p');
       p.innerHTML = backToExperimentWindow;
       message.appendChild(p);
+      listenerParameters.microphoneDeviceId = urlParams.get('deviceId');
       window.listener = new speakerCalibrator.Listener(listenerParameters);
       console.log(window.listener);
     });
