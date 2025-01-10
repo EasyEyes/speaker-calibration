@@ -469,13 +469,13 @@ class Speaker extends AudioPeer {
         } else if (this.isSmartPhone) {
           titleDisplay.innerHTML = titleDisplay.innerHTML.replace('6', '7');
         } else {
-          titleDisplay.innerHTML = titleDisplay.innerHTML.replace('5', '6');
+          titleDisplay.innerHTML = titleDisplay.innerHTML.replace('4', '5');
         }
       } else {
         if (this.isSmartPhone) {
           titleDisplay.innerHTML = titleDisplay.innerHTML.replace('5', '6');
         } else {
-          titleDisplay.innerHTML = titleDisplay.innerHTML.replace('4', '5');
+          titleDisplay.innerHTML = titleDisplay.innerHTML.replace('3', '4');
         }
       }
     }

@@ -26,16 +26,11 @@ class Listener extends AudioPeer {
 
     const urlParameters = this.parseURLSearchParams();
     this.calibrateSoundHz =
-    // previous calibrateSoundHz
-      urlParameters.hz !== null && urlParameters.hz !== undefined
-        ? urlParameters.hz
-        : 48000;
+      // previous calibrateSoundHz
+      urlParameters.hz !== null && urlParameters.hz !== undefined ? urlParameters.hz : 48000;
     this.calibrateSoundSamplingDesiredBits =
-    // previous calibrateSoundSamplingDesiredBits
-      urlParameters.bits !== null &&
-      urlParameters.bits !== undefined
-        ? urlParameters.bits
-        : 24;
+      // previous calibrateSoundSamplingDesiredBits
+      urlParameters.bits !== null && urlParameters.bits !== undefined ? urlParameters.bits : 24;
     this.speakerPeerId = urlParameters.speakerPeerId;
 
     this.peer.on('open', this.onPeerOpen);
@@ -161,9 +156,9 @@ class Listener extends AudioPeer {
     this.displayUpdate('Listener - sendFlags');
     this.conn.send({
       name: 'flags',
-      payload: flags
+      payload: flags,
     });
-  }
+  };
 
   getDeviceInfo = async () => {
     try {
@@ -200,7 +195,9 @@ class Listener extends AudioPeer {
 
   applyHQTrackConstraints = async stream => {
     // Contraint the incoming audio to the sampling rate we want
-    stream.getAudioTracks().forEach(track => {console.log(track, track.enabled)});
+    stream.getAudioTracks().forEach(track => {
+      console.log(track, track.enabled);
+    });
     const track = stream.getAudioTracks()[0];
     console.log(track);
     const capabilities = track.getCapabilities();
@@ -242,46 +239,53 @@ class Listener extends AudioPeer {
     return settings;
   };
 
-  getMediaDevicesAudioContraints = () => {
+  getMediaDevicesAudioContraints = async () => {
     const availableConstraints = navigator.mediaDevices.getSupportedConstraints();
-
-    this.displayUpdate(
-      `Listener MediaDevices Available Contraints  - ${JSON.stringify(
-        availableConstraints,
-        undefined,
-        2
-      )}`
-    );
 
     const contraints = {
       // ...(availableConstraints.echoCancellation && availableConstraints.echoCancellation == true
       //   ? {echoCancellation: {exact: false}}
       //   : {}),
-      ...(availableConstraints.sampleRate && availableConstraints.sampleRate == true
-        ? {sampleRate: {ideal: this.calibrateSoundHz}}
-        : {}),
-      ...(availableConstraints.sampleSize && availableConstraints.sampleSize == true
-        ? {sampleSize: {ideal: this.calibrateSoundSamplingDesiredBits}}
-        : {}),
-      ...(availableConstraints.channelCount && availableConstraints.channelCount == true
-        ? {channelCount: {exact: 1}}
-        : {}),
+      // ...(availableConstraints.sampleRate && availableConstraints.sampleRate == true
+      //   ? {sampleRate: {ideal: this.calibrateSoundHz}}
+      //   : {}),
+      // ...(availableConstraints.sampleSize && availableConstraints.sampleSize == true
+      //   ? {sampleSize: {ideal: this.calibrateSoundSamplingDesiredBits}}
+      //   : {}),
+      // ...(availableConstraints.channelCount && availableConstraints.channelCount == true
+      //   ? {channelCount: {exact: 1}}
+      //   : {}),
       echoCancellation: false,
-      noiseSuppression: false,
-      autoGainControl: false,
+      channelCount: 1,
     };
 
     if (this.microphoneDeviceId !== '') {
-      contraints.deviceId = {exact: this.microphoneDeviceId};
+      contraints.deviceId = {exact: await this.getDeviceIdByLabel(this.microphoneDeviceId)};
     }
 
     console.log(contraints);
 
-    this.displayUpdate(
-      `Listener MediaDevices Contraints - ${JSON.stringify(contraints, undefined, 2)}`
-    );
-
     return contraints;
+  };
+  getDeviceIdByLabel = async targetLabel => {
+    try {
+      // Enumerate available media devices
+      const devices = await navigator.mediaDevices.enumerateDevices();
+
+      // Find the device with the matching label
+      const matchingDevice = devices.find(
+        device => device.kind === 'audioinput' && device.label === targetLabel
+      );
+
+      if (matchingDevice) {
+        return matchingDevice.deviceId; // Return the deviceId if found
+      } else {
+        throw new Error(`No audio input device found with label: "${targetLabel}"`);
+      }
+    } catch (error) {
+      console.error('Error finding device ID:', error);
+      return null;
+    }
   };
 
   openAudioStream = async () => {
@@ -295,28 +299,35 @@ class Listener extends AudioPeer {
       });
       return;
     }
-
+    const constraints = await this.getMediaDevicesAudioContraints();
+    console.log('Constraints right before getUserMedia:', constraints);
     navigator.mediaDevices
       .getUserMedia({
-        // audio: this.getMediaDevicesAudioContraints(),
-        audio: {echoCancellation: false, channelCount: 1},
+        audio: constraints,
         video: false,
+        //audio: {echoCancellation: false, noiseSuppression: false, autoGainControl: false, deviceId: {exact: await this.getDeviceIdByLabel(this.microphoneDeviceId) }},
       })
       .then(stream => {
-        this.displayUpdate(`Listener Track settings before applied constraints - ${JSON.stringify(stream.getAudioTracks()[0].getSettings(), undefined, 2)}`);
+        this.displayUpdate(
+          `Listener Track settings before applied constraints - ${JSON.stringify(
+            stream.getAudioTracks()[0].getSettings(),
+            undefined,
+            2
+          )}`
+        );
         this.applyHQTrackConstraints(stream)
           .then(settings => {
             console.log(settings);
             this.sendSamplingRate(settings.sampleRate);
             let sampleSize = settings.sampleSize;
-            if (!sampleSize){
+            if (!sampleSize) {
               sampleSize = this.calibrateSoundSamplingDesiredBits;
             }
             this.sendSampleSize(sampleSize);
             this.sendFlags({
-              'autoGainControl':settings.autoGainControl,
-              'noiseSuppression':settings.noiseSuppression,
-              'echoCancellation':settings.echoCancellation
+              autoGainControl: settings.autoGainControl,
+              noiseSuppression: settings.noiseSuppression,
+              echoCancellation: settings.echoCancellation,
             });
             this.peer.call(this.speakerPeerId, stream); // one-way call
             this.displayUpdate('Listener - openAudioStream');
@@ -330,6 +341,15 @@ class Listener extends AudioPeer {
       })
       .catch(err => {
         console.error(err);
+        if (err.name === 'OverconstrainedError') {
+          const constraint = err.constraint;
+          const message = `The constraint "${constraint}" cannot be satisfied by the selected microphone. Please adjust your calibration settings or choose a different microphone.`;
+
+          this.displayUpdate(`Listener - OverconstrainedError: ${message}`);
+          console.error(message);
+
+          alert(`Overconstrained Error: ${message}`);
+        }
         this.displayUpdate(
           `Listener - Error in getUserMedia - ${JSON.stringify(err, undefined, 2)}`
         );

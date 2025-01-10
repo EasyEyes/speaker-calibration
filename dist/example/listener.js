@@ -96,7 +96,7 @@ switch (isSmartPhone) {
         console.log(err);
       }
       listenerParameters.microphoneFromAPI = webAudioDeviceNames.microphone;
-      listenerParameters.microphoneDeviceId = webAudioDeviceNames.deviceID;
+      listenerParameters.microphoneDeviceId = webAudioDeviceNames.microphone;
       let lock = null;
       try {
         if ('wakeLock' in navigator) {
@@ -120,6 +120,7 @@ switch (isSmartPhone) {
     calibrationBeginButton2.remove();
     container.style.display = 'block';
     // event listener for when the page is loaded
+
     window.addEventListener('load', () => {
       // set the text of the html elements
       recordingInProgressElement.innerHTML = recordingInProgress;

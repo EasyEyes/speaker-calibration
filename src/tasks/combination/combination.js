@@ -2772,7 +2772,16 @@ class Combination extends AudioCalibrator {
     this._calibrateSoundBurstScalarDB = _calibrateSoundBurstScalarDB;
     this.webAudioDeviceNames = webAudioDeviceNames;
     this.calibrateSoundSamplingDesiredBits = calibrateSoundSamplingDesiredBits;
-    if (isSmartPhone) this.webAudioDeviceNames.microphone = this.deviceInfo.microphoneFromAPI;
+    if (isSmartPhone) {
+      const leftQuote = "\u201C"; // “
+       const rightQuote = "\u201D"; // ”
+      this.webAudioDeviceNames.microphone = this.deviceInfo.microphoneFromAPI;
+      const quotedWebAudioMic = leftQuote + this.webAudioDeviceNames.microphone + rightQuote;
+      const combinedMicText = this.micModelName + " " + quotedWebAudioMic;
+      webAudioDeviceNames.microphoneText = phrases.RC_nameMicrophone[this.language]
+      .replace("“xxx”", combinedMicText)
+      .replace("“XXX”", combinedMicText);
+    }
     // this.webAudioDeviceNames.microphoneText = this.webAudioDeviceNames.microphoneText
     //   .replace('xxx', this.webAudioDeviceNames.microphone)
     //   .replace('XXX', this.webAudioDeviceNames.microphone);
