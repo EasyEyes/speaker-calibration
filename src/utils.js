@@ -1,5 +1,5 @@
 import Swal from "sweetalert2";
-import {phrases} from '../dist/example/i18n.js';
+//import {phrases} from '../dist/example/i18n.js';
 /** .
  * .
  * .
@@ -147,7 +147,7 @@ export const formatLineBreak =(inputStr,checkInternetConnection) => {
 
 
   
-export const createAndShowPopup = (lang) => {
+export const createAndShowPopup = (lang, phrases) => {
   console.log(`
     <div style="text-align: left;"> 
     ${convertAsterisksToList(phrases.RC_NeedInternetConnectedPhone[lang].replace(/\n/g, '<br>'))}

@@ -32,7 +32,7 @@ import {
   where,
   Timestamp,
 } from 'firebase/firestore';
-import { phrases } from '../../../dist/example/i18n';
+//import { phrases } from '../../../dist/example/i18n';
 
 /**
  *
@@ -312,7 +312,7 @@ class Combination extends AudioCalibrator {
     let systemSD = '';
     let flags = '';
     const reportWebAudioNames = `<strong>${this.webAudioDeviceNames.loudspeakerText} </strong> <strong>${this.webAudioDeviceNames.microphoneText} </strong>`;
-    const samplingParamText =  phrases.RC_SamplingHzBits[this.language].replace('111', this.sourceSamplingRate).replace('222',this.sinkSamplingRate).replace('333', this.calibrateSoundSamplingDesiredBits);
+    const samplingParamText = this.phrases.RC_SamplingHzBits[this.language].replace('111', this.sourceSamplingRate).replace('222',this.sinkSamplingRate).replace('333', this.calibrateSoundSamplingDesiredBits);
     const reportParameters = `${samplingParamText}`;
     if (this.flags) {
       flags = `<br> autoGainControl: ${this.flags.autoGainControl}; 
@@ -2735,6 +2735,7 @@ class Combination extends AudioCalibrator {
     calibrateSoundSamplingDesiredBits = 24,
     language,
     loudspeakerModelName='',
+    phrases,
 
   ) => {
     this._calibrateSoundBurstPreSec = _calibrateSoundBurstPreSec;
@@ -2772,13 +2773,14 @@ class Combination extends AudioCalibrator {
     this._calibrateSoundBurstScalarDB = _calibrateSoundBurstScalarDB;
     this.webAudioDeviceNames = webAudioDeviceNames;
     this.calibrateSoundSamplingDesiredBits = calibrateSoundSamplingDesiredBits;
+    this.phrases = phrases;
     if (isSmartPhone) {
       const leftQuote = "\u201C"; // “
        const rightQuote = "\u201D"; // ”
       this.webAudioDeviceNames.microphone = this.deviceInfo.microphoneFromAPI;
       const quotedWebAudioMic = leftQuote + this.webAudioDeviceNames.microphone + rightQuote;
       const combinedMicText = this.micModelName + " " + quotedWebAudioMic;
-      webAudioDeviceNames.microphoneText = phrases.RC_nameMicrophone[this.language]
+      webAudioDeviceNames.microphoneText = this.phrases.RC_nameMicrophone[this.language]
       .replace("“xxx”", combinedMicText)
       .replace("“XXX”", combinedMicText);
     }

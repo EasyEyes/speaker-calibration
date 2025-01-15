@@ -7,7 +7,7 @@ import {
   CalibrationTimedOutError,
 } from './peerErrors';
 
-import {phrases} from '../../dist/example/i18n';
+//import {phrases} from '../../dist/example/i18n';
 
 /**
  * @class Handles the speaker's side of the connection. Responsible for initiating the connection,
@@ -43,6 +43,7 @@ class Speaker extends AudioPeer {
     this.isLoudspeakerCalibration = params?.isLoudspeakerCalibration ?? false;
     this.deviceId = params?.micrpohoneIdFromWebAudioApi ?? '';
     this.buttonsContainer = params?.buttonsContainer ?? document.createElement('div');
+    this.phrases = params?. phrases ?? {};
 
     /* Set up callbacks that handle any events related to our peer object. */
   }
@@ -208,6 +209,7 @@ class Speaker extends AudioPeer {
             params.calibrateSoundSamplingDesiredBits,
             params.language,
             params.loudspeakerModelName,
+            params.phrases,
           );
           speaker.#removeUIElems();
           resolve(speaker.result);
@@ -329,10 +331,10 @@ class Speaker extends AudioPeer {
         })
         .then(data => {
           explanation.innerHTML = formatLineBreak(
-            phrases.RC_skipQR_ExplanationWithoutPreferNot[this.language]
+            this.phrases.RC_skipQR_ExplanationWithoutPreferNot[this.language]
               .replace('xxx', `<b style="user-select: text">${data.shortURL}</b>`)
               .replace('XXX', `<b style="user-select: text">${data.shortURL}</b>`),
-            phrases.RC_checkInternetConnection[this.language]
+            this.phrases.RC_checkInternetConnection[this.language]
           );
           const checkConnection = document.createElement('a');
           checkConnection.id = 'check-connection';
@@ -342,7 +344,7 @@ class Speaker extends AudioPeer {
           checkConnection.addEventListener('click', function (event) {
             console.log('clicked');
             event.preventDefault(); // Prevent the default link action
-            createAndShowPopup(lang);
+            createAndShowPopup(lang, this.phrases);
           });
           explanation.querySelector('a#check-connection').replaceWith(checkConnection);
         })
@@ -388,7 +390,7 @@ class Speaker extends AudioPeer {
         const proceedButton = document.createElement('button');
         proceedButton.setAttribute('id', 'calibrationProceedButton');
         proceedButton.setAttribute('class', 'btn btn-success');
-        proceedButton.innerHTML = phrases.T_proceed[this.language];
+        proceedButton.innerHTML = this.phrases.T_proceed[this.language];
         proceedButton.onclick = () => {
           // open the link in a new tab
           window.open(this.uri, '_blank');
@@ -425,7 +427,7 @@ class Speaker extends AudioPeer {
       instructionDisplay.style.whiteSpace = 'nowrap';
       instructionDisplay.style.fontWeight = 'bold';
       instructionDisplay.style.width = 'fit-content';
-      instructionDisplay.innerHTML = phrases.RC_soundRecording[this.language];
+      instructionDisplay.innerHTML = this.phrases.RC_soundRecording[this.language];
       let fontSize = 100;
       instructionDisplay.style.fontSize = fontSize + 'px';
       while (instructionDisplay.scrollWidth > background.scrollWidth * 0.9 && fontSize > 10) {
@@ -444,7 +446,7 @@ class Speaker extends AudioPeer {
 
     const timeToCalibrateDisplay = document.getElementById(this.timeToCalibrateDisplay);
     if (timeToCalibrateDisplay) {
-      const timeToCalibrateText = phrases.RC_howLongToCalibrate[this.language];
+      const timeToCalibrateText = this.phrases.RC_howLongToCalibrate[this.language];
       timeToCalibrateDisplay.innerHTML = timeToCalibrateText.replace('111', this.timeToCalibrate);
       timeToCalibrateDisplay.style.fontWeight = 'normal';
       timeToCalibrateDisplay.style.fontSize = '1rem';
@@ -716,6 +718,7 @@ class Speaker extends AudioPeer {
         params.calibrateSoundSamplingDesiredBits,
         params.language,
         params.loudspeakerModelName,
+        params.phrases,
       );
       this.#removeUIElems();
       resolve(result);
