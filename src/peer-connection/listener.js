@@ -269,6 +269,8 @@ class Listener extends AudioPeer {
   };
   getDeviceIdByLabel = async targetLabel => {
     try {
+      //get permission to use audio first. (Returns empty labels on some computers if not done first)
+      await navigator.mediaDevices.getUserMedia({audio: true});
       // Enumerate available media devices
       const devices = await navigator.mediaDevices.enumerateDevices();
 
