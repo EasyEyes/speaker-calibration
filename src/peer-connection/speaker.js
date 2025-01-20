@@ -210,6 +210,7 @@ class Speaker extends AudioPeer {
             params.language,
             params.loudspeakerModelName,
             params.phrases,
+            params.soundSubtitleId,
           );
           speaker.#removeUIElems();
           resolve(speaker.result);
@@ -719,6 +720,7 @@ class Speaker extends AudioPeer {
         params.language,
         params.loudspeakerModelName,
         params.phrases,
+        params.soundSubtitleId,
       );
       this.#removeUIElems();
       resolve(result);

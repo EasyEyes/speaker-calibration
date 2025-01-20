@@ -311,7 +311,13 @@ class Combination extends AudioCalibrator {
     let componentSD = '';
     let systemSD = '';
     let flags = '';
-    const reportWebAudioNames = `<strong>${this.webAudioDeviceNames.loudspeakerText} </strong> <strong>${this.webAudioDeviceNames.microphoneText} </strong>`;
+    const soundSubtitle = document.getElementById(this.soundSubtitleId);
+    if(soundSubtitle)
+    {
+      const reportWebAudioNames = `${this.webAudioDeviceNames.loudspeakerText}<br/> ${this.webAudioDeviceNames.microphoneText}`;
+      soundSubtitle.innerHTML = reportWebAudioNames;
+    }
+    
     const samplingParamText = this.phrases.RC_SamplingHzBits[this.language].replace('111', this.sourceSamplingRate).replace('222',this.sinkSamplingRate).replace('333', this.calibrateSoundSamplingDesiredBits);
     const reportParameters = `${samplingParamText}`;
     if (this.flags) {
@@ -330,7 +336,6 @@ class Combination extends AudioCalibrator {
     }
     const template = `<div style="display: flex; justify-content: flex-start; margin-top: 0.4rem;"><div style="width: 100%; height: 20px; border: 2px solid #000; border-radius: 10px;"><div style="width: ${this.percent_complete}%; height: 100%; background-color: #00aaff; border-radius: 8px;"></div></div></div>`;
     return `
-        ${reportWebAudioNames}
         ${reportParameters} 
         ${MLSsd}
         ${systemSD}
@@ -2736,6 +2741,7 @@ class Combination extends AudioCalibrator {
     language,
     loudspeakerModelName='',
     phrases,
+    soundSubtitleId,
 
   ) => {
     this._calibrateSoundBurstPreSec = _calibrateSoundBurstPreSec;
@@ -2774,6 +2780,7 @@ class Combination extends AudioCalibrator {
     this.webAudioDeviceNames = webAudioDeviceNames;
     this.calibrateSoundSamplingDesiredBits = calibrateSoundSamplingDesiredBits;
     this.phrases = phrases;
+    this.soundSubtitleId = soundSubtitleId;
     if (isSmartPhone) {
       const leftQuote = "\u201C"; // “
        const rightQuote = "\u201D"; // ”

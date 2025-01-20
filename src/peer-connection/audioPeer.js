@@ -114,10 +114,15 @@ class AudioPeer {
     this.displayUpdate('Connection lost. Please reconnect');
 
     // Workaround for peer.reconnect deleting previous id
-    this.peer.id = this.lastPeerId;
+    try {
+      this.peer.id = this.lastPeerId;
     // eslint-disable-next-line no-underscore-dangle
     this.peer._lastServerId = this.lastPeerId;
     this.peer.reconnect();
+    } catch(e) {
+      console.log(e);
+    }
+    
   };
 
   /** .
