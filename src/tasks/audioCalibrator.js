@@ -23,6 +23,7 @@ class AudioCalibrator extends AudioRecorder {
     this.numCaptures = numCaptures;
     this.numMLSPerCapture = numMLSPerCapture;
     this.pyServerAPI = new PythonServerAPI();
+    this.currentTime = 0;
   }
 
   /** @private */
@@ -70,9 +71,22 @@ class AudioCalibrator extends AudioRecorder {
   };
 
   addTimeStamp = taskName => {
-    let startTaskTime = (new Date().getTime() - this.startTime) / 1000;
-    this.timeStamp.push(`SOUND ${Number(startTaskTime.toFixed(1))} s. ${taskName}`);
+    const currentTime = new Date().getTime(); // Current time in milliseconds
+    const elapsedTime = (currentTime - this.startTime) / 1000; // Total time since start in seconds
+    const stepDuration = elapsedTime - this.currentTime; // Time taken for the current step
+  
+    this.currentTime = elapsedTime; // Update for the next step
+  
+    // Round to 1 decimal place for consistent formatting
+ 
+;
+  
+    // Log the timestamp with aligned bars
+    this.timeStamp.push(
+      `SOUND Total: ${elapsedTime.toFixed(1)} s  Step: ${stepDuration.toFixed(1)} s  ${taskName}`
+    );
   };
+  
 
   recordBackground = async (
     stream,
@@ -144,7 +158,7 @@ class AudioCalibrator extends AudioRecorder {
     console.warn('beforeRecord');
     await beforeRecord();
     const totalSec = this._calibrateSoundBurstPreSec + (this.numMLSPerCapture - this.num_mls_to_skip) * this._calibrateSoundBurstSec + this._calibrateSoundBurstPostSec;
-    this.addTimeStamp(`Record ${totalSec.toFixed(1)} s of MLS with speaker+microphone IIR.`);
+    
 
     // calibration loop
     while (loopCondition()) {
@@ -194,6 +208,7 @@ class AudioCalibrator extends AudioRecorder {
   ) => {
     this.numCalibratingRoundsCompleted = 0;
     this.numCalibratingRounds = 2;
+    console.log("maxSD in VolumeCaibrationSteps: ", maxSD, '0' >= maxSD);
     // calibration loop
     while (!this.isCalibrating && this.numCalibratingRoundsCompleted < this.numCalibratingRounds) {
       if (this.isCalibrating) break;
@@ -213,7 +228,7 @@ class AudioCalibrator extends AudioRecorder {
       if (this.isCalibrating) break;
       // after recording
       await afterRecord(lCalib);
-      const sd = await checkSD() || Infinity;
+      const sd = await checkSD();
       if (sd <= maxSD) {
         console.log(`SD =${sd}, less than calibrateSound1000HzMaxSD_dB=${maxSD}`);
         this.numCalibratingRoundsCompleted += 2;

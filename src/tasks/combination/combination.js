@@ -551,7 +551,7 @@ class Combination extends AudioCalibrator {
     // Slice the array from the calculated start index to the end of the array
     const background_rec = background_rec_whole.slice(startIndex);
     console.log('Sending background recording to server for processing');
-    this.addTimeStamp('Compute background PSD');
+    this.addTimeStamp('Compute PSD of background');
     this.pyServerAPI
       .getBackgroundNoisePSDWithRetry({
         background_rec,
@@ -780,7 +780,7 @@ class Combination extends AudioCalibrator {
    */
   #afterMLSRecord = async () => {
     console.log('after record');
-    this.addTimeStamp(`Send unfiltered MLS to the server`);
+    this.addTimeStamp(`Send MLS to the server`);
     await this.sendRecordingToServerForProcessing();
   };
 
@@ -903,8 +903,8 @@ class Combination extends AudioCalibrator {
       const post = this._calibrateSoundBurstPostSec;     
       const total_dur = pre + repeats * burst + post;
       this.addTimeStamp(
-        `Record ${total_dur.toFixed(1)} s of MLS ver. ${this.icapture}, unfiltered. ` +
-        `(${pre.toFixed(1)} s pre + ${repeats}×${burst.toFixed(1)} s used + ${post.toFixed(1)} s post).`
+        `Record ${total_dur.toFixed(1)} s ` +
+        `(${pre.toFixed(1)} + ${repeats}×${burst.toFixed(1)} + ${post.toFixed(1)} s) of MLS ver. ${this.icapture}`
       );
       this.status = this.generateTemplate(`All Hz Calibration: playing the calibration tone...`.toString()).toString();
     } else if (this.mode === 'filtered') {
@@ -1337,7 +1337,7 @@ class Combination extends AudioCalibrator {
       this.filteredMLSRange.component.Max = findMaxValue(this.#currentConvolution);
       this.soundCheck = 'component';
       this.addTimeStamp(`Record ${total_dur} s of MLS with ${this.soundCheck} IIR.`)
-      this.addTimeStamp(`Record ${total_dur} s of MLS with speaker or microphone IIR.`);
+      //this.addTimeStamp(`Record ${total_dur} s of MLS with speaker or microphone IIR.`);
       if (this.isCalibrating) return null;
       await this.playMLSwithIIR(stream, this.#currentConvolution);
       this.stopCalibrationAudio();
@@ -1347,7 +1347,7 @@ class Combination extends AudioCalibrator {
       this.filteredMLSRange.system.Max = findMaxValue(this.#currentConvolution);
       this.soundCheck = 'system';
       this.addTimeStamp(`Record ${total_dur} s of MLS with ${this.soundCheck} IIR.`)
-      this.addTimeStamp(`Record ${total_dur} s of MLS with speaker or microphone IIR.`);
+      //this.addTimeStamp(`Record ${total_dur} s of MLS with speaker or microphone IIR.`);
       if (this.isCalibrating) return null;
       await this.playMLSwithIIR(stream, this.#currentConvolution);
       this.stopCalibrationAudio();
@@ -1427,7 +1427,7 @@ class Combination extends AudioCalibrator {
           console.error(err);
         });
 
-      this.addTimeStamp('Compute PSD recording of filtered recording (component)');
+      this.addTimeStamp('Compute PSD recording of  speaker+ mic IIR-filtered MLS recording');
       if (this.isCalibrating) return null;
       let conv_results = await this.pyServerAPI
         .getSubtractedPSDWithRetry(conv_rec, knownGain, knownFreq, sampleRate)
@@ -1468,7 +1468,7 @@ class Combination extends AudioCalibrator {
 
       unconv_rec = this.componentInvertedImpulseResponseNoBandpass;
       conv_rec = this.componentInvertedImpulseResponse;
-      this.addTimeStamp('Compute PSD of component IIR and component IIR no bandpass');
+      this.addTimeStamp('Compute PSD of speaker or mic IIR, with and without bandpass');
       if (this.isCalibrating) return null;
       let component_iir_psd = await this.pyServerAPI
         .getPSDWithRetry({
@@ -1487,7 +1487,7 @@ class Combination extends AudioCalibrator {
         });
       unconv_rec = this.systemInvertedImpulseResponseNoBandpass;
       conv_rec = this.systemInvertedImpulseResponse;
-      this.addTimeStamp('Compute PSD of system IIR and system IIR no bandpass');
+      this.addTimeStamp('Compute PSD of speaker +mic IIR, with and without bandpass');
       if (this.isCalibrating) return null;
       let system_iir_psd = await this.pyServerAPI
         .getPSDWithRetry({
@@ -1505,7 +1505,7 @@ class Combination extends AudioCalibrator {
           console.error(err);
         });
 
-      this.addTimeStamp('Compute PSD of MLS sequence');
+      this.addTimeStamp('Compute PSD of MLS');
       if (this.isCalibrating) return null;
       let mls_psd = await this.pyServerAPI
         .getMLSPSDWithRetry({
@@ -1522,7 +1522,7 @@ class Combination extends AudioCalibrator {
           console.error(err);
         });
 
-      this.addTimeStamp('Compute PSD of filtered MLS (component)');
+      this.addTimeStamp('Compute PSD of speaker or mic');
       if (this.isCalibrating) return null;
       let filtered_mls_psd = await this.pyServerAPI
         .getMLSPSDWithRetry({
@@ -2087,6 +2087,7 @@ class Combination extends AudioCalibrator {
     if (this.isCalibrating) return null;
     this.percent_complete = 100;
     this.status =  this.generateTemplate(`All Hz Calibration: Finished`.toString()).toString();
+    this.addTimeStamp('Done');
     this.emit('update', {message: this.status});
 
     //here after calibration we have the component calibration (either loudspeaker or microphone) in the same form as the componentIR
@@ -2249,14 +2250,7 @@ class Combination extends AudioCalibrator {
 
   #sendToServerForProcessing = async lCalib => {
     console.log('Sending data to server');
-    const total_dur = this.calibrateSound1000HzPreSec + this.calibrateSound1000HzSec + this.calibrateSound1000HzPostSec;
-    this.addTimeStamp(
-      "1000 Hz: recorded at " + this.inDB + 
-      " dB (" + this.calibrateSound1000HzPreSec.toFixed(1) + 
-      " s pre + " + this.calibrateSound1000HzSec.toFixed(1) + 
-      " s used + " + this.calibrateSound1000HzPostSec.toFixed(1) + 
-      " s post)"
-    );
+    
     let left = this.calibrateSound1000HzPreSec;
     let right = this.calibrateSound1000HzPreSec + this.calibrateSound1000HzSec;
     if (this.isCalibrating) return null;
@@ -2293,6 +2287,27 @@ class Combination extends AudioCalibrator {
       this._calibrateSoundPowerBinDesiredSec);
      console.log(res);
      this.recordingChecks['volume'][this.inDB] = res;
+     console.log("Recording checks in sendToServer", this.recordingChecks['volume']);
+    const  getSD = () => this.recordingChecks['volume'][this.inDB]['sd'];
+    const getSDMessage = () => {
+      //SOUND 6.7 s. 2.5+2.5+0.5 s. 1000 Hz at -60 dB. SD = 1.3 dB
+      // And reporting each rejected recording as
+      // SOUND 6.7 s. 2.5+2.5+0.5 s. 1000 Hz at -60 dB, SD = 19.7  > 4 dB.
+
+      if(this.numCalibratingRoundsCompleted==1)
+        return `, SD = ${getSD()} > ${this.calibrateSound1000HzMaxSD_dB} dB.`;
+      return `. SD = ${getSD()} dB`
+    }
+    const total_dur = this.calibrateSound1000HzPreSec + this.calibrateSound1000HzSec + this.calibrateSound1000HzPostSec;
+    
+    this.addTimeStamp(
+      `${this.calibrateSound1000HzPreSec.toFixed(1)}` + 
+     `+ ${this.calibrateSound1000HzSec.toFixed(1)}` + 
+      `+ ${this.calibrateSound1000HzPostSec.toFixed(1)} s.` + 
+      `1000 Hz at ${this.inDB} dB${getSDMessage()}`
+    );
+    
+     
   };
 
   startCalibrationVolume = async (stream, gainValues, lCalib, componentGainDBSPL) => {
