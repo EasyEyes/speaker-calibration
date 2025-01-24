@@ -255,6 +255,8 @@ class Listener extends AudioPeer {
       // ...(availableConstraints.channelCount && availableConstraints.channelCount == true
       //   ? {channelCount: {exact: 1}}
       //   : {}),
+      autoGainControl: false,
+      noiseSuppression: false,
       echoCancellation: false,
       channelCount: 1,
     };
