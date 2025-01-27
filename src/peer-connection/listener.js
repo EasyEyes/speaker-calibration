@@ -323,10 +323,13 @@ class Listener extends AudioPeer {
           .then(settings => {
             console.log(settings);
             this.sendSamplingRate(settings.sampleRate);
-            let sampleSize = settings.sampleSize;
+            //let sampleSize = settings.sampleSize;
+            let sampleSize = this.calibrateSoundSamplingDesiredBits;
+            /*
             if (!sampleSize) {
               sampleSize = this.calibrateSoundSamplingDesiredBits;
             }
+            */
             this.sendSampleSize(sampleSize);
             this.sendFlags({
               autoGainControl: settings.autoGainControl,
