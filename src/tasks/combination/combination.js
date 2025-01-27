@@ -455,7 +455,7 @@ class Combination extends AudioCalibrator {
     const componentIRFreqs = this.componentIR['Freq'];
     //normalize the component IR gains
     componentIRGains = componentIRGains.map(value => {
-      return value + this._calibrateSoundBurstScalarDB - this._calibrateSoundBurstDb;
+      return value - this._calibrateSoundBurstScalarDB - this._calibrateSoundBurstDb;
     });
     if (this._calibrateSoundBurstNormalizeBy1000HzGainBool) {
       const sineGainAt1000Hz_dB = this.gainDBSPL;
