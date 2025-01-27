@@ -161,8 +161,8 @@ class Listener extends AudioPeer {
   };
 
   getDeviceInfo = async () => {
+    const deviceInfo = {};
     try {
-      const deviceInfo = {};
       fod.complete(function (data) {
         deviceInfo['IsMobile'] = data.device['ismobile'];
         deviceInfo['HardwareName'] = data.device['hardwarename'];
@@ -176,21 +176,20 @@ class Listener extends AudioPeer {
         deviceInfo['DeviceType'] = data.device['devicetype'];
         // deviceInfo['deviceInfoFromUser'] = this.deviceInfoFromUser;
       });
-      // deviceInfo['deviceInfoFromUser'] = this.deviceInfoFromUser;
-      deviceInfo['microphoneFromAPI'] = this.microphoneFromAPI;
-      deviceInfo['microphoneDeviceId'] = this.microphoneDeviceId;
-      deviceInfo['screenWidth'] = window.screen.width;
-      deviceInfo['screenHeight'] = window.screen.height;
-      console.log('deviceInfo Inside getDeviceInfo: ', deviceInfo);
-      this.conn.send({
-        name: 'deviceInfo',
-        payload: deviceInfo,
-      });
-      return deviceInfo;
     } catch (error) {
       console.error('Error fetching or executing script:', error.message);
-      return null;
     }
+    // deviceInfo['deviceInfoFromUser'] = this.deviceInfoFromUser;
+    deviceInfo['microphoneFromAPI'] = this.microphoneFromAPI;
+    deviceInfo['microphoneDeviceId'] = this.microphoneDeviceId;
+    deviceInfo['screenWidth'] = window.screen.width;
+    deviceInfo['screenHeight'] = window.screen.height;
+    console.log('deviceInfo Inside getDeviceInfo: ', deviceInfo);
+    this.conn.send({
+      name: 'deviceInfo',
+      payload: deviceInfo,
+    });
+    return deviceInfo;
   };
 
   applyHQTrackConstraints = async stream => {

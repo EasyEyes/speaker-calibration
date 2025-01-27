@@ -6,6 +6,7 @@ import {
   MissingSpeakerIdError,
   CalibrationTimedOutError,
 } from './peerErrors';
+import Peer from 'peerjs';
 
 //import {phrases} from '../../dist/example/i18n';
 
@@ -43,7 +44,7 @@ class Speaker extends AudioPeer {
     this.isLoudspeakerCalibration = params?.isLoudspeakerCalibration ?? false;
     this.deviceId = params?.micrpohoneIdFromWebAudioApi ?? '';
     this.buttonsContainer = params?.buttonsContainer ?? document.createElement('div');
-    this.phrases = params?. phrases ?? {};
+    this.phrases = params?.phrases ?? {};
 
     /* Set up callbacks that handle any events related to our peer object. */
   }
@@ -210,7 +211,7 @@ class Speaker extends AudioPeer {
             params.language,
             params.loudspeakerModelName,
             params.phrases,
-            params.soundSubtitleId,
+            params.soundSubtitleId
           );
           speaker.#removeUIElems();
           resolve(speaker.result);
@@ -288,7 +289,7 @@ class Speaker extends AudioPeer {
       hz: this.calibrateSoundHz,
       bits: this.calibrateSoundSamplingDesiredBits,
       lang: this.language,
-      deviceId: this.deviceId
+      deviceId: this.deviceId,
     };
     const queryString = this.queryStringFromObject(queryStringParameters);
     this.uri = this.siteUrl + queryString;
@@ -720,7 +721,7 @@ class Speaker extends AudioPeer {
         params.language,
         params.loudspeakerModelName,
         params.phrases,
-        params.soundSubtitleId,
+        params.soundSubtitleId
       );
       this.#removeUIElems();
       resolve(result);
