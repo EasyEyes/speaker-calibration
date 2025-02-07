@@ -222,7 +222,9 @@ class Speaker extends AudioPeer {
             new CalibrationTimedOutError(
               `Calibration failed to produce a result after ${
                 timeOut / 1000
-              } seconds. Please try again.`
+              } seconds. Try increasing "_timeoutSec", which is currently ${
+                timeOut / 1000
+              } seconds.`
             )
           );
         }, timeOut);
@@ -265,7 +267,9 @@ class Speaker extends AudioPeer {
             new CalibrationTimedOutError(
               `Calibration failed to produce a result after ${
                 timeOut / 1000
-              } seconds. Please try again.`
+              } seconds. Try increasing "_timeoutSec", which is currently ${
+                timeOut / 1000
+              } seconds.`
             )
           );
         }, timeOut);
