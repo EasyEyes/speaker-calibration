@@ -347,10 +347,11 @@ class Speaker extends AudioPeer {
           checkConnection.href = '#';
           checkConnection.innerHTML = "check the phone's internet connection";
           const lang = this.language;
+          const phrases = this.phrases;
           checkConnection.addEventListener('click', function (event) {
             console.log('clicked');
             event.preventDefault(); // Prevent the default link action
-            createAndShowPopup(lang, this.phrases);
+            createAndShowPopup(lang, phrases);
           });
           explanation.querySelector('a#check-connection').replaceWith(checkConnection);
         })
