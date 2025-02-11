@@ -43,12 +43,15 @@ class Listener extends AudioPeer {
   onPeerOpen = id => {
     this.displayUpdate('Listener - onPeerOpen');
     // Workaround for peer.reconnect deleting previous id
-
-    if (id === null) {
-      this.displayUpdate('Received null id from peer open');
-      this.peer.id = this.lastPeerId;
-    } else {
-      this.lastPeerId = this.peer.id;
+    try {
+      if (id === null) {
+        this.displayUpdate('Received null id from peer open');
+        this.peer.id = this.lastPeerId;
+      } else {
+        this.lastPeerId = this.peer.id;
+      }
+    } catch (error) {
+      console.error('Error in onPeerOpen: ', error);
     }
 
     this.join();
