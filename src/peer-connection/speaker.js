@@ -222,7 +222,9 @@ class Speaker extends AudioPeer {
             new CalibrationTimedOutError(
               `Calibration failed to produce a result after ${
                 timeOut / 1000
-              } seconds. Please try again.`
+              } seconds. Try increasing "_timeoutSec", which is currently ${
+                timeOut / 1000
+              } seconds.`
             )
           );
         }, timeOut);
@@ -265,7 +267,9 @@ class Speaker extends AudioPeer {
             new CalibrationTimedOutError(
               `Calibration failed to produce a result after ${
                 timeOut / 1000
-              } seconds. Please try again.`
+              } seconds. Try increasing "_timeoutSec", which is currently ${
+                timeOut / 1000
+              } seconds.`
             )
           );
         }, timeOut);
@@ -282,7 +286,6 @@ class Speaker extends AudioPeer {
    */
 
   #showQRCode = async () => {
-    // Get query string, the URL parameters to specify a Listener
     const queryStringParameters = {
       speakerPeerId: this.peer.id,
       sp: this.isSmartPhone,
@@ -293,91 +296,106 @@ class Speaker extends AudioPeer {
     };
     const queryString = this.queryStringFromObject(queryStringParameters);
     this.uri = this.siteUrl + queryString;
+
     if (this.isSmartPhone) {
-      // if (true) { // test smartphone QR
-      // Display QR code for the participant to scan
+      // Generate QR code
       const qrCanvas = document.createElement('canvas');
       qrCanvas.setAttribute('id', 'qrCanvas');
       QRCode.toCanvas(qrCanvas, this.uri, error => {
         if (error) console.error(error);
       });
-      const explanation = document.createElement('h2');
-      explanation.id = 'skipQRExplanation';
-      explanation.style = `
-      user-select: text;
-      margin-top: 9px;
-      font-size: 1.1rem;
-     `;
-      // Define the URL and options for the request
-      const url = 'https://api.short.io/links/public';
-      const options = {
-        method: 'POST',
-        headers: {
-          Accept: 'application/json',
-          'Content-Type': 'application/json',
-          Authorization: 'pk_fysLKGj3legZz4XZ',
-        },
-        body: JSON.stringify({
-          domain: 'listeners.link', // Ensure this domain is valid for your account
-          originalURL: this.uri,
-        }),
-      };
 
-      // Make the request using fetch
-      await fetch(url, options)
-        .then(response => {
-          if (!response.ok) {
-            throw new Error(`HTTP error! Status: ${response.status}`);
-          }
-          return response.json(); // Parse the JSON response
-        })
-        .then(data => {
-          explanation.innerHTML = formatLineBreak(
-            this.phrases.RC_skipQR_ExplanationWithoutPreferNot[this.language]
-              .replace('xxx', `<b style="user-select: text">${data.shortURL}</b>`)
-              .replace('XXX', `<b style="user-select: text">${data.shortURL}</b>`),
-            this.phrases.RC_checkInternetConnection[this.language]
-          );
-          const checkConnection = document.createElement('a');
-          checkConnection.id = 'check-connection';
-          checkConnection.href = '#';
-          checkConnection.innerHTML = "check the phone's internet connection";
-          const lang = this.language;
-          checkConnection.addEventListener('click', function (event) {
-            console.log('clicked');
-            event.preventDefault(); // Prevent the default link action
-            createAndShowPopup(lang, this.phrases);
-          });
-          explanation.querySelector('a#check-connection').replaceWith(checkConnection);
-        })
-        .catch(error => {
-          console.error('Error:', error.message); // Handle errors
-        });
-
-      const qrImage = new Image(400, 400);
+      // Create QR image
+      const qrImage = new Image();
       qrImage.setAttribute('id', 'compatibilityCheckQRImage');
       qrImage.style.zIndex = Infinity;
-      qrImage.style.width = 400;
-      qrImage.style.height = 400;
+      qrImage.style.height = '150px';
+      qrImage.style.width = '150px';
+      qrImage.style.margin = '-10px';
       qrImage.style.aspectRatio = 1;
       qrImage.src = qrCanvas.toDataURL();
-      qrImage.style.maxHeight = '150px';
-      qrImage.style.maxWidth = '150px';
-
       this.qrImage = qrImage;
 
+      // Get shortened URL
+      let shortURL = '';
+      try {
+        const response = await fetch('https://api.short.io/links/public', {
+          method: 'POST',
+          headers: {
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+            Authorization: 'pk_fysLKGj3legZz4XZ',
+          },
+          body: JSON.stringify({
+            domain: 'listeners.link',
+            originalURL: this.uri,
+          }),
+        });
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        const data = await response.json();
+        shortURL = data.shortURL;
+      } catch (error) {
+        console.error('Error:', error.message);
+      }
+
+      // Main container with 3 columns
       const container = document.createElement('div');
       container.style.display = 'flex';
-      container.style.justifyContent = 'space-between';
-      container.style.alignItems = 'top';
+      container.style.alignItems = 'flex-start';
+      container.style.paddingTop = '0';
       container.id = 'skipQRContainer';
-      container.appendChild(qrImage);
-      container.appendChild(explanation);
-      container.appendChild(this.buttonsContainer);
-      const qrContainer = document.createElement('div');
-      qrContainer.appendChild(container);
 
-      document.getElementById(this.targetElement).appendChild(qrContainer);
+      // Column 1: QR Code
+      const qrColumn = document.createElement('div');
+      qrColumn.style.flex = '0 0 auto';
+      qrColumn.appendChild(qrImage);
+
+      // Column 2: Explanation Text
+      const textColumn = document.createElement('div');
+      textColumn.style.flex = '1';
+      textColumn.style.padding = '0 20px';
+      textColumn.style.maxWidth = '560px';
+
+      const explanation = document.createElement('h2');
+      explanation.style.fontSize = '1.1rem';
+      explanation.id = 'skipQRExplanation';
+      explanation.style.margin = '0';
+      explanation.style.textAlign = 'left';
+      explanation.innerHTML = formatLineBreak(
+        this.phrases.RC_skipQR_ExplanationWithoutPreferNot[this.language]
+          .replace('xxx', `<b style="user-select: text">${shortURL}</b>`)
+          .replace('XXX', `<b style="user-select: text">${shortURL}</b>`),
+        this.phrases.RC_checkInternetConnection[this.language]
+      );
+
+      const checkConnection = document.createElement('a');
+      checkConnection.id = 'check-connection';
+      checkConnection.href = '#';
+      checkConnection.innerHTML = "check the phone's internet connection";
+      checkConnection.addEventListener('click', function (event) {
+        event.preventDefault();
+        createAndShowPopup(this.language, this.phrases);
+      });
+      explanation.querySelector('a#check-connection').replaceWith(checkConnection);
+      textColumn.appendChild(explanation);
+
+      // Column 3: Buttons
+      const buttonColumn = document.createElement('div');
+      buttonColumn.style.display = 'flex';
+      buttonColumn.style.flexDirection = 'column';
+      buttonColumn.style.gap = '10px';
+      buttonColumn.style.flex = '0 0 auto';
+      buttonColumn.style.alignItems = 'flex-end';
+      buttonColumn.appendChild(this.buttonsContainer);
+
+      // Assemble the columns
+      container.appendChild(qrColumn);
+      container.appendChild(textColumn);
+      container.appendChild(buttonColumn);
+
+      document.getElementById(this.targetElement).appendChild(container);
     } else {
       // show the link to the user
       // If specified HTML Id is available, show QR code there
@@ -505,15 +523,19 @@ class Speaker extends AudioPeer {
    */
   #onPeerOpen = id => {
     // Workaround for peer.reconnect deleting previous id
-    if (id === null) {
-      console.error('Received null id from peer open');
-      this.peer.id = this.lastPeerId;
-    } else {
-      this.lastPeerId = this.peer.id;
-    }
+    try {
+      if (id === null) {
+        console.error('Received null id from peer open');
+        this.peer.id = this.lastPeerId;
+      } else {
+        this.lastPeerId = this.peer.id;
+      }
 
-    if (id !== this.peer.id) {
-      console.warn('DEBUG Check you assumption that id === this.peer.id');
+      if (id !== this.peer.id) {
+        console.warn('DEBUG Check you assumption that id === this.peer.id');
+      }
+    } catch (error) {
+      console.error('Error in #onPeerOpen: ', error);
     }
 
     this.#showQRCode();
@@ -570,11 +592,15 @@ class Speaker extends AudioPeer {
   #onPeerDisconnected = () => {
     console.log('Connection lost. Please reconnect');
 
-    // Workaround for peer.reconnect deleting previous id
-    this.peer.id = this.lastPeerId;
-    // eslint-disable-next-line no-underscore-dangle
-    this.peer._lastServerId = this.lastPeerId;
-    this.peer.reconnect();
+    try {
+      // Workaround for peer.reconnect deleting previous id
+      this.peer.id = this.lastPeerId;
+      // eslint-disable-next-line no-underscore-dangle
+      this.peer._lastServerId = this.lastPeerId;
+      this.peer.reconnect();
+    } catch (error) {
+      console.error('Error in #onPeerDisconnected: ', error);
+    }
   };
 
   /**
