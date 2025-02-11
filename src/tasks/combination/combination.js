@@ -2402,26 +2402,26 @@ class Combination extends AudioCalibrator {
     this.recordingChecks['volume'][this.inDB] = res;
     console.log('Recording checks in sendToServer', this.recordingChecks['volume']);
     const getSD = () => this.recordingChecks['volume'][this.inDB]['sd'];
-    const getSDMessage = () => {
-      //SOUND 6.7 s. 2.5+2.5+0.5 s. 1000 Hz at -60 dB. SD = 1.3 dB
-      // And reporting each rejected recording as
-      // SOUND 6.7 s. 2.5+2.5+0.5 s. 1000 Hz at -60 dB, SD = 19.7  > 4 dB.
+    // const getSDMessage = () => {
+    //   //SOUND 6.7 s. 2.5+2.5+0.5 s. 1000 Hz at -60 dB. SD = 1.3 dB
+    //   // And reporting each rejected recording as
+    //   // SOUND 6.7 s. 2.5+2.5+0.5 s. 1000 Hz at -60 dB, SD = 19.7  > 4 dB.
 
-      if (this.numCalibratingRoundsCompleted == 1)
-        return `, SD = ${getSD()} > ${this.calibrateSound1000HzMaxSD_dB} dB.`;
-      return `. SD = ${getSD()} dB`;
-    };
-    const total_dur =
-      this.calibrateSound1000HzPreSec +
-      this.calibrateSound1000HzSec +
-      this.calibrateSound1000HzPostSec;
+    //   if (this.numCalibratingRoundsCompleted == 1)
+    //     return `. SD = ${getSD()} > ${this.calibrateSound1000HzMaxSD_dB} dB.`;
+    //   return `. SD = ${getSD()} dB`;
+    // };
+    // const total_dur =
+    //   this.calibrateSound1000HzPreSec +
+    //   this.calibrateSound1000HzSec +
+    //   this.calibrateSound1000HzPostSec;
 
-    this.addTimeStamp(
-      `${this.calibrateSound1000HzPreSec.toFixed(1)}` +
-        `+ ${this.calibrateSound1000HzSec.toFixed(1)}` +
-        `+ ${this.calibrateSound1000HzPostSec.toFixed(1)} s.` +
-        `1000 Hz at ${this.inDB} dB${getSDMessage()}`
-    );
+    // this.addTimeStamp(
+    //   `${this.calibrateSound1000HzPreSec.toFixed(1)}` +
+    //     `+${this.calibrateSound1000HzSec.toFixed(1)}` +
+    //     `+${this.calibrateSound1000HzPostSec.toFixed(1)} s.` +
+    //     `1000 Hz at ${this.inDB} dB${getSDMessage()}`
+    // );
   };
 
   startCalibrationVolume = async (stream, gainValues, lCalib, componentGainDBSPL) => {

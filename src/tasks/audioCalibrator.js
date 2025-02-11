@@ -70,22 +70,21 @@ class AudioCalibrator extends AudioRecorder {
     targetElement.appendChild(this.localAudio);
   };
 
-  addTimeStamp = taskName => {
-    const currentTime = new Date().getTime(); // Current time in milliseconds
-    const elapsedTime = (currentTime - this.startTime) / 1000; // Total time since start in seconds
-    const stepDuration = elapsedTime - this.currentTime; // Time taken for the current step
+  addTimeStamp = (taskName) => {
+    const currentTime = new Date().getTime(); // Current time in ms
+    const elapsedTime = (currentTime - this.startTime) / 1000; // Convert to seconds
+    const stepDuration = elapsedTime - this.currentTime;
   
-    this.currentTime = elapsedTime; // Update for the next step
+    this.currentTime = elapsedTime; // Update for next step
   
-    // Round to 1 decimal place for consistent formatting
- 
-;
+    // Format numbers to 1 decimal place without padding
+    const elapsedStr = elapsedTime.toFixed(1);
+    const stepStr = stepDuration.toFixed(1);
   
-    // Log the timestamp with aligned bars
-    this.timeStamp.push(
-      `SOUND Total: ${elapsedTime.toFixed(1)} s  Step: ${stepDuration.toFixed(1)} s  ${taskName}`
-    );
+    // Push timestamp string (without padding)
+    this.timeStamp.push(`${elapsedStr} s. ∆ ${stepStr} s.  ${taskName}`);
   };
+  
   
 
   recordBackground = async (
@@ -229,16 +228,26 @@ class AudioCalibrator extends AudioRecorder {
       // after recording
       await afterRecord(lCalib);
       const sd = await checkSD();
+      let sdMessage;
       if (sd <= maxSD) {
         console.log(`SD =${sd}, less than calibrateSound1000HzMaxSD_dB=${maxSD}`);
         this.numCalibratingRoundsCompleted += 2;
+        sdMessage =  `. SD = ${sd} dB`;
+
       } else {
         // if exist the maxSD do it one more time and only one more time
         console.log(`SD =${sd}, greater than calibrateSound1000HzMaxSD_dB=${maxSD}`);
         this.numCalibratingRoundsCompleted += 1;
+        sdMessage = `. SD = ${sd} > ${this.calibrateSound1000HzMaxSD_dB} dB.`;
       }
+      this.addTimeStamp(
+        `${this.calibrateSound1000HzPreSec.toFixed(1)}` +
+          `+${this.calibrateSound1000HzSec.toFixed(1)}` +
+          `+${this.calibrateSound1000HzPostSec.toFixed(1)} s. ` +
+          `1000 Hz at ${this.inDB} dB${sdMessage}`
+      );
       this.calibrationNodes = [];
-
+      
       // eslint-disable-next-line no-await-in-loop
       await sleep(2);
     }
