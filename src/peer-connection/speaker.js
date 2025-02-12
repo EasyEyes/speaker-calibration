@@ -317,7 +317,7 @@ class Speaker extends AudioPeer {
       this.qrImage = qrImage;
 
       // Get shortened URL
-      let shortURL = '';
+      let shortURL = this.uri;
       try {
         const response = await fetch('https://api.short.io/links/public', {
           method: 'POST',
@@ -370,13 +370,15 @@ class Speaker extends AudioPeer {
         this.phrases.RC_checkInternetConnection[this.language]
       );
 
+      const language = this.language;
+      const phrases = this.phrases;
       const checkConnection = document.createElement('a');
       checkConnection.id = 'check-connection';
       checkConnection.href = '#';
       checkConnection.innerHTML = "check the phone's internet connection";
       checkConnection.addEventListener('click', function (event) {
         event.preventDefault();
-        createAndShowPopup(this.language, this.phrases);
+        createAndShowPopup(language, phrases);
       });
       explanation.querySelector('a#check-connection').replaceWith(checkConnection);
       textColumn.appendChild(explanation);
