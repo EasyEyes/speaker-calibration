@@ -35,59 +35,46 @@ switch (isSmartPhone) {
 
     // Check microphone permission first
     async function checkAndRequestMicrophonePermission() {
-      try {
-        // Check if Permissions API is supported
-        if (navigator.permissions && navigator.permissions.query) {
-          const permissionStatus = await navigator.permissions.query({name: 'microphone'});
+      // Show permission request message
+      allowMicrophoneElement.innerText = phrases.RC_microphonePermission['en-US'];
+      container.style.display = 'block';
 
-          if (permissionStatus.state === 'granted') {
-            // Permission already granted, proceed to normal flow
-            initializeSmartPhoneDisplay();
+      // Function to request microphone access
+      async function requestMicAccess(attempt = 1) {
+        try {
+          await navigator.mediaDevices.getUserMedia({audio: true});
+          // Permission granted, proceed to normal flow
+          initializeSmartPhoneDisplay();
+        } catch (err) {
+          if (err.name === 'NotAllowedError') {
+            console.log('Permission explicitly denied');
+            // Permission explicitly denied
+            allowMicrophoneElement.innerText = phrases.RC_microphonePermissionDenied['en-US'];
+            // Send denied status and end study
+            let error = JSON.stringify(err);
+            await window.listener.sendPermissionStatus({type: 'denied', error: error});
             return;
           }
-        }
 
-        // If Permissions API is not supported or permission not granted,
-        // proceed directly to requesting microphone access
-        // Show permission request message
-        allowMicrophoneElement.innerText = phrases.RC_microphonePermission['en-US'];
-        container.style.display = 'block';
-
-        // Function to request microphone access
-        async function requestMicAccess(attempt = 1) {
-          try {
-            await navigator.mediaDevices.getUserMedia({audio: true});
-            // Permission granted, proceed to normal flow
-            initializeSmartPhoneDisplay();
-          } catch (err) {
-            if (err.name === 'NotAllowedError') {
-              console.log('Permission explicitly denied');
-              // Permission explicitly denied
-              allowMicrophoneElement.innerText = phrases.RC_microphonePermissionDenied['en-US'];
-              // Send denied status and end study
-              let error = JSON.stringify(err);
-              await window.listener.sendPermissionStatus({type: 'denied', error: error});
-              return;
-            }
-
-            // If 10 seconds passed, try again
-            if (attempt < 3) {
-              console.log('Retrying microphone access');
-              // Limit retries
-              setTimeout(() => requestMicAccess(attempt + 1), 10000);
-            } else {
-              console.log('All retries failed, treating as denied');
-              // After all retries failed, treat as denied
-              allowMicrophoneElement.innerText = phrases.RC_microphonePermissionDenied['en-US'];
-              let error = JSON.stringify(err);
-              await window.listener.sendPermissionStatus({type: 'error', error: error});
-            }
+          // If 10 seconds passed, try again
+          if (attempt < 3) {
+            console.log('Retrying microphone access');
+            // Limit retries
+            setTimeout(() => requestMicAccess(attempt + 1), 10000);
+          } else {
+            console.log('All retries failed, treating as denied');
+            // After all retries failed, treat as denied
+            allowMicrophoneElement.innerText = phrases.RC_microphonePermissionDenied['en-US'];
+            let error = JSON.stringify(err);
+            await window.listener.sendPermissionStatus({type: 'error', error: error});
           }
         }
+      }
 
-        requestMicAccess();
+      try {
+        await requestMicAccess();
       } catch (err) {
-        console.error('Error checking microphone permission:', err);
+        console.error('Error requesting microphone permission:', err);
         allowMicrophoneElement.innerText = phrases.RC_microphonePermissionDenied['en-US'];
         let error = JSON.stringify(err);
         await window.listener.sendPermissionStatus({type: 'error', error: error});
