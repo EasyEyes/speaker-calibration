@@ -41,37 +41,46 @@ hr {
 
 .phrases {
   transform: rotate(180deg);
-  /* margin-top: 100vh; */
-  position: absolute;
-  bottom: 0;
-  right: 10px;
-  overflow-y: scroll;
-  max-height: 70vh;
-  z-index: 1000;
+  width: 100%;
+  text-align: left;
+  position: fixed;
+  bottom: 20px; /* Will appear at top after rotation */
+  left: 20px;
+  padding: 20px;
 }
 
-.updateDisplay {
-  transform: rotate(180deg);
-  /* position: absolute;
-  bottom: 20vh;
-  right: 10px; */
-  overflow-y: scroll;
-  overflow-x: hidden;
-  z-index: 1;
+.phrases h1 {
+  margin: 0;
+  font-size: 24px;
+  margin-bottom: 15px;
+}
+
+.phrases .lead {
+  margin-bottom: 10px;
+}
+
+.phrases #calibrationBeginButton {
+  margin-top: 20px;
+  margin-left: 0;
 }
 
 .turnMeToReadBelow {
-  position: absolute;
+  position: fixed;
   top: 20px;
-  /* font-size: larger; */
-  /* max-height: 25vh; */
-  overflow-y: scroll;
+  left: 20px;
   line-height: 1.2rem;
+  text-align: left;
 }
 
-#calibrationBeginButton {
-  margin-top: 2vh;
-  margin-bottom: 2vh;
+.updateDisplay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(180deg);
+  width: 100%;
+  text-align: center;
+  background: white;
+  -webkit-overflow-scrolling: touch; /* For smooth scrolling on iOS */
 }
 
 .container {
@@ -96,4 +105,48 @@ hr {
   border: 1px solid black;
   margin-top: 10px;
   margin-bottom: 10px;
+}
+
+#headerContainer {
+  border-top: 1px solid #eee;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Ensure content doesn't get hidden under fixed elements */
+#display {
+  width: 100%;
+  margin: 0 auto;
+  text-align: center;
+  padding-bottom: 20px;
+}
+
+@media (max-width: 768px) {
+  #listenerContainer {
+    padding: 0;
+    position: relative;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  #headerContainer h1 {
+    font-size: 20px;
+  }
+
+  #recordingInProgress {
+    font-size: 16px;
+  }
+
+  .phrases {
+    margin-bottom: 1rem;
+  }
+
+  #recordingInProgress {
+    margin: 0;
+    padding: 0.5rem;
+  }
+
+  #allowMicrophone {
+    margin: 0;
+    padding: 0.5rem;
+  }
 }

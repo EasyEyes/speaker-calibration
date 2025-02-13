@@ -45,6 +45,7 @@ class Speaker extends AudioPeer {
     this.deviceId = params?.micrpohoneIdFromWebAudioApi ?? '';
     this.buttonsContainer = params?.buttonsContainer ?? document.createElement('div');
     this.phrases = params?.phrases ?? {};
+    this.permissionStatus = 'pending';
 
     /* Set up callbacks that handle any events related to our peer object. */
   }
@@ -138,10 +139,19 @@ class Speaker extends AudioPeer {
     await speaker.initPeer();
     // wrap the calibration process in a promise so we can await it
     return new Promise((resolve, reject) => {
+      // Add a permission check handler
+      const permissionCheckInterval = setInterval(() => {
+        if (speaker.permissionStatus === 'error' || speaker.permissionStatus === 'denied') {
+          clearInterval(permissionCheckInterval);
+          speaker.#removeUIElems();
+          resolve('permission denied');
+        }
+      }, 100);
+
       // when a call is received
       speaker.peer.on('call', async call => {
-        // Answer the call (one way)
-
+        clearInterval(permissionCheckInterval); // Clear interval when call is received
+        // Rest of the existing call handling code...
         call.answer();
         speaker.#removeUIElems();
         speaker.#showSpinner();
@@ -218,6 +228,7 @@ class Speaker extends AudioPeer {
         });
         // if we do not receive a result within the timeout, reject
         setTimeout(() => {
+          clearInterval(permissionCheckInterval);
           reject(
             new CalibrationTimedOutError(
               `Calibration failed to produce a result after ${
@@ -657,6 +668,20 @@ class Speaker extends AudioPeer {
         this.ac.setDeviceInfo(data.payload);
         console.log('Received device info from listener: ', data.payload);
         break;
+      case 'permissionStatus':
+        console.log('Received permission status from listener: ', data.payload);
+        if (data.payload.type === 'error') {
+          this.permissionStatus = 'error';
+          this.ac.setPermissionStatus('error');
+        } else if (data.payload.type === 'denied') {
+          this.permissionStatus = 'denied';
+          this.ac.setPermissionStatus('denied');
+        } else if (data.payload.type === 'granted') {
+          this.permissionStatus = 'granted';
+          this.ac.setPermissionStatus('granted');
+          console.log('Permission granted');
+        }
+        break;
       case UnsupportedDeviceError.name:
       case MissingSpeakerIdError.name:
         throw data.payload;
@@ -700,59 +725,77 @@ class Speaker extends AudioPeer {
 
     console.log('This is a repeat');
     // wrap the calibration process in a promise so we can await it
-    return new Promise(async (resolve, reject) => {
-      const result = await this.ac.startCalibration(
-        stream,
-        params.gainValues,
-        params.ICalib,
-        params.knownIR,
-        params.microphoneName,
-        params.calibrateSoundCheck,
-        params.isSmartPhone,
-        params.calibrateSoundBurstDb,
-        params.calibrateSoundBurstFilteredExtraDb,
-        params.calibrateSoundBurstLevelReTBool,
-        params.calibrateSoundBurstUses1000HzGainBool,
-        params.calibrateSoundBurstRepeats,
-        params.calibrateSoundBurstSec,
-        params._calibrateSoundBurstPreSec,
-        params._calibrateSoundBurstPostSec,
-        params.calibrateSoundHz,
-        params.calibrateSoundIRSec,
-        params.calibrateSoundIIRSec,
-        params.calibrateSoundIIRPhase,
-        params.calibrateSound1000HzPreSec,
-        params.calibrateSound1000HzSec,
-        params.calibrateSound1000HzPostSec,
-        params.calibrateSoundBackgroundSecs,
-        params.calibrateSoundSmoothOctaves,
-        params.calibrateSoundSmoothMinBandwidthHz,
-        params.calibrateSoundPowerBinDesiredSec,
-        params.calibrateSoundPowerDbSDToleratedDb,
-        params.calibrateSoundTaperSec,
-        params.micManufacturer,
-        params.micSerialNumber,
-        params.micModelNumber,
-        params.micModelName,
-        params.calibrateMicrophonesBool,
-        params.authorEmails,
-        params.webAudioDeviceNames,
-        params.IDsToSaveInSoundProfileLibrary,
-        params.restartButton,
-        params.reminder,
-        params.calibrateSoundLimit,
-        params.calibrateSoundBurstNormalizeBy1000HzGainBool,
-        params.calibrateSoundBurstScalarDB,
-        params.calibrateSound1000HzMaxSD_dB,
-        params._calibrateSoundBurstMaxSD_dB,
-        params.calibrateSoundSamplingDesiredBits,
-        params.language,
-        params.loudspeakerModelName,
-        params.phrases,
-        params.soundSubtitleId
-      );
-      this.#removeUIElems();
-      resolve(result);
+    return new Promise((resolve, reject) => {
+      // Add a permission check handler
+      const permissionCheckInterval = setInterval(() => {
+        if (this.permissionStatus === 'error' || this.permissionStatus === 'denied') {
+          clearInterval(permissionCheckInterval);
+          this.#removeUIElems();
+          resolve('permission denied');
+        }
+      }, 100);
+
+      // Start calibration process
+      (async () => {
+        try {
+          const result = await this.ac.startCalibration(
+            stream,
+            params.gainValues,
+            params.ICalib,
+            params.knownIR,
+            params.microphoneName,
+            params.calibrateSoundCheck,
+            params.isSmartPhone,
+            params.calibrateSoundBurstDb,
+            params.calibrateSoundBurstFilteredExtraDb,
+            params.calibrateSoundBurstLevelReTBool,
+            params.calibrateSoundBurstUses1000HzGainBool,
+            params.calibrateSoundBurstRepeats,
+            params.calibrateSoundBurstSec,
+            params._calibrateSoundBurstPreSec,
+            params._calibrateSoundBurstPostSec,
+            params.calibrateSoundHz,
+            params.calibrateSoundIRSec,
+            params.calibrateSoundIIRSec,
+            params.calibrateSoundIIRPhase,
+            params.calibrateSound1000HzPreSec,
+            params.calibrateSound1000HzSec,
+            params.calibrateSound1000HzPostSec,
+            params.calibrateSoundBackgroundSecs,
+            params.calibrateSoundSmoothOctaves,
+            params.calibrateSoundSmoothMinBandwidthHz,
+            params.calibrateSoundPowerBinDesiredSec,
+            params.calibrateSoundPowerDbSDToleratedDb,
+            params.calibrateSoundTaperSec,
+            params.micManufacturer,
+            params.micSerialNumber,
+            params.micModelNumber,
+            params.micModelName,
+            params.calibrateMicrophonesBool,
+            params.authorEmails,
+            params.webAudioDeviceNames,
+            params.IDsToSaveInSoundProfileLibrary,
+            params.restartButton,
+            params.reminder,
+            params.calibrateSoundLimit,
+            params.calibrateSoundBurstNormalizeBy1000HzGainBool,
+            params.calibrateSoundBurstScalarDB,
+            params.calibrateSound1000HzMaxSD_dB,
+            params._calibrateSoundBurstMaxSD_dB,
+            params.calibrateSoundSamplingDesiredBits,
+            params.language,
+            params.loudspeakerModelName,
+            params.phrases,
+            params.soundSubtitleId
+          );
+          clearInterval(permissionCheckInterval);
+          this.#removeUIElems();
+          resolve(result);
+        } catch (error) {
+          clearInterval(permissionCheckInterval);
+          reject(error);
+        }
+      })();
     });
   };
 }

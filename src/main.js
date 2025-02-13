@@ -1,4 +1,4 @@
-import Listener from './peer-connection/listener';
+// import Listener from './peer-connection/listener';
 import Speaker from './peer-connection/speaker';
 
 import VolumeCalibration from './tasks/volume/volume';
@@ -12,7 +12,6 @@ import {
 } from './peer-connection/peerErrors';
 
 export {
-  Listener,
   Speaker,
   VolumeCalibration,
   ImpulseResponseCalibration,

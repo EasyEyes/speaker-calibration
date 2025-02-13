@@ -296,6 +296,8 @@ class Combination extends AudioCalibrator {
   fs2;
   icapture = 0;
 
+  permissionStatus = null;
+
   /**generate string template that gets reevaluated as variable increases */
   generateTemplate = status => {
     if (this.isCalibrating) {
@@ -360,6 +362,10 @@ class Combination extends AudioCalibrator {
 
   setDeviceInfo = deviceInfo => {
     this.deviceInfo = deviceInfo;
+  };
+
+  setPermissionStatus = permissionStatus => {
+    this.permissionStatus = permissionStatus;
   };
 
   /** .
@@ -3147,6 +3153,7 @@ class Combination extends AudioCalibrator {
       total_results['system']['phase'] = this.systemIRPhase;
       total_results['qualityMetrics'] = this.SDofFilteredRange;
       total_results['flags'] = this.flags;
+      total_results['permissionStatus'] = this.permissionStatus;
       console.log('total results');
       console.log(total_results);
       console.log('Time Stamps');

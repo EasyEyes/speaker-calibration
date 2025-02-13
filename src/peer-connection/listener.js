@@ -32,6 +32,7 @@ class Listener extends AudioPeer {
       // previous calibrateSoundSamplingDesiredBits
       urlParameters.bits !== null && urlParameters.bits !== undefined ? urlParameters.bits : 24;
     this.speakerPeerId = urlParameters.speakerPeerId;
+    this.connOpen = false;
 
     this.peer.on('open', this.onPeerOpen);
     this.peer.on('connection', this.onPeerConnection);
@@ -71,22 +72,22 @@ class Listener extends AudioPeer {
   onConnData = data => {
     this.displayUpdate('Listener - onConnData');
     const hasSpeakerID = Object.prototype.hasOwnProperty.call(data, 'speakerPeerId');
-    if (!hasSpeakerID) {
-      this.displayUpdate('Error in parsing data received! Must set "speakerPeerId" property');
-      throw new MissingSpeakerIdError('Must set "speakerPeerId" property');
-    } else {
-      // this.conn.close();
-      this.displayUpdate(this.speakerPeerId);
-      this.speakerPeerId = data.speakerPeerId;
-      const newParams = {
-        speakerPeerId: this.speakerPeerId,
-      };
-      /*
-      FUTURE does this limit usable environments?
-      ie does this work if internet is lost after initial page load?
-      */
-      window.location.search = this.queryStringFromObject(newParams); // Redirect to correctly constructed keypad page
-    }
+    // if (!hasSpeakerID) {
+    //   this.displayUpdate('Error in parsing data received! Must set "speakerPeerId" property');
+    //   throw new MissingSpeakerIdError('Must set "speakerPeerId" property');
+    // } else {
+    //   // this.conn.close();
+    //   this.displayUpdate(this.speakerPeerId);
+    //   this.speakerPeerId = data.speakerPeerId;
+    //   const newParams = {
+    //     speakerPeerId: this.speakerPeerId,
+    //   };
+    //   /*
+    //   FUTURE does this limit usable environments?
+    //   ie does this work if internet is lost after initial page load?
+    //   */
+    //   window.location.search = this.queryStringFromObject(newParams); // Redirect to correctly constructed keypad page
+    // }
   };
 
   join = async () => {
@@ -112,16 +113,21 @@ class Listener extends AudioPeer {
     this.displayUpdate('Created connection');
     this.conn.on('open', async () => {
       this.displayUpdate('Listener - conn open');
+      this.connOpen = true;
       await this.getDeviceInfo();
       // this.sendSamplingRate();
-      await this.openAudioStream();
     });
 
     // Handle incoming data (messages only since this is the signal sender)
     this.conn.on('data', this.onConnData);
     this.conn.on('close', () => {
       console.log('Connection closed');
+      this.connOpen = false;
     });
+  };
+
+  startCalibration = async () => {
+    await this.openAudioStream();
   };
 
   getMobileOS = () => {
@@ -160,6 +166,14 @@ class Listener extends AudioPeer {
     this.conn.send({
       name: 'flags',
       payload: flags,
+    });
+  };
+
+  sendPermissionStatus = status => {
+    // this.displayUpdate('Listener - sendPermissionStatus');
+    this.conn.send({
+      name: 'permissionStatus',
+      payload: status,
     });
   };
 
@@ -270,6 +284,12 @@ class Listener extends AudioPeer {
     console.log(contraints);
 
     return contraints;
+  };
+  setMicrophoneFromAPI = microphoneFromAPI => {
+    this.microphoneFromAPI = microphoneFromAPI;
+  };
+  setMicrophoneDeviceId = microphoneDeviceId => {
+    this.microphoneDeviceId = microphoneDeviceId;
   };
   getDeviceIdByLabel = async targetLabel => {
     try {
