@@ -220,10 +220,10 @@ switch (isSmartPhone) {
         const display = document.getElementById('updateDisplay');
         display.classList.add('updateDisplay');
         display.style.position = 'fixed';
-        display.style.top = `${headerHeight}px`; // Start after header
+        display.style.bottom = `${headerHeight}px`; // Start after header
         display.style.left = '0';
         display.style.right = '0';
-        display.style.bottom = '0';
+        display.style.top = '0';
         display.style.transform = 'rotate(180deg)';
         display.style.overflowY = 'auto';
         display.style.padding = '20px';
