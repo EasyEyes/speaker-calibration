@@ -36,14 +36,19 @@ switch (isSmartPhone) {
     // Check microphone permission first
     async function checkAndRequestMicrophonePermission() {
       try {
-        const permissionStatus = await navigator.permissions.query({name: 'microphone'});
+        // Check if Permissions API is supported
+        if (navigator.permissions && navigator.permissions.query) {
+          const permissionStatus = await navigator.permissions.query({name: 'microphone'});
 
-        if (permissionStatus.state === 'granted') {
-          // Permission already granted, proceed to normal flow
-          initializeSmartPhoneDisplay();
-          return;
+          if (permissionStatus.state === 'granted') {
+            // Permission already granted, proceed to normal flow
+            initializeSmartPhoneDisplay();
+            return;
+          }
         }
 
+        // If Permissions API is not supported or permission not granted,
+        // proceed directly to requesting microphone access
         // Show permission request message
         allowMicrophoneElement.innerText = phrases.RC_microphonePermission['en-US'];
         container.style.display = 'block';
