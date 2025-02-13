@@ -213,18 +213,21 @@ switch (isSmartPhone) {
           adjustFontSize(title, window.innerWidth);
         }
 
-        // Adjust the display container for scrolling
+        // Get the header height after text is added and sized
+        const headerHeight = headerContainer.getBoundingClientRect().height;
+
+        // Adjust the display container to start after header
         const display = document.getElementById('updateDisplay');
         display.classList.add('updateDisplay');
         display.style.position = 'fixed';
-        display.style.top = '0';
+        display.style.top = `${headerHeight}px`; // Start after header
         display.style.left = '0';
         display.style.right = '0';
-        display.style.bottom = '100px'; // Leave space for header
+        display.style.bottom = '0';
         display.style.transform = 'rotate(180deg)';
         display.style.overflowY = 'auto';
         display.style.padding = '20px';
-        display.style.paddingBottom = '120px'; // Extra padding at bottom for better scrolling
+        display.style.background = 'white';
 
         // Position microphone instruction at the top (appears at bottom due to rotation)
         allowMicrophoneElement.innerText = '';
