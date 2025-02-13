@@ -114,7 +114,6 @@ class Listener extends AudioPeer {
     this.conn.on('open', async () => {
       this.displayUpdate('Listener - conn open');
       this.connOpen = true;
-      await this.getDeviceInfo();
       // this.sendSamplingRate();
     });
 
@@ -127,6 +126,7 @@ class Listener extends AudioPeer {
   };
 
   startCalibration = async () => {
+    await this.getDeviceInfo();
     await this.openAudioStream();
   };
 
