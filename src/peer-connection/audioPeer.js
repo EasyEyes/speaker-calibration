@@ -30,40 +30,6 @@ class AudioPeer {
    * @example
    */
   constructor(param = initParameters) {
-    // PeerJS
-    /* Create the Peer object for our end of the connection. */
-    this.peer = new Peer({
-      secure: true,
-      host: 'easyeyes-peer-server.herokuapp.com',
-      port: 443,
-      config: {
-        iceServers: [
-          {
-            urls: 'stun:stun.relay.metered.ca:80',
-          },
-          {
-            urls: 'turn:global.relay.metered.ca:80',
-            username: 'de884cfc34189cdf1a5dd616',
-            credential: 'IcOpouU9/TYBmpHU',
-          },
-          {
-            urls: 'turn:global.relay.metered.ca:80?transport=tcp',
-            username: 'de884cfc34189cdf1a5dd616',
-            credential: 'IcOpouU9/TYBmpHU',
-          },
-          {
-            urls: 'turn:global.relay.metered.ca:443',
-            username: 'de884cfc34189cdf1a5dd616',
-            credential: 'IcOpouU9/TYBmpHU',
-          },
-          {
-            urls: 'turns:global.relay.metered.ca:443?transport=tcp',
-            username: 'de884cfc34189cdf1a5dd616',
-            credential: 'IcOpouU9/TYBmpHU',
-          },
-        ],
-      },
-    });
     this.conn = null;
     this.lastPeerId = null;
 
@@ -116,13 +82,12 @@ class AudioPeer {
     // Workaround for peer.reconnect deleting previous id
     try {
       this.peer.id = this.lastPeerId;
-    // eslint-disable-next-line no-underscore-dangle
-    this.peer._lastServerId = this.lastPeerId;
-    this.peer.reconnect();
-    } catch(e) {
+      // eslint-disable-next-line no-underscore-dangle
+      this.peer._lastServerId = this.lastPeerId;
+      this.peer.reconnect();
+    } catch (e) {
       console.log(e);
     }
-    
   };
 
   /** .

@@ -1,6 +1,7 @@
 import AudioPeer from './audioPeer';
 import {UnsupportedDeviceError, MissingSpeakerIdError} from './peerErrors';
 import axios from 'axios';
+import Peer from 'peerjs';
 
 /**
  * @class Handles the listener's side of the connection. Responsible for getting access to user's microphone,
@@ -16,6 +17,7 @@ class Listener extends AudioPeer {
    */
   constructor(params) {
     super(params);
+    console.log('Listener constructor', this.peer);
     this.microphoneFromAPI = params.microphoneFromAPI ? params.microphoneFromAPI : '';
     this.microphoneDeviceId = params.microphoneDeviceId ? params.microphoneDeviceId : '';
     // this.deviceInfoFromUser = params.deviceInfoFromUser
@@ -32,17 +34,92 @@ class Listener extends AudioPeer {
       // previous calibrateSoundSamplingDesiredBits
       urlParameters.bits !== null && urlParameters.bits !== undefined ? urlParameters.bits : 24;
     this.speakerPeerId = urlParameters.speakerPeerId;
+    this.lastPeerId = this.speakerPeerId;
     this.connOpen = false;
-
-    this.peer.on('open', this.onPeerOpen);
-    this.peer.on('connection', this.onPeerConnection);
-    this.peer.on('disconnected', this.onPeerDisconnected);
-    this.peer.on('close', this.onPeerClose);
-    this.peer.on('error', this.onPeerError);
   }
+  generateTimeBasedPeerID = async () => {
+    const now = new Date().getTime();
+    const randomBuffer = new Uint8Array(10);
+    crypto.getRandomValues(randomBuffer);
+    const randomPart = Array.from(randomBuffer)
+      .map(b => b.toString(36))
+      .join('');
+    const toHash = `${now}-${randomPart}`;
+    const encoder = new TextEncoder();
+    const data = encoder.encode(toHash);
+    const hash = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hash));
+    const hashString = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    const shortHash = hashString.substring(0, 12);
+    return this.encodeBase62(parseInt(shortHash, 16));
+  };
+
+  encodeBase62 = num => {
+    const base = 26;
+    const characters = 'abcdefghijklmnopqrstuvwxyz';
+    let result = '';
+    while (num > 0) {
+      result = characters[num % base] + result;
+      num = Math.floor(num / base);
+    }
+    return result || 'a';
+  };
+
+  initializePeer = async () => {
+    console.log('Initializing PeerJS connection...');
+    const id = await this.generateTimeBasedPeerID();
+    console.log('Generated Peer ID:', id);
+
+    try {
+      this.peer = new Peer(id, {
+        debug: 2,
+        host: 'easyeyes-peer-server.herokuapp.com',
+        port: 443,
+        secure: true,
+        config: {
+          iceServers: [
+            {
+              urls: 'stun:stun.relay.metered.ca:80',
+            },
+            {
+              urls: 'turn:global.relay.metered.ca:80',
+              username: 'de884cfc34189cdf1a5dd616',
+              credential: 'IcOpouU9/TYBmpHU',
+            },
+            {
+              urls: 'turn:global.relay.metered.ca:80?transport=tcp',
+              username: 'de884cfc34189cdf1a5dd616',
+              credential: 'IcOpouU9/TYBmpHU',
+            },
+            {
+              urls: 'turn:global.relay.metered.ca:443',
+              username: 'de884cfc34189cdf1a5dd616',
+              credential: 'IcOpouU9/TYBmpHU',
+            },
+            {
+              urls: 'turns:global.relay.metered.ca:443?transport=tcp',
+              username: 'de884cfc34189cdf1a5dd616',
+              credential: 'IcOpouU9/TYBmpHU',
+            },
+          ],
+        },
+      });
+
+      this.peer.on('open', this.onPeerOpen);
+      this.peer.on('connection', this.onPeerConnection);
+      this.peer.on('disconnected', this.onPeerDisconnected);
+      this.peer.on('close', this.onPeerClose);
+      this.peer.on('error', this.onPeerError);
+
+      console.log('Peer object created:', this.peer);
+    } catch (error) {
+      console.error('Failed to initialize PeerJS:', error);
+    }
+  };
 
   onPeerOpen = id => {
     this.displayUpdate('Listener - onPeerOpen');
+    console.log('onPeerOpen: ', id);
     // Workaround for peer.reconnect deleting previous id
     try {
       if (id === null) {
@@ -54,12 +131,12 @@ class Listener extends AudioPeer {
     } catch (error) {
       console.error('Error in onPeerOpen: ', error);
     }
-
     this.join();
   };
 
   onPeerConnection = connection => {
     this.displayUpdate('Listener - onPeerConnection');
+    console.log('onPeerConnection: ', connection);
     // Disallow incoming connections
     connection.on('open', () => {
       connection.send('Sender does not accept incoming connections');
@@ -92,6 +169,7 @@ class Listener extends AudioPeer {
 
   join = async () => {
     this.displayUpdate('Listener - join');
+    console.log(' Creating connection to: ', this.speakerPeerId);
     /**
      * Create the connection between the two Peers.
      *

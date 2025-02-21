@@ -31,6 +31,7 @@ switch (isSmartPhone) {
     // Initialize Listener early
     const initializeListener = async () => {
       window.listener = new Listener(listenerParameters);
+      await window.listener.initializePeer();
     };
 
     // Check microphone permission first
