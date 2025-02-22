@@ -344,6 +344,11 @@ switch (isSmartPhone) {
       calibrationBeginButton2.remove();
       container.style.display = 'block';
 
+      //update the display to be
+      const display = document.getElementById('display');
+      if (display) {
+        display.style.textAlign = 'left';
+      }
       // set the text of the html elements
       recordingInProgressElement.innerText = recordingInProgress;
       allowMicrophoneElement.innerText = allowMicrophone;
