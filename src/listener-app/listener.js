@@ -307,14 +307,43 @@ switch (isSmartPhone) {
   case 'false':
     // Initialize listener immediately
     listenerParameters.microphoneDeviceId = urlParams.get('deviceId');
-    window.listener = new Listener(listenerParameters);
 
-    // remove the button
-    const calibrationBeginButton2 = document.getElementById('calibrationBeginButton');
-    calibrationBeginButton2.remove();
-    container.style.display = 'block';
+    // Wrap initialization in an IIFE
+    (async function initializeDesktopMode() {
+      window.listener = new Listener(listenerParameters);
+      await window.listener.initializePeer();
 
-    window.addEventListener('load', async () => {
+      const timeout = 30000; // 30 seconds timeout
+      const startTime = Date.now();
+
+      // Wait for peer connection setup with timeout
+      while (Date.now() - startTime < timeout) {
+        if (
+          window.listener.peer.id !== null &&
+          window.listener.conn !== null &&
+          window.listener.connOpen
+        ) {
+          console.log('Connection established successfully');
+          // Continue with desktop setup
+          setupDesktopUI();
+          return;
+        }
+        console.log('Waiting for connection setup...');
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+
+      // If we get here, we've timed out
+      console.error('Connection setup timed out after 30 seconds');
+      const message = document.getElementById('message');
+      message.innerText = phrases.RC_microphonePermissionDenied['en-US'];
+    })().catch(console.error);
+
+    function setupDesktopUI() {
+      // remove the button
+      const calibrationBeginButton2 = document.getElementById('calibrationBeginButton');
+      calibrationBeginButton2.remove();
+      container.style.display = 'block';
+
       // set the text of the html elements
       recordingInProgressElement.innerText = recordingInProgress;
       allowMicrophoneElement.innerText = allowMicrophone;
@@ -337,8 +366,7 @@ switch (isSmartPhone) {
       p.innerText = backToExperimentWindow;
       message.appendChild(p);
 
-      await window.listener.startCalibration();
-      console.log(window.listener);
-    });
+      window.listener.startCalibration();
+    }
     break;
 }
