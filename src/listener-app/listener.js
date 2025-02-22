@@ -334,8 +334,8 @@ switch (isSmartPhone) {
 
       // If we get here, we've timed out
       console.error('Connection setup timed out after 30 seconds');
-      const message = document.getElementById('message');
-      message.innerText = phrases.RC_microphonePermissionDenied['en-US'];
+      // const message = document.getElementById('message');
+      // message.innerText = phrases.RC_microphonePermissionDenied['en-US'];
     })().catch(console.error);
 
     function setupDesktopUI() {
