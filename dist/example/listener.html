@@ -70,10 +70,12 @@
       var noSleep = new NoSleep();
       var wakeLockEnabled = false;
       var calibrationBeginButton = document.getElementById('calibrationBeginButton');
-      calibrationBeginButton.addEventListener('click', function () {
-        console.log('enable no sleep!');
-        noSleep.enable();
-      });
+      if (calibrationBeginButton) {
+        calibrationBeginButton.addEventListener('click', function () {
+          console.log('enable no sleep!');
+          noSleep.enable();
+        });
+      }
     </script>
   </body>
 </html>
