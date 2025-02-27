@@ -2469,7 +2469,8 @@ class Combination extends AudioCalibrator {
         () => {
           return this.recordingChecks['volume'][this.inDB]['sd'];
         },
-        this.calibrateSound1000HzMaxSD_dB
+        this.calibrateSound1000HzMaxSD_dB,
+        this.calibrateSound1000HzMaxTries
       );
     } while (this.outDBSPL === null);
     //reset the values
@@ -2513,7 +2514,8 @@ class Combination extends AudioCalibrator {
           () => {
             return this.recordingChecks?.['volume']?.[this.inDB]?.['sd'] || 0;
           },
-          this.calibrateSound1000HzMaxSD_dB
+          this.calibrateSound1000HzMaxSD_dB,
+          this.calibrateSound1000HzMaxTries
         );
       } while (this.outDBSPL === null);
       outDBSPL1000Values.push(this.outDBSPL1000);
@@ -2885,6 +2887,7 @@ class Combination extends AudioCalibrator {
     _calibrateSoundBurstNormalizeBy1000HzGainBool = false,
     _calibrateSoundBurstScalarDB = 71,
     calibrateSound1000HzMaxSD_dB = 4,
+    calibrateSound1000HzMaxTries = 4,
     _calibrateSoundBurstMaxSD_dB = 4,
     calibrateSoundSamplingDesiredBits = 24,
     language,
@@ -2945,6 +2948,7 @@ class Combination extends AudioCalibrator {
     //feed calibration goal here
     this._calibrateSoundCheck = _calibrateSoundCheck;
     this.calibrateSound1000HzMaxSD_dB = calibrateSound1000HzMaxSD_dB;
+    this.calibrateSound1000HzMaxTries = calibrateSound1000HzMaxTries;
     this._calibrateSoundBurstMaxSD_dB = _calibrateSoundBurstMaxSD_dB;
     //check if a componentIR was given to the system, if it isn't check for the microphone. using dummy data here bc we need to
     //check the db based on the microphone currently connected

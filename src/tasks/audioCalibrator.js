@@ -203,13 +203,13 @@ class AudioCalibrator extends AudioRecorder {
     lCalib = 104.92978421490648,
     checkRec,
     checkSD,
-    maxSD
+    maxSD,
+    maxRetry
   ) => {
     this.numCalibratingRoundsCompleted = 0;
-    this.numCalibratingRounds = 2;
     console.log("maxSD in VolumeCaibrationSteps: ", maxSD, '0' >= maxSD);
     // calibration loop
-    while (!this.isCalibrating && this.numCalibratingRoundsCompleted < this.numCalibratingRounds) {
+    while (!this.isCalibrating && this.numCalibratingRoundsCompleted < maxRetry) {
       if (this.isCalibrating) break;
       // before recording
       await beforeRecord(gainValue);
@@ -231,7 +231,7 @@ class AudioCalibrator extends AudioRecorder {
       let sdMessage;
       if (sd <= maxSD) {
         console.log(`SD =${sd}, less than calibrateSound1000HzMaxSD_dB=${maxSD}`);
-        this.numCalibratingRoundsCompleted += 2;
+        this.numCalibratingRoundsCompleted += maxRetry;
         sdMessage =  `. SD = ${sd} dB`;
 
       } else {
