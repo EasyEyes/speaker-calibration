@@ -46,6 +46,7 @@ class Speaker extends AudioPeer {
     this.buttonsContainer = params?.buttonsContainer ?? document.createElement('div');
     this.phrases = params?.phrases ?? {};
     this.permissionStatus = 'pending';
+    this.calibrateSoundHz = params?.calibrateSoundHz ?? 48000;
 
     /* Set up callbacks that handle any events related to our peer object. */
   }
@@ -648,7 +649,12 @@ class Speaker extends AudioPeer {
 
     switch (data.name) {
       case 'samplingRate':
-        this.ac.setSamplingRates(data.payload);
+        console.log('Received sampling rate from listener: ', data.payload);
+        if (!data.payload) {
+          this.ac.setSamplingRates(this.calibrateSoundHz);
+        } else {
+          this.ac.setSamplingRates(data.payload);
+        }
         break;
       case 'sampleSize':
         this.ac.setSampleSize(data.payload);
