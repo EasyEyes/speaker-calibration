@@ -2545,6 +2545,9 @@ class Combination extends AudioCalibrator {
       .then(res => {
         this.incrementStatusBar();
         return res;
+      })
+      .catch(err => {
+        throw err;
       });
     if (this.isCalibrating) return null;
     const result = {

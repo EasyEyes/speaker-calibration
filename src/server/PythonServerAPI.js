@@ -676,7 +676,14 @@ class PythonServerAPI {
       .then(response => {
         // if response.data is a string, parse it
         if (typeof response.data === 'string') {
-          response.data = response.data.replaceAll('Infinity', 99999999);
+          // response.data = response.data.replaceAll('Infinity', 99999999);
+          // response.data = JSON.parse(response.data);
+          //if there is Infinity in the string, throw an error
+          if (response.data.includes('Infinity')) {
+            throw new Error(
+              'Server returned Infinity. Please Make sure the microphone is recording correclty'
+            );
+          }
           response.data = JSON.parse(response.data);
         }
         return response.data[task];
