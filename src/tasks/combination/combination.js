@@ -1958,7 +1958,6 @@ class Combination extends AudioCalibrator {
    * @example
    */
   startCalibrationImpulseResponse = async stream => {
-    console.log('JS used memory:', performance.memory.usedJSHeapSize / 1024 / 1024, 'mb');
     let desired_time = this.desired_time_per_mls;
     let checkRec = 'allhz';
 
