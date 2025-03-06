@@ -2364,6 +2364,12 @@ class Combination extends AudioCalibrator {
         lCalib: lCalib,
       })
       .then(res => {
+        //if res is undefined, throw an error
+        if (res === undefined) {
+          throw new Error(
+            'No response from server in getVolumeCalibration function. Please try again.'
+          );
+        }
         if (this.outDBSPL === null) {
           this.incrementStatusBar();
           this.outDBSPL = res['outDbSPL'];

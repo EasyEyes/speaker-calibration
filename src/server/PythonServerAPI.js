@@ -1,7 +1,5 @@
 import axios from 'axios';
-import {
-  sleep
-} from '../utils';
+import {sleep} from '../utils';
 /**
  *
  */
@@ -28,15 +26,7 @@ class PythonServerAPI {
    * @returns
    * @example
    */
-  getImpulseResponse = async ({
-    mls, 
-    sampleRate, 
-    numPeriods,
-    sig,
-    fs2,
-    L_new_n,
-    dL_n
-  }) => {
+  getImpulseResponse = async ({mls, sampleRate, numPeriods, sig, fs2, L_new_n, dL_n}) => {
     const task = 'impulse-response';
     let res = null;
 
@@ -48,7 +38,7 @@ class PythonServerAPI {
       sig,
       fs2,
       L_new_n,
-      dL_n
+      dL_n,
     });
 
     await axios({
@@ -69,18 +59,13 @@ class PythonServerAPI {
     return res.data[task];
   };
 
-  getAutocorrelation = async ({
-    mls, 
-    payload, 
-    sampleRate, 
-    numPeriods
-  }) => {
+  getAutocorrelation = async ({mls, payload, sampleRate, numPeriods}) => {
     const task = 'autocorrelation';
     let res = null;
 
     const data = JSON.stringify({
       task,
-      'payload': payload,
+      payload: payload,
       'sample-rate': sampleRate,
       mls,
       numPeriods,
@@ -105,22 +90,22 @@ class PythonServerAPI {
   };
 
   getConvolution = async ({
-    mls, 
-    inverse_response, 
+    mls,
+    inverse_response,
     inverse_response_no_bandpass,
     attenuatorGain_dB,
-    mls_amplitude
+    mls_amplitude,
   }) => {
     const task = 'convolution';
     let res = null;
 
     const data = JSON.stringify({
       task,
-      mls, 
-      inverse_response, 
+      mls,
+      inverse_response,
       inverse_response_no_bandpass,
       attenuatorGain_dB,
-      mls_amplitude
+      mls_amplitude,
     });
 
     await axios({
@@ -141,7 +126,7 @@ class PythonServerAPI {
     return res.data[task];
   };
 
-  getMLS = async ({length,amplitude,calibrateSoundBurstMLSVersions}) => {
+  getMLS = async ({length, amplitude, calibrateSoundBurstMLSVersions}) => {
     const task = 'mls';
     let res = null;
 
@@ -171,12 +156,12 @@ class PythonServerAPI {
     return res.data[task];
   };
 
-  getShortURL = async (originalURL) => {
+  getShortURL = async originalURL => {
     const task = 'url';
     let res = null;
     console.log(originalURL);
     const data = JSON.stringify({
-      'URL': originalURL
+      URL: originalURL,
     });
 
     console.log(data);
@@ -209,21 +194,20 @@ class PythonServerAPI {
       url: `/memory`,
       headers: {
         'Content-Type': 'application/json',
-      }
+      },
     })
       .then(response => {
-        console.log("memory used:", Math.round(response.data['memory']), "mb");
+        console.log('memory used:', Math.round(response.data['memory']), 'mb');
         res = response.data['memory'];
       })
       .catch(error => {
         throw error;
       });
-      return res;
+    return res;
   };
 
-
   checkMemory = async () => {
-    console.log("wait for memory under 500 mb to continue calibration");
+    console.log('wait for memory under 500 mb to continue calibration');
     await this.getMemory();
     // let memory = await this.getMemory();
     // while (memory >= 500) {
@@ -231,17 +215,15 @@ class PythonServerAPI {
     //   await sleep(30);
     //   memory = await this.getMemory();
     // }
-    
   };
 
-
-  getMLSWithRetry = async ({length,amplitude,calibrateSoundBurstMLSVersions}) => {
+  getMLSWithRetry = async ({length, amplitude, calibrateSoundBurstMLSVersions}) => {
     let retryCount = 0;
     let response = null;
 
     while (retryCount < this.MAX_RETRY_COUNT) {
       try {
-        response = await this.getMLS({length,amplitude, calibrateSoundBurstMLSVersions});
+        response = await this.getMLS({length, amplitude, calibrateSoundBurstMLSVersions});
         // If the request is successful, break out of the loop
         break;
       } catch (error) {
@@ -428,7 +410,7 @@ class PythonServerAPI {
     calibrateSoundSmoothOctaves,
     calibrateSoundSmoothMinBandwidthHz,
     calibrateSoundBurstFilteredExtraDb,
-    calibrateSoundIIRPhase
+    calibrateSoundIIRPhase,
   }) => {
     const task = 'component-inverse-impulse-response';
     let res = null;
@@ -448,7 +430,7 @@ class PythonServerAPI {
       calibrateSoundSmoothOctaves,
       calibrateSoundSmoothMinBandwidthHz,
       calibrateSoundBurstFilteredExtraDb,
-      calibrateSoundIIRPhase
+      calibrateSoundIIRPhase,
     });
 
     await axios({
@@ -478,7 +460,7 @@ class PythonServerAPI {
     sampleRate,
     mlsAmplitude,
     calibrateSoundBurstFilteredExtraDb,
-    calibrateSoundIIRPhase
+    calibrateSoundIIRPhase,
   }) => {
     const task = 'system-inverse-impulse-response';
     let res = null;
@@ -493,7 +475,7 @@ class PythonServerAPI {
       sampleRate,
       mlsAmplitude,
       calibrateSoundBurstFilteredExtraDb,
-      calibrateSoundIIRPhase
+      calibrateSoundIIRPhase,
     });
 
     await axios({
@@ -583,7 +565,7 @@ class PythonServerAPI {
     calibrateSoundSmoothOctaves,
     calibrateSoundSmoothMinBandwidthHz,
     calibrateSoundBurstFilteredExtraDb,
-    calibrateSoundIIRPhase
+    calibrateSoundIIRPhase,
   }) => {
     let retryCount = 0;
     let response = null;
@@ -604,7 +586,7 @@ class PythonServerAPI {
           calibrateSoundSmoothOctaves,
           calibrateSoundSmoothMinBandwidthHz,
           calibrateSoundBurstFilteredExtraDb,
-          calibrateSoundIIRPhase
+          calibrateSoundIIRPhase,
         });
         // If the request is successful, break out of the loop
         break;
@@ -633,7 +615,7 @@ class PythonServerAPI {
     sampleRate,
     mlsAmplitude,
     calibrateSoundBurstFilteredExtraDb,
-    calibrateSoundIIRPhase
+    calibrateSoundIIRPhase,
   }) => {
     let retryCount = 0;
     let response = null;
@@ -649,7 +631,7 @@ class PythonServerAPI {
           sampleRate,
           mlsAmplitude,
           calibrateSoundBurstFilteredExtraDb,
-          calibrateSoundIIRPhase
+          calibrateSoundIIRPhase,
         });
         // If the request is successful, break out of the loop
         break;
@@ -682,7 +664,7 @@ class PythonServerAPI {
       lCalib,
     });
 
-    await axios({
+    const response = await axios({
       method: 'post',
       baseURL: PythonServerAPI.PYTHON_SERVER_URL,
       url: `/task/${task}`,
@@ -692,13 +674,19 @@ class PythonServerAPI {
       data,
     })
       .then(response => {
-        res = response;
+        // if response.data is a string, parse it
+        if (typeof response.data === 'string') {
+          response.data = response.data.replaceAll('Infinity', 99999999);
+          response.data = JSON.parse(response.data);
+        }
+        return response.data[task];
       })
       .catch(error => {
         throw error;
       });
 
-    return res.data[task];
+    console.log(response);
+    return response;
   };
 
   getVolumeCalibrationParameters = async ({
@@ -748,31 +736,19 @@ class PythonServerAPI {
     return res.data[task];
   };
 
-  allHzPowerCheck = async ({
-    payload, 
-    sampleRate, 
-    binDesiredSec,
-    burstSec,
-    repeats,
-    warmUp
-  }) => {
+  allHzPowerCheck = async ({payload, sampleRate, binDesiredSec, burstSec, repeats, warmUp}) => {
     const task = 'all-hz-check';
     let res = null;
 
-    console.log({payload, 
-      sampleRate, 
-      binDesiredSec,
-      burstSec,
-      repeats,
-      warmUp});
+    console.log({payload, sampleRate, binDesiredSec, burstSec, repeats, warmUp});
 
     const data = JSON.stringify({
-      payload, 
-      sampleRate, 
+      payload,
+      sampleRate,
       binDesiredSec,
       burstSec,
       repeats,
-      warmUp
+      warmUp,
     });
 
     await axios({
@@ -794,22 +770,16 @@ class PythonServerAPI {
     return res.data[task];
   };
 
-  volumePowerCheck = async ({
-    payload, 
-    sampleRate, 
-    preSec,
-    Sec,
-    binDesiredSec
-  }) => {
+  volumePowerCheck = async ({payload, sampleRate, preSec, Sec, binDesiredSec}) => {
     const task = 'volume-check';
     let res = null;
 
     const data = JSON.stringify({
-      payload, 
-      sampleRate, 
+      payload,
+      sampleRate,
       preSec,
       Sec,
-      binDesiredSec
+      binDesiredSec,
     });
 
     await axios({
@@ -831,24 +801,19 @@ class PythonServerAPI {
     return res.data[task];
   };
 
-  volumePowerCheckWithRetry = async ({
-    payload, 
-    sampleRate, 
-    preSec,
-    Sec,
-    binDesiredSec
-  }) => {
+  volumePowerCheckWithRetry = async ({payload, sampleRate, preSec, Sec, binDesiredSec}) => {
     let retryCount = 0;
     let response = null;
 
     while (retryCount < this.MAX_RETRY_COUNT) {
       try {
         response = await this.volumePowerCheck({
-          payload, 
-          sampleRate, 
+          payload,
+          sampleRate,
           preSec,
           Sec,
-          binDesiredSec});
+          binDesiredSec,
+        });
         // If the request is successful, break out of the loop
         break;
       } catch (error) {
