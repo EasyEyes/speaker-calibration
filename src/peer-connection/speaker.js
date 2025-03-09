@@ -64,9 +64,6 @@ class Speaker extends AudioPeer {
       config: {
         iceServers: [
           {
-            urls: 'stun:stun.relay.metered.ca:80',
-          },
-          {
             urls: 'turn:global.relay.metered.ca:80',
             username: 'de884cfc34189cdf1a5dd616',
             credential: 'IcOpouU9/TYBmpHU',

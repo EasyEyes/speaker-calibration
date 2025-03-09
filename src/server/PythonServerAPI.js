@@ -681,7 +681,7 @@ class PythonServerAPI {
           //if there is Infinity in the string, throw an error
           if (response.data.includes('Infinity')) {
             throw new Error(
-              'Server returned Infinity. Please Make sure the microphone is recording correclty'
+              'Server returned Infinity. Please make sure the microphone is recording correctly'
             );
           }
           response.data = JSON.parse(response.data);
@@ -689,6 +689,9 @@ class PythonServerAPI {
         return response.data[task];
       })
       .catch(error => {
+        alert(
+          'Invalid data. Please make sure the microphone is recording correctly and press on "Re-Record"'
+        );
         throw error;
       });
 
