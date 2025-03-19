@@ -5,6 +5,7 @@ const config = {
   entry: {
     main: './src/main.js',
     listener: './src/listener-app/listener.js',
+    phonePeer: './src/listener-app/PhonePeer.js',
   },
   output: {
     path: path.resolve(__dirname, 'dist'),

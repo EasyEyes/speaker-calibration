@@ -56,7 +56,7 @@ class AudioCalibrator extends AudioRecorder {
   /** @private */
   startTime;
 
-  numCalibratingRoundsCompleted=0;
+  numCalibratingRoundsCompleted = 0;
   /**
    * Called when a call is received.
    * Creates a local audio DOM element and attaches it to the page.
@@ -70,22 +70,20 @@ class AudioCalibrator extends AudioRecorder {
     targetElement.appendChild(this.localAudio);
   };
 
-  addTimeStamp = (taskName) => {
+  addTimeStamp = taskName => {
     const currentTime = new Date().getTime(); // Current time in ms
     const elapsedTime = (currentTime - this.startTime) / 1000; // Convert to seconds
     const stepDuration = elapsedTime - this.currentTime;
-  
+
     this.currentTime = elapsedTime; // Update for next step
-  
+
     // Format numbers to 1 decimal place without padding
     const elapsedStr = elapsedTime.toFixed(1);
     const stepStr = stepDuration.toFixed(1);
-  
+
     // Push timestamp string (without padding)
     this.timeStamp.push(`${elapsedStr} s. ∆ ${stepStr} s.  ${taskName}`);
   };
-  
-  
 
   recordBackground = async (
     stream,
@@ -141,7 +139,7 @@ class AudioCalibrator extends AudioRecorder {
     checkRec
   ) => {
     // if it finished 2 attempts, it move to next iteration so reset numSuccessfulCaptured
-    if (this.numSuccessfulCaptured >=2) {
+    if (this.numSuccessfulCaptured >= 2) {
       this.numSuccessfulCaptured = 0;
     }
 
@@ -156,8 +154,10 @@ class AudioCalibrator extends AudioRecorder {
     // do something before recording such as awaiting a certain amount of time
     console.warn('beforeRecord');
     await beforeRecord();
-    const totalSec = this._calibrateSoundBurstPreSec + (this.numMLSPerCapture - this.num_mls_to_skip) * this._calibrateSoundBurstSec + this._calibrateSoundBurstPostSec;
-    
+    const totalSec =
+      this._calibrateSoundBurstPreSec +
+      (this.numMLSPerCapture - this.num_mls_to_skip) * this._calibrateSoundBurstSec +
+      this._calibrateSoundBurstPostSec;
 
     // calibration loop
     while (loopCondition()) {
@@ -207,7 +207,7 @@ class AudioCalibrator extends AudioRecorder {
     maxRetry
   ) => {
     this.numCalibratingRoundsCompleted = 0;
-    console.log("maxSD in VolumeCaibrationSteps: ", maxSD, '0' >= maxSD);
+    console.log('maxSD in VolumeCaibrationSteps: ', maxSD, '0' >= maxSD);
     // calibration loop
     while (!this.isCalibrating && this.numCalibratingRoundsCompleted < maxRetry) {
       if (this.isCalibrating) break;
@@ -232,8 +232,7 @@ class AudioCalibrator extends AudioRecorder {
       if (sd <= maxSD) {
         console.log(`SD =${sd}, less than calibrateSound1000HzMaxSD_dB=${maxSD}`);
         this.numCalibratingRoundsCompleted += maxRetry;
-        sdMessage =  `. SD = ${sd} dB`;
-
+        sdMessage = `. SD = ${sd} dB`;
       } else {
         // if exist the maxSD do it one more time and only one more time
         console.log(`SD =${sd}, greater than calibrateSound1000HzMaxSD_dB=${maxSD}`);
@@ -247,7 +246,7 @@ class AudioCalibrator extends AudioRecorder {
           `1000 Hz at ${this.inDB} dB${sdMessage}`
       );
       this.calibrationNodes = [];
-      
+
       // eslint-disable-next-line no-await-in-loop
       await sleep(2);
     }
@@ -284,7 +283,7 @@ class AudioCalibrator extends AudioRecorder {
 
   setFlags = flags => {
     this.flags = flags;
-  }
+  };
 
   sampleRatesSet = () => this.sourceSamplingRate && this.sinkSamplingRate;
 

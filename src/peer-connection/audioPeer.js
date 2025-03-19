@@ -30,9 +30,6 @@ class AudioPeer {
    * @example
    */
   constructor(param = initParameters) {
-    this.conn = null;
-    this.lastPeerId = null;
-
     // Display information to HTML elem with given id
     this.targetElement = param.targetElementId;
 
@@ -68,51 +65,6 @@ class AudioPeer {
     } else {
       console.log('MESSAGE: ', message);
     }
-  };
-
-  /**
-   * Callback method for when a peer connection is lost
-   * saves the last peer id, last server id, and attempts to reconnect.
-   *
-   * @example
-   */
-  onPeerDisconnected = () => {
-    this.displayUpdate('Connection lost. Please reconnect');
-
-    // Workaround for peer.reconnect deleting previous id
-    try {
-      this.peer.id = this.lastPeerId;
-      // eslint-disable-next-line no-underscore-dangle
-      this.peer._lastServerId = this.lastPeerId;
-      this.peer.reconnect();
-    } catch (e) {
-      console.log(e);
-    }
-  };
-
-  /** .
-   * .
-   * .
-   * Callback method that cleans up after peer connection is closed
-   *
-   * @example
-   */
-  onPeerClose = () => {
-    this.displayUpdate('Connection closed');
-    this.conn = null;
-  };
-
-  /** .
-   * .
-   * .
-   * Helper method for when an error occurs
-   *
-   * @param {*} err
-   * @example
-   */
-  onPeerError = err => {
-    this.displayUpdate(err);
-    console.log(`${err}`);
   };
 
   /** .

@@ -87,20 +87,19 @@ class AudioRecorder extends MyEventEmitter {
           ' unique values.'
       );
     }
-    if (mode === 'volume'){
-      console.log('Saving 1000 Hz Recording to #allVolumeRecordings')
+    if (mode === 'volume') {
+      console.log('Saving 1000 Hz Recording to #allVolumeRecordings');
       this.#allVolumeRecordings.push(dataArray);
-    }else if (mode ==='unfiltered'){
-      console.log('Saving unfiltered all Hz recording to #allHzUnfilteredRecordings')
+    } else if (mode === 'unfiltered') {
+      console.log('Saving unfiltered all Hz recording to #allHzUnfilteredRecordings');
       this.#allHzUnfilteredRecordings.push(dataArray);
-    }else if (mode ==='filtered'){
-      console.log('Saving filtered all hz recording to #allHzFilteredRecordings')
+    } else if (mode === 'filtered') {
+      console.log('Saving filtered all hz recording to #allHzFilteredRecordings');
       this.#allHzFilteredRecordings.push(dataArray);
-    }else if (mode ==='background'){
-      console.log('Saving background recording to #allBackgroundRecordings')
+    } else if (mode === 'background') {
+      console.log('Saving background recording to #allBackgroundRecordings');
       this.#allBackgroundRecordings.push(dataArray);
     }
-
   };
 
   #saveFilteredRecording = async () => {
@@ -139,6 +138,11 @@ class AudioRecorder extends MyEventEmitter {
     this.#mediaRecorder.ondataavailable = e => this.#onRecorderDataAvailable(e);
   };
 
+  #removeMediaRecorder = () => {
+    this.#mediaRecorder.ondataavailable = null;
+    this.#mediaRecorder = null;
+  };
+
   #setAudioContext = () => {
     this.#audioContext = new (window.AudioContext ||
       window.webkitAudioContext ||
@@ -163,6 +167,9 @@ class AudioRecorder extends MyEventEmitter {
       if (!this.#mediaRecorder) this.#setMediaRecorder(stream);
       // clear recorded chunks
       this.#recordedChunks = [];
+      if (this.#mediaRecorder.state === 'recording') {
+        this.#mediaRecorder.stop();
+      }
       // start recording
       this.#mediaRecorder.start();
     } catch (error) {
@@ -217,7 +224,8 @@ class AudioRecorder extends MyEventEmitter {
    * @returns
    * @example
    */
-  getLastVolumeRecordedSignal = () => Array.from(this.#allVolumeRecordings[this.#allVolumeRecordings.length - 1]);
+  getLastVolumeRecordedSignal = () =>
+    Array.from(this.#allVolumeRecordings[this.#allVolumeRecordings.length - 1]);
 
   /** .
    * .
@@ -257,7 +265,7 @@ class AudioRecorder extends MyEventEmitter {
    * @returns
    * @example
    */
-  clearAllFilteredRecordedSignals = () => this.#allHzFilteredRecordings = [];
+  clearAllFilteredRecordedSignals = () => (this.#allHzFilteredRecordings = []);
 
   /** .
    * .

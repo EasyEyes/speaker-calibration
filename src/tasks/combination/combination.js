@@ -2337,7 +2337,7 @@ class Combination extends AudioCalibrator {
       });
     }
     const totalDuration = this.CALIBRATION_TONE_DURATION * 1.2;
-
+    console.log('this.calibrationNodes', this.calibrationNodes);
     this.calibrationNodes[0].start(0);
     this.calibrationNodes[0].stop(totalDuration);
     console.log(`Playing a buffer of ${this.CALIBRATION_TONE_DURATION} seconds of audio`);
@@ -2349,6 +2349,7 @@ class Combination extends AudioCalibrator {
     if (this.calibrationNodes.length > 0) {
       this.calibrationNodes[0].stop();
     }
+    this.calibrationNodes = [];
   };
 
   #sendToServerForProcessing = async lCalib => {
@@ -2455,6 +2456,7 @@ class Combination extends AudioCalibrator {
     //this.emit('update', {message: `1000 Hz Calibration: Sound Level ${soundLevelToDiscard} dB`});
     this.emit('update', {message: this.status});
     this.startTime = new Date().getTime();
+    this.calibrationNodes = [];
 
     do {
       console.log('while loop');
@@ -3170,6 +3172,8 @@ class Combination extends AudioCalibrator {
       console.log(total_results);
       console.log('Time Stamps');
       console.log(timeStampresult);
+
+      this.stopCalibrationAudio();
 
       resolve(total_results);
     });

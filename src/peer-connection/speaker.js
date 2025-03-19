@@ -11,24 +11,23 @@ import Peer from 'peerjs';
 //import {phrases} from '../../dist/example/i18n';
 
 /**
- * @class Handles the speaker's side of the connection. Responsible for initiating the connection,
- * rendering the QRCode, and answering the call.
+ * @class Handles the speaker's side of the connection. Responsible for calibration process
+ * and communication with the listener.
  * @augments AudioPeer
  */
 class Speaker extends AudioPeer {
   /**
-   * Takes the url of the current site and a target element where html elements will be appended.
+   * Takes the parameters for calibration and a connection manager instance.
    *
    * @param params - See type definition for initParameters.
-   * @param Calibrator - An instance of the AudioCalibrator class, should not use AudioCalibrator directly, instead use an extended class available in /tasks/.
-   * @param CalibratorInstance
-   * @example
+   * @param CalibratorInstance - An instance of the AudioCalibrator class
+   * @param connectionManager - An instance of the ConnectionManager class
    */
-  constructor(params, CalibratorInstance) {
+  constructor(params, CalibratorInstance, connectionManager = null) {
     super(params);
     this.language = params?.language ?? 'en-US';
     this.siteUrl += '/listener?';
-    this.ac = CalibratorInstance;
+    // this.ac = CalibratorInstance;
     this.result = null;
     this.debug = params?.debug ?? false;
     this.isSmartPhone = params?.isSmartPhone ?? false;
@@ -47,94 +46,127 @@ class Speaker extends AudioPeer {
     this.phrases = params?.phrases ?? {};
     this.permissionStatus = 'pending';
     this.calibrateSoundHz = params?.calibrateSoundHz ?? 48000;
+    this.name = 'SoundCalibration'; // Name used for submodule registration
+    this.connectionManager = connectionManager;
 
-    /* Set up callbacks that handle any events related to our peer object. */
+    // Register with connection manager if provided
+    if (this.connectionManager) {
+      this.connectionManager.registerSubmodule(this);
+    }
   }
 
   uri = '';
   qrImage;
   shortURL;
 
-  initPeer = async () => {
-    const id = await this.generateTimeBasedPeerID();
-    this.peer = new Peer(id, {
-      secure: true,
-      host: 'easyeyes-peer-server.herokuapp.com',
-      port: 443,
-      config: {
-        iceServers: [
-          {
-            urls: 'turn:global.relay.metered.ca:80',
-            username: 'de884cfc34189cdf1a5dd616',
-            credential: 'IcOpouU9/TYBmpHU',
-          },
-          {
-            urls: 'turn:global.relay.metered.ca:80?transport=tcp',
-            username: 'de884cfc34189cdf1a5dd616',
-            credential: 'IcOpouU9/TYBmpHU',
-          },
-          {
-            urls: 'turn:global.relay.metered.ca:443',
-            username: 'de884cfc34189cdf1a5dd616',
-            credential: 'IcOpouU9/TYBmpHU',
-          },
-          {
-            urls: 'turns:global.relay.metered.ca:443?transport=tcp',
-            username: 'de884cfc34189cdf1a5dd616',
-            credential: 'IcOpouU9/TYBmpHU',
-          },
-        ],
-      },
-    });
-    this.peer.on('open', this.#onPeerOpen);
-    this.peer.on('connection', this.#onPeerConnection);
-    this.peer.on('close', this.onPeerClose);
-    this.peer.on('disconnected', this.#onPeerDisconnected);
-    this.peer.on('error', this.#onPeerError);
-  };
-  generateTimeBasedPeerID = async () => {
-    const now = new Date().getTime();
-    const randomBuffer = new Uint8Array(10);
-    crypto.getRandomValues(randomBuffer);
-    const randomPart = Array.from(randomBuffer)
-      .map(b => b.toString(36))
-      .join('');
-    const toHash = `${now}-${randomPart}`;
-    const encoder = new TextEncoder();
-    const data = encoder.encode(toHash);
-    const hash = await crypto.subtle.digest('SHA-256', data);
-    const hashArray = Array.from(new Uint8Array(hash)); // Convert buffer to byte array
-    const hashString = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-    const shortHash = hashString.substring(0, 12); // Use more of the hash for a longer ID
-    //   return shortHash; // Consider converting this to Base62
-    return this.encodeBase62(parseInt(shortHash, 16));
-  };
-
-  encodeBase62 = num => {
-    const base = 36;
-    const characters = '0123456789abcdefghijklmnopqrstuvwxyz';
-    let result = '';
-    while (num > 0) {
-      result = characters[num % base] + result;
-      num = Math.floor(num / base);
+  // Required method for submodule interface
+  onMessage(data, connectionManager) {
+    if (!data || (!data.name && !data.type)) {
+      console.error('Received malformed data: ', data);
+      return;
     }
-    return result;
-  };
+
+    // Convert type to name if needed for backward compatibility
+    const messageName = data.payload.name;
+    const payload = data.payload.payload;
+
+    switch (messageName) {
+      case 'samplingRate':
+        console.log('Received sampling rate from listener: ', payload);
+        if (!payload) {
+          window.speaker.ac.setSamplingRates(window.speaker.calibrateSoundHz);
+        } else {
+          window.speaker.ac.setSamplingRates(payload);
+        }
+        break;
+      case 'sampleSize':
+        window.speaker.ac.setSampleSize(payload);
+        break;
+      case 'deviceType':
+        window.speaker.ac.setDeviceType(payload);
+        break;
+      case 'deviceName':
+        window.speaker.ac.setDeviceName(payload);
+        break;
+      case 'flags':
+        console.log('FLAGS');
+        console.log(payload);
+        window.speaker.ac.setFlags(payload);
+        break;
+      case 'deviceInfo':
+        window.speaker.ac.setDeviceInfo(payload);
+        console.log('Received device info from listener: ', payload);
+        break;
+      case 'permissionStatus':
+        console.log('Received permission status from listener: ', payload);
+        if (payload.type === 'error') {
+          this.permissionStatus = 'error';
+          window.speaker.ac.setPermissionStatus('error');
+        } else if (payload.type === 'denied') {
+          this.permissionStatus = 'denied';
+          window.speaker.ac.setPermissionStatus('denied');
+        } else if (payload.type === 'granted') {
+          this.permissionStatus = 'granted';
+          window.speaker.ac.setPermissionStatus('granted');
+          console.log('Permission granted');
+        }
+        break;
+      case UnsupportedDeviceError.name:
+      case MissingSpeakerIdError.name:
+        throw payload;
+      default:
+        break;
+    }
+  }
+
+  /**
+   * Prepares the parameters to send to the listener
+   * @returns {Object} Parameters for the listener
+   */
+  prepareConnectionParams() {
+    const params = {
+      type: 'SoundCalibration',
+      name: 'SoundCalibration',
+      message: 'connectionParams',
+      payload: {
+        speakerPeerId: this.connectionManager?.getPeerID(),
+        sp: this.isSmartPhone,
+        hz: this.calibrateSoundHz,
+        bits: this.calibrateSoundSamplingDesiredBits,
+        lang: this.language,
+        deviceId: this.deviceId,
+      },
+    };
+    console.log('prepareConnectionParams', params);
+    return params;
+  }
 
   /**
    * Async factory method that creates the Speaker object, and returns a promise that resolves to the result of the calibration.
    *
    * @param params - The parameters to be passed to the peer object.
-   * @param Calibrator - The class that defines the calibration process.
-   * @param CalibratorInstance
+   * @param CalibratorInstance - The class that defines the calibration process.
+   * @param connectionManager - Instance of the ConnectionManager
    * @param timeOut - The amount of time to wait before timing out the connection (in milliseconds).
    * @public
-   * @example
    */
-  static startCalibration = async (params, CalibratorInstance, timeOut = 180000) => {
-    window.speaker = new Speaker(params, CalibratorInstance);
+  static startCalibration = async (
+    params,
+    CalibratorInstance,
+    connectionManager,
+    timeOut = 180000
+  ) => {
+    // Create a speaker instance and register with the connection manager
+    window.speaker = new Speaker(params, CalibratorInstance, connectionManager);
     const {speaker} = window;
-    await speaker.initPeer();
+    speaker.ac = CalibratorInstance;
+
+    await speaker.connectionManager.waitForPeerConnection();
+    await speaker.connectionManager.resolveWhenHandshakeReceived();
+
+    // Send connection parameters to the listener
+    speaker.connectionManager.send(speaker.prepareConnectionParams());
+
     // wrap the calibration process in a promise so we can await it
     return new Promise((resolve, reject) => {
       // Add a permission check handler
@@ -146,14 +178,18 @@ class Speaker extends AudioPeer {
         }
       }, 100);
 
-      // when a call is received
-      speaker.peer.on('call', async call => {
+      console.log('Setting up call handler on the peer');
+      // Set up call handler on the peer
+      speaker.connectionManager.peer.on('call', async call => {
+        console.log('Received call from listener');
         clearInterval(permissionCheckInterval); // Clear interval when call is received
-        // Rest of the existing call handling code...
+
+        // Answer the call
         call.answer();
         speaker.#removeUIElems();
         speaker.#showSpinner();
         speaker.ac.createLocalAudio(document.getElementById(speaker.targetElement));
+
         // when we start receiving audio
         call.on('stream', async stream => {
           window.localStream = stream;
@@ -223,8 +259,11 @@ class Speaker extends AudioPeer {
             params.soundSubtitleId
           );
           speaker.#removeUIElems();
+          //remove the call
+          speaker.connectionManager.peer.off('call');
           resolve(speaker.result);
         });
+
         // if we do not receive a result within the timeout, reject
         setTimeout(() => {
           clearInterval(permissionCheckInterval);
@@ -239,17 +278,22 @@ class Speaker extends AudioPeer {
           );
         }, timeOut);
       });
+
+      console.log('Call handler set up', speaker.connectionManager.peer);
     });
   };
 
-  static testIIR = async (params, CalibratorInstance, IIR, timeOut = 180000) => {
-    window.speaker = new Speaker(params, CalibratorInstance);
+  static testIIR = async (params, CalibratorInstance, IIR, connectionManager, timeOut = 180000) => {
+    window.speaker = new Speaker(params, CalibratorInstance, connectionManager);
     const {speaker} = window;
-    speaker.initPeer();
+
+    // Set QR code parameters
+    connectionManager.setQueryParams(speaker.prepareQRParams());
+
     // wrap the calibration process in a promise so we can await it
     return new Promise((resolve, reject) => {
       // when a call is received
-      speaker.peer.on('call', async call => {
+      connectionManager.peer.on('call', async call => {
         // Answer the call (one way)
         call.answer();
         speaker.#removeUIElems();
@@ -644,51 +688,54 @@ class Speaker extends AudioPeer {
       return;
     }
 
-    switch (data.name) {
+    const name = data.payload.name;
+    const payload = data.payload.payload;
+
+    switch (name) {
       case 'samplingRate':
-        console.log('Received sampling rate from listener: ', data.payload);
-        if (!data.payload) {
-          this.ac.setSamplingRates(this.calibrateSoundHz);
+        console.log('Received sampling rate from listener: ', payload);
+        if (!payload) {
+          window.speaker.ac.setSamplingRates(window.speaker.calibrateSoundHz);
         } else {
-          this.ac.setSamplingRates(data.payload);
+          window.speaker.ac.setSamplingRates(payload);
         }
         break;
       case 'sampleSize':
-        this.ac.setSampleSize(data.payload);
+        window.speaker.ac.setSampleSize(payload);
         break;
       case 'deviceType':
-        this.ac.setDeviceType(data.payload);
+        window.speaker.ac.setDeviceType(payload);
         break;
       case 'deviceName':
-        this.ac.setDeviceName(data.payload);
+        window.speaker.ac.setDeviceName(payload);
         break;
       case 'flags':
         //this.ac.setDeviceName(data.payload);
         console.log('FLAGS');
-        console.log(data.payload);
-        this.ac.setFlags(data.payload);
+        console.log(payload);
+        window.speaker.ac.setFlags(payload);
         break;
       case 'deviceInfo':
-        this.ac.setDeviceInfo(data.payload);
-        console.log('Received device info from listener: ', data.payload);
+        window.speaker.ac.setDeviceInfo(payload);
+        console.log('Received device info from listener: ', payload);
         break;
       case 'permissionStatus':
-        console.log('Received permission status from listener: ', data.payload);
-        if (data.payload.type === 'error') {
+        console.log('Received permission status from listener: ', payload);
+        if (payload.type === 'error') {
           this.permissionStatus = 'error';
-          this.ac.setPermissionStatus('error');
-        } else if (data.payload.type === 'denied') {
+          window.speaker.ac.setPermissionStatus('error');
+        } else if (payload.type === 'denied') {
           this.permissionStatus = 'denied';
-          this.ac.setPermissionStatus('denied');
-        } else if (data.payload.type === 'granted') {
+          window.speaker.ac.setPermissionStatus('denied');
+        } else if (payload.type === 'granted') {
           this.permissionStatus = 'granted';
-          this.ac.setPermissionStatus('granted');
+          window.speaker.ac.setPermissionStatus('granted');
           console.log('Permission granted');
         }
         break;
       case UnsupportedDeviceError.name:
       case MissingSpeakerIdError.name:
-        throw data.payload;
+        throw payload;
         break;
       default:
         break;
@@ -722,19 +769,22 @@ class Speaker extends AudioPeer {
     this.ac.downloadData();
   };
 
-  repeatCalibration = async (params, stream, CalibratorInstance) => {
-    this.ac = CalibratorInstance;
-    this.#removeUIElems();
-    this.#showSpinner();
+  static repeatCalibration = async (params, stream, CalibratorInstance) => {
+    window.speaker.ac = CalibratorInstance;
+    window.speaker.#removeUIElems();
+    window.speaker.#showSpinner();
 
     console.log('This is a repeat');
     // wrap the calibration process in a promise so we can await it
     return new Promise((resolve, reject) => {
       // Add a permission check handler
       const permissionCheckInterval = setInterval(() => {
-        if (this.permissionStatus === 'error' || this.permissionStatus === 'denied') {
+        if (
+          window.speaker.permissionStatus === 'error' ||
+          window.speaker.permissionStatus === 'denied'
+        ) {
           clearInterval(permissionCheckInterval);
-          this.#removeUIElems();
+          window.speaker.#removeUIElems();
           resolve('permission denied');
         }
       }, 100);
@@ -742,7 +792,7 @@ class Speaker extends AudioPeer {
       // Start calibration process
       (async () => {
         try {
-          const result = await this.ac.startCalibration(
+          const result = await window.speaker.ac.startCalibration(
             stream,
             params.gainValues,
             params.ICalib,
@@ -794,7 +844,7 @@ class Speaker extends AudioPeer {
             params.soundSubtitleId
           );
           clearInterval(permissionCheckInterval);
-          this.#removeUIElems();
+          window.speaker.#removeUIElems();
           resolve(result);
         } catch (error) {
           clearInterval(permissionCheckInterval);
