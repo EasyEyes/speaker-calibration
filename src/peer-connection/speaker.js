@@ -256,7 +256,8 @@ class Speaker extends AudioPeer {
             params.language,
             params.loudspeakerModelName,
             params.phrases,
-            params.soundSubtitleId
+            params.soundSubtitleId,
+            params.calibrateSoundBurstDownsample
           );
           speaker.#removeUIElems();
           //remove the call
@@ -841,7 +842,8 @@ class Speaker extends AudioPeer {
             params.language,
             params.loudspeakerModelName,
             params.phrases,
-            params.soundSubtitleId
+            params.soundSubtitleId,
+            params.calibrateSoundBurstDownsample
           );
           clearInterval(permissionCheckInterval);
           window.speaker.#removeUIElems();

@@ -383,7 +383,11 @@ class Combination extends AudioCalibrator {
       return element != undefined;
     }); //log any errors that are found in this step
     console.log('filteredComputedIRs', filteredComputedIRs);
-    const mls = this.#mls[this.icapture];
+    const fMLS = this.sourceSamplingRate / this._calibrateSoundBurstDownsample;
+    const mls = this.downsampleSignal(
+      this.#mls[this.icapture],
+      this._calibrateSoundBurstDownsample
+    );
     const lowHz = this.#lowHz; //gain of 1 below cutoff, need gain of 0
     const highHz = this.#highHz; //check error for anything other than 10 kHz
     const iirLength = this.iirLength;
@@ -393,17 +397,23 @@ class Combination extends AudioCalibrator {
       `All Hz Calibration: computing the IIR...`.toString()
     ).toString();
     this.emit('update', {message: this.status});
+    const filteredComputedIRs_slice = filteredComputedIRs.slice(0, this.numCaptures);
+    // for each element in filteredComputedIRs_slice, downsample it
+    const payload_downsampled = filteredComputedIRs_slice.map(ir =>
+      this.downsampleSignal(ir, this._calibrateSoundBurstDownsample)
+    );
     return await this.pyServerAPI
       .getSystemInverseImpulseResponseWithRetry({
-        payload: filteredComputedIRs.slice(0, this.numCaptures),
+        payload: payload_downsampled,
         mls,
         lowHz,
         highHz,
         iirLength,
-        sampleRate: this.sourceSamplingRate || 96000,
+        sampleRate: fMLS,
         mlsAmplitude: Math.pow(10, this.power_dB / 20),
         calibrateSoundBurstFilteredExtraDb: this._calibrateSoundBurstFilteredExtraDb,
         calibrateSoundIIRPhase: this.calibrateSoundIIRPhase,
+        downsample: this._calibrateSoundBurstDownsample,
       })
       .then(async res => {
         this.stepNum += 1;
@@ -429,8 +439,14 @@ class Combination extends AudioCalibrator {
           })
           .then(result => {
             console.log(result);
-            this.systemConvolution = result['convolution'];
-            this.systemConvolutionNoBandpass = result['convolution_no_bandpass'];
+            this.systemConvolution = this.upsampleSignal(
+              result['convolution'],
+              this._calibrateSoundBurstDownsample
+            );
+            this.systemConvolutionNoBandpass = this.upsampleSignal(
+              result['convolution_no_bandpass'],
+              this._calibrateSoundBurstDownsample
+            );
           });
 
         // attenuate the system convolution if the amplitude is greater than this.calibrateSoundLimit
@@ -460,6 +476,12 @@ class Combination extends AudioCalibrator {
     const filteredComputedIRs = computedIRs.filter(element => {
       return element != undefined;
     });
+    const fMLS = this.sourceSamplingRate / this._calibrateSoundBurstDownsample;
+    const filteredComputedIRs_slice = filteredComputedIRs.slice(0, this.numCaptures);
+    // for each element in filteredComputedIRs_slice, downsample it
+    const payload_downsampled = filteredComputedIRs_slice.map(ir =>
+      this.downsampleSignal(ir, this._calibrateSoundBurstDownsample)
+    );
     let componentIRGains = this.componentIR['Gain'];
     const componentIRFreqs = this.componentIR['Freq'];
     //normalize the component IR gains
@@ -472,7 +494,10 @@ class Combination extends AudioCalibrator {
         return value - sineGainAt1000Hz_dB;
       });
     }
-    const mls = this.#mls[this.icapture];
+    const mls = this.downsampleSignal(
+      this.#mls[this.icapture],
+      this._calibrateSoundBurstDownsample
+    );
     const lowHz = this.#lowHz;
     const iirLength = this.iirLength;
     const irLength = this.irLength;
@@ -483,23 +508,24 @@ class Combination extends AudioCalibrator {
       `All Hz Calibration: computing the IIR...`.toString()
     ).toString();
     this.emit('update', {message: this.status});
-    console.log();
+
     return this.pyServerAPI
       .getComponentInverseImpulseResponseWithRetry({
-        payload: filteredComputedIRs.slice(0, this.numCaptures),
+        payload: payload_downsampled,
         mls,
         lowHz,
         highHz,
         iirLength,
         componentIRGains,
         componentIRFreqs,
-        sampleRate: this.sourceSamplingRate || 96000,
+        sampleRate: fMLS,
         mlsAmplitude: Math.pow(10, this.power_dB / 20),
         irLength,
         calibrateSoundSmoothOctaves: this._calibrateSoundSmoothOctaves,
         calibrateSoundSmoothMinBandwidthHz: this._calibrateSoundSmoothMinBandwidthHz,
         calibrateSoundBurstFilteredExtraDb: this._calibrateSoundBurstFilteredExtraDb,
         calibrateSoundIIRPhase: this.calibrateSoundIIRPhase,
+        downsample: this._calibrateSoundBurstDownsample,
       })
       .then(async res => {
         this.stepNum += 1;
@@ -530,9 +556,20 @@ class Combination extends AudioCalibrator {
             mls_amplitude: Math.pow(10, this.power_dB / 20),
           })
           .then(result => {
-            console.log(result);
-            this.componentConvolution = result['convolution'];
-            this.componentConvolutionNoBandpass = result['convolution_no_bandpass'];
+            console.log('result', result);
+            this.componentConvolution = this.upsampleSignal(
+              result['convolution'],
+              this._calibrateSoundBurstDownsample
+            );
+            this.componentConvolutionNoBandpass = this.upsampleSignal(
+              result['convolution_no_bandpass'],
+              this._calibrateSoundBurstDownsample
+            );
+            console.log('this.componentConvolution...', this.componentConvolution);
+            console.log(
+              'this.componentConvolutionNoBandpass...',
+              this.componentConvolutionNoBandpass
+            );
           });
         // attenuate the component convolution if the amplitude is greater than this.calibrateSoundLimit
         // find max of absolute value of component convolution
@@ -554,6 +591,44 @@ class Combination extends AudioCalibrator {
       });
   };
 
+  /**
+   * Upsamples a signal by repeating each sample N times
+   * @param {Array<number>} signal - The input signal to upsample
+   * @param {number} N - The upsampling factor
+   * @returns {Array<number>} - The upsampled signal
+   */
+  upsampleSignal = (signal, N) => {
+    if (N <= 1) return signal;
+
+    const result = [];
+    for (let sample of signal) {
+      // Repeat each sample N times
+      for (let i = 0; i < N; i++) {
+        result.push(sample);
+      }
+    }
+    return result;
+  };
+
+  /**
+   * Downsamples a signal by averaging groups of N samples
+   * @param {Array<number>} signal - The input signal to downsample
+   * @param {number} N - The downsampling factor
+   * @returns {Array<number>} - The downsampled signal
+   */
+  downsampleSignal = (signal, N) => {
+    if (N <= 1) return signal;
+
+    const result = [];
+    for (let i = 0; i < signal.length; i += N) {
+      const chunk = signal.slice(i, Math.min(i + N, signal.length));
+      // Calculate average of the chunk
+      const avg = chunk.reduce((sum, val) => sum + val, 0) / chunk.length;
+      result.push(avg);
+    }
+    return result;
+  };
+
   sendBackgroundRecording = () => {
     const allSignals = this.getAllBackgroundRecordings();
     const numSignals = allSignals.length;
@@ -565,10 +640,16 @@ class Combination extends AudioCalibrator {
     const background_rec = background_rec_whole.slice(startIndex);
     console.log('Sending background recording to server for processing');
     this.addTimeStamp('Compute PSD of background');
+    const fBackground = this.sourceSamplingRate / this._calibrateSoundBurstDownsample;
+    const background_rec_downsampled = this.downsampleSignal(
+      background_rec,
+      this._calibrateSoundBurstDownsample
+    );
+
     this.pyServerAPI
       .getBackgroundNoisePSDWithRetry({
-        background_rec,
-        sampleRate: this.sourceSamplingRate || 96000,
+        background_rec: background_rec_downsampled,
+        sampleRate: fBackground,
       })
       .then(res => {
         if (this.numSuccessfulBackgroundCaptured < 1) {
@@ -609,14 +690,16 @@ class Combination extends AudioCalibrator {
     ).toString();
     this.emit('update', {message: this.status});
     if (this.isCalibrating) return null;
+    const fMLS = this.sourceSamplingRate / this._calibrateSoundBurstDownsample;
     await this.pyServerAPI
       .allHzPowerCheck({
         payload,
-        sampleRate: this.sourceSamplingRate || 96000,
+        sampleRate: fMLS,
         binDesiredSec: this._calibrateSoundPowerBinDesiredSec,
         burstSec: this.desired_time_per_mls,
         repeats: this.numMLSPerCapture - this.num_mls_to_skip,
         warmUp: this.num_mls_to_skip,
+        downsample: this._calibrateSoundBurstDownsample,
       })
       .then(async result => {
         if (result) {
@@ -675,12 +758,17 @@ class Combination extends AudioCalibrator {
             console.log('start calculate impulse response');
             const usedPeriodStart = this.num_mls_to_skip * this.sourceSamplingRate;
             const payload_skipped_warmUp = payload.slice(usedPeriodStart);
+            const payload_skipped_warmUp_downsampled = this.downsampleSignal(
+              payload_skipped_warmUp,
+              this._calibrateSoundBurstDownsample
+            );
             await this.pyServerAPI
               .getAutocorrelation({
                 mls: mls,
-                payload: payload_skipped_warmUp,
-                sampleRate: this.sourceSamplingRate || 96000,
+                payload: payload_skipped_warmUp_downsampled,
+                sampleRate: fMLS,
                 numPeriods: this.numMLSPerCapture - this.num_mls_to_skip,
+                downsample: this._calibrateSoundBurstDownsample,
               })
               .then(async res => {
                 this.autocorrelations.push(res['autocorrelation']);
@@ -691,12 +779,13 @@ class Combination extends AudioCalibrator {
                   await this.pyServerAPI
                     .getImpulseResponse({
                       mls,
-                      sampleRate: this.sourceSamplingRate || 96000,
+                      sampleRate: fMLS,
                       numPeriods: this.numMLSPerCapture - this.num_mls_to_skip,
-                      sig: payload_skipped_warmUp,
+                      sig: payload_skipped_warmUp_downsampled,
                       fs2: this.fs2,
                       L_new_n: this.L_new_n,
                       dL_n: this.dL_n,
+                      downsample: this._calibrateSoundBurstDownsample,
                     })
                     .then(res => {
                       this.numSuccessfulCaptured += 2;
@@ -746,17 +835,17 @@ class Combination extends AudioCalibrator {
       message: this.status,
     });
     let time_to_wait = 0;
+    const fMLS = this.sourceSamplingRate / this._calibrateSoundBurstDownsample;
     if (this.mode === 'unfiltered') {
       //unfiltered
-      time_to_wait = (this.#mls[0].length / this.sourceSamplingRate) * this.numMLSPerCapture;
+      time_to_wait = (this.#mls[0].length / fMLS) * this.numMLSPerCapture;
       time_to_wait = time_to_wait + this._calibrateSoundBurstPostSec;
     } else if (this.mode === 'filtered') {
       //filtered
       // time_to_wait =
       //   (this.#currentConvolution.length / this.sourceSamplingRate) *
       //   (this.numMLSPerCapture / (this.num_mls_to_skip + this.numMLSPerCapture));
-      time_to_wait =
-        (this.#currentConvolution.length / this.sourceSamplingRate) * this.numMLSPerCapture;
+      time_to_wait = (this.#currentConvolution.length / fMLS) * this.numMLSPerCapture;
       time_to_wait = time_to_wait + this._calibrateSoundBurstPostSec;
     } else {
       throw new Error('Mode broke in awaitDesiredMLSLength');
@@ -798,15 +887,15 @@ class Combination extends AudioCalibrator {
     });
     let number_of_bursts_to_skip = 0;
     let time_to_sleep = 0;
+    const fMLS = this.sourceSamplingRate / this._calibrateSoundBurstDownsample;
     if (this.mode === 'unfiltered') {
-      time_to_sleep = (this.#mls[0].length / this.sourceSamplingRate) * number_of_bursts_to_skip;
+      time_to_sleep = (this.#mls[0].length / fMLS) * number_of_bursts_to_skip;
     } else if (this.mode === 'filtered') {
       console.log(this.#currentConvolution.length);
       // time_to_sleep =
       //   (this.#currentConvolution.length / this.sourceSamplingRate) *
       //   (number_of_bursts_to_skip / (number_of_bursts_to_skip + this.numMLSPerCapture));
-      time_to_sleep =
-        (this.#currentConvolution.length / this.sourceSamplingRate) * number_of_bursts_to_skip;
+      time_to_sleep = (this.#currentConvolution.length / fMLS) * number_of_bursts_to_skip;
     } else {
       throw new Error('Mode broke in awaitSignalOnset');
     }
@@ -1077,7 +1166,7 @@ class Combination extends AudioCalibrator {
     let unconv_rec = recs[0];
     let return_unconv_rec = unconv_rec;
     let conv_rec = component_conv_recs[component_conv_recs.length - 1];
-
+    const fMLS = this.sourceSamplingRate / this._calibrateSoundBurstDownsample;
     //psd of component
     let knownGain = this.oldComponentIR.Gain;
     let knownFreq = this.oldComponentIR.Freq;
@@ -1085,7 +1174,13 @@ class Combination extends AudioCalibrator {
     this.addTimeStamp('Compute PSD of MLS recording');
     if (this.isCalibrating) return null;
     let component_unconv_rec_psd = await this.pyServerAPI
-      .getSubtractedPSDWithRetry(unconv_rec, knownGain, knownFreq, sampleRate)
+      .getSubtractedPSDWithRetry(
+        this.downsampleSignal(unconv_rec, this._calibrateSoundBurstDownsample),
+        knownGain,
+        knownFreq,
+        fMLS,
+        this._calibrateSoundBurstDownsample
+      )
       .then(res => {
         this.incrementStatusBar();
         this.status = this.generateTemplate(
@@ -1101,7 +1196,13 @@ class Combination extends AudioCalibrator {
     this.addTimeStamp('Compute PSD of filtered recording (component)');
     if (this.isCalibrating) return null;
     let component_conv_rec_psd = await this.pyServerAPI
-      .getSubtractedPSDWithRetry(conv_rec, knownGain, knownFreq, sampleRate)
+      .getSubtractedPSDWithRetry(
+        this.downsampleSignal(conv_rec, this._calibrateSoundBurstDownsample),
+        knownGain,
+        knownFreq,
+        fMLS,
+        this._calibrateSoundBurstDownsample
+      )
       .then(res => {
         let interpolatedGain = res.x.map((freq, index) => {
           let i = 0;
@@ -1140,9 +1241,10 @@ class Combination extends AudioCalibrator {
     if (this.isCalibrating) return null;
     let system_recs_psd = await this.pyServerAPI
       .getPSDWithRetry({
-        unconv_rec,
-        conv_rec,
-        sampleRate: this.sourceSamplingRate || 96000,
+        unconv_rec: this.downsampleSignal(unconv_rec, this._calibrateSoundBurstDownsample),
+        conv_rec: this.downsampleSignal(conv_rec, this._calibrateSoundBurstDownsample),
+        sampleRate: fMLS,
+        downsample: this._calibrateSoundBurstDownsample,
       })
       .then(res => {
         let filtered_psd = res.y_conv
@@ -1179,9 +1281,10 @@ class Combination extends AudioCalibrator {
     if (this.isCalibrating) return null;
     let component_iir_psd = await this.pyServerAPI
       .getPSDWithRetry({
-        unconv_rec,
-        conv_rec,
-        sampleRate: this.sourceSamplingRate || 96000,
+        unconv_rec: this.downsampleSignal(unconv_rec, this._calibrateSoundBurstDownsample),
+        conv_rec: this.downsampleSignal(conv_rec, this._calibrateSoundBurstDownsample),
+        sampleRate: fMLS,
+        downsample: this._calibrateSoundBurstDownsample,
       })
       .then(res => {
         this.incrementStatusBar();
@@ -1200,9 +1303,10 @@ class Combination extends AudioCalibrator {
     if (this.isCalibrating) return null;
     let system_iir_psd = await this.pyServerAPI
       .getPSDWithRetry({
-        unconv_rec,
-        conv_rec,
-        sampleRate: this.sourceSamplingRate || 96000,
+        unconv_rec: this.downsampleSignal(unconv_rec, this._calibrateSoundBurstDownsample),
+        conv_rec: this.downsampleSignal(conv_rec, this._calibrateSoundBurstDownsample),
+        sampleRate: fMLS,
+        downsample: this._calibrateSoundBurstDownsample,
       })
       .then(res => {
         this.incrementStatusBar();
@@ -1220,8 +1324,9 @@ class Combination extends AudioCalibrator {
     if (this.isCalibrating) return null;
     let mls_psd = await this.pyServerAPI
       .getMLSPSDWithRetry({
-        mls: this.#mlsBufferView[0],
-        sampleRate: this.sourceSamplingRate || 96000,
+        mls: this.downsampleSignal(this.#mlsBufferView[0], this._calibrateSoundBurstDownsample),
+        sampleRate: fMLS,
+        downsample: this._calibrateSoundBurstDownsample,
       })
       .then(res => {
         this.incrementStatusBar();
@@ -1239,8 +1344,9 @@ class Combination extends AudioCalibrator {
     if (this.isCalibrating) return null;
     let system_filtered_mls_psd = await this.pyServerAPI
       .getMLSPSDWithRetry({
-        mls: this.systemConvolution,
-        sampleRate: this.sourceSamplingRate || 96000,
+        mls: this.downsampleSignal(this.systemConvolution, this._calibrateSoundBurstDownsample),
+        sampleRate: fMLS,
+        downsample: this._calibrateSoundBurstDownsample,
       })
       .then(res => {
         this.incrementStatusBar();
@@ -1256,8 +1362,12 @@ class Combination extends AudioCalibrator {
 
     let system_no_bandpass_filtered_mls_psd = await this.pyServerAPI
       .getMLSPSDWithRetry({
-        mls: this.systemConvolution,
-        sampleRate: this.sourceSamplingRate || 96000,
+        mls: this.downsampleSignal(
+          this.systemConvolutionNoBandpass,
+          this._calibrateSoundBurstDownsample
+        ),
+        sampleRate: fMLS,
+        downsample: this._calibrateSoundBurstDownsample,
       })
       .then(res => {
         this.incrementStatusBar();
@@ -1275,8 +1385,9 @@ class Combination extends AudioCalibrator {
     if (this.isCalibrating) return null;
     let component_filtered_mls_psd = await this.pyServerAPI
       .getMLSPSDWithRetry({
-        mls: this.componentConvolution,
-        sampleRate: this.sourceSamplingRate || 96000,
+        mls: this.downsampleSignal(this.componentConvolution, this._calibrateSoundBurstDownsample),
+        sampleRate: fMLS,
+        downsample: this._calibrateSoundBurstDownsample,
       })
       .then(res => {
         this.incrementStatusBar();
@@ -1292,8 +1403,12 @@ class Combination extends AudioCalibrator {
 
     let component_no_bandpass_filtered_mls_psd = await this.pyServerAPI
       .getMLSPSDWithRetry({
-        mls: this.componentConvolutionNoBandpass,
-        sampleRate: this.sourceSamplingRate || 96000,
+        mls: this.downsampleSignal(
+          this.componentConvolutionNoBandpass,
+          this._calibrateSoundBurstDownsample
+        ),
+        sampleRate: fMLS,
+        downsample: this._calibrateSoundBurstDownsample,
       })
       .then(res => {
         this.incrementStatusBar();
@@ -1475,8 +1590,16 @@ class Combination extends AudioCalibrator {
       let sampleRate = this.sourceSamplingRate || 96000;
       this.addTimeStamp('Compute PSD of MLS recording');
       if (this.isCalibrating) return null;
+      const fMLS = this.sourceSamplingRate / this._calibrateSoundBurstDownsample;
+
       let unconv_results = await this.pyServerAPI
-        .getSubtractedPSDWithRetry(unconv_rec, knownGain, knownFreq, sampleRate)
+        .getSubtractedPSDWithRetry(
+          this.downsampleSignal(unconv_rec, this._calibrateSoundBurstDownsample),
+          knownGain,
+          knownFreq,
+          fMLS,
+          this._calibrateSoundBurstDownsample
+        )
         .then(res => {
           console.log(res);
           let mls_psd = res.y
@@ -1499,8 +1622,15 @@ class Combination extends AudioCalibrator {
 
       this.addTimeStamp('Compute PSD recording of  speaker+ mic IIR-filtered MLS recording');
       if (this.isCalibrating) return null;
+
       let conv_results = await this.pyServerAPI
-        .getSubtractedPSDWithRetry(conv_rec, knownGain, knownFreq, sampleRate)
+        .getSubtractedPSDWithRetry(
+          this.downsampleSignal(conv_rec, this._calibrateSoundBurstDownsample),
+          knownGain,
+          knownFreq,
+          fMLS,
+          this._calibrateSoundBurstDownsample
+        )
         .then(res => {
           let interpolatedGain = res.x.map((freq, index) => {
             let i = 0;
@@ -1542,11 +1672,13 @@ class Combination extends AudioCalibrator {
       conv_rec = this.componentInvertedImpulseResponse;
       this.addTimeStamp('Compute PSD of speaker or mic IIR, with and without bandpass');
       if (this.isCalibrating) return null;
+
       let component_iir_psd = await this.pyServerAPI
         .getPSDWithRetry({
-          unconv_rec,
-          conv_rec,
-          sampleRate: this.sourceSamplingRate || 96000,
+          unconv_rec: this.downsampleSignal(unconv_rec, this._calibrateSoundBurstDownsample),
+          conv_rec: this.downsampleSignal(conv_rec, this._calibrateSoundBurstDownsample),
+          sampleRate: fMLS,
+          downsample: this._calibrateSoundBurstDownsample,
         })
         .then(res => {
           this.incrementStatusBar();
@@ -1565,9 +1697,10 @@ class Combination extends AudioCalibrator {
       if (this.isCalibrating) return null;
       let system_iir_psd = await this.pyServerAPI
         .getPSDWithRetry({
-          unconv_rec,
-          conv_rec,
-          sampleRate: this.sourceSamplingRate || 96000,
+          unconv_rec: this.downsampleSignal(unconv_rec, this._calibrateSoundBurstDownsample),
+          conv_rec: this.downsampleSignal(conv_rec, this._calibrateSoundBurstDownsample),
+          sampleRate: fMLS,
+          downsample: this._calibrateSoundBurstDownsample,
         })
         .then(res => {
           this.incrementStatusBar();
@@ -1585,8 +1718,12 @@ class Combination extends AudioCalibrator {
       if (this.isCalibrating) return null;
       let mls_psd = await this.pyServerAPI
         .getMLSPSDWithRetry({
-          mls: this.#mlsBufferView[this.icapture],
-          sampleRate: this.sourceSamplingRate || 96000,
+          mls: this.downsampleSignal(
+            this.#mlsBufferView[this.icapture],
+            this._calibrateSoundBurstDownsample
+          ),
+          sampleRate: fMLS,
+          downsample: this._calibrateSoundBurstDownsample,
         })
         .then(res => {
           this.incrementStatusBar();
@@ -1604,8 +1741,12 @@ class Combination extends AudioCalibrator {
       if (this.isCalibrating) return null;
       let filtered_mls_psd = await this.pyServerAPI
         .getMLSPSDWithRetry({
-          mls: this.componentConvolution,
-          sampleRate: this.sourceSamplingRate || 96000,
+          mls: this.downsampleSignal(
+            this.componentConvolution,
+            this._calibrateSoundBurstDownsample
+          ),
+          sampleRate: fMLS,
+          downsample: this._calibrateSoundBurstDownsample,
         })
         .then(res => {
           this.incrementStatusBar();
@@ -1621,8 +1762,12 @@ class Combination extends AudioCalibrator {
 
       let filtered_no_bandpass_mls_psd = await this.pyServerAPI
         .getMLSPSDWithRetry({
-          mls: this.componentConvolutionNoBandpass,
-          sampleRate: this.sourceSamplingRate || 96000,
+          mls: this.downsampleSignal(
+            this.componentConvolutionNoBandpass,
+            this._calibrateSoundBurstDownsample
+          ),
+          sampleRate: fMLS,
+          downsample: this._calibrateSoundBurstDownsample,
         })
         .then(res => {
           this.incrementStatusBar();
@@ -1711,11 +1856,13 @@ class Combination extends AudioCalibrator {
     } else {
       this.addTimeStamp('Compute PSD of filtered recording (system) and unfiltered recording');
       if (this.isCalibrating) return null;
+      const fMLS = this.sourceSamplingRate / this._calibrateSoundBurstDownsample;
       let results = await this.pyServerAPI
         .getPSDWithRetry({
-          unconv_rec,
-          conv_rec,
-          sampleRate: this.sourceSamplingRate || 96000,
+          unconv_rec: this.downsampleSignal(unconv_rec, this._calibrateSoundBurstDownsample),
+          conv_rec: this.downsampleSignal(conv_rec, this._calibrateSoundBurstDownsample),
+          sampleRate: fMLS,
+          downsample: this._calibrateSoundBurstDownsample,
         })
         .then(res => {
           let filtered_psd = res.y_conv
@@ -1751,9 +1898,10 @@ class Combination extends AudioCalibrator {
       if (this.isCalibrating) return null;
       let component_iir_psd = await this.pyServerAPI
         .getPSDWithRetry({
-          unconv_rec,
-          conv_rec,
-          sampleRate: this.sourceSamplingRate || 96000,
+          unconv_rec: this.downsampleSignal(unconv_rec, this._calibrateSoundBurstDownsample),
+          conv_rec: this.downsampleSignal(conv_rec, this._calibrateSoundBurstDownsample),
+          sampleRate: fMLS,
+          downsample: this._calibrateSoundBurstDownsample,
         })
         .then(res => {
           this.incrementStatusBar();
@@ -1772,9 +1920,10 @@ class Combination extends AudioCalibrator {
       if (this.isCalibrating) return null;
       let system_iir_psd = await this.pyServerAPI
         .getPSDWithRetry({
-          unconv_rec,
-          conv_rec,
-          sampleRate: this.sourceSamplingRate || 96000,
+          unconv_rec: this.downsampleSignal(unconv_rec, this._calibrateSoundBurstDownsample),
+          conv_rec: this.downsampleSignal(conv_rec, this._calibrateSoundBurstDownsample),
+          sampleRate: fMLS,
+          downsample: this._calibrateSoundBurstDownsample,
         })
         .then(res => {
           this.incrementStatusBar();
@@ -1792,8 +1941,12 @@ class Combination extends AudioCalibrator {
       if (this.isCalibrating) return null;
       let mls_psd = await this.pyServerAPI
         .getMLSPSDWithRetry({
-          mls: this.#mlsBufferView[this.icapture],
-          sampleRate: this.sourceSamplingRate || 96000,
+          mls: this.downsampleSignal(
+            this.#mlsBufferView[this.icapture],
+            this._calibrateSoundBurstDownsample
+          ),
+          sampleRate: fMLS,
+          downsample: this._calibrateSoundBurstDownsample,
         })
         .then(res => {
           this.incrementStatusBar();
@@ -1811,8 +1964,9 @@ class Combination extends AudioCalibrator {
       if (this.isCalibrating) return null;
       let filtered_mls_psd = await this.pyServerAPI
         .getMLSPSDWithRetry({
-          mls: this.systemConvolution,
-          sampleRate: this.sourceSamplingRate || 96000,
+          mls: this.downsampleSignal(this.systemConvolution, this._calibrateSoundBurstDownsample),
+          sampleRate: fMLS,
+          downsample: this._calibrateSoundBurstDownsample,
         })
         .then(res => {
           this.incrementStatusBar();
@@ -1828,8 +1982,12 @@ class Combination extends AudioCalibrator {
 
       let filtered_no_bandpass_mls_psd = await this.pyServerAPI
         .getMLSPSDWithRetry({
-          mls: this.systemConvolutionNoBandpass,
-          sampleRate: this.sourceSamplingRate || 96000,
+          mls: this.downsampleSignal(
+            this.systemConvolutionNoBandpass,
+            this._calibrateSoundBurstDownsample
+          ),
+          sampleRate: fMLS,
+          downsample: this._calibrateSoundBurstDownsample,
         })
         .then(res => {
           this.incrementStatusBar();
@@ -1961,9 +2119,11 @@ class Combination extends AudioCalibrator {
     let desired_time = this.desired_time_per_mls;
     let checkRec = 'allhz';
 
-    console.log('MLS sequence should be of length: ' + this.sourceSamplingRate * desired_time);
+    const fMLS = this.sourceSamplingRate / this._calibrateSoundBurstDownsample;
 
-    length = this.sourceSamplingRate * desired_time;
+    console.log('MLS sequence should be of length: ' + fMLS * desired_time);
+
+    length = fMLS * desired_time;
     //get mls here
     // const calibrateSoundBurstDb = Math.pow(10, this._calibrateSoundBurstDb / 20);
 
@@ -1984,11 +2144,12 @@ class Combination extends AudioCalibrator {
         length,
         amplitude,
         calibrateSoundBurstMLSVersions: this.numCaptures,
+        calibrateSoundBurstDownsample: this._calibrateSoundBurstDownsample,
       })
       .then(res => {
         console.log(res);
-        this.#mlsBufferView = res['mls'];
-        this.#mls = res['unscaledMLS'];
+        this.#mlsBufferView = this.upsampleSignal(res['mls'], this._calibrateSoundBurstDownsample);
+        this.#mls = this.upsampleSignal(res['unscaledMLS'], this._calibrateSoundBurstDownsample);
       })
       .catch(err => {
         // this.emit('InvertedImpulseResponse', {res: false});
@@ -2063,9 +2224,10 @@ class Combination extends AudioCalibrator {
       if (this.isCalibrating) return null;
       let component_iir_psd = await this.pyServerAPI
         .getPSDWithRetry({
-          unconv_rec,
-          conv_rec,
-          sampleRate: this.sourceSamplingRate || 96000,
+          unconv_rec: this.downsampleSignal(unconv_rec, this._calibrateSoundBurstDownsample),
+          conv_rec: this.downsampleSignal(conv_rec, this._calibrateSoundBurstDownsample),
+          sampleRate: fMLS,
+          downsample: this._calibrateSoundBurstDownsample,
         })
         .then(res => {
           this.incrementStatusBar();
@@ -2083,9 +2245,10 @@ class Combination extends AudioCalibrator {
       if (this.isCalibrating) return null;
       let system_iir_psd = await this.pyServerAPI
         .getPSDWithRetry({
-          unconv_rec,
-          conv_rec,
-          sampleRate: this.sourceSamplingRate || 96000,
+          unconv_rec: this.downsampleSignal(unconv_rec, this._calibrateSoundBurstDownsample),
+          conv_rec: this.downsampleSignal(conv_rec, this._calibrateSoundBurstDownsample),
+          sampleRate: fMLS,
+          downsample: this._calibrateSoundBurstDownsample,
         })
         .then(res => {
           this.incrementStatusBar();
@@ -2781,15 +2944,18 @@ class Combination extends AudioCalibrator {
     // });
 
     const rec = recordings[recordings.length - 1];
+    const fMLS = this.sourceSamplingRate / this._calibrateSoundBurstDownsample;
+    const payload_downsampled = this.downsampleSignal(rec, this._calibrateSoundBurstDownsample);
 
     await this.pyServerAPI
       .allHzPowerCheck({
-        payload: rec,
-        sampleRate: this.sourceSamplingRate || 96000,
+        payload: payload_downsampled,
+        sampleRate: fMLS,
         binDesiredSec: this._calibrateSoundPowerBinDesiredSec,
         burstSec: this.desired_time_per_mls,
         repeats: this.numMLSPerCapture - this.num_mls_to_skip,
         warmUp: this.num_mls_to_skip,
+        downsample: this._calibrateSoundBurstDownsample,
       })
       .then(result => {
         if (result) {
@@ -2903,8 +3069,10 @@ class Combination extends AudioCalibrator {
     language,
     loudspeakerModelName = '',
     phrases,
-    soundSubtitleId
+    soundSubtitleId,
+    calibrateSoundBurstDownsample = 1
   ) => {
+    this._calibrateSoundBurstDownsample = calibrateSoundBurstDownsample;
     this._calibrateSoundBurstPreSec = _calibrateSoundBurstPreSec;
     this._calibrateSoundBurstRepeats = _calibrateSoundBurstRepeats;
     this._calibrateSoundBurstSec = _calibrateSoundBurstSec;
@@ -2921,8 +3089,9 @@ class Combination extends AudioCalibrator {
     this.calibrateSound1000HzPreSec = calibrateSound1000HzPreSec;
     this.calibrateSound1000HzSec = calibrateSound1000HzSec;
     this.calibrateSound1000HzPostSec = calibrateSound1000HzPostSec;
-    this.iirLength = Math.floor(_calibrateSoundIIRSec * this.sourceSamplingRate);
-    this.irLength = Math.floor(_calibrateSoundIRSec * this.sourceSamplingRate);
+    const fMLS = this.sourceSamplingRate / this._calibrateSoundBurstDownsample;
+    this.iirLength = Math.floor(_calibrateSoundIIRSec * fMLS);
+    this.irLength = Math.floor(_calibrateSoundIRSec * fMLS);
     this.calibrateSoundIIRPhase = _calibrateSoundIIRPhase;
     this.num_mls_to_skip = Math.ceil(_calibrateSoundBurstPreSec / _calibrateSoundBurstSec);
     this._calibrateSoundBurstPostSec = _calibrateSoundBurstPostSec;

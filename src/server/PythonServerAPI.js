@@ -126,7 +126,12 @@ class PythonServerAPI {
     return res.data[task];
   };
 
-  getMLS = async ({length, amplitude, calibrateSoundBurstMLSVersions}) => {
+  getMLS = async ({
+    length,
+    amplitude,
+    calibrateSoundBurstMLSVersions,
+    calibrateSoundBurstDownsample,
+  }) => {
     const task = 'mls';
     let res = null;
 
@@ -135,6 +140,7 @@ class PythonServerAPI {
       length: length,
       amplitude: amplitude,
       calibrateSoundBurstMLSVersions: calibrateSoundBurstMLSVersions,
+      calibrateSoundBurstDownsample: calibrateSoundBurstDownsample,
     });
 
     await axios({
@@ -217,13 +223,23 @@ class PythonServerAPI {
     // }
   };
 
-  getMLSWithRetry = async ({length, amplitude, calibrateSoundBurstMLSVersions}) => {
+  getMLSWithRetry = async ({
+    length,
+    amplitude,
+    calibrateSoundBurstMLSVersions,
+    calibrateSoundBurstDownsample,
+  }) => {
     let retryCount = 0;
     let response = null;
 
     while (retryCount < this.MAX_RETRY_COUNT) {
       try {
-        response = await this.getMLS({length, amplitude, calibrateSoundBurstMLSVersions});
+        response = await this.getMLS({
+          length,
+          amplitude,
+          calibrateSoundBurstMLSVersions,
+          calibrateSoundBurstDownsample,
+        });
         // If the request is successful, break out of the loop
         break;
       } catch (error) {
@@ -240,7 +256,7 @@ class PythonServerAPI {
     }
   };
 
-  getPSD = async ({unconv_rec, conv_rec, sampleRate}) => {
+  getPSD = async ({unconv_rec, conv_rec, sampleRate, downsample}) => {
     const task = 'psd';
     let res = null;
 
@@ -249,6 +265,7 @@ class PythonServerAPI {
       unconv_rec,
       conv_rec,
       sampleRate,
+      downsample,
     });
 
     await axios({
@@ -320,7 +337,7 @@ class PythonServerAPI {
     }
   };
 
-  getSubtractedPSD = async (rec, knownGains, knownFrequencies, sampleRate) => {
+  getSubtractedPSD = async (rec, knownGains, knownFrequencies, sampleRate, downsample) => {
     const task = 'subtracted-psd';
     let res = null;
 
@@ -330,6 +347,7 @@ class PythonServerAPI {
       knownGains,
       knownFrequencies,
       sampleRate,
+      downsample,
     });
 
     await axios({
@@ -350,13 +368,19 @@ class PythonServerAPI {
     return res.data[task];
   };
 
-  getSubtractedPSDWithRetry = async (rec, knownGains, knownFrequencies, sampleRate) => {
+  getSubtractedPSDWithRetry = async (rec, knownGains, knownFrequencies, sampleRate, downsample) => {
     let retryCount = 0;
     let response = null;
 
     while (retryCount < this.MAX_RETRY_COUNT) {
       try {
-        response = await this.getSubtractedPSD(rec, knownGains, knownFrequencies, sampleRate);
+        response = await this.getSubtractedPSD(
+          rec,
+          knownGains,
+          knownFrequencies,
+          sampleRate,
+          downsample
+        );
         // If the request is successful, break out of the loop
         break;
       } catch (error) {
@@ -373,13 +397,13 @@ class PythonServerAPI {
     }
   };
 
-  getPSDWithRetry = async ({unconv_rec, conv_rec, sampleRate}) => {
+  getPSDWithRetry = async ({unconv_rec, conv_rec, sampleRate, downsample}) => {
     let retryCount = 0;
     let response = null;
 
     while (retryCount < this.MAX_RETRY_COUNT) {
       try {
-        response = await this.getPSD({unconv_rec, conv_rec, sampleRate});
+        response = await this.getPSD({unconv_rec, conv_rec, sampleRate, downsample});
         // If the request is successful, break out of the loop
         break;
       } catch (error) {
@@ -411,6 +435,7 @@ class PythonServerAPI {
     calibrateSoundSmoothMinBandwidthHz,
     calibrateSoundBurstFilteredExtraDb,
     calibrateSoundIIRPhase,
+    downsample,
   }) => {
     const task = 'component-inverse-impulse-response';
     let res = null;
@@ -431,6 +456,7 @@ class PythonServerAPI {
       calibrateSoundSmoothMinBandwidthHz,
       calibrateSoundBurstFilteredExtraDb,
       calibrateSoundIIRPhase,
+      downsample,
     });
 
     await axios({
@@ -461,6 +487,7 @@ class PythonServerAPI {
     mlsAmplitude,
     calibrateSoundBurstFilteredExtraDb,
     calibrateSoundIIRPhase,
+    downsample,
   }) => {
     const task = 'system-inverse-impulse-response';
     let res = null;
@@ -476,6 +503,7 @@ class PythonServerAPI {
       mlsAmplitude,
       calibrateSoundBurstFilteredExtraDb,
       calibrateSoundIIRPhase,
+      downsample,
     });
 
     await axios({
@@ -497,7 +525,7 @@ class PythonServerAPI {
     return res.data[task];
   };
 
-  getMLSPSD = async ({mls, sampleRate}) => {
+  getMLSPSD = async ({mls, sampleRate, downsample}) => {
     const task = 'mls-psd';
     let res = null;
 
@@ -505,6 +533,7 @@ class PythonServerAPI {
       task,
       mls,
       sampleRate,
+      downsample,
     });
 
     await axios({
@@ -526,13 +555,13 @@ class PythonServerAPI {
     return res.data[task];
   };
 
-  getMLSPSDWithRetry = async ({mls, sampleRate}) => {
+  getMLSPSDWithRetry = async ({mls, sampleRate, downsample}) => {
     let retryCount = 0;
     let response = null;
 
     while (retryCount < this.MAX_RETRY_COUNT) {
       try {
-        response = await this.getMLSPSD({mls, sampleRate});
+        response = await this.getMLSPSD({mls, sampleRate, downsample});
         // If the request is successful, break out of the loop
         break;
       } catch (error) {
@@ -566,6 +595,7 @@ class PythonServerAPI {
     calibrateSoundSmoothMinBandwidthHz,
     calibrateSoundBurstFilteredExtraDb,
     calibrateSoundIIRPhase,
+    downsample,
   }) => {
     let retryCount = 0;
     let response = null;
@@ -587,6 +617,7 @@ class PythonServerAPI {
           calibrateSoundSmoothMinBandwidthHz,
           calibrateSoundBurstFilteredExtraDb,
           calibrateSoundIIRPhase,
+          downsample,
         });
         // If the request is successful, break out of the loop
         break;
@@ -616,6 +647,7 @@ class PythonServerAPI {
     mlsAmplitude,
     calibrateSoundBurstFilteredExtraDb,
     calibrateSoundIIRPhase,
+    downsample,
   }) => {
     let retryCount = 0;
     let response = null;
@@ -632,6 +664,7 @@ class PythonServerAPI {
           mlsAmplitude,
           calibrateSoundBurstFilteredExtraDb,
           calibrateSoundIIRPhase,
+          downsample,
         });
         // If the request is successful, break out of the loop
         break;
@@ -746,7 +779,15 @@ class PythonServerAPI {
     return res.data[task];
   };
 
-  allHzPowerCheck = async ({payload, sampleRate, binDesiredSec, burstSec, repeats, warmUp}) => {
+  allHzPowerCheck = async ({
+    payload,
+    sampleRate,
+    binDesiredSec,
+    burstSec,
+    repeats,
+    warmUp,
+    downsample,
+  }) => {
     const task = 'all-hz-check';
     let res = null;
 
@@ -759,6 +800,7 @@ class PythonServerAPI {
       burstSec,
       repeats,
       warmUp,
+      downsample,
     });
 
     await axios({
