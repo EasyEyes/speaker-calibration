@@ -439,14 +439,8 @@ class Combination extends AudioCalibrator {
           })
           .then(result => {
             console.log(result);
-            this.systemConvolution = this.upsampleSignal(
-              result['convolution'],
-              this._calibrateSoundBurstDownsample
-            );
-            this.systemConvolutionNoBandpass = this.upsampleSignal(
-              result['convolution_no_bandpass'],
-              this._calibrateSoundBurstDownsample
-            );
+            this.systemConvolution = result['convolution'];
+            this.systemConvolutionNoBandpass = result['convolution_no_bandpass'];
           });
 
         // attenuate the system convolution if the amplitude is greater than this.calibrateSoundLimit
@@ -679,7 +673,10 @@ class Combination extends AudioCalibrator {
       'Obtaining last all hz unfiltered recording from #allHzUnfilteredRecordings to send to server for processing'
     );
     const numSignals = allSignals.length;
-    const mls = this.#mlsBufferView[this.icapture];
+    const mls = this.downsampleSignal(
+      this.#mlsBufferView[this.icapture],
+      this._calibrateSoundBurstDownsample
+    );
     const payload =
       signalCsv && signalCsv.length > 0 ? csvToArray(signalCsv) : allSignals[numSignals - 1];
     console.log('sending rec');
@@ -691,9 +688,10 @@ class Combination extends AudioCalibrator {
     this.emit('update', {message: this.status});
     if (this.isCalibrating) return null;
     const fMLS = this.sourceSamplingRate / this._calibrateSoundBurstDownsample;
+    const payload_downsampled = this.downsampleSignal(payload, this._calibrateSoundBurstDownsample);
     await this.pyServerAPI
       .allHzPowerCheck({
-        payload,
+        payload: payload_downsampled,
         sampleRate: fMLS,
         binDesiredSec: this._calibrateSoundPowerBinDesiredSec,
         burstSec: this.desired_time_per_mls,
@@ -1103,6 +1101,10 @@ class Combination extends AudioCalibrator {
   bothSoundCheck = async stream => {
     let iir_ir_and_plots;
     this.#currentConvolution = this.componentConvolution;
+    this.#currentConvolution = this.upsampleSignal(
+      this.#currentConvolution,
+      this._calibrateSoundBurstDownsample
+    );
     this.filteredMLSRange.component.Min = findMinValue(this.#currentConvolution);
     this.filteredMLSRange.component.Max = findMaxValue(this.#currentConvolution);
     const pre = this._calibrateSoundBurstPreSec;
@@ -1130,6 +1132,10 @@ class Combination extends AudioCalibrator {
 
     this.numSuccessfulCaptured = 0;
     this.#currentConvolution = this.systemConvolution;
+    this.#currentConvolution = this.upsampleSignal(
+      this.#currentConvolution,
+      this._calibrateSoundBurstDownsample
+    );
     this.filteredMLSRange.system.Min = findMinValue(this.#currentConvolution);
     this.filteredMLSRange.system.Max = findMaxValue(this.#currentConvolution);
     this.soundCheck = 'system';
@@ -1516,6 +1522,10 @@ class Combination extends AudioCalibrator {
     const total_dur = pre + repeats * burst + post;
     if (this._calibrateSoundCheck != 'system') {
       this.#currentConvolution = this.componentConvolution;
+      this.#currentConvolution = this.upsampleSignal(
+        this.#currentConvolution,
+        this._calibrateSoundBurstDownsample
+      );
       this.filteredMLSRange.component.Min = findMinValue(this.#currentConvolution);
       this.filteredMLSRange.component.Max = findMaxValue(this.#currentConvolution);
       this.soundCheck = 'component';
@@ -1526,6 +1536,10 @@ class Combination extends AudioCalibrator {
       this.stopCalibrationAudio();
     } else {
       this.#currentConvolution = this.systemConvolution;
+      this.#currentConvolution = this.upsampleSignal(
+        this.#currentConvolution,
+        this._calibrateSoundBurstDownsample
+      );
       this.filteredMLSRange.system.Min = findMinValue(this.#currentConvolution);
       this.filteredMLSRange.system.Max = findMaxValue(this.#currentConvolution);
       this.soundCheck = 'system';
