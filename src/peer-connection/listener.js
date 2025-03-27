@@ -55,7 +55,6 @@ class Listener extends AudioPeer {
   };
 
   sendSamplingRate = sampleRate => {
-    this.displayUpdate('Listener - sendSamplingRate');
     this.connectionManager.send({
       name: 'SoundCalibration',
       payload: {
@@ -66,7 +65,6 @@ class Listener extends AudioPeer {
   };
 
   sendSampleSize = sampleSize => {
-    this.displayUpdate('Listener - sendSampleSize');
     this.connectionManager.send({
       name: 'SoundCalibration',
       payload: {
@@ -77,7 +75,6 @@ class Listener extends AudioPeer {
   };
 
   sendFlags = flags => {
-    this.displayUpdate('Listener - sendFlags');
     this.connectionManager.send({
       name: 'SoundCalibration',
       payload: {
@@ -142,10 +139,6 @@ class Listener extends AudioPeer {
     console.log(track);
     const capabilities = track.getCapabilities();
 
-    this.displayUpdate(
-      `Listener Track Capabilities - ${JSON.stringify(capabilities, undefined, 2)}`
-    );
-
     const constraints = track.getConstraints();
 
     if (capabilities.echoCancellation) {
@@ -163,8 +156,6 @@ class Listener extends AudioPeer {
     if (capabilities.channelCount) {
       constraints.channelCount = 1;
     }
-
-    this.displayUpdate(`Listener Track Constraints - ${JSON.stringify(constraints, undefined, 2)}`);
 
     // await the promise
     try {
@@ -261,13 +252,6 @@ class Listener extends AudioPeer {
         //audio: {echoCancellation: false, noiseSuppression: false, autoGainControl: false, deviceId: {exact: await this.getDeviceIdByLabel(this.microphoneDeviceId) }},
       })
       .then(stream => {
-        this.displayUpdate(
-          `Listener Track settings before applied constraints - ${JSON.stringify(
-            stream.getAudioTracks()[0].getSettings(),
-            undefined,
-            2
-          )}`
-        );
         this.applyHQTrackConstraints(stream)
           .then(settings => {
             console.log(settings);
