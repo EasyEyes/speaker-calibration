@@ -421,11 +421,14 @@ export class PhonePeer {
     const display = document.getElementById('display');
     if (display) {
       display.style.textAlign = 'left';
+      display.style.fontSize = '11px';
     }
 
     // set the text of the html elements
     recordingInProgressElement.innerText = recordingInProgress;
     allowMicrophoneElement.innerText = allowMicrophone;
+    allowMicrophoneElement.style.marginBottom = '0.5rem';
+    allowMicrophoneElement.style.fontSize = '17px';
 
     recordingInProgressElement.style.whiteSpace = 'nowrap';
     recordingInProgressElement.style.fontWeight = 'bold';
@@ -444,6 +447,7 @@ export class PhonePeer {
     message.style.lineHeight = '2.5rem';
     const p = document.createElement('p');
     p.innerText = backToExperimentWindow;
+    p.style.fontSize = '17px';
     message.appendChild(p);
 
     await this.listener.startCalibration();

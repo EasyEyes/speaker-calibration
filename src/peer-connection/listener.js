@@ -85,7 +85,6 @@ class Listener extends AudioPeer {
   };
 
   sendPermissionStatus = status => {
-    // this.displayUpdate('Listener - sendPermissionStatus');
     this.connectionManager.send({
       name: 'SoundCalibration',
       payload: {
@@ -230,7 +229,7 @@ class Listener extends AudioPeer {
   };
 
   openAudioStream = async () => {
-    this.displayUpdate('Listener - openAudioStream');
+    this.displayUpdate('Listener - openAudioStream', false);
     const mobileOS = this.getMobileOS();
     if (process.env.NODE_ENV !== 'development' && mobileOS !== 'iOS') {
       const err = new UnsupportedDeviceError(`${mobileOS} is not supported`);
