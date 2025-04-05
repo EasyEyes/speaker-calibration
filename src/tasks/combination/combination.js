@@ -708,7 +708,27 @@ class Combination extends AudioCalibrator {
                 ', greater than _calibrateSoundBurstMaxSD_dB: ' +
                 this._calibrateSoundBurstMaxSD_dB
             );
+            const pre = this._calibrateSoundBurstPreSec;
+            const repeats = this._calibrateSoundBurstRepeats;
+            const burst = this._calibrateSoundBurstSec;
+            const post = this._calibrateSoundBurstPostSec;
+            const total_dur = pre + repeats * burst + post;
+            this.addTimeStamp(
+              `Recorded ${total_dur.toFixed(1)} s ` +
+              `(${pre.toFixed(1)} + ${repeats}×${burst.toFixed(1)} + ${post.toFixed(1)} s)
+               of MLS ver. ${this.icapture}. SD = ${result['sd']} > ${this._calibrateSoundBurstMaxSD_dB}`);
             this.recordingChecks['unfiltered'].push(result);
+            this.recordingChecks['warnings'].push(
+              `All Hz. Re-recorded because SD ${result['sd']} >
+               ${this._calibrateSoundBurstMaxSD_dB} dB`
+            );
+            this.status = this.generateTemplate(
+              `All Hz: Re-recording because SD ${result['sd']} >
+               ${this._calibrateSoundBurstMaxSD_dB} dB`.toString()
+            ).toString();
+            this.emit('update', {
+              message: this.status,
+            });
             this.clearLastUnfilteredRecordedSignals();
             this.numSuccessfulCaptured += 1;
           } else {
@@ -719,6 +739,10 @@ class Combination extends AudioCalibrator {
                   ', less than _calibrateSoundBurstMaxSD_dB: ' +
                   this._calibrateSoundBurstMaxSD_dB
               );
+              this.addTimeStamp(
+                `Recorded ${total_dur.toFixed(1)} s ` +
+                `(${pre.toFixed(1)} + ${repeats}×${burst.toFixed(1)} + ${post.toFixed(1)} s)
+                 of MLS ver. ${this.icapture}. SD = ${result['sd']} <= ${this._calibrateSoundBurstMaxSD_dB}`);
             } else {
               console.log(
                 'SD: ' +
@@ -726,33 +750,16 @@ class Combination extends AudioCalibrator {
                   ', greater than _calibrateSoundBurstMaxSD_dB: ' +
                   this._calibrateSoundBurstMaxSD_dB
               );
-              this.recordingChecks['warnings'].push(
-                `All Hz. Re-recorded ${this.inDB} dB because SD ${result['sd']} > ${this._calibrateSoundBurstMaxSD_dB} dB`
-              );
-              this.status = this.generateTemplate(
-                `All Hz: Re-recording at ${this.inDB} dB because SD ${result['sd']} > ${this._calibrateSoundBurstMaxSD_dB} dB`.toString()
-              ).toString();
-              this.emit('update', {
-                message: this.status,
-              });
+              this.addTimeStamp(
+                `Recorded ${total_dur.toFixed(1)} s ` +
+                `(${pre.toFixed(1)} + ${repeats}×${burst.toFixed(1)} + ${post.toFixed(1)} s)
+                 of MLS ver. ${this.icapture}. SD = ${result['sd']} > ${this._calibrateSoundBurstMaxSD_dB}`);
             }
             if (this.numSuccessfulCaptured == 1) {
               console.log('pop last unfiltered mls volume check');
               this.recordingChecks['unfiltered'].pop();
             }
             this.recordingChecks['unfiltered'].push(result);
-            // let start = new Date().getTime() / 1000;
-            //   const payloadT = tf.tensor1d(payload);
-            //   payloadT.print();
-            //   const xfft = payloadT.rfft();  // tf.spe
-            //   xfft.array().then(array => {
-            //     console.log("fft:", array);
-            //     let setItem = new Set(array);
-            //     console.log("all zero", setItem.size === 1 && setItem.has(0));
-            // });
-            // console.log("dimention:", xfft.shape);
-            // let end = new Date().getTime() / 1000;
-            // console.log("Time taken:", end - start, "seconds");
             console.log('start calculate impulse response');
             const usedPeriodStart = this.num_mls_to_skip * this.sourceSamplingRate;
             const payload_skipped_warmUp = payload.slice(usedPeriodStart);
@@ -1025,17 +1032,6 @@ class Combination extends AudioCalibrator {
     if (this.mode === 'unfiltered') {
       console.log('play calibration audio ' + this.stepNum);
 
-      const pre = this._calibrateSoundBurstPreSec;
-      const repeats = this._calibrateSoundBurstRepeats;
-      const burst = this._calibrateSoundBurstSec;
-      const post = this._calibrateSoundBurstPostSec;
-      const total_dur = pre + repeats * burst + post;
-      this.addTimeStamp(
-        `Record ${total_dur.toFixed(1)} s ` +
-          `(${pre.toFixed(1)} + ${repeats}×${burst.toFixed(1)} + ${post.toFixed(
-            1
-          )} s) of MLS ver. ${this.icapture}`
-      );
       this.status = this.generateTemplate(
         `All Hz Calibration: playing the calibration tone...`.toString()
       ).toString();
@@ -1107,13 +1103,7 @@ class Combination extends AudioCalibrator {
     );
     this.filteredMLSRange.component.Min = findMinValue(this.#currentConvolution);
     this.filteredMLSRange.component.Max = findMaxValue(this.#currentConvolution);
-    const pre = this._calibrateSoundBurstPreSec;
-    const repeats = this._calibrateSoundBurstRepeats;
-    const burst = this._calibrateSoundBurstSec;
-    const post = this._calibrateSoundBurstPostSec;
-    const total_dur = pre + repeats * burst + post;
     this.soundCheck = 'component';
-    this.addTimeStamp(`Record ${total_dur} s of MLS with ${this.soundCheck} IIR.”`);
 
     if (this.isCalibrating) return null;
     await this.playMLSwithIIR(stream, this.#currentConvolution);
@@ -1140,8 +1130,6 @@ class Combination extends AudioCalibrator {
     this.filteredMLSRange.system.Max = findMaxValue(this.#currentConvolution);
     this.soundCheck = 'system';
 
-    this.addTimeStamp(`Record ${total_dur} s of MLS with ${this.soundCheck} IIR.”`);
-
     if (this.isCalibrating) return null;
     await this.playMLSwithIIR(stream, this.#currentConvolution);
 
@@ -1157,7 +1145,6 @@ class Combination extends AudioCalibrator {
     }
 
     let return_system_conv_rec = system_conv_recs[system_conv_recs.length - 1];
-    // await this.checkPowerVariation(return_system_conv_rec);
 
     this.clearAllFilteredRecordedSignals();
 
@@ -1515,11 +1502,7 @@ class Combination extends AudioCalibrator {
 
   singleSoundCheck = async stream => {
     let iir_ir_and_plots;
-    const pre = this._calibrateSoundBurstPreSec;
-    const repeats = this._calibrateSoundBurstRepeats;
-    const burst = this._calibrateSoundBurstSec;
-    const post = this._calibrateSoundBurstPostSec;
-    const total_dur = pre + repeats * burst + post;
+
     if (this._calibrateSoundCheck != 'system') {
       this.#currentConvolution = this.componentConvolution;
       this.#currentConvolution = this.upsampleSignal(
@@ -1529,7 +1512,6 @@ class Combination extends AudioCalibrator {
       this.filteredMLSRange.component.Min = findMinValue(this.#currentConvolution);
       this.filteredMLSRange.component.Max = findMaxValue(this.#currentConvolution);
       this.soundCheck = 'component';
-      this.addTimeStamp(`Record ${total_dur} s of MLS with ${this.soundCheck} IIR.`);
       //this.addTimeStamp(`Record ${total_dur} s of MLS with speaker or microphone IIR.`);
       if (this.isCalibrating) return null;
       await this.playMLSwithIIR(stream, this.#currentConvolution);
@@ -2973,8 +2955,9 @@ class Combination extends AudioCalibrator {
       })
       .then(result => {
         if (result) {
+          const total_dur = this._calibrateSoundBurstPreSec + this._calibrateSoundBurstRepeats * this._calibrateSoundBurstSec + this._calibrateSoundBurstPostSec;
           if (result['sd'] > this._calibrateSoundBurstMaxSD_dB && this.numSuccessfulCaptured == 0) {
-            console.log('filtered recording sd too high');
+            this.addTimeStamp(`Recorded ${total_dur} s of MLS with ${this.soundCheck} IIR. SD = ${result['sd']} > ${this._calibrateSoundBurstMaxSD_dB} dB`);
             this.recordingChecks['warnings'].push(
               `All Hz. Re-recorded ${this.inDB} because SD ${result['sd']} > ${this._calibrateSoundBurstMaxSD_dB} dB`
             );
@@ -2989,6 +2972,7 @@ class Combination extends AudioCalibrator {
             // else count one attemp
             this.numSuccessfulCaptured += 1;
           } else {
+            this.addTimeStamp(`Recorded ${total_dur} s of MLS with ${this.soundCheck} IIR. SD = ${result['sd']} <= ${this._calibrateSoundBurstMaxSD_dB} dB`);
             this.recordingChecks[this.soundCheck].push(result);
             // Now we do at most 2 attempts if sd > _calibrateSoundBurstMaxSD_dB
             // Second attempt is the final
