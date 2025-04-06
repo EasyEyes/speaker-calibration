@@ -322,9 +322,7 @@ class Combination extends AudioCalibrator {
       .replace('333', this.calibrateSoundSamplingDesiredBits);
     const reportParameters = `${samplingParamText}`;
     if (this.flags) {
-      flags = `<br> autoGainControl: ${this.flags.autoGainControl}; 
-      echoCancellation: ${this.flags.echoCancellation};
-      noiseSuppression: ${this.flags.noiseSuppression}`;
+      flags = `<br> autoGainControl: ${this.flags.autoGainControl}, echoCancellation: ${this.flags.echoCancellation}, noiseSuppression: ${this.flags.noiseSuppression}`;
     }
     if (this.SDofFilteredRange['mls']) {
       MLSsd = `<br> Recorded MLS power SD: ${this.SDofFilteredRange['mls']} dB`;
@@ -753,8 +751,8 @@ class Combination extends AudioCalibrator {
               );
               this.addTimeStamp(
                 `Recorded ${total_dur.toFixed(1)} s ` +
-                `(${pre.toFixed(1)} + ${repeats}×${burst.toFixed(1)} + ${post.toFixed(1)} s)
-                 of MLS ver. ${this.icapture}. SD = ${result['sd']} > ${this._calibrateSoundBurstMaxSD_dB}`);
+                `(${pre.toFixed(1)} + ${repeats}×${burst.toFixed(1)} + ${post.toFixed(1)} s)` +
+                 `of MLS ver. ${this.icapture}. SD = ${result['sd']} > ${this._calibrateSoundBurstMaxSD_dB}`);
             }
             if (this.numSuccessfulCaptured == 1) {
               console.log('pop last unfiltered mls volume check');
@@ -871,7 +869,6 @@ class Combination extends AudioCalibrator {
       'Waiting ' + this._calibrateSoundBackgroundSecs + ' second(s) to record background noise'
     );
     let time_to_wait = this._calibrateSoundBackgroundSecs + 0.5;
-    this.addTimeStamp(`Record ${time_to_wait.toFixed(1)} s of background.`);
     await sleep(time_to_wait);
   };
 
@@ -2131,7 +2128,6 @@ class Combination extends AudioCalibrator {
 
     const amplitude = Math.pow(10, this.power_dB / 20);
     //MLSpower = Math.pow(10,this.power_dB/20);
-    this.addTimeStamp('Compute MLS sequence');
     if (this.isCalibrating) return null;
     await this.pyServerAPI
       .getMLSWithRetry({
@@ -2149,6 +2145,7 @@ class Combination extends AudioCalibrator {
         // this.emit('InvertedImpulseResponse', {res: false});
         console.error(err);
       });
+    this.addTimeStamp('Compute MLS sequence');
     this.numSuccessfulBackgroundCaptured = 0;
     if (this._calibrateSoundBackgroundSecs > 0) {
       this.mode = 'background';
@@ -2167,6 +2164,7 @@ class Combination extends AudioCalibrator {
       );
       this.incrementStatusBar();
     }
+    this.addTimeStamp(`Record ${time_to_wait.toFixed(1)} s of background.`);
     this.mode = 'unfiltered';
     this.numSuccessfulCaptured = 0;
 
