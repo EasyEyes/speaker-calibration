@@ -2164,7 +2164,8 @@ class Combination extends AudioCalibrator {
       );
       this.incrementStatusBar();
     }
-    this.addTimeStamp(`Record ${time_to_wait.toFixed(1)} s of background.`);
+    let backgroundSec = (this._calibrateSoundBackgroundSecs + 0.5);
+    this.addTimeStamp(`Record ${backgroundSec.toFixed(1)} s of background.`);
     this.mode = 'unfiltered';
     this.numSuccessfulCaptured = 0;
 
