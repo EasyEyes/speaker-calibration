@@ -549,19 +549,8 @@ class Combination extends AudioCalibrator {
           })
           .then(result => {
             console.log('result', result);
-            this.componentConvolution = this.upsampleSignal(
-              result['convolution'],
-              this._calibrateSoundBurstDownsample
-            );
-            this.componentConvolutionNoBandpass = this.upsampleSignal(
-              result['convolution_no_bandpass'],
-              this._calibrateSoundBurstDownsample
-            );
-            console.log('this.componentConvolution...', this.componentConvolution);
-            console.log(
-              'this.componentConvolutionNoBandpass...',
-              this.componentConvolutionNoBandpass
-            );
+            this.componentConvolution = result['convolution'];
+            this.componentConvolutionNoBandpass = result['convolution_no_bandpass'];
           });
         // attenuate the component convolution if the amplitude is greater than this.calibrateSoundLimit
         // find max of absolute value of component convolution
@@ -631,7 +620,7 @@ class Combination extends AudioCalibrator {
     // Slice the array from the calculated start index to the end of the array
     const background_rec = background_rec_whole.slice(startIndex);
     console.log('Sending background recording to server for processing');
-    let backgroundSec = (this._calibrateSoundBackgroundSecs + 0.5);
+    let backgroundSec = this._calibrateSoundBackgroundSecs + 0.5;
     this.addTimeStamp(`Record ${backgroundSec.toFixed(1)} s of background.`);
     const fBackground = this.sourceSamplingRate / this._calibrateSoundBurstDownsample;
     const background_rec_downsampled = this.downsampleSignal(
@@ -713,11 +702,14 @@ class Combination extends AudioCalibrator {
                 ', greater than _calibrateSoundBurstMaxSD_dB: ' +
                 this._calibrateSoundBurstMaxSD_dB
             );
-            
+
             this.addTimeStamp(
               `Recorded ${total_dur.toFixed(1)} s ` +
-              `(${pre.toFixed(1)} + ${repeats}×${burst.toFixed(1)} + ${post.toFixed(1)} s) of MLS ver.` +
-              ` ${this.icapture}. SD = ${result['sd']} > ${this._calibrateSoundBurstMaxSD_dB}`);
+                `(${pre.toFixed(1)} + ${repeats}×${burst.toFixed(1)} + ${post.toFixed(
+                  1
+                )} s) of MLS ver.` +
+                ` ${this.icapture}. SD = ${result['sd']} > ${this._calibrateSoundBurstMaxSD_dB}`
+            );
             this.recordingChecks['unfiltered'].push(result);
             this.recordingChecks['warnings'].push(
               `All Hz. Re-recorded because SD ${result['sd']} >
@@ -742,8 +734,11 @@ class Combination extends AudioCalibrator {
               );
               this.addTimeStamp(
                 `Recorded ${total_dur.toFixed(1)} s ` +
-                `(${pre.toFixed(1)} + ${repeats}×${burst.toFixed(1)} + ${post.toFixed(1)} s) of MLS ver.` +
-                ` ${this.icapture}. SD = ${result['sd']} > ${this._calibrateSoundBurstMaxSD_dB}`);
+                  `(${pre.toFixed(1)} + ${repeats}×${burst.toFixed(1)} + ${post.toFixed(
+                    1
+                  )} s) of MLS ver.` +
+                  ` ${this.icapture}. SD = ${result['sd']} > ${this._calibrateSoundBurstMaxSD_dB}`
+              );
             } else {
               console.log(
                 'SD: ' +
@@ -753,8 +748,9 @@ class Combination extends AudioCalibrator {
               );
               this.addTimeStamp(
                 `Recorded ${total_dur.toFixed(1)} s ` +
-                `(${pre.toFixed(1)} + ${repeats}×${burst.toFixed(1)} + ${post.toFixed(1)} s)` +
-                 `of MLS ver. ${this.icapture}. SD = ${result['sd']} > ${this._calibrateSoundBurstMaxSD_dB}`);
+                  `(${pre.toFixed(1)} + ${repeats}×${burst.toFixed(1)} + ${post.toFixed(1)} s)` +
+                  `of MLS ver. ${this.icapture}. SD = ${result['sd']} > ${this._calibrateSoundBurstMaxSD_dB}`
+              );
             }
             if (this.numSuccessfulCaptured == 1) {
               console.log('pop last unfiltered mls volume check');
@@ -2952,9 +2948,14 @@ class Combination extends AudioCalibrator {
       })
       .then(result => {
         if (result) {
-          const total_dur = this._calibrateSoundBurstPreSec + this._calibrateSoundBurstRepeats * this._calibrateSoundBurstSec + this._calibrateSoundBurstPostSec;
+          const total_dur =
+            this._calibrateSoundBurstPreSec +
+            this._calibrateSoundBurstRepeats * this._calibrateSoundBurstSec +
+            this._calibrateSoundBurstPostSec;
           if (result['sd'] > this._calibrateSoundBurstMaxSD_dB && this.numSuccessfulCaptured == 0) {
-            this.addTimeStamp(`Recorded ${total_dur} s of MLS with ${this.soundCheck} IIR. SD = ${result['sd']} > ${this._calibrateSoundBurstMaxSD_dB} dB`);
+            this.addTimeStamp(
+              `Recorded ${total_dur} s of MLS with ${this.soundCheck} IIR. SD = ${result['sd']} > ${this._calibrateSoundBurstMaxSD_dB} dB`
+            );
             this.recordingChecks['warnings'].push(
               `All Hz. Re-recorded ${this.inDB} because SD ${result['sd']} > ${this._calibrateSoundBurstMaxSD_dB} dB`
             );
@@ -2969,7 +2970,11 @@ class Combination extends AudioCalibrator {
             // else count one attemp
             this.numSuccessfulCaptured += 1;
           } else {
-            this.addTimeStamp(`Recorded ${total_dur} s of MLS with ${this.soundCheck} IIR. SD = ${result['sd']} ${result['sd'] > this._calibrateSoundBurstMaxSD_dB ? '>' : '<='} ${this._calibrateSoundBurstMaxSD_dB} dB`);
+            this.addTimeStamp(
+              `Recorded ${total_dur} s of MLS with ${this.soundCheck} IIR. SD = ${result['sd']} ${
+                result['sd'] > this._calibrateSoundBurstMaxSD_dB ? '>' : '<='
+              } ${this._calibrateSoundBurstMaxSD_dB} dB`
+            );
             this.recordingChecks[this.soundCheck].push(result);
             // Now we do at most 2 attempts if sd > _calibrateSoundBurstMaxSD_dB
             // Second attempt is the final
