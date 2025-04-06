@@ -689,6 +689,11 @@ class Combination extends AudioCalibrator {
     if (this.isCalibrating) return null;
     const fMLS = this.sourceSamplingRate / this._calibrateSoundBurstDownsample;
     const payload_downsampled = this.downsampleSignal(payload, this._calibrateSoundBurstDownsample);
+    const pre = this._calibrateSoundBurstPreSec;
+    const repeats = this._calibrateSoundBurstRepeats;
+    const burst = this._calibrateSoundBurstSec;
+    const post = this._calibrateSoundBurstPostSec;
+    const total_dur = pre + repeats * burst + post;
     await this.pyServerAPI
       .allHzPowerCheck({
         payload: payload_downsampled,
@@ -708,11 +713,7 @@ class Combination extends AudioCalibrator {
                 ', greater than _calibrateSoundBurstMaxSD_dB: ' +
                 this._calibrateSoundBurstMaxSD_dB
             );
-            const pre = this._calibrateSoundBurstPreSec;
-            const repeats = this._calibrateSoundBurstRepeats;
-            const burst = this._calibrateSoundBurstSec;
-            const post = this._calibrateSoundBurstPostSec;
-            const total_dur = pre + repeats * burst + post;
+            
             this.addTimeStamp(
               `Recorded ${total_dur.toFixed(1)} s ` +
               `(${pre.toFixed(1)} + ${repeats}×${burst.toFixed(1)} + ${post.toFixed(1)} s)
