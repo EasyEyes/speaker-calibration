@@ -716,8 +716,8 @@ class Combination extends AudioCalibrator {
             
             this.addTimeStamp(
               `Recorded ${total_dur.toFixed(1)} s ` +
-              `(${pre.toFixed(1)} + ${repeats}×${burst.toFixed(1)} + ${post.toFixed(1)} s)
-               of MLS ver. ${this.icapture}. SD = ${result['sd']} > ${this._calibrateSoundBurstMaxSD_dB}`);
+              `(${pre.toFixed(1)} + ${repeats}×${burst.toFixed(1)} + ${post.toFixed(1)} s) of MLS ver.` +
+              ` ${this.icapture}. SD = ${result['sd']} > ${this._calibrateSoundBurstMaxSD_dB}`);
             this.recordingChecks['unfiltered'].push(result);
             this.recordingChecks['warnings'].push(
               `All Hz. Re-recorded because SD ${result['sd']} >
@@ -916,7 +916,6 @@ class Combination extends AudioCalibrator {
    */
   #afterMLSRecord = async () => {
     console.log('after record');
-    this.addTimeStamp(`Send MLS to the server`);
     await this.sendRecordingToServerForProcessing();
   };
 
@@ -1513,7 +1512,7 @@ class Combination extends AudioCalibrator {
       this.filteredMLSRange.component.Min = findMinValue(this.#currentConvolution);
       this.filteredMLSRange.component.Max = findMaxValue(this.#currentConvolution);
       this.soundCheck = 'component';
-      //this.addTimeStamp(`Record ${total_dur} s of MLS with speaker or microphone IIR.`);
+
       if (this.isCalibrating) return null;
       await this.playMLSwithIIR(stream, this.#currentConvolution);
       this.stopCalibrationAudio();
@@ -1526,8 +1525,6 @@ class Combination extends AudioCalibrator {
       this.filteredMLSRange.system.Min = findMinValue(this.#currentConvolution);
       this.filteredMLSRange.system.Max = findMaxValue(this.#currentConvolution);
       this.soundCheck = 'system';
-      this.addTimeStamp(`Record ${total_dur} s of MLS with ${this.soundCheck} IIR.`);
-      //this.addTimeStamp(`Record ${total_dur} s of MLS with speaker or microphone IIR.`);
       if (this.isCalibrating) return null;
       await this.playMLSwithIIR(stream, this.#currentConvolution);
       this.stopCalibrationAudio();
@@ -2973,7 +2970,7 @@ class Combination extends AudioCalibrator {
             // else count one attemp
             this.numSuccessfulCaptured += 1;
           } else {
-            this.addTimeStamp(`Recorded ${total_dur} s of MLS with ${this.soundCheck} IIR. SD = ${result['sd']} <= ${this._calibrateSoundBurstMaxSD_dB} dB`);
+            this.addTimeStamp(`Recorded ${total_dur} s of MLS with ${this.soundCheck} IIR. SD = ${result['sd']} ${this._calibrateSoundBurstMaxSD_dB > result['sd'] ? '>' : '<='} ${this._calibrateSoundBurstMaxSD_dB} dB`);
             this.recordingChecks[this.soundCheck].push(result);
             // Now we do at most 2 attempts if sd > _calibrateSoundBurstMaxSD_dB
             // Second attempt is the final
