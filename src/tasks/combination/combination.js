@@ -742,8 +742,8 @@ class Combination extends AudioCalibrator {
               );
               this.addTimeStamp(
                 `Recorded ${total_dur.toFixed(1)} s ` +
-                `(${pre.toFixed(1)} + ${repeats}×${burst.toFixed(1)} + ${post.toFixed(1)} s)
-                 of MLS ver. ${this.icapture}. SD = ${result['sd']} <= ${this._calibrateSoundBurstMaxSD_dB}`);
+                `(${pre.toFixed(1)} + ${repeats}×${burst.toFixed(1)} + ${post.toFixed(1)} s) of MLS ver.` +
+                ` ${this.icapture}. SD = ${result['sd']} > ${this._calibrateSoundBurstMaxSD_dB}`);
             } else {
               console.log(
                 'SD: ' +
@@ -2970,7 +2970,7 @@ class Combination extends AudioCalibrator {
             // else count one attemp
             this.numSuccessfulCaptured += 1;
           } else {
-            this.addTimeStamp(`Recorded ${total_dur} s of MLS with ${this.soundCheck} IIR. SD = ${result['sd']} ${this._calibrateSoundBurstMaxSD_dB > result['sd'] ? '>' : '<='} ${this._calibrateSoundBurstMaxSD_dB} dB`);
+            this.addTimeStamp(`Recorded ${total_dur} s of MLS with ${this.soundCheck} IIR. SD = ${result['sd']} ${result['sd'] > this._calibrateSoundBurstMaxSD_dB ? '>' : '<='} ${this._calibrateSoundBurstMaxSD_dB} dB`);
             this.recordingChecks[this.soundCheck].push(result);
             // Now we do at most 2 attempts if sd > _calibrateSoundBurstMaxSD_dB
             // Second attempt is the final
