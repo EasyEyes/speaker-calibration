@@ -631,7 +631,8 @@ class Combination extends AudioCalibrator {
     // Slice the array from the calculated start index to the end of the array
     const background_rec = background_rec_whole.slice(startIndex);
     console.log('Sending background recording to server for processing');
-    this.addTimeStamp('Compute PSD of background');
+    let backgroundSec = (this._calibrateSoundBackgroundSecs + 0.5);
+    this.addTimeStamp(`Record ${backgroundSec.toFixed(1)} s of background.`);
     const fBackground = this.sourceSamplingRate / this._calibrateSoundBurstDownsample;
     const background_rec_downsampled = this.downsampleSignal(
       background_rec,
@@ -651,6 +652,7 @@ class Combination extends AudioCalibrator {
           this.background_noise['y_background'] = res['y_background'];
           this.background_noise['recording'] = background_rec;
         }
+        this.addTimeStamp('Compute PSD of background');
       })
       .catch(err => {
         console.error(err);
@@ -2164,8 +2166,6 @@ class Combination extends AudioCalibrator {
       );
       this.incrementStatusBar();
     }
-    let backgroundSec = (this._calibrateSoundBackgroundSecs + 0.5);
-    this.addTimeStamp(`Record ${backgroundSec.toFixed(1)} s of background.`);
     this.mode = 'unfiltered';
     this.numSuccessfulCaptured = 0;
 
