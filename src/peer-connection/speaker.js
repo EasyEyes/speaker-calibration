@@ -164,6 +164,18 @@ class Speaker extends AudioPeer {
     await speaker.connectionManager.waitForPeerConnection();
     await speaker.connectionManager.resolveWhenHandshakeReceived();
     speaker.connectionManager.sendPageTitle('EasyEyes Microphone');
+    speaker.connectionManager.send({
+      name: 'CompatibilityPeer',
+      message: 'Text',
+      text: 'Loading...',
+    });
+    speaker.connectionManager.send({
+      name: 'SoundCalibration',
+      message: 'phrases',
+      payload: {
+        phrases: speaker.phrases,
+      },
+    });
 
     // Send connection parameters to the listener
     speaker.connectionManager.send(speaker.prepareConnectionParams());

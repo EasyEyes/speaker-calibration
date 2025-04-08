@@ -26,6 +26,10 @@ export class PhonePeer {
         console.log('connectionParams', data.payload);
         this.handleConnectionParams(data.payload);
         break;
+      case 'phrases':
+        console.log('phrases', data.payload);
+        this.handlePhrases(data.payload);
+        break;
     }
   };
 
@@ -40,6 +44,10 @@ export class PhonePeer {
     this.listenerParameters.microphoneDeviceId = payload.deviceId;
 
     this.handleStartCalibration();
+  };
+
+  handlePhrases = payload => {
+    this.phrases = payload;
   };
 
   createUI = () => {
