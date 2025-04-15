@@ -581,6 +581,16 @@ class Combination extends AudioCalibrator {
   upsampleSignal = (signal, N) => {
     if (N <= 1) return signal;
 
+    //if signal is an array of arrays, upsample each array individually
+    try {
+      if (Array.isArray(signal[0])) {
+        return signal.map(arr => this.upsampleSignal(arr, N));
+      }
+    } catch (err) {
+      console.error(err);
+      return signal;
+    }
+
     const result = [];
     for (let sample of signal) {
       // Repeat each sample N times
@@ -599,6 +609,16 @@ class Combination extends AudioCalibrator {
    */
   downsampleSignal = (signal, N) => {
     if (N <= 1) return signal;
+
+    //if signal is an array of arrays, downsample each array individually
+    try {
+      if (Array.isArray(signal[0])) {
+        return signal.map(arr => this.downsampleSignal(arr, N));
+      }
+    } catch (err) {
+      console.error(err);
+      return signal;
+    }
 
     const result = [];
     for (let i = 0; i < signal.length; i += N) {
