@@ -320,7 +320,7 @@ class Combination extends AudioCalibrator {
       .replace('111', this.sourceSamplingRate)
       .replace('222', this.sinkSamplingRate)
       .replace('333', this.calibrateSoundSamplingDesiredBits);
-    const reportParameters = `${samplingParamText}`;
+    const reportParameters = `${samplingParamText} ↓${this._calibrateSoundBurstDownsample}:1`;
     if (this.flags) {
       flags = `<br> autoGainControl: ${this.flags.autoGainControl}, echoCancellation: ${this.flags.echoCancellation}, noiseSuppression: ${this.flags.noiseSuppression}`;
     }
@@ -710,7 +710,7 @@ class Combination extends AudioCalibrator {
         binDesiredSec: this._calibrateSoundPowerBinDesiredSec,
         burstSec: this.desired_time_per_mls,
         repeats: this.numMLSPerCapture - this.num_mls_to_skip,
-        warmUp: this.num_mls_to_skip,
+        warmUp: this._calibrateSoundBurstPreSec,
         downsample: this._calibrateSoundBurstDownsample,
       })
       .then(async result => {
@@ -757,7 +757,7 @@ class Combination extends AudioCalibrator {
                   `(${pre.toFixed(1)} + ${repeats}×${burst.toFixed(1)} + ${post.toFixed(
                     1
                   )} s) of MLS ver.` +
-                  ` ${this.icapture}. SD = ${result['sd']} > ${this._calibrateSoundBurstMaxSD_dB}`
+                  ` ${this.icapture}. SD = ${result['sd']} <= ${this._calibrateSoundBurstMaxSD_dB}`
               );
             } else {
               console.log(
@@ -857,22 +857,30 @@ class Combination extends AudioCalibrator {
       message: this.status,
     });
     let time_to_wait = 0;
-    const fMLS = this.sourceSamplingRate / this._calibrateSoundBurstDownsample;
     if (this.mode === 'unfiltered') {
       //unfiltered
-      time_to_wait = (this.#mls[0].length / fMLS) * this.numMLSPerCapture;
-      time_to_wait = time_to_wait + this._calibrateSoundBurstPostSec;
+      //should be: pre + (burst * repeats) + post
+      // time_to_wait = (this.#mls[0].length / this.sourceSamplingRate) * this.numMLSPerCapture;
+      // time_to_wait = time_to_wait + this._calibrateSoundBurstPostSec;
+      time_to_wait =
+        this._calibrateSoundBurstPreSec +
+        this._calibrateSoundBurstSec * this._calibrateSoundBurstRepeats +
+        this._calibrateSoundBurstPostSec;
     } else if (this.mode === 'filtered') {
       //filtered
       // time_to_wait =
       //   (this.#currentConvolution.length / this.sourceSamplingRate) *
       //   (this.numMLSPerCapture / (this.num_mls_to_skip + this.numMLSPerCapture));
-      time_to_wait = (this.#currentConvolution.length / fMLS) * this.numMLSPerCapture;
-      time_to_wait = time_to_wait + this._calibrateSoundBurstPostSec;
+      // time_to_wait =
+      //   (this.#currentConvolution.length / this.sourceSamplingRate) * this.numMLSPerCapture;
+      // time_to_wait = time_to_wait + this._calibrateSoundBurstPostSec;
+      time_to_wait =
+        this._calibrateSoundBurstPreSec +
+        this._calibrateSoundBurstSec * this._calibrateSoundBurstRepeats +
+        this._calibrateSoundBurstPostSec;
     } else {
       throw new Error('Mode broke in awaitDesiredMLSLength');
     }
-
     await sleep(time_to_wait);
   };
 
@@ -908,15 +916,15 @@ class Combination extends AudioCalibrator {
     });
     let number_of_bursts_to_skip = 0;
     let time_to_sleep = 0;
-    const fMLS = this.sourceSamplingRate / this._calibrateSoundBurstDownsample;
     if (this.mode === 'unfiltered') {
-      time_to_sleep = (this.#mls[0].length / fMLS) * number_of_bursts_to_skip;
+      time_to_sleep = (this.#mls[0].length / this.sourceSamplingRate) * number_of_bursts_to_skip;
     } else if (this.mode === 'filtered') {
       console.log(this.#currentConvolution.length);
       // time_to_sleep =
       //   (this.#currentConvolution.length / this.sourceSamplingRate) *
       //   (number_of_bursts_to_skip / (number_of_bursts_to_skip + this.numMLSPerCapture));
-      time_to_sleep = (this.#currentConvolution.length / fMLS) * number_of_bursts_to_skip;
+      time_to_sleep =
+        (this.#currentConvolution.length / this.sourceSamplingRate) * number_of_bursts_to_skip;
     } else {
       throw new Error('Mode broke in awaitSignalOnset');
     }
@@ -2410,7 +2418,7 @@ class Combination extends AudioCalibrator {
     const gainNode = audioContext.createGain();
     const taperGainNode = audioContext.createGain();
     const offsetGainNode = audioContext.createGain();
-    const totalDuration = this.CALIBRATION_TONE_DURATION * 1.2;
+    const totalDuration = this.CALIBRATION_TONE_DURATION;
 
     oscilator.frequency.value = this.#CALIBRATION_TONE_FREQUENCY;
     oscilator.type = this.#CALIBRATION_TONE_TYPE;
@@ -2493,7 +2501,7 @@ class Combination extends AudioCalibrator {
         message: this.status,
       });
     }
-    const totalDuration = this.CALIBRATION_TONE_DURATION * 1.2;
+    const totalDuration = this.CALIBRATION_TONE_DURATION;
     console.log('this.calibrationNodes', this.calibrationNodes);
     this.calibrationNodes[0].start(0);
     this.calibrationNodes[0].stop(totalDuration);
@@ -2544,7 +2552,7 @@ class Combination extends AudioCalibrator {
       getPower(rec.slice(0, this.calibrateSound1000HzPreSec * this.sourceSamplingRate)).toFixed(1)
     );
     console.log(
-      'pre period power: ',
+      'sec period power: ',
       getPower(
         rec.slice(
           this.calibrateSound1000HzPreSec * this.sourceSamplingRate,
@@ -2553,7 +2561,7 @@ class Combination extends AudioCalibrator {
       ).toFixed(1)
     );
     console.log(
-      'pre period power: ',
+      'post period power: ',
       getPower(
         rec.slice(
           (this.calibrateSound1000HzPreSec + this.calibrateSound1000HzSec) * this.sourceSamplingRate
@@ -2948,7 +2956,7 @@ class Combination extends AudioCalibrator {
         binDesiredSec: this._calibrateSoundPowerBinDesiredSec,
         burstSec: this.desired_time_per_mls,
         repeats: this.numMLSPerCapture - this.num_mls_to_skip,
-        warmUp: this.num_mls_to_skip,
+        warmUp: this._calibrateSoundBurstPreSec,
         downsample: this._calibrateSoundBurstDownsample,
       })
       .then(result => {
