@@ -7,7 +7,7 @@ class PythonServerAPI {
   static PYTHON_SERVER_URL = 'https://easyeyes-python-flask-server.herokuapp.com';
 
   static TEST_SERVER_URL = 'http://127.0.0.1:5000';
-  // static PYTHON_SERVER_URL ='http://127.0.0.1:5000';
+  // static PYTHON_SERVER_URL = 'http://127.0.0.1:5000';
 
   /** @private */
   MAX_RETRY_COUNT = 3;
@@ -760,7 +760,7 @@ class PythonServerAPI {
     })
       .then(response => {
         res = response;
-        console.log(res.data[task]);
+        console.log('data', data, 'res', res.data[task]);
       })
       .catch(error => {
         throw error;
@@ -776,6 +776,35 @@ class PythonServerAPI {
     //  backgroundDBSPL: 43.88233142069752,
     //  gainDBSPL: -128.24742161208985
     //}
+    return res.data[task];
+  };
+
+  irConvolution = async ({input_signal, microphone_ir, loudspeaker_ir}) => {
+    const task = 'ir-convolution';
+    let res = null;
+
+    const data = JSON.stringify({
+      input_signal,
+      microphone_ir,
+      loudspeaker_ir,
+    });
+
+    await axios({
+      method: 'post',
+      baseURL: PythonServerAPI.PYTHON_SERVER_URL, //server
+      url: `/task/${task}`,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      data,
+    })
+      .then(response => {
+        res = response;
+      })
+      .catch(error => {
+        throw error;
+      });
+    console.log('res in irConvolution: ', res);
     return res.data[task];
   };
 

@@ -102,6 +102,10 @@ class AudioRecorder extends MyEventEmitter {
     }
   };
 
+  saveVolumeRecording = async dataArray => {
+    this.#allVolumeRecordings.push(dataArray);
+  };
+
   #saveFilteredRecording = async () => {
     const arrayBuffer = await this.#audioBlob.arrayBuffer();
     const audioBuffer = await this.#audioContext.decodeAudioData(arrayBuffer);
@@ -296,6 +300,30 @@ class AudioRecorder extends MyEventEmitter {
    * @example
    */
   clearLastUnfilteredRecordedSignals = () => this.#allHzUnfilteredRecordings.pop();
+
+  /** .
+   * .
+   * .
+   * Public method to save a simulated unfiltered recording directly
+   *
+   * @param {Array<number>} dataArray - The simulated recording data
+   * @example
+   */
+  saveUnfilteredRecording = async dataArray => {
+    this.#allHzUnfilteredRecordings.push(dataArray);
+  };
+
+  /** .
+   * .
+   * .
+   * Public method to save a simulated filtered recording directly
+   *
+   * @param {Array<number>} dataArray - The simulated filtered recording data
+   * @example
+   */
+  saveFilteredRecording = async dataArray => {
+    this.#allHzFilteredRecordings.push(dataArray);
+  };
 
   /** .
    * .

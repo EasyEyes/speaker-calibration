@@ -270,7 +270,9 @@ class Speaker extends AudioPeer {
             params.loudspeakerModelName,
             params.phrases,
             params.soundSubtitleId,
-            params.calibrateSoundBurstDownsample
+            params.calibrateSoundBurstDownsample,
+            params.calibrateSoundSimulateMicrophone,
+            params.calibrateSoundSimulateLoudspeaker
           );
           speaker.#removeUIElems();
           //remove the call
@@ -856,7 +858,9 @@ class Speaker extends AudioPeer {
             params.loudspeakerModelName,
             params.phrases,
             params.soundSubtitleId,
-            params.calibrateSoundBurstDownsample
+            params.calibrateSoundBurstDownsample,
+            params.calibrateSoundSimulateMicrophone,
+            params.calibrateSoundSimulateLoudspeaker
           );
           clearInterval(permissionCheckInterval);
           window.speaker.#removeUIElems();

@@ -253,6 +253,60 @@ class AudioCalibrator extends AudioRecorder {
   };
 
   /**
+   * Simulates recording by convolving input signal with loudspeaker and microphone impulse responses
+   *
+   * @param {Array<number>} inputSignal - The input signal to be convolved
+   * @param {Array<number>} loudspeakerImpulseResponse - The loudspeaker impulse response
+   * @param {Array<number>} microphoneImpulseResponse - The microphone impulse response
+   * @param {Function} afterRecord - Callback function to execute after recording simulation
+   * @param {number} lCalib - Calibration parameter
+   * @param {string} checkRec - Recording check type
+   */
+  simulatedVolumeCalibrationSteps = async (
+    inputSignal,
+    loudspeakerImpulseResponse,
+    microphoneImpulseResponse,
+    afterRecord = () => {},
+    lCalib,
+    checkRec
+  ) => {
+    // Convolve with loudspeaker and microphone impulse responses
+    const convolvedSignalWithMicrophone = await this.pyServerAPI
+      .irConvolution({
+        input_signal: inputSignal,
+        loudspeaker_ir: loudspeakerImpulseResponse,
+        microphone_ir: microphoneImpulseResponse,
+      })
+      .then(res => {
+        console.log('res in simulatedVolumeCalibrationSteps: ', res);
+        return res['output_signal'];
+      });
+
+    // Log details about the simulated recording
+    const uniqueSet = new Set(convolvedSignalWithMicrophone);
+    const numberOfUniqueValues = uniqueSet.size;
+    const squaredValues = convolvedSignalWithMicrophone.map(value => value * value);
+    const sum_of_squares = squaredValues.reduce((total, value) => total + value, 0);
+    const squared_mean = sum_of_squares / convolvedSignalWithMicrophone.length;
+    const dbLevel = 20 * Math.log10(Math.sqrt(squared_mean));
+    const roundedDbLevel = Math.round(dbLevel * 10) / 10;
+
+    console.log(
+      '[SIMULATION] 1000-Hz recording: ' +
+        roundedDbLevel +
+        ' dB with ' +
+        numberOfUniqueValues +
+        ' unique values.'
+    );
+
+    // Save the simulated recording as if it were captured from a microphone
+    this.saveVolumeRecording(convolvedSignalWithMicrophone);
+
+    // Process the simulated recording
+    await afterRecord(lCalib);
+  };
+
+  /**
    * Getter for the isCalibrating property.
    *
    * @public

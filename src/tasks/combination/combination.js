@@ -276,6 +276,45 @@ class Combination extends AudioCalibrator {
     maxAbsComponent: 1,
   };
 
+  // Generate a signal for the MLS sequence
+  generateMLSSignal = (mls, burstDownsample) => {
+    // Generate a signal using the MLS sequence, upsampling if needed
+    if (burstDownsample > 1) {
+      return this.upsampleSignal(mls, burstDownsample);
+    }
+    return mls;
+  };
+
+  // Simulate MLS calibration by convolving with impulse responses
+  simulatedMLSCalibration = async (mlsSignal, loudspeakerIR, microphoneIR) => {
+    console.log('[SIMULATION] Running MLS impulse response calibration simulation');
+
+    // Convolve MLS with loudspeaker IR and microphone IR
+    const simulatedRecording = await this.pyServerAPI
+      .irConvolution({
+        input_signal: mlsSignal,
+        microphone_ir: microphoneIR,
+        loudspeaker_ir: loudspeakerIR,
+      })
+      .then(res => {
+        return res['output_signal'];
+      });
+    // Save the simulated recording using proper method
+    await this.saveUnfilteredRecording(simulatedRecording);
+    console.log(
+      'simulatedRecording',
+      simulatedRecording.length,
+      this.getAllUnfilteredRecordedSignals().length,
+      microphoneIR.length,
+      loudspeakerIR.length,
+      mlsSignal.length
+    );
+    // Process the recording
+    await this.sendRecordingToServerForProcessing();
+
+    return simulatedRecording;
+  };
+
   //parameter result from volume calibration
   T = 0;
   //gainDBSPL result from volume calibration
@@ -297,6 +336,10 @@ class Combination extends AudioCalibrator {
   icapture = 0;
 
   permissionStatus = null;
+
+  //impulse responses for simulated loudspeaker and microphone
+  calibrateSoundSimulateMicrophone = null;
+  calibrateSoundSimulateLoudspeaker = null;
 
   /**generate string template that gets reevaluated as variable increases */
   generateTemplate = status => {
@@ -789,7 +832,9 @@ class Combination extends AudioCalibrator {
                 mls: mls,
                 payload: payload_skipped_warmUp_downsampled,
                 sampleRate: fMLS,
-                numPeriods: this.numMLSPerCapture - this.num_mls_to_skip,
+                numPeriods:
+                  (this.numMLSPerCapture - this.num_mls_to_skip) /
+                  this._calibrateSoundBurstDownsample,
                 downsample: this._calibrateSoundBurstDownsample,
               })
               .then(async res => {
@@ -802,7 +847,9 @@ class Combination extends AudioCalibrator {
                     .getImpulseResponse({
                       mls,
                       sampleRate: fMLS,
-                      numPeriods: this.numMLSPerCapture - this.num_mls_to_skip,
+                      numPeriods:
+                        (this.numMLSPerCapture - this.num_mls_to_skip) /
+                        this._calibrateSoundBurstDownsample,
                       sig: payload_skipped_warmUp_downsampled,
                       fs2: this.fs2,
                       L_new_n: this.L_new_n,
@@ -1117,8 +1164,52 @@ class Combination extends AudioCalibrator {
     );
   };
 
+  /**
+   * Simulates playing convolved MLS with IIR and recording the result
+   * @param {Array<number>} convolution - The convolved MLS signal
+   * @param {Array<number>} loudspeakerIR - The loudspeaker impulse response
+   * @param {Array<number>} microphoneIR - The microphone impulse response
+   * @returns {Promise<void>}
+   */
+  simulatePlayMLSwithIIR = async (convolution, loudspeakerIR, microphoneIR) => {
+    console.log('[SIMULATION] Simulate playing MLS with IIR');
+    this.mode = 'filtered';
+
+    // Further convolve with loudspeaker and microphone IRs to simulate recording
+    const simulatedRecording = await this.pyServerAPI
+      .irConvolution({
+        input_signal: convolution,
+        loudspeaker_ir: loudspeakerIR,
+        microphone_ir: microphoneIR,
+      })
+      .then(res => {
+        return res['output_signal'];
+      });
+
+    // Save the simulated recording
+    await this.saveFilteredRecording(simulatedRecording);
+
+    // Process the recording
+    await this.checkPowerVariation();
+
+    this.numSuccessfulCaptured = 2; // Mark as successfully captured to avoid retries
+
+    this.stepNum += 1;
+    this.incrementStatusBar();
+    this.status = this.generateTemplate(
+      `All Hz Calibration [SIMULATION]: Filtered recording processed...`.toString()
+    ).toString();
+    this.emit('update', {message: this.status});
+  };
+
   bothSoundCheck = async stream => {
     let iir_ir_and_plots;
+
+    // Check if simulation is enabled
+    const simulationEnabled =
+      this.calibrateSoundSimulateMicrophone !== null &&
+      this.calibrateSoundSimulateLoudspeaker !== null;
+
     this.#currentConvolution = this.componentConvolution;
     this.#currentConvolution = this.upsampleSignal(
       this.#currentConvolution,
@@ -1129,12 +1220,24 @@ class Combination extends AudioCalibrator {
     this.soundCheck = 'component';
 
     if (this.isCalibrating) return null;
-    await this.playMLSwithIIR(stream, this.#currentConvolution);
-    this.stopCalibrationAudio();
+
+    if (simulationEnabled) {
+      // Use simulation mode for component check
+      await this.simulatePlayMLSwithIIR(
+        this.#currentConvolution,
+        this.calibrateSoundSimulateLoudspeaker,
+        this.calibrateSoundSimulateMicrophone
+      );
+    } else {
+      // Use actual recording mode
+      await this.playMLSwithIIR(stream, this.#currentConvolution);
+      this.stopCalibrationAudio();
+    }
+
     let component_conv_recs = this.getAllFilteredRecordedSignals();
 
     if (this.componentAttentuatorGainDB != 0) {
-      let linearScaleAttenuation = Math.pow(10, this.componentAttentuatorGainDB / 20);
+      let linearScaleAttenuation = Math.pow(10, this.componentAttenuatorGainDB / 20);
       component_conv_recs = component_conv_recs.map(rec => {
         return rec.map(value => value / this.linearScaleAttenuation);
       });
@@ -1154,9 +1257,19 @@ class Combination extends AudioCalibrator {
     this.soundCheck = 'system';
 
     if (this.isCalibrating) return null;
-    await this.playMLSwithIIR(stream, this.#currentConvolution);
 
-    this.stopCalibrationAudio();
+    if (simulationEnabled) {
+      // Use simulation mode for system check
+      await this.simulatePlayMLSwithIIR(
+        this.#currentConvolution,
+        this.calibrateSoundSimulateLoudspeaker,
+        this.calibrateSoundSimulateMicrophone
+      );
+    } else {
+      // Use actual recording mode
+      await this.playMLSwithIIR(stream, this.#currentConvolution);
+      this.stopCalibrationAudio();
+    }
 
     let system_conv_recs = this.getAllFilteredRecordedSignals();
 
@@ -1171,10 +1284,15 @@ class Combination extends AudioCalibrator {
 
     this.clearAllFilteredRecordedSignals();
 
-    this.sourceAudioContext.close();
+    if (simulationEnabled) {
+      console.log('[SIMULATION] Processing simulated recordings');
+    } else {
+      this.sourceAudioContext.close();
+    }
+
     let recs = this.getAllUnfilteredRecordedSignals();
     if (this.componentAttentuatorGainDB != 0) {
-      let linearScaleAttenuation = Math.pow(10, this.componentAttentuatorGainDB / 20);
+      let linearScaleAttenuation = Math.pow(10, this.componentAttenuatorGainDB / 20);
       recs = recs.map(rec => {
         return rec.map(value => value / this.linearScaleAttenuation);
       });
@@ -1520,6 +1638,11 @@ class Combination extends AudioCalibrator {
   singleSoundCheck = async stream => {
     let iir_ir_and_plots;
 
+    // Check if simulation is enabled
+    const simulationEnabled =
+      this.calibrateSoundSimulateMicrophone !== null &&
+      this.calibrateSoundSimulateLoudspeaker !== null;
+
     if (this._calibrateSoundCheck != 'system') {
       this.#currentConvolution = this.componentConvolution;
       this.#currentConvolution = this.upsampleSignal(
@@ -1531,8 +1654,19 @@ class Combination extends AudioCalibrator {
       this.soundCheck = 'component';
 
       if (this.isCalibrating) return null;
-      await this.playMLSwithIIR(stream, this.#currentConvolution);
-      this.stopCalibrationAudio();
+
+      if (simulationEnabled) {
+        // Use simulation mode
+        await this.simulatePlayMLSwithIIR(
+          this.#currentConvolution,
+          this.calibrateSoundSimulateLoudspeaker,
+          this.calibrateSoundSimulateMicrophone
+        );
+      } else {
+        // Use actual recording mode
+        await this.playMLSwithIIR(stream, this.#currentConvolution);
+        this.stopCalibrationAudio();
+      }
     } else {
       this.#currentConvolution = this.systemConvolution;
       this.#currentConvolution = this.upsampleSignal(
@@ -1542,39 +1676,44 @@ class Combination extends AudioCalibrator {
       this.filteredMLSRange.system.Min = findMinValue(this.#currentConvolution);
       this.filteredMLSRange.system.Max = findMaxValue(this.#currentConvolution);
       this.soundCheck = 'system';
+
       if (this.isCalibrating) return null;
-      await this.playMLSwithIIR(stream, this.#currentConvolution);
-      this.stopCalibrationAudio();
+
+      if (simulationEnabled) {
+        // Use simulation mode
+        await this.simulatePlayMLSwithIIR(
+          this.#currentConvolution,
+          this.calibrateSoundSimulateLoudspeaker,
+          this.calibrateSoundSimulateMicrophone
+        );
+      } else {
+        // Use actual recording mode
+        await this.playMLSwithIIR(stream, this.#currentConvolution);
+        this.stopCalibrationAudio();
+      }
     }
+
     let conv_recs = this.getAllFilteredRecordedSignals();
     if (this._calibrateSoundCheck == 'goal') {
       if (this.componentAttentuatorGainDB != 0) {
-        let linearScaleAttenuation = Math.pow(10, this.componentAttentuatorGainDB / 20);
+        let linearScaleAttenuation = Math.pow(10, this.componentAttenuatorGainDB / 20);
         conv_recs = conv_recs.map(rec => {
           return rec.map(value => value / this.linearScaleAttenuation);
         });
       }
     } else if (this._calibrateSoundCheck == 'system') {
       if (this.systemAttentuatorGainDB != 0) {
-        let linearScaleAttenuation = Math.pow(10, this.systemAttentuatorGainDB / 20);
+        let linearScaleAttenuation = Math.pow(10, this.systemAttenuatorGainDB / 20);
         conv_recs = conv_recs.map(rec => {
           return rec.map(value => value / this.linearScaleAttenuation);
         });
       }
     }
 
-    //remove the filteredMLSAttenuation from the recorded signals
-    // conv_recs = conv_recs.map(rec => {
-    //   if (this.soundCheck === 'component') {
-    //     return rec.map(value => value / this.filteredMLSAttenuation.component);
-    //   }
-    //   return rec.map(value => value / this.filteredMLSAttenuation.system);
-    // });
-
     let recs = this.getAllUnfilteredRecordedSignals();
     if (this._calibrateSoundCheck == 'goal') {
       if (this.componentAttentuatorGainDB != 0) {
-        let linearScaleAttenuation = Math.pow(10, this.componentAttentuatorGainDB / 20);
+        let linearScaleAttenuation = Math.pow(10, this.componentAttenuatorGainDB / 20);
         recs = recs.map(rec => {
           return rec.map(value => value / this.linearScaleAttenuation);
         });
@@ -1594,7 +1733,13 @@ class Combination extends AudioCalibrator {
     let return_unconv_rec = unconv_rec;
     let conv_rec = conv_recs[conv_recs.length - 1];
     let return_conv_rec = conv_rec;
-    this.sourceAudioContext.close();
+
+    if (simulationEnabled) {
+      console.log('[SIMULATION] Processing simulated recordings');
+    } else {
+      this.sourceAudioContext.close();
+    }
+
     if (this._calibrateSoundCheck != 'system') {
       let knownGain = this.oldComponentIR.Gain;
       let knownFreq = this.oldComponentIR.Freq;
@@ -1631,7 +1776,7 @@ class Combination extends AudioCalibrator {
           console.error(err);
         });
 
-      this.addTimeStamp('Compute PSD recording of  speaker+ mic IIR-filtered MLS recording');
+      this.addTimeStamp('Compute PSD recording of speaker+ mic IIR-filtered MLS recording');
       if (this.isCalibrating) return null;
 
       let conv_results = await this.pyServerAPI
@@ -2126,8 +2271,6 @@ class Combination extends AudioCalibrator {
     console.log('MLS sequence should be of length: ' + fMLS * desired_time);
 
     length = fMLS * desired_time;
-    //get mls here
-    // const calibrateSoundBurstDb = Math.pow(10, this._calibrateSoundBurstDb / 20);
 
     this.power_dB = 0;
 
@@ -2138,7 +2281,7 @@ class Combination extends AudioCalibrator {
     }
 
     const amplitude = Math.pow(10, this.power_dB / 20);
-    //MLSpower = Math.pow(10,this.power_dB/20);
+
     if (this.isCalibrating) return null;
     await this.pyServerAPI
       .getMLSWithRetry({
@@ -2153,12 +2296,15 @@ class Combination extends AudioCalibrator {
         this.#mls = this.upsampleSignal(res['unscaledMLS'], this._calibrateSoundBurstDownsample);
       })
       .catch(err => {
-        // this.emit('InvertedImpulseResponse', {res: false});
         console.error(err);
       });
     this.addTimeStamp('Compute MLS sequence');
     this.numSuccessfulBackgroundCaptured = 0;
-    if (this._calibrateSoundBackgroundSecs > 0) {
+    const simulationEnabled =
+      this.calibrateSoundSimulateMicrophone !== null &&
+      this.calibrateSoundSimulateLoudspeaker !== null;
+
+    if (this._calibrateSoundBackgroundSecs > 0 && !simulationEnabled) {
       this.mode = 'background';
       this.status = this.generateTemplate(
         `All Hz Calibration: sampling the background noise...`.toString()
@@ -2175,25 +2321,58 @@ class Combination extends AudioCalibrator {
       );
       this.incrementStatusBar();
     }
+
     this.mode = 'unfiltered';
     this.numSuccessfulCaptured = 0;
 
     if (this.isCalibrating) return null;
-    for (var i = 0; i < this.numCaptures; i++) {
-      this.icapture = i;
-      await this.calibrationSteps(
-        stream,
-        this.#playCalibrationAudio, // play audio func (required)
-        this.#createCalibrationNodeFromBuffer(this.#mlsBufferView[this.icapture]), // before play func
-        this.#awaitSignalOnset, // before record
-        () => this.numSuccessfulCaptured < 2, // loop while true
-        this.#awaitDesiredMLSLength, // during record
-        this.#afterMLSRecord, // after record
-        this.mode,
-        checkRec
-      );
-      this.stopCalibrationAudio();
+
+    if (simulationEnabled) {
+      console.log('[SIMULATION] Using simulation mode for MLS calibration');
+
+      // Run simulation for each capture
+      for (var i = 0; i < this.numCaptures; i++) {
+        this.icapture = i;
+        if (this.isCalibrating) return null;
+
+        // Get the MLS signal for this capture
+        const mlsSignal = this.#mlsBufferView[this.icapture];
+
+        // Run the simulation
+        await this.simulatedMLSCalibration(
+          mlsSignal,
+          this.calibrateSoundSimulateLoudspeaker,
+          this.calibrateSoundSimulateMicrophone
+        );
+
+        this.stepNum += 1;
+        this.incrementStatusBar();
+        this.status = this.generateTemplate(
+          `All Hz Calibration [SIMULATION]: ${i + 1}/${
+            this.numCaptures
+          } simulated captures processed...`.toString()
+        ).toString();
+        this.emit('update', {message: this.status});
+      }
+    } else {
+      // Use actual recording mode
+      for (var i = 0; i < this.numCaptures; i++) {
+        this.icapture = i;
+        await this.calibrationSteps(
+          stream,
+          this.#playCalibrationAudio, // play audio func (required)
+          this.#createCalibrationNodeFromBuffer(this.#mlsBufferView[this.icapture]), // before play func
+          this.#awaitSignalOnset, // before record
+          () => this.numSuccessfulCaptured < 2, // loop while true
+          this.#awaitDesiredMLSLength, // during record
+          this.#afterMLSRecord, // after record
+          this.mode,
+          checkRec
+        );
+        this.stopCalibrationAudio();
+      }
     }
+
     checkRec = false;
 
     // at this stage we've captured all the required signals,
@@ -2523,7 +2702,7 @@ class Combination extends AudioCalibrator {
     let left = this.calibrateSound1000HzPreSec;
     let right = this.calibrateSound1000HzPreSec + this.calibrateSound1000HzSec;
     if (this.isCalibrating) return null;
-    this.pyServerAPI
+    await this.pyServerAPI
       .getVolumeCalibration({
         sampleRate: this.sourceSamplingRate,
         payload: this.#getTruncatedSignal(left, right),
@@ -2536,6 +2715,7 @@ class Combination extends AudioCalibrator {
             'No response from server in getVolumeCalibration function. Please try again.'
           );
         }
+        console.log('res', res);
         if (this.outDBSPL === null) {
           this.incrementStatusBar();
           this.outDBSPL = res['outDbSPL'];
@@ -2552,7 +2732,7 @@ class Combination extends AudioCalibrator {
       getPower(rec.slice(0, this.calibrateSound1000HzPreSec * this.sourceSamplingRate)).toFixed(1)
     );
     console.log(
-      'sec period power: ',
+      'used period power: ',
       getPower(
         rec.slice(
           this.calibrateSound1000HzPreSec * this.sourceSamplingRate,
@@ -2618,37 +2798,56 @@ class Combination extends AudioCalibrator {
     this.status = this.generateTemplate(
       `1000 Hz Calibration: Sound Level ${soundLevelToDiscard} dB`.toString()
     ).toString();
-    //this.emit('update', {message: `1000 Hz Calibration: Sound Level ${soundLevelToDiscard} dB`});
     this.emit('update', {message: this.status});
     this.startTime = new Date().getTime();
     this.calibrationNodes = [];
 
-    do {
-      console.log('while loop');
-      if (this.isCalibrating) {
-        console.log('restart calibration');
-        return null;
-      }
-      // eslint-disable-next-line no-await-in-loop
-      await this.volumeCalibrationSteps(
-        stream,
-        this.#playCalibrationAudioVolume,
-        this.#createCalibrationToneWithGainValue,
-        this.#sendToServerForProcessing,
-        gainToDiscard,
-        lCalib, //todo make this a class parameter
-        checkRec,
-        () => {
-          return this.recordingChecks['volume'][this.inDB]['sd'];
-        },
-        this.calibrateSound1000HzMaxSD_dB,
-        this.calibrateSound1000HzMaxTries
-      );
-    } while (this.outDBSPL === null);
-    //reset the values
-    //this.incrementStatusBar();
+    // Check if simulation is enabled (both impulse responses are available)
+    const simulationEnabled =
+      this.calibrateSoundSimulateMicrophone !== null &&
+      this.calibrateSoundSimulateLoudspeaker !== null;
 
-    this.outDBSPL = null;
+    if (simulationEnabled) {
+      console.log('Using simulation mode with provided impulse responses');
+      // Generate the calibration tone signal for simulation
+      const calibrationToneSignal = this.generateCalibrationToneSignal(gainToDiscard);
+
+      // Run the simulation for initial calibration
+      await this.simulatedVolumeCalibrationSteps(
+        calibrationToneSignal,
+        this.calibrateSoundSimulateLoudspeaker,
+        this.calibrateSoundSimulateMicrophone,
+        this.#sendToServerForProcessing,
+        lCalib,
+        checkRec
+      );
+    } else {
+      // Use actual recording mode
+      do {
+        console.log('while loop');
+        if (this.isCalibrating) {
+          console.log('restart calibration');
+          return null;
+        }
+        // eslint-disable-next-line no-await-in-loop
+        await this.volumeCalibrationSteps(
+          stream,
+          this.#playCalibrationAudioVolume,
+          this.#createCalibrationToneWithGainValue,
+          this.#sendToServerForProcessing,
+          gainToDiscard,
+          lCalib, //todo make this a class parameter
+          checkRec,
+          () => {
+            return this.recordingChecks['volume'][this.inDB]['sd'];
+          },
+          this.calibrateSound1000HzMaxSD_dB,
+          this.calibrateSound1000HzMaxTries
+        );
+      } while (this.outDBSPL === null);
+    }
+
+    //reset the values
     this.outDBSPL = null;
     this.outDBSPL1000 = null;
     this.THD = null;
@@ -2669,27 +2868,46 @@ class Combination extends AudioCalibrator {
         `1000 Hz Calibration: Sound Level ${inDB} dB`.toString()
       ).toString();
       this.emit('update', {message: this.status});
-      do {
-        if (this.isCalibrating) {
-          console.log('restart calibration');
-          return null;
-        }
-        // eslint-disable-next-line no-await-in-loop
-        await this.volumeCalibrationSteps(
-          stream,
-          this.#playCalibrationAudioVolume,
-          this.#createCalibrationToneWithGainValue,
+
+      if (simulationEnabled) {
+        console.log('simulationEnabled', gainValues[i]);
+        // Generate the calibration tone signal for current gain value
+        const calibrationToneSignal = this.generateCalibrationToneSignal(gainValues[i]);
+
+        // Run the simulation for this gain value
+        await this.simulatedVolumeCalibrationSteps(
+          calibrationToneSignal,
+          this.calibrateSoundSimulateLoudspeaker,
+          this.calibrateSoundSimulateMicrophone,
           this.#sendToServerForProcessing,
-          gainValues[i],
-          lCalib, //todo make this a class parameter
-          checkRec,
-          () => {
-            return this.recordingChecks?.['volume']?.[this.inDB]?.['sd'] || 0;
-          },
-          this.calibrateSound1000HzMaxSD_dB,
-          this.calibrateSound1000HzMaxTries
+          lCalib,
+          checkRec
         );
-      } while (this.outDBSPL === null);
+      } else {
+        // Use actual recording mode
+        do {
+          if (this.isCalibrating) {
+            console.log('restart calibration');
+            return null;
+          }
+          // eslint-disable-next-line no-await-in-loop
+          await this.volumeCalibrationSteps(
+            stream,
+            this.#playCalibrationAudioVolume,
+            this.#createCalibrationToneWithGainValue,
+            this.#sendToServerForProcessing,
+            gainValues[i],
+            lCalib, //todo make this a class parameter
+            checkRec,
+            () => {
+              return this.recordingChecks?.['volume']?.[this.inDB]?.['sd'] || 0;
+            },
+            this.calibrateSound1000HzMaxSD_dB,
+            this.calibrateSound1000HzMaxTries
+          );
+        } while (this.outDBSPL === null);
+      }
+
       outDBSPL1000Values.push(this.outDBSPL1000);
       thdValues.push(this.THD);
       outDBSPLValues.push(this.outDBSPL);
@@ -2698,9 +2916,15 @@ class Combination extends AudioCalibrator {
       this.outDBSPL1000 = null;
       this.THD = null;
     }
+
     if (this.isCalibrating) return null;
     // get the volume calibration parameters from the server
     this.addTimeStamp('Compute sound calibration parameters');
+
+    console.log('inDBValues', inDBValues);
+    console.log('outDBSPL1000Values', outDBSPL1000Values);
+    console.log('lCalib', lCalib);
+    console.log('componentGainDBSPL', componentGainDBSPL);
 
     const parameters = await this.pyServerAPI
       .getVolumeCalibrationParameters({
@@ -3083,7 +3307,9 @@ class Combination extends AudioCalibrator {
     loudspeakerModelName = '',
     phrases,
     soundSubtitleId,
-    calibrateSoundBurstDownsample = 1
+    calibrateSoundBurstDownsample = 1,
+    calibrateSoundSimulateMicrophone = null,
+    calibrateSoundSimulateLoudspeaker = null
   ) => {
     this._calibrateSoundBurstDownsample = calibrateSoundBurstDownsample;
     this._calibrateSoundBurstPreSec = _calibrateSoundBurstPreSec;
@@ -3102,6 +3328,11 @@ class Combination extends AudioCalibrator {
     this.calibrateSound1000HzPreSec = calibrateSound1000HzPreSec;
     this.calibrateSound1000HzSec = calibrateSound1000HzSec;
     this.calibrateSound1000HzPostSec = calibrateSound1000HzPostSec;
+
+    // Set simulation impulse responses
+    this.calibrateSoundSimulateMicrophone = calibrateSoundSimulateMicrophone;
+    this.calibrateSoundSimulateLoudspeaker = calibrateSoundSimulateLoudspeaker;
+
     const fMLS = this.sourceSamplingRate / this._calibrateSoundBurstDownsample;
     this.iirLength = Math.floor(_calibrateSoundIIRSec * fMLS);
     this.irLength = Math.floor(_calibrateSoundIRSec * fMLS);
@@ -3125,14 +3356,14 @@ class Combination extends AudioCalibrator {
     this.phrases = phrases;
     this.soundSubtitleId = soundSubtitleId;
     if (isSmartPhone) {
-      const leftQuote = '\u201C'; // “
-      const rightQuote = '\u201D'; // ”
+      const leftQuote = '\u201C'; // "
+      const rightQuote = '\u201D'; // "
       this.webAudioDeviceNames.microphone = this.deviceInfo.microphoneFromAPI;
       const quotedWebAudioMic = leftQuote + this.webAudioDeviceNames.microphone + rightQuote;
       const combinedMicText = this.micModelName + ' ' + quotedWebAudioMic;
       webAudioDeviceNames.microphoneText = this.phrases.RC_nameMicrophone[this.language]
-        .replace('“xxx”', combinedMicText)
-        .replace('“XXX”', combinedMicText);
+        .replace('"xxx"', combinedMicText)
+        .replace('"XXX"', combinedMicText);
     }
     // this.webAudioDeviceNames.microphoneText = this.webAudioDeviceNames.microphoneText
     //   .replace('xxx', this.webAudioDeviceNames.microphone)
@@ -3275,7 +3506,12 @@ class Combination extends AudioCalibrator {
       impulseResponseResults['component']['background_noise'] = this.background_noise;
 
       //attenuate system background noise
-      if (this.systemAttenuatorGainDB != 0) {
+      if (
+        this.systemAttenuatorGainDB != 0 &&
+        impulseResponseResults['system']['background_noise']['recording'] &&
+        impulseResponseResults['system']['background_noise']['x_background'] &&
+        impulseResponseResults['system']['background_noise']['y_background']
+      ) {
         let linearScaleAttenuation = Math.pow(10, this.systemAttenuatorGainDB / 20);
         let linearScalePowerAttenuation = Math.pow(10, this.systemAttenuatorGainDB / 10);
         impulseResponseResults['system']['background_noise']['recording'] = impulseResponseResults[
@@ -3289,7 +3525,12 @@ class Combination extends AudioCalibrator {
           );
       }
       //attenuate component background noise
-      if (this.componentAttentuatorGainDB != 0) {
+      if (
+        this.componentAttentuatorGainDB != 0 &&
+        impulseResponseResults['component']['background_noise']['recording'] &&
+        impulseResponseResults['component']['background_noise']['x_background'] &&
+        impulseResponseResults['component']['background_noise']['y_background']
+      ) {
         let linearScaleAttenuation = Math.pow(10, this.componentAttenuatorGainDB / 20);
         let linearScalePowerAttenuation = Math.pow(10, this.componentAttenuatorGainDB / 10);
         impulseResponseResults['component']['background_noise']['recording'] =
@@ -3359,6 +3600,36 @@ class Combination extends AudioCalibrator {
 
       resolve(total_results);
     });
+  };
+
+  generateCalibrationToneSignal = gainValue => {
+    // Generate a 1000Hz sine wave at the specified gain value
+    const duration = this.CALIBRATION_TONE_DURATION; // in seconds
+    const frequency = this.#CALIBRATION_TONE_FREQUENCY; // 1000Hz
+    const sampleRate = this.sourceSamplingRate;
+    const numSamples = duration * sampleRate;
+    const signal = new Array(numSamples);
+
+    for (let i = 0; i < numSamples; i++) {
+      const t = i / sampleRate;
+
+      // Base sine wave at specified frequency
+      let value = Math.sin(2 * Math.PI * frequency * t) * gainValue;
+
+      // Apply taper at beginning and end
+      if (t < this.TAPER_SECS) {
+        const onsetCurve = Math.pow(Math.sin((Math.PI * t) / (2 * this.TAPER_SECS)), 2);
+        value *= onsetCurve;
+      } else if (t > duration - this.TAPER_SECS) {
+        const offsetTime = t - (duration - this.TAPER_SECS);
+        const offsetCurve = Math.pow(Math.cos((Math.PI * offsetTime) / (2 * this.TAPER_SECS)), 2);
+        value *= offsetCurve;
+      }
+
+      signal[i] = value;
+    }
+
+    return signal;
   };
 }
 
