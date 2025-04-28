@@ -172,9 +172,7 @@ class Speaker extends AudioPeer {
     speaker.connectionManager.send({
       name: 'SoundCalibration',
       message: 'phrases',
-      payload: {
-        phrases: speaker.phrases,
-      },
+      payload: speaker.phrases,
     });
 
     // Send connection parameters to the listener

@@ -746,6 +746,9 @@ class Combination extends AudioCalibrator {
     const burst = this._calibrateSoundBurstSec;
     const post = this._calibrateSoundBurstPostSec;
     const total_dur = pre + repeats * burst + post;
+    const simulationEnabled =
+      this.calibrateSoundSimulateMicrophone !== null &&
+      this.calibrateSoundSimulateLoudspeaker !== null;
     await this.pyServerAPI
       .allHzPowerCheck({
         payload: payload_downsampled,
@@ -758,7 +761,11 @@ class Combination extends AudioCalibrator {
       })
       .then(async result => {
         if (result) {
-          if (result['sd'] > this._calibrateSoundBurstMaxSD_dB && this.numSuccessfulCaptured == 0) {
+          if (
+            result['sd'] > this._calibrateSoundBurstMaxSD_dB &&
+            this.numSuccessfulCaptured == 0 &&
+            !simulationEnabled
+          ) {
             console.log(
               'SD: ' +
                 result['sd'] +
@@ -834,7 +841,7 @@ class Combination extends AudioCalibrator {
                 sampleRate: fMLS,
                 numPeriods:
                   (this.numMLSPerCapture - this.num_mls_to_skip) /
-                  this._calibrateSoundBurstDownsample,
+                  (2 * this._calibrateSoundBurstDownsample),
                 downsample: this._calibrateSoundBurstDownsample,
               })
               .then(async res => {
@@ -849,7 +856,7 @@ class Combination extends AudioCalibrator {
                       sampleRate: fMLS,
                       numPeriods:
                         (this.numMLSPerCapture - this.num_mls_to_skip) /
-                        this._calibrateSoundBurstDownsample,
+                        (2 * this._calibrateSoundBurstDownsample),
                       sig: payload_skipped_warmUp_downsampled,
                       fs2: this.fs2,
                       L_new_n: this.L_new_n,
@@ -1188,11 +1195,10 @@ class Combination extends AudioCalibrator {
 
     // Save the simulated recording
     await this.saveFilteredRecording(simulatedRecording);
+    this.numSuccessfulCaptured = 2; // Mark as successfully captured to avoid retries
 
     // Process the recording
     await this.checkPowerVariation();
-
-    this.numSuccessfulCaptured = 2; // Mark as successfully captured to avoid retries
 
     this.stepNum += 1;
     this.incrementStatusBar();
