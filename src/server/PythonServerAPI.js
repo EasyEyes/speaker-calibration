@@ -843,7 +843,12 @@ class PythonServerAPI {
     })
       .then(response => {
         res = response;
-        console.log(res.data[task]);
+        if (typeof res.data === 'string') {
+          //if there is NaN in the string, replace it with 0
+          res.data = res.data.replace('NaN', '0');
+          res.data = JSON.parse(res.data);
+        }
+        console.log('res', res);
       })
       .catch(error => {
         throw error;

@@ -834,14 +834,13 @@ class Combination extends AudioCalibrator {
               payload_skipped_warmUp,
               this._calibrateSoundBurstDownsample
             );
+            const factor = simulationEnabled ? this._calibrateSoundBurstDownsample : 1;
             await this.pyServerAPI
               .getAutocorrelation({
                 mls: mls,
                 payload: payload_skipped_warmUp_downsampled,
                 sampleRate: fMLS,
-                numPeriods:
-                  (this.numMLSPerCapture - this.num_mls_to_skip) /
-                  (2 * this._calibrateSoundBurstDownsample),
+                numPeriods: (this.numMLSPerCapture - this.num_mls_to_skip) / factor,
                 downsample: this._calibrateSoundBurstDownsample,
               })
               .then(async res => {
@@ -854,9 +853,7 @@ class Combination extends AudioCalibrator {
                     .getImpulseResponse({
                       mls,
                       sampleRate: fMLS,
-                      numPeriods:
-                        (this.numMLSPerCapture - this.num_mls_to_skip) /
-                        (2 * this._calibrateSoundBurstDownsample),
+                      numPeriods: (this.numMLSPerCapture - this.num_mls_to_skip) / factor,
                       sig: payload_skipped_warmUp_downsampled,
                       fs2: this.fs2,
                       L_new_n: this.L_new_n,
