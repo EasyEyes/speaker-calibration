@@ -3393,6 +3393,8 @@ class Combination extends AudioCalibrator {
     this.calibrateSound1000HzMaxSD_dB = calibrateSound1000HzMaxSD_dB;
     this.calibrateSound1000HzMaxTries = calibrateSound1000HzMaxTries;
     this._calibrateSoundBurstMaxSD_dB = _calibrateSoundBurstMaxSD_dB;
+    this.simulatedMicrophoneIR = null;
+    this.simulatedLoudspeakerIR = null;
     //check if a componentIR was given to the system, if it isn't check for the microphone. using dummy data here bc we need to
     //check the db based on the microphone currently connected
 
@@ -3499,6 +3501,16 @@ class Combination extends AudioCalibrator {
         frequencyResponse.impulse_response_1000hz_microphone;
       this.calibrateSoundSimulateLoudspeaker1000Hz =
         frequencyResponse.impulse_response_1000hz_loudspeaker;
+      this.simulatedLoudspeakerIR = {
+        Freq: frequencyResponse.frequencies_loudspeaker,
+        Gain: frequencyResponse.gains_loudspeaker,
+      };
+      this.simulatedMicrophoneIR = {
+        Freq: frequencyResponse.frequencies_microphone,
+        Gain: frequencyResponse.gains_microphone,
+      };
+      console.log('simulatedMicrophoneIR', this.simulatedMicrophoneIR);
+      console.log('simulatedLoudspeakerIR', this.simulatedLoudspeakerIR);
 
       if (isLoudspeakerCalibration) {
         //define this.componentIR, this.componentGainDBSPL
@@ -3506,6 +3518,7 @@ class Combination extends AudioCalibrator {
           Freq: frequencyResponse.frequencies_microphone,
           Gain: frequencyResponse.gains_microphone,
         };
+        console.log('this.componentIR', this.componentIR);
         this.componentGainDBSPL = frequencyResponse.gain_at_1000hz_microphone;
         lCalib = this.componentGainDBSPL;
       } else {
@@ -3647,6 +3660,8 @@ class Combination extends AudioCalibrator {
       total_results['qualityMetrics'] = this.SDofFilteredRange;
       total_results['flags'] = this.flags;
       total_results['permissionStatus'] = this.permissionStatus;
+      total_results['simulatedMicrophoneIR'] = this.simulatedMicrophoneIR;
+      total_results['simulatedLoudspeakerIR'] = this.simulatedLoudspeakerIR;
       console.log('total results');
       console.log(total_results);
       console.log('Time Stamps');
