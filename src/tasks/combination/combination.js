@@ -834,7 +834,12 @@ class Combination extends AudioCalibrator {
               payload_skipped_warmUp,
               this._calibrateSoundBurstDownsample
             );
-            const factor = simulationEnabled ? this._calibrateSoundBurstDownsample : 1;
+            // console.log('usedPeriodStart', usedPeriodStart);
+            // console.log('payload', payload);
+            // console.log('payload_skipped_warmUp', payload_skipped_warmUp);
+            // console.log('payload_skipped_warmUp_downsampled', payload_skipped_warmUp_downsampled);
+            const factor = 1;
+            //simulationEnabled ? this._calibrateSoundBurstDownsample : 1;
             await this.pyServerAPI
               .getAutocorrelation({
                 mls: mls,
@@ -2756,7 +2761,8 @@ class Combination extends AudioCalibrator {
       this.sourceSamplingRate || 96000,
       this.calibrateSound1000HzPreSec,
       this.calibrateSound1000HzSec,
-      this._calibrateSoundPowerBinDesiredSec
+      this._calibrateSoundPowerBinDesiredSec,
+      this.calibrateSound1000HzPostSec
     );
     console.log(res);
     this.recordingChecks['volume'][this.inDB] = res;
@@ -2818,8 +2824,8 @@ class Combination extends AudioCalibrator {
       // Run the simulation for initial calibration
       await this.simulatedVolumeCalibrationSteps(
         calibrationToneSignal,
-        this.calibrateSoundSimulateLoudspeaker,
-        this.calibrateSoundSimulateMicrophone,
+        this.calibrateSoundSimulateLoudspeaker1000Hz,
+        this.calibrateSoundSimulateMicrophone1000Hz,
         this.#sendToServerForProcessing,
         lCalib,
         checkRec
@@ -2880,8 +2886,8 @@ class Combination extends AudioCalibrator {
         // Run the simulation for this gain value
         await this.simulatedVolumeCalibrationSteps(
           calibrationToneSignal,
-          this.calibrateSoundSimulateLoudspeaker,
-          this.calibrateSoundSimulateMicrophone,
+          this.calibrateSoundSimulateLoudspeaker1000Hz,
+          this.calibrateSoundSimulateMicrophone1000Hz,
           this.#sendToServerForProcessing,
           lCalib,
           checkRec
@@ -3312,7 +3318,10 @@ class Combination extends AudioCalibrator {
     soundSubtitleId,
     calibrateSoundBurstDownsample = 1,
     calibrateSoundSimulateMicrophone = null,
-    calibrateSoundSimulateLoudspeaker = null
+    calibrateSoundSimulateMicrophoneTime = null,
+    calibrateSoundSimulateLoudspeaker = null,
+    calibrateSoundSimulateLoudspeakerTime = null,
+    isLoudspeakerCalibration = true
   ) => {
     this._calibrateSoundBurstDownsample = calibrateSoundBurstDownsample;
     this._calibrateSoundBurstPreSec = _calibrateSoundBurstPreSec;
@@ -3358,7 +3367,15 @@ class Combination extends AudioCalibrator {
     this.calibrateSoundSamplingDesiredBits = calibrateSoundSamplingDesiredBits;
     this.phrases = phrases;
     this.soundSubtitleId = soundSubtitleId;
-    if (isSmartPhone) {
+    const simulationEnabled =
+      this.calibrateSoundSimulateMicrophone !== null &&
+      this.calibrateSoundSimulateLoudspeaker !== null;
+    //pre + repeats * sec + post
+    const allHzDuation =
+      this._calibrateSoundBurstPreSec +
+      this._calibrateSoundBurstRepeats * this._calibrateSoundBurstSec +
+      this._calibrateSoundBurstPostSec;
+    if (isSmartPhone && !simulationEnabled) {
       const leftQuote = '\u201C'; // "
       const rightQuote = '\u201D'; // "
       this.webAudioDeviceNames.microphone = this.deviceInfo.microphoneFromAPI;
@@ -3409,8 +3426,8 @@ class Combination extends AudioCalibrator {
       DeviceType: isSmartPhone ? this.deviceInfo.devicetype : 'N/A',
       ID_from_51Degrees: isSmartPhone ? this.deviceInfo.DeviceId : 'N/A',
       calibrateMicrophonesBool: calibrateMicrophonesBool,
-      screenHeight: this.deviceInfo.screenHeight,
-      screenWidth: this.deviceInfo.screenWidth,
+      screenHeight: this.deviceInfo?.screenHeight,
+      screenWidth: this.deviceInfo?.screenWidth,
       webAudioDeviceNames: {
         loudspeaker: this.webAudioDeviceNames.loudspeaker,
         microphone: this.webAudioDeviceNames.microphone,
@@ -3430,40 +3447,76 @@ class Combination extends AudioCalibrator {
 
     // this.writeMicrophoneInfoToFirestore(ID, micInfo, OEM, 'default');
     // this.addMicrophoneInfo(ID, OEM, micInfo);
-    if (componentIR == null) {
-      //mode 'ir'
-      //global variable this.componentIR must be set
-      await this.readFrqGainFromFirestore(ID, OEM, true).then(data => {
-        if (data !== null) {
-          this.componentIR = data.ir;
-          micInfo['parentTimestamp'] = data.createDate ? data.createDate : new Date();
-          micInfo['parentFilenameJSON'] = data.jsonFileName ? data.jsonFileName : '';
+    if (!simulationEnabled) {
+      if (componentIR == null) {
+        //mode 'ir'
+        //global variable this.componentIR must be set
+        await this.readFrqGainFromFirestore(ID, OEM, true).then(data => {
+          if (data !== null) {
+            this.componentIR = data.ir;
+            micInfo['parentTimestamp'] = data.createDate ? data.createDate : new Date();
+            micInfo['parentFilenameJSON'] = data.jsonFileName ? data.jsonFileName : '';
+          }
+        });
+
+        // await this.readFrqGain(ID, OEM).then(data => {
+        //   return data;
+        // });
+
+        // lCalib = await this.readGainat1000Hz(ID, OEM);
+        lCalib = await this.readGainat1000HzFromFirestore(ID, OEM, true);
+        micInfo['gainDBSPL'] = lCalib;
+        // this.componentGainDBSPL = this.convertToDB(lCalib);
+        this.componentGainDBSPL = lCalib;
+        //TODO: if this call to database is unknown, cannot perform experiment => return false
+        if (this.componentIR == null) {
+          this.status =
+            `Microphone (${OEM},${ID}) is not found in the database. Please add it to the database.`.toString();
+          this.emit('update', {message: this.status});
+          return false;
         }
-      });
-
-      // await this.readFrqGain(ID, OEM).then(data => {
-      //   return data;
-      // });
-
-      // lCalib = await this.readGainat1000Hz(ID, OEM);
-      lCalib = await this.readGainat1000HzFromFirestore(ID, OEM, true);
-      micInfo['gainDBSPL'] = lCalib;
-      // this.componentGainDBSPL = this.convertToDB(lCalib);
-      this.componentGainDBSPL = lCalib;
-      //TODO: if this call to database is unknown, cannot perform experiment => return false
-      if (this.componentIR == null) {
-        this.status =
-          `Microphone (${OEM},${ID}) is not found in the database. Please add it to the database.`.toString();
-        this.emit('update', {message: this.status});
-        return false;
+      } else {
+        this.transducerType = 'Microphone';
+        this.componentIR = componentIR;
+        lCalib = this.findGainatFrequency(this.componentIR.Freq, this.componentIR.Gain, 1000);
+        // this.componentGainDBSPL = this.convertToDB(lCalib);
+        this.componentGainDBSPL = lCalib;
+        // await this.writeIsSmartPhone(ID, isSmartPhone, OEM);
       }
     } else {
-      this.transducerType = 'Microphone';
-      this.componentIR = componentIR;
-      lCalib = this.findGainatFrequency(this.componentIR.Freq, this.componentIR.Gain, 1000);
-      // this.componentGainDBSPL = this.convertToDB(lCalib);
-      this.componentGainDBSPL = lCalib;
-      // await this.writeIsSmartPhone(ID, isSmartPhone, OEM);
+      //simulation.
+      const frequencyResponse = await this.pyServerAPI.getFrequencyResponseFromImpulseResponse({
+        impulseResponseMicrophone: this.calibrateSoundSimulateMicrophone,
+        impulseResponseLoudspeaker: this.calibrateSoundSimulateLoudspeaker,
+        sampleRate: this.sourceSamplingRate,
+        timeArray: calibrateSoundSimulateMicrophoneTime,
+        totalDuration: allHzDuation,
+        totalDuration1000Hz: this.CALIBRATION_TONE_DURATION,
+      });
+      this.calibrateSoundSimulateMicrophone = frequencyResponse.impulse_response_microphone;
+      this.calibrateSoundSimulateLoudspeaker = frequencyResponse.impulse_response_loudspeaker;
+      this.calibrateSoundSimulateMicrophone1000Hz =
+        frequencyResponse.impulse_response_1000hz_microphone;
+      this.calibrateSoundSimulateLoudspeaker1000Hz =
+        frequencyResponse.impulse_response_1000hz_loudspeaker;
+
+      if (isLoudspeakerCalibration) {
+        //define this.componentIR, this.componentGainDBSPL
+        this.componentIR = {
+          Freq: frequencyResponse.frequencies_microphone,
+          Gain: frequencyResponse.gains_microphone,
+        };
+        this.componentGainDBSPL = frequencyResponse.gain_at_1000hz_microphone;
+        lCalib = this.componentGainDBSPL;
+      } else {
+        //define this.componentIR, this.componentGainDBSPL
+        this.componentIR = {
+          Freq: frequencyResponse.frequencies_loudspeaker,
+          Gain: frequencyResponse.gains_loudspeaker,
+        };
+        this.componentGainDBSPL = frequencyResponse.gain_at_1000hz_loudspeaker;
+        lCalib = this.componentGainDBSPL;
+      }
     }
 
     this.oldComponentIR = JSON.parse(JSON.stringify(this.componentIR));

@@ -141,6 +141,80 @@ class Speaker extends AudioPeer {
     return params;
   }
 
+  //no need to connect to the listener, just simulate the calibration
+  static simulateCalibration = async (
+    params,
+    CalibratorInstance,
+    connectionManager,
+    timeOut = 180000
+  ) => {
+    window.speaker = new Speaker(params, CalibratorInstance, connectionManager);
+    const {speaker} = window;
+    speaker.ac = CalibratorInstance;
+    //set sampling rates
+    speaker.ac.setSamplingRates(speaker.calibrateSoundHz);
+    speaker.ac.setSampleSize(speaker.calibrateSoundSamplingDesiredBits);
+    speaker.result = await speaker.ac.startCalibration(
+      null,
+      params.gainValues,
+      params.ICalib,
+      params.knownIR,
+      params.microphoneName,
+      params.calibrateSoundCheck,
+      params.isSmartPhone,
+      params.calibrateSoundBurstDb,
+      params.calibrateSoundBurstFilteredExtraDb,
+      params.calibrateSoundBurstLevelReTBool,
+      params.calibrateSoundBurstUses1000HzGainBool,
+      params.calibrateSoundBurstRepeats,
+      params.calibrateSoundBurstSec,
+      params._calibrateSoundBurstPreSec,
+      params._calibrateSoundBurstPostSec,
+      params.calibrateSoundHz,
+      params.calibrateSoundIRSec,
+      params.calibrateSoundIIRSec,
+      params.calibrateSoundIIRPhase,
+      params.calibrateSound1000HzPreSec,
+      params.calibrateSound1000HzSec,
+      params.calibrateSound1000HzPostSec,
+      params.calibrateSoundBackgroundSecs,
+      params.calibrateSoundSmoothOctaves,
+      params.calibrateSoundSmoothMinBandwidthHz,
+      params.calibrateSoundPowerBinDesiredSec,
+      params.calibrateSoundPowerDbSDToleratedDb,
+      params.calibrateSoundTaperSec,
+      params.micManufacturer,
+      params.micSerialNumber,
+      params.micModelNumber,
+      params.micModelName,
+      params.calibrateMicrophonesBool,
+      params.authorEmails,
+      params.webAudioDeviceNames,
+      params.IDsToSaveInSoundProfileLibrary,
+      params.restartButton,
+      params.reminder,
+      params.calibrateSoundLimit,
+      params.calibrateSoundBurstNormalizeBy1000HzGainBool,
+      params.calibrateSoundBurstScalarDB,
+      params.calibrateSound1000HzMaxSD_dB,
+      params.calibrateSound1000HzMaxTries,
+      params._calibrateSoundBurstMaxSD_dB,
+      params.calibrateSoundSamplingDesiredBits,
+      params.language,
+      params.loudspeakerModelName,
+      params.phrases,
+      params.soundSubtitleId,
+      params.calibrateSoundBurstDownsample,
+      params.calibrateSoundSimulateMicrophone,
+      params.calibrateSoundSimulateMicrophoneTime,
+      params.calibrateSoundSimulateLoudspeaker,
+      params.calibrateSoundSimulateLoudspeakerTime,
+      params.isLoudspeakerCalibration
+    );
+    speaker.#removeUIElems();
+    return speaker.result;
+  };
+
   /**
    * Async factory method that creates the Speaker object, and returns a promise that resolves to the result of the calibration.
    *
@@ -270,7 +344,10 @@ class Speaker extends AudioPeer {
             params.soundSubtitleId,
             params.calibrateSoundBurstDownsample,
             params.calibrateSoundSimulateMicrophone,
-            params.calibrateSoundSimulateLoudspeaker
+            params.calibrateSoundSimulateMicrophoneTime,
+            params.calibrateSoundSimulateLoudspeaker,
+            params.calibrateSoundSimulateLoudspeakerTime,
+            params.isLoudspeakerCalibration
           );
           speaker.#removeUIElems();
           //remove the call
@@ -859,7 +936,10 @@ class Speaker extends AudioPeer {
             params.soundSubtitleId,
             params.calibrateSoundBurstDownsample,
             params.calibrateSoundSimulateMicrophone,
-            params.calibrateSoundSimulateLoudspeaker
+            params.calibrateSoundSimulateMicrophoneTime,
+            params.calibrateSoundSimulateLoudspeaker,
+            params.calibrateSoundSimulateLoudspeakerTime,
+            params.isLoudspeakerCalibration
           );
           clearInterval(permissionCheckInterval);
           window.speaker.#removeUIElems();
