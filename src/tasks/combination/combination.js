@@ -704,7 +704,7 @@ class Combination extends AudioCalibrator {
           this.background_noise['y_background'] = res['y_background'];
           this.background_noise['recording'] = background_rec;
         }
-        this.addTimeStamp('Compute PSD of background');
+        this.addTimeStamp('Compute spectrum of background');
       })
       .catch(err => {
         console.error(err);
@@ -1313,7 +1313,7 @@ class Combination extends AudioCalibrator {
     let knownGain = this.oldComponentIR.Gain;
     let knownFreq = this.oldComponentIR.Freq;
     let sampleRate = this.sourceSamplingRate || 96000;
-    this.addTimeStamp('Compute PSD of MLS recording');
+    this.addTimeStamp('Compute spectrum of MLS recording');
     if (this.isCalibrating) return null;
     let component_unconv_rec_psd = await this.pyServerAPI
       .getSubtractedPSDWithRetry(
@@ -1335,7 +1335,7 @@ class Combination extends AudioCalibrator {
         console.error(err);
       });
 
-    this.addTimeStamp('Compute PSD of filtered recording (component)');
+    this.addTimeStamp('Compute spectrum of filtered recording (component)');
     if (this.isCalibrating) return null;
     let component_conv_rec_psd = await this.pyServerAPI
       .getSubtractedPSDWithRetry(
@@ -1379,7 +1379,7 @@ class Combination extends AudioCalibrator {
 
     conv_rec = system_conv_recs[system_conv_recs.length - 1];
     //psd of system
-    this.addTimeStamp('Compute PSD of filtered recording (system) and unfiltered recording');
+    this.addTimeStamp('Compute spectrum of filtered recording (system) and unfiltered recording');
     if (this.isCalibrating) return null;
     let system_recs_psd = await this.pyServerAPI
       .getPSDWithRetry({
@@ -1419,7 +1419,7 @@ class Combination extends AudioCalibrator {
     //iir w/ and without bandpass psd. done
     unconv_rec = this.componentInvertedImpulseResponseNoBandpass;
     conv_rec = this.componentInvertedImpulseResponse;
-    this.addTimeStamp('Compute PSD of component IIR and component IIR no band pass');
+    this.addTimeStamp('Compute spectrum of component IIR and component IIR no band pass');
     if (this.isCalibrating) return null;
     let component_iir_psd = await this.pyServerAPI
       .getPSDWithRetry({
@@ -1441,7 +1441,7 @@ class Combination extends AudioCalibrator {
       });
     unconv_rec = this.systemInvertedImpulseResponseNoBandpass;
     conv_rec = this.systemInvertedImpulseResponse;
-    this.addTimeStamp('Compute PSD of system IIR and system IIR no band pass');
+    this.addTimeStamp('Compute spectrum of system IIR and system IIR no band pass');
     if (this.isCalibrating) return null;
     let system_iir_psd = await this.pyServerAPI
       .getPSDWithRetry({
@@ -1453,7 +1453,7 @@ class Combination extends AudioCalibrator {
       .then(res => {
         this.incrementStatusBar();
         this.status = this.generateTemplate(
-          `All Hz Calibration: done computing the PSD graphs...`.toString()
+          `All Hz Calibration: done computing the spectrum graphs...`.toString()
         ).toString();
         this.emit('update', {message: this.status});
         return res;
@@ -1462,7 +1462,7 @@ class Combination extends AudioCalibrator {
         console.error(err);
       });
 
-    this.addTimeStamp('Compute PSD of MLS sequence');
+    this.addTimeStamp('Compute spectrum of MLS sequence');
     if (this.isCalibrating) return null;
     let mls_psd = await this.pyServerAPI
       .getMLSPSDWithRetry({
@@ -1473,7 +1473,7 @@ class Combination extends AudioCalibrator {
       .then(res => {
         this.incrementStatusBar();
         this.status = this.generateTemplate(
-          `All Hz Calibration: done computing the PSD graphs...`.toString()
+          `All Hz Calibration: done computing the spectrum graphs...`.toString()
         ).toString();
         this.emit('update', {message: this.status});
         return res;
@@ -1482,7 +1482,7 @@ class Combination extends AudioCalibrator {
         console.error(err);
       });
 
-    this.addTimeStamp('Compute PSD of filtered MLS (system)');
+    this.addTimeStamp('Compute spectrum of filtered MLS (system)');
     if (this.isCalibrating) return null;
     let system_filtered_mls_psd = await this.pyServerAPI
       .getMLSPSDWithRetry({
@@ -1493,7 +1493,7 @@ class Combination extends AudioCalibrator {
       .then(res => {
         this.incrementStatusBar();
         this.status = this.generateTemplate(
-          `All Hz Calibration: done computing the PSD graphs...`.toString()
+          `All Hz Calibration: done computing the spectrum graphs...`.toString()
         ).toString();
         this.emit('update', {message: this.status});
         return res;
@@ -1511,7 +1511,7 @@ class Combination extends AudioCalibrator {
       .then(res => {
         this.incrementStatusBar();
         this.status = this.generateTemplate(
-          `All Hz Calibration: done computing the PSD graphs...`.toString()
+          `All Hz Calibration: done computing the spectrum graphs...`.toString()
         ).toString();
         this.emit('update', {message: this.status});
         return res;
@@ -1520,7 +1520,7 @@ class Combination extends AudioCalibrator {
         console.error(err);
       });
 
-    this.addTimeStamp('Compute PSD of filtered MLS (component)');
+    this.addTimeStamp('Compute spectrum of filtered MLS (component)');
     if (this.isCalibrating) return null;
     let component_filtered_mls_psd = await this.pyServerAPI
       .getMLSPSDWithRetry({
@@ -1531,7 +1531,7 @@ class Combination extends AudioCalibrator {
       .then(res => {
         this.incrementStatusBar();
         this.status = this.generateTemplate(
-          `All Hz Calibration: done computing the PSD graphs...`.toString()
+          `All Hz Calibration: done computing the spectrum graphs...`.toString()
         ).toString();
         this.emit('update', {message: this.status});
         return res;
@@ -1549,7 +1549,7 @@ class Combination extends AudioCalibrator {
       .then(res => {
         this.incrementStatusBar();
         this.status = this.generateTemplate(
-          `All Hz Calibration: done computing the PSD graphs...`.toString()
+          `All Hz Calibration: done computing the spectrum graphs...`.toString()
         ).toString();
         this.emit('update', {message: this.status});
         return res;
@@ -1735,8 +1735,8 @@ class Combination extends AudioCalibrator {
       }
     }
     this.clearAllFilteredRecordedSignals();
-    console.log('Obtaining unfiltered recording from #allHzUnfilteredRecordings to calculate PSD');
-    console.log('Obtaining filtered recording from #allHzFilteredRecordings to calculate PSD');
+    console.log('Obtaining unfiltered recording from #allHzUnfilteredRecordings to calculate spectrum');
+    console.log('Obtaining filtered recording from #allHzFilteredRecordings to calculate spectrum');
     let unconv_rec = recs[0];
     let return_unconv_rec = unconv_rec;
     let conv_rec = conv_recs[conv_recs.length - 1];
@@ -1752,7 +1752,7 @@ class Combination extends AudioCalibrator {
       let knownGain = this.oldComponentIR.Gain;
       let knownFreq = this.oldComponentIR.Freq;
       let sampleRate = this.sourceSamplingRate || 96000;
-      this.addTimeStamp('Compute PSD of MLS recording');
+      this.addTimeStamp('Compute spectrum of MLS recording');
       if (this.isCalibrating) return null;
       const fMLS = this.sourceSamplingRate / this._calibrateSoundBurstDownsample;
 
@@ -1775,7 +1775,7 @@ class Combination extends AudioCalibrator {
           console.log('mls sd', this.SDofFilteredRange['mls']);
           this.incrementStatusBar();
           this.status = this.generateTemplate(
-            `All Hz Calibration: done computing the PSD graphs...`.toString()
+            `All Hz Calibration: done computing the spectrum graphs...`.toString()
           ).toString();
           this.emit('update', {message: this.status});
           return res;
@@ -1784,7 +1784,7 @@ class Combination extends AudioCalibrator {
           console.error(err);
         });
 
-      this.addTimeStamp('Compute PSD recording of speaker+ mic IIR-filtered MLS recording');
+      this.addTimeStamp('Compute spectrum recording of speaker+ mic IIR-filtered MLS recording');
       if (this.isCalibrating) return null;
 
       let conv_results = await this.pyServerAPI
@@ -1834,7 +1834,7 @@ class Combination extends AudioCalibrator {
 
       unconv_rec = this.componentInvertedImpulseResponseNoBandpass;
       conv_rec = this.componentInvertedImpulseResponse;
-      this.addTimeStamp('Compute PSD of speaker or mic IIR, with and without bandpass');
+      this.addTimeStamp('Compute spectrum of speaker or mic IIR, with and without bandpass');
       if (this.isCalibrating) return null;
 
       let component_iir_psd = await this.pyServerAPI
@@ -1857,7 +1857,7 @@ class Combination extends AudioCalibrator {
         });
       unconv_rec = this.systemInvertedImpulseResponseNoBandpass;
       conv_rec = this.systemInvertedImpulseResponse;
-      this.addTimeStamp('Compute PSD of speaker +mic IIR, with and without bandpass');
+      this.addTimeStamp('Compute spectrum of speaker +mic IIR, with and without bandpass');
       if (this.isCalibrating) return null;
       let system_iir_psd = await this.pyServerAPI
         .getPSDWithRetry({
@@ -1878,7 +1878,7 @@ class Combination extends AudioCalibrator {
           console.error(err);
         });
 
-      this.addTimeStamp('Compute PSD of MLS');
+      this.addTimeStamp('Compute spectrum of MLS');
       if (this.isCalibrating) return null;
       let mls_psd = await this.pyServerAPI
         .getMLSPSDWithRetry({
@@ -1901,7 +1901,7 @@ class Combination extends AudioCalibrator {
           console.error(err);
         });
 
-      this.addTimeStamp('Compute PSD of speaker or mic');
+      this.addTimeStamp('Compute spectrum of speaker or mic');
       if (this.isCalibrating) return null;
       let filtered_mls_psd = await this.pyServerAPI
         .getMLSPSDWithRetry({
@@ -2012,7 +2012,7 @@ class Combination extends AudioCalibrator {
         impulseResponses: [],
       };
     } else {
-      this.addTimeStamp('Compute PSD of filtered recording (system) and unfiltered recording');
+      this.addTimeStamp('Compute spectrum of filtered recording (system) and unfiltered recording');
       if (this.isCalibrating) return null;
       const fMLS = this.sourceSamplingRate / this._calibrateSoundBurstDownsample;
       let results = await this.pyServerAPI
@@ -2052,7 +2052,7 @@ class Combination extends AudioCalibrator {
       //iir w/ and without bandpass psd
       unconv_rec = this.componentInvertedImpulseResponseNoBandpass;
       conv_rec = this.componentInvertedImpulseResponse;
-      this.addTimeStamp('Compute PSD of component IIR and component IIR no band pass');
+      this.addTimeStamp('Compute spectrum of component IIR and component IIR no band pass');
       if (this.isCalibrating) return null;
       let component_iir_psd = await this.pyServerAPI
         .getPSDWithRetry({
@@ -2074,7 +2074,7 @@ class Combination extends AudioCalibrator {
         });
       unconv_rec = this.systemInvertedImpulseResponseNoBandpass;
       conv_rec = this.systemInvertedImpulseResponse;
-      this.addTimeStamp('Compute PSD of system IIR and system IIR no band pass');
+      this.addTimeStamp('Compute spectrum of system IIR and system IIR no band pass');
       if (this.isCalibrating) return null;
       let system_iir_psd = await this.pyServerAPI
         .getPSDWithRetry({
@@ -2095,7 +2095,7 @@ class Combination extends AudioCalibrator {
           console.error(err);
         });
 
-      this.addTimeStamp('Compute PSD of MLS sequence');
+      this.addTimeStamp('Compute spectrum of MLS sequence');
       if (this.isCalibrating) return null;
       let mls_psd = await this.pyServerAPI
         .getMLSPSDWithRetry({
@@ -2118,7 +2118,7 @@ class Combination extends AudioCalibrator {
           console.error(err);
         });
 
-      this.addTimeStamp('Compute PSD of filtered MLS (system)');
+      this.addTimeStamp('Compute spectrum of filtered MLS (system)');
       if (this.isCalibrating) return null;
       let filtered_mls_psd = await this.pyServerAPI
         .getMLSPSDWithRetry({
