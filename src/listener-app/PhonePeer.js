@@ -357,6 +357,28 @@ export class PhonePeer {
     allowMicrophoneElement.style.textAlign = 'left';
     allowMicrophoneElement.style.zIndex = '1000';
 
+    const webAudioDeviceNames = {microphone: '', deviceID: ''};
+    const externalMicList = ['UMIK', 'Airpods', 'Bluetooth'];
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({audio: true});
+      if (stream) {
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const mics = devices.filter(device => device.kind === 'audioinput');
+        mics.forEach(mic => {
+          if (externalMicList.some(externalMic => mic.label.includes(externalMic))) {
+            webAudioDeviceNames.microphone = mic.label;
+            webAudioDeviceNames.deviceID = mic.deviceId;
+          }
+        });
+        if (webAudioDeviceNames.microphone === '') {
+          webAudioDeviceNames.microphone = mics[0].label;
+          webAudioDeviceNames.deviceID = mics[0].deviceId;
+        }
+      }
+    } catch (err) {
+      console.log(err);
+    }
+
     let lock = null;
     try {
       if ('wakeLock' in navigator) {
@@ -370,7 +392,10 @@ export class PhonePeer {
 
     // show target element
     targetElement.style.display = 'block';
-    await this.listener.startCalibration();
+    await this.listener.startCalibration({
+      microphoneFromAPI: webAudioDeviceNames.microphone,
+      microphoneDeviceId: webAudioDeviceNames.deviceID,
+    });
     if (lock) {
       lock.release();
     }

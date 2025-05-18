@@ -1735,7 +1735,9 @@ class Combination extends AudioCalibrator {
       }
     }
     this.clearAllFilteredRecordedSignals();
-    console.log('Obtaining unfiltered recording from #allHzUnfilteredRecordings to calculate spectrum');
+    console.log(
+      'Obtaining unfiltered recording from #allHzUnfilteredRecordings to calculate spectrum'
+    );
     console.log('Obtaining filtered recording from #allHzFilteredRecordings to calculate spectrum');
     let unconv_rec = recs[0];
     let return_unconv_rec = unconv_rec;
@@ -3375,19 +3377,7 @@ class Combination extends AudioCalibrator {
       this._calibrateSoundBurstPreSec +
       this._calibrateSoundBurstRepeats * this._calibrateSoundBurstSec +
       this._calibrateSoundBurstPostSec;
-    if (isSmartPhone && !simulationEnabled) {
-      const leftQuote = '\u201C'; // "
-      const rightQuote = '\u201D'; // "
-      this.webAudioDeviceNames.microphone = this.deviceInfo.microphoneFromAPI;
-      const quotedWebAudioMic = leftQuote + this.webAudioDeviceNames.microphone + rightQuote;
-      const combinedMicText = this.micModelName + ' ' + quotedWebAudioMic;
-      webAudioDeviceNames.microphoneText = this.phrases.RC_nameMicrophone[this.language]
-        .replace('"xxx"', combinedMicText)
-        .replace('"XXX"', combinedMicText);
-    }
-    // this.webAudioDeviceNames.microphoneText = this.webAudioDeviceNames.microphoneText
-    //   .replace('xxx', this.webAudioDeviceNames.microphone)
-    //   .replace('XXX', this.webAudioDeviceNames.microphone);
+
     //feed calibration goal here
     this._calibrateSoundCheck = _calibrateSoundCheck;
     this.calibrateSound1000HzMaxSD_dB = calibrateSound1000HzMaxSD_dB;
