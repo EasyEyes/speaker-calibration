@@ -266,7 +266,10 @@ switch (isSmartPhone) {
         window.listener.setMicrophoneDeviceId(webAudioDeviceNames.microphone);
         // show target element
         targetElement.style.display = 'block';
-        await window.listener.startCalibration();
+        await window.listener.startCalibration({
+          microphoneFromAPI: webAudioDeviceNames.microphone,
+          microphoneDeviceId: webAudioDeviceNames.microphone,
+        });
         if (lock) {
           lock.release();
         }

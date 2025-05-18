@@ -34,8 +34,8 @@ class Listener extends AudioPeer {
     this.connectionManager = null;
   }
 
-  startCalibration = async () => {
-    await this.getDeviceInfo();
+  startCalibration = async (deviceInfo = {}) => {
+    await this.getDeviceInfo(deviceInfo);
     await this.openAudioStream();
   };
 
@@ -94,8 +94,7 @@ class Listener extends AudioPeer {
     });
   };
 
-  getDeviceInfo = async () => {
-    const deviceInfo = {};
+  getDeviceInfo = async (deviceInfo = {}) => {
     try {
       fod.complete(function (data) {
         deviceInfo['IsMobile'] = data.device['ismobile'];
@@ -114,8 +113,8 @@ class Listener extends AudioPeer {
       console.error('Error fetching or executing script:', error.message);
     }
     // deviceInfo['deviceInfoFromUser'] = this.deviceInfoFromUser;
-    deviceInfo['microphoneFromAPI'] = this.microphoneFromAPI;
-    deviceInfo['microphoneDeviceId'] = this.microphoneDeviceId;
+    // deviceInfo['microphoneFromAPI'] = this.microphoneFromAPI;
+    // deviceInfo['microphoneDeviceId'] = this.microphoneDeviceId;
     deviceInfo['screenWidth'] = window.screen.width;
     deviceInfo['screenHeight'] = window.screen.height;
     console.log('deviceInfo Inside getDeviceInfo: ', deviceInfo);
