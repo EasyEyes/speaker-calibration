@@ -209,6 +209,10 @@ class Speaker extends AudioPeer {
       params.calibrateSoundSimulateMicrophoneTime,
       params.calibrateSoundSimulateLoudspeaker,
       params.calibrateSoundSimulateLoudspeakerTime,
+      params.calibrateSoundSimulateMicrophoneFrequencies,
+      params.calibrateSoundSimulateLoudspeakerFrequencies,
+      params.calibrateSoundSimulateMicrophoneType,
+      params.calibrateSoundSimulateLoudspeakerType,
       params.isLoudspeakerCalibration
     );
     speaker.#removeUIElems();
@@ -347,6 +351,10 @@ class Speaker extends AudioPeer {
             params.calibrateSoundSimulateMicrophoneTime,
             params.calibrateSoundSimulateLoudspeaker,
             params.calibrateSoundSimulateLoudspeakerTime,
+            params.calibrateSoundSimulateMicrophoneFrequencies,
+            params.calibrateSoundSimulateLoudspeakerFrequencies,
+            params.calibrateSoundSimulateMicrophoneType,
+            params.calibrateSoundSimulateLoudspeakerType,
             params.isLoudspeakerCalibration
           );
           speaker.#removeUIElems();
@@ -939,6 +947,10 @@ class Speaker extends AudioPeer {
             params.calibrateSoundSimulateMicrophoneTime,
             params.calibrateSoundSimulateLoudspeaker,
             params.calibrateSoundSimulateLoudspeakerTime,
+            params.calibrateSoundSimulateMicrophoneFrequencies,
+            params.calibrateSoundSimulateLoudspeakerFrequencies,
+            params.calibrateSoundSimulateMicrophoneType,
+            params.calibrateSoundSimulateLoudspeakerType,
             params.isLoudspeakerCalibration
           );
           clearInterval(permissionCheckInterval);

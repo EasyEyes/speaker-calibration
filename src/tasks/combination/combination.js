@@ -3323,6 +3323,10 @@ class Combination extends AudioCalibrator {
     calibrateSoundSimulateMicrophoneTime = null,
     calibrateSoundSimulateLoudspeaker = null,
     calibrateSoundSimulateLoudspeakerTime = null,
+    calibrateSoundSimulateMicrophoneFrequencies = null,
+    calibrateSoundSimulateLoudspeakerFrequencies = null,
+    calibrateSoundSimulateMicrophoneType = 'impulseResponse',
+    calibrateSoundSimulateLoudspeakerType = 'impulseResponse',
     isLoudspeakerCalibration = true
   ) => {
     this._calibrateSoundBurstDownsample = calibrateSoundBurstDownsample;
@@ -3477,48 +3481,103 @@ class Combination extends AudioCalibrator {
       }
     } else {
       //simulation.
-      const frequencyResponse = await this.pyServerAPI.getFrequencyResponseFromImpulseResponse({
-        impulseResponseMicrophone: this.calibrateSoundSimulateMicrophone,
-        impulseResponseLoudspeaker: this.calibrateSoundSimulateLoudspeaker,
-        sampleRate: this.sourceSamplingRate,
-        timeArray: calibrateSoundSimulateMicrophoneTime,
-        totalDuration: allHzDuation,
-        totalDuration1000Hz: this.CALIBRATION_TONE_DURATION,
-      });
-      this.calibrateSoundSimulateMicrophone = frequencyResponse.impulse_response_microphone;
-      this.calibrateSoundSimulateLoudspeaker = frequencyResponse.impulse_response_loudspeaker;
-      this.calibrateSoundSimulateMicrophone1000Hz =
-        frequencyResponse.impulse_response_1000hz_microphone;
-      this.calibrateSoundSimulateLoudspeaker1000Hz =
-        frequencyResponse.impulse_response_1000hz_loudspeaker;
-      this.simulatedLoudspeakerIR = {
-        Freq: frequencyResponse.frequencies_loudspeaker,
-        Gain: frequencyResponse.gains_loudspeaker,
-      };
-      this.simulatedMicrophoneIR = {
-        Freq: frequencyResponse.frequencies_microphone,
-        Gain: frequencyResponse.gains_microphone,
-      };
-      console.log('simulatedMicrophoneIR', this.simulatedMicrophoneIR);
-      console.log('simulatedLoudspeakerIR', this.simulatedLoudspeakerIR);
-
-      if (isLoudspeakerCalibration) {
-        //define this.componentIR, this.componentGainDBSPL
-        this.componentIR = {
-          Freq: frequencyResponse.frequencies_microphone,
-          Gain: frequencyResponse.gains_microphone,
+      if (calibrateSoundSimulateMicrophoneType === 'impulseResponse') {
+        const frequencyResponse = await this.pyServerAPI.getFrequencyResponseFromImpulseResponse({
+          impulseResponse: this.calibrateSoundSimulateMicrophone,
+          sampleRate: this.sourceSamplingRate,
+          timeArray: calibrateSoundSimulateMicrophoneTime,
+          totalDuration: allHzDuation,
+          totalDuration1000Hz: this.CALIBRATION_TONE_DURATION,
+        });
+        this.calibrateSoundSimulateMicrophone = frequencyResponse.impulse_response;
+        this.calibrateSoundSimulateMicrophone1000Hz = frequencyResponse.impulse_response_1000hz;
+        this.simulatedMicrophoneIR = {
+          Freq: frequencyResponse.frequencies,
+          Gain: frequencyResponse.gains,
         };
-        console.log('this.componentIR', this.componentIR);
-        this.componentGainDBSPL = frequencyResponse.gain_at_1000hz_microphone;
-        lCalib = this.componentGainDBSPL;
+        if (isLoudspeakerCalibration) {
+          this.componentIR = {
+            Freq: frequencyResponse.frequencies,
+            Gain: frequencyResponse.gains,
+          };
+          this.componentGainDBSPL = frequencyResponse.gain_at_1000hz;
+          lCalib = this.componentGainDBSPL;
+        }
       } else {
-        //define this.componentIR, this.componentGainDBSPL
-        this.componentIR = {
-          Freq: frequencyResponse.frequencies_loudspeaker,
-          Gain: frequencyResponse.gains_loudspeaker,
+        const impulseResponse = await this.pyServerAPI.getImpulseResponseFromFrequencyResponse({
+          frequencies: calibrateSoundSimulateMicrophoneFrequencies,
+          gains: this.calibrateSoundSimulateMicrophone,
+          sample_rate: this.sourceSamplingRate,
+          iir_length: this.iirLength,
+          calibrateSoundIIRPhase: this.calibrateSoundIIRPhase,
+          totalDuration: allHzDuation,
+          totalDuration1000Hz: this.CALIBRATION_TONE_DURATION,
+        });
+        if (isLoudspeakerCalibration) {
+          this.componentIR = {
+            Freq: impulseResponse.frequencies,
+            Gain: impulseResponse.gains,
+          };
+          this.componentGainDBSPL = impulseResponse.gain_at_1000hz;
+          lCalib = this.componentGainDBSPL;
+        }
+        this.simulatedMicrophoneIR = {
+          Freq: impulseResponse.frequencies,
+          Gain: impulseResponse.gains,
         };
-        this.componentGainDBSPL = frequencyResponse.gain_at_1000hz_loudspeaker;
-        lCalib = this.componentGainDBSPL;
+        this.calibrateSoundSimulateMicrophone = impulseResponse.impulse_response;
+        this.calibrateSoundSimulateMicrophone1000Hz = impulseResponse.impulse_response_1000hz;
+      }
+
+      if (calibrateSoundSimulateLoudspeakerType === 'impulseResponse') {
+        const frequencyResponse = await this.pyServerAPI.getFrequencyResponseFromImpulseResponse({
+          impulseResponse: this.calibrateSoundSimulateLoudspeaker,
+          sampleRate: this.sourceSamplingRate,
+          timeArray: calibrateSoundSimulateLoudspeakerTime,
+          totalDuration: allHzDuation,
+          totalDuration1000Hz: this.CALIBRATION_TONE_DURATION,
+        });
+
+        if (!isLoudspeakerCalibration) {
+          this.componentIR = {
+            Freq: frequencyResponse.frequencies,
+            Gain: frequencyResponse.gains,
+          };
+          this.componentGainDBSPL = frequencyResponse.gain_at_1000hz;
+          lCalib = this.componentGainDBSPL;
+        }
+
+        this.calibrateSoundSimulateLoudspeaker = frequencyResponse.impulse_response;
+        this.calibrateSoundSimulateLoudspeaker1000Hz = frequencyResponse.impulse_response_1000hz;
+        this.simulatedLoudspeakerIR = {
+          Freq: frequencyResponse.frequencies,
+          Gain: frequencyResponse.gains,
+        };
+      } else {
+        const impulseResponse = await this.pyServerAPI.getImpulseResponseFromFrequencyResponse({
+          frequencies: calibrateSoundSimulateLoudspeakerFrequencies,
+          gains: this.calibrateSoundSimulateLoudspeaker,
+          sample_rate: this.sourceSamplingRate,
+          iir_length: this.iirLength,
+          calibrateSoundIIRPhase: this.calibrateSoundIIRPhase,
+          totalDuration: allHzDuation,
+          totalDuration1000Hz: this.CALIBRATION_TONE_DURATION,
+        });
+
+        this.simulatedLoudspeakerIR = {
+          Freq: impulseResponse.frequencies,
+          Gain: impulseResponse.gains,
+        };
+        if (!isLoudspeakerCalibration) {
+          this.componentIR = {
+            Freq: impulseResponse.frequencies,
+            Gain: impulseResponse.gains,
+          };
+          this.componentGainDBSPL = impulseResponse.gain_at_1000hz;
+          lCalib = this.componentGainDBSPL;
+        }
+        this.calibrateSoundSimulateLoudspeaker = impulseResponse.impulse_response;
+        this.calibrateSoundSimulateLoudspeaker1000Hz = impulseResponse.impulse_response_1000hz;
       }
     }
 

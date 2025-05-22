@@ -126,9 +126,50 @@ class PythonServerAPI {
     return res.data[task];
   };
 
+  getImpulseResponseFromFrequencyResponse = async ({
+    frequencies,
+    gains,
+    sample_rate,
+    iir_length,
+    calibrateSoundIIRPhase,
+    totalDuration,
+    totalDuration1000Hz,
+  }) => {
+    const task = 'frequency-response-to-impulse-response';
+    let res = null;
+
+    const data = JSON.stringify({
+      task,
+      frequencies,
+      gains,
+      sample_rate,
+      iir_length,
+      calibrateSoundIIRPhase,
+      total_duration: totalDuration,
+      total_duration_1000hz: totalDuration1000Hz,
+    });
+
+    await axios({
+      method: 'post',
+      baseURL: PythonServerAPI.PYTHON_SERVER_URL,
+      url: `/task/${task}`,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      data,
+    })
+      .then(response => {
+        res = response;
+      })
+      .catch(error => {
+        throw error;
+      });
+
+    return res.data[task];
+  };
+
   getFrequencyResponseFromImpulseResponse = async ({
-    impulseResponseMicrophone,
-    impulseResponseLoudspeaker,
+    impulseResponse,
     sampleRate,
     timeArray,
     totalDuration,
@@ -139,8 +180,7 @@ class PythonServerAPI {
 
     const data = JSON.stringify({
       task,
-      impulse_response_microphone: impulseResponseMicrophone,
-      impulse_response_loudspeaker: impulseResponseLoudspeaker,
+      impulse_response: impulseResponse,
       sample_rate: sampleRate,
       time_array: timeArray,
       total_duration: totalDuration,
