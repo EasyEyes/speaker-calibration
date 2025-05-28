@@ -3668,6 +3668,8 @@ class Combination extends AudioCalibrator {
       impulseResponseResults['component']['fMaxHz'] = this.componentFMaxHz;
       impulseResponseResults['L_new_n'] = this.L_new_n;
       impulseResponseResults['fs2'] = this.fs2;
+      impulseResponseResults['fMLS'] =
+        this.sourceSamplingRate / this._calibrateSoundBurstDownsample;
 
       if (componentIR != null) {
         // I corrected microphone/loudpeaker IR scale in easyeyes,
