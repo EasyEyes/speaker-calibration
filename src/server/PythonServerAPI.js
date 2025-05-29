@@ -858,7 +858,7 @@ class PythonServerAPI {
     return res.data[task];
   };
 
-  irConvolution = async ({input_signal, microphone_ir, loudspeaker_ir}) => {
+  irConvolution = async ({input_signal, microphone_ir, loudspeaker_ir, duration, sample_rate}) => {
     const task = 'ir-convolution';
     let res = null;
 
@@ -866,6 +866,8 @@ class PythonServerAPI {
       input_signal,
       microphone_ir,
       loudspeaker_ir,
+      duration,
+      sample_rate,
     });
 
     await axios({

@@ -288,13 +288,18 @@ class Combination extends AudioCalibrator {
   // Simulate MLS calibration by convolving with impulse responses
   simulatedMLSCalibration = async (mlsSignal, loudspeakerIR, microphoneIR) => {
     console.log('[SIMULATION] Running MLS impulse response calibration simulation');
-
+    const duration =
+      this._calibrateSoundBurstPreSec +
+      this._calibrateSoundBurstRepeats * this._calibrateSoundBurstSec +
+      this._calibrateSoundBurstPostSec;
     // Convolve MLS with loudspeaker IR and microphone IR
     const simulatedRecording = await this.pyServerAPI
       .irConvolution({
         input_signal: mlsSignal,
         microphone_ir: microphoneIR,
         loudspeaker_ir: loudspeakerIR,
+        duration: duration,
+        sample_rate: this.sourceSamplingRate / this._calibrateSoundBurstDownsample,
       })
       .then(res => {
         return res['output_signal'];
@@ -1183,13 +1188,18 @@ class Combination extends AudioCalibrator {
   simulatePlayMLSwithIIR = async (convolution, loudspeakerIR, microphoneIR) => {
     console.log('[SIMULATION] Simulate playing MLS with IIR');
     this.mode = 'filtered';
-
+    const duration =
+      this._calibrateSoundBurstPreSec +
+      this._calibrateSoundBurstRepeats * this._calibrateSoundBurstSec +
+      this._calibrateSoundBurstPostSec;
     // Further convolve with loudspeaker and microphone IRs to simulate recording
     const simulatedRecording = await this.pyServerAPI
       .irConvolution({
         input_signal: convolution,
         loudspeaker_ir: loudspeakerIR,
         microphone_ir: microphoneIR,
+        duration: duration,
+        sample_rate: this.sourceSamplingRate / this._calibrateSoundBurstDownsample,
       })
       .then(res => {
         return res['output_signal'];

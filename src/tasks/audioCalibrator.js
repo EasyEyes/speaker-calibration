@@ -270,12 +270,15 @@ class AudioCalibrator extends AudioRecorder {
     lCalib,
     checkRec
   ) => {
+    const totalSec = this.CALIBRATION_TONE_DURATION;
     // Convolve with loudspeaker and microphone impulse responses
     const convolvedSignalWithMicrophone = await this.pyServerAPI
       .irConvolution({
         input_signal: inputSignal,
         loudspeaker_ir: loudspeakerImpulseResponse,
         microphone_ir: microphoneImpulseResponse,
+        duration: totalSec,
+        sample_rate: this.sourceSamplingRate / this._calibrateSoundBurstDownsample,
       })
       .then(res => {
         console.log('res in simulatedVolumeCalibrationSteps: ', res);
