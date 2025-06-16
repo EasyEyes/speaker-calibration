@@ -363,12 +363,21 @@ class Combination extends AudioCalibrator {
       const reportWebAudioNames = `${this.webAudioDeviceNames.loudspeakerText}<br/> ${this.webAudioDeviceNames.microphoneText}`;
       soundSubtitle.innerHTML = reportWebAudioNames;
     }
+    const simulationEnabled =
+      this.calibrateSoundSimulateMicrophone !== null &&
+      this.calibrateSoundSimulateLoudspeaker !== null;
+
+    const simulateText = simulationEnabled
+      ? `
+      Simulating Loudspeaker: ${this.calibrateSoundSimulateLoudspeakerFileName}, Microphone: ${this.calibrateSoundSimulateMicrophoneFileName}
+    <br>`
+      : '';
 
     const samplingParamText = this.phrases.RC_SamplingHzBits[this.language]
       .replace('111', this.sourceSamplingRate)
       .replace('222', this.sinkSamplingRate)
       .replace('333', this.calibrateSoundSamplingDesiredBits);
-    const reportParameters = `${samplingParamText} ↓${this._calibrateSoundBurstDownsample}:1`;
+    const reportParameters = `${simulateText}${samplingParamText} ↓${this._calibrateSoundBurstDownsample}:1`;
     if (this.flags) {
       flags = `<br> autoGainControl: ${this.flags.autoGainControl}, echoCancellation: ${this.flags.echoCancellation}, noiseSuppression: ${this.flags.noiseSuppression}`;
     }
@@ -2419,281 +2428,278 @@ class Combination extends AudioCalibrator {
         iir_ir_and_plots = await this.bothSoundCheck(stream);
         if (this.isCalibrating) return null;
       }
-    
-    // } else {
-    //   let unconv_rec = this.componentInvertedImpulseResponseNoBandpass;
-    //   let conv_rec = this.componentInvertedImpulseResponse;
-    //   if (this.isCalibrating) return null;
-    //   let component_iir_psd = await this.pyServerAPI
-    //     .getPSDWithRetry({
-    //       unconv_rec: this.componentInvertedImpulseResponseNoBandpass,
-    //       conv_rec: this.componentInvertedImpulseResponse,
-    //       sampleRate: fMLS,
-    //       downsample: this._calibrateSoundBurstDownsample,
-    //     })
-    //     .then(res => {
-    //       this.incrementStatusBar();
-    //       this.status = this.generateTemplate(
-    //         `All Hz Calibration: done computing the PSD graphs...`.toString()
-    //       ).toString();
-    //       this.emit('update', {message: this.status});
-    //       return res;
-    //     })
-    //     .catch(err => {
-    //       console.error(err);
-    //     });
-    //   unconv_rec = this.systemInvertedImpulseResponseNoBandpass;
-    //   conv_rec = this.systemInvertedImpulseResponse;
-    //   if (this.isCalibrating) return null;
-    //   let system_iir_psd = await this.pyServerAPI
-    //     .getPSDWithRetry({
-    //       unconv_rec: this.systemInvertedImpulseResponseNoBandpass,
-    //       conv_rec: this.systemInvertedImpulseResponse,
-    //       sampleRate: fMLS,
-    //       downsample: this._calibrateSoundBurstDownsample,
-    //     })
-    //     .then(res => {
-    //       this.incrementStatusBar();
-    //       this.status = this.generateTemplate(
-    //         `All Hz Calibration: done computing the PSD graphs...`.toString()
-    //       ).toString();
-    //       this.emit('update', {message: this.status});
-    //       return res;
-    //     })
-    //     .catch(err => {
-    //       console.error(err);
-    //     });
 
-    //   let gainValue = this.getGainDBSPL();
-    //   let return_unconv_rec = unconv_rec;
-    //   let return_conv_rec   = conv_rec;
-    //   iir_ir_and_plots = {
-    //     unfiltered_recording: return_unconv_rec,
-    //     filtered_recording: return_conv_rec,
-    //     system: {
-    //       iir: this.systemInvertedImpulseResponse,
-    //       iir_no_bandpass: this.systemInvertedImpulseResponseNoBandpass,
-    //       ir: this.systemIR,
-    //       iir_psd: {
-    //         y: system_iir_psd['y_conv'],
-    //         x: system_iir_psd['y_conv'],
-    //         y_no_bandpass: system_iir_psd['y_unconv'],
-    //         x_no_bandpass: system_iir_psd['x_unconv'],
-    //       },
-    //       filtered_recording: [],
-    //       convolution: this.systemConvolution,
-    //       convolutionNoBandpass: this.systemConvolutionNoBandpass,
-    //       psd: {
-    //         unconv: {
-    //           x: [],
-    //           y: [],
-    //         },
-    //         conv: {
-    //           x: [],
-    //           y: [],
-    //         },
-    //       },
-    //     },
-    //     component: {
-    //       iir: this.componentInvertedImpulseResponse,
-    //       iir_no_bandpass: this.componentInvertedImpulseResponseNoBandpass,
-    //       ir: this.componentIR,
-    //       ir_in_time_domain: this.componentIRInTimeDomain,
-    //       iir_psd: {
-    //         y: component_iir_psd['y_conv'],
-    //         x: component_iir_psd['x_conv'],
-    //         y_no_bandpass: component_iir_psd['y_unconv'],
-    //         x_no_bandpass: component_iir_psd['x_unconv'],
-    //       },
-    //       convolution: this.componentConvolution,
-    //       convolutionNoBandpass: this.componentConvolutionNoBandpass,
-    //       psd: {
-    //         unconv: {
-    //           x: [],
-    //           y: [],
-    //         },
-    //         conv: {
-    //           x: [],
-    //           y: [],
-    //         },
-    //       },
-    //       gainDBSPL: gainValue,
-    //     },
-    //     mls: this.#mlsBufferView,
-    //     autocorrelations: this.autocorrelations,
-    //     impulseResponses: [],
-    //   };
-    //   if (this.isCalibrating) return null;
-    //   await Promise.all(this.impulseResponses).then(res => {
-    //     for (let i = 0; i < res.length; i++) {
-    //       if (res[i] != undefined) {
-    //         iir_ir_and_plots['impulseResponses'].push(res[i]);
-    //       }
-    //     }
-    //   });
+      // } else {
+      //   let unconv_rec = this.componentInvertedImpulseResponseNoBandpass;
+      //   let conv_rec = this.componentInvertedImpulseResponse;
+      //   if (this.isCalibrating) return null;
+      //   let component_iir_psd = await this.pyServerAPI
+      //     .getPSDWithRetry({
+      //       unconv_rec: this.componentInvertedImpulseResponseNoBandpass,
+      //       conv_rec: this.componentInvertedImpulseResponse,
+      //       sampleRate: fMLS,
+      //       downsample: this._calibrateSoundBurstDownsample,
+      //     })
+      //     .then(res => {
+      //       this.incrementStatusBar();
+      //       this.status = this.generateTemplate(
+      //         `All Hz Calibration: done computing the PSD graphs...`.toString()
+      //       ).toString();
+      //       this.emit('update', {message: this.status});
+      //       return res;
+      //     })
+      //     .catch(err => {
+      //       console.error(err);
+      //     });
+      //   unconv_rec = this.systemInvertedImpulseResponseNoBandpass;
+      //   conv_rec = this.systemInvertedImpulseResponse;
+      //   if (this.isCalibrating) return null;
+      //   let system_iir_psd = await this.pyServerAPI
+      //     .getPSDWithRetry({
+      //       unconv_rec: this.systemInvertedImpulseResponseNoBandpass,
+      //       conv_rec: this.systemInvertedImpulseResponse,
+      //       sampleRate: fMLS,
+      //       downsample: this._calibrateSoundBurstDownsample,
+      //     })
+      //     .then(res => {
+      //       this.incrementStatusBar();
+      //       this.status = this.generateTemplate(
+      //         `All Hz Calibration: done computing the PSD graphs...`.toString()
+      //       ).toString();
+      //       this.emit('update', {message: this.status});
+      //       return res;
+      //     })
+      //     .catch(err => {
+      //       console.error(err);
+      //     });
 
-    //   if (this.#download) {
-    //     saveToCSV(this.#mls, 'MLS.csv');
-    //     saveToCSV(this.componentConvolution, 'python_component_convolution_mls_iir.csv');
-    //     saveToCSV(this.systemConvolution, 'python_system_convolution_mls_iir.csv');
-    //     saveToCSV(this.componentInvertedImpulseResponse, 'componentIIR.csv');
-    //     saveToCSV(this.systemInvertedImpulseResponse, 'systemIIR.csv');
-    //     for (let i = 0; i < this.autocorrelations.length; i++) {
-    //       saveToCSV(this.autocorrelations[i], `autocorrelation_${i}`);
-    //     }
-    //     const computedIRagain = await Promise.all(this.impulseResponses).then(res => {
-    //       for (let i = 0; i < res.length; i++) {
-    //         if (res[i] != undefined) {
-    //           saveToCSV(res[i], `IR_${i}`);
-    //         }
-    //       }
-    //     });
-    //   }
-    // }
-  } else {
-    
-    let unconv_rec = this.componentInvertedImpulseResponseNoBandpass;
-    let conv_rec   = this.componentInvertedImpulseResponse;
-  
-  
-    let return_unconv_rec = unconv_rec;
-    let return_conv_rec   = conv_rec;
-  
-    const fMLS = this.sourceSamplingRate / this._calibrateSoundBurstDownsample;
-  
-   
-    this.addTimeStamp('Compute spectrum of component IIR and component IIR no band pass');
-    if (this.isCalibrating) return null;
-    let component_iir_psd = await this.pyServerAPI.getPSDWithRetry({
-      unconv_rec: this.componentInvertedImpulseResponseNoBandpass,
-      conv_rec:   this.componentInvertedImpulseResponse,
-      sampleRate: fMLS,
-      downsample: this._calibrateSoundBurstDownsample,
-    })
-    .then(res => {
-      this.incrementStatusBar();
-      this.status = this.generateTemplate(`All Hz Calibration: done computing the PSD graphs...`).toString();
-      this.emit('update', { message: this.status });
-      return res;
-    })
-    .catch(err => {
-      console.error(err);
-    });
-  
-   
-    this.addTimeStamp('Compute spectrum of speaker+mic IIR and speaker+mic IIR no band pass');
-    if (this.isCalibrating) return null;
-    let system_iir_psd = await this.pyServerAPI.getPSDWithRetry({
-      unconv_rec: this.systemInvertedImpulseResponseNoBandpass,
-      conv_rec:   this.systemInvertedImpulseResponse,
-      sampleRate: fMLS,
-      downsample: this._calibrateSoundBurstDownsample,
-    })
-    .then(res => {
-      this.incrementStatusBar();
-      this.status = this.generateTemplate(`All Hz Calibration: done computing the PSD graphs...`).toString();
-      this.emit('update', { message: this.status });
-      return res;
-    })
-    .catch(err => {
-      console.error(err);
-    });
-  
-    
-    let gainValue = this.getGainDBSPL();
-  
-    
-    iir_ir_and_plots = {
-      unfiltered_recording: return_unconv_rec,
-      filtered_recording:   return_conv_rec,
-  
-      system: {
-        iir:                  this.systemInvertedImpulseResponse,
-        iir_no_bandpass:      this.systemInvertedImpulseResponseNoBandpass,
-        ir:                   this.systemIR,
-        iir_psd: {
-          y:                 system_iir_psd['y_conv'],
-          x:                 system_iir_psd['x_conv'],
-          y_no_bandpass:     system_iir_psd['y_unconv'],
-          x_no_bandpass:     system_iir_psd['x_unconv'],
+      //   let gainValue = this.getGainDBSPL();
+      //   let return_unconv_rec = unconv_rec;
+      //   let return_conv_rec   = conv_rec;
+      //   iir_ir_and_plots = {
+      //     unfiltered_recording: return_unconv_rec,
+      //     filtered_recording: return_conv_rec,
+      //     system: {
+      //       iir: this.systemInvertedImpulseResponse,
+      //       iir_no_bandpass: this.systemInvertedImpulseResponseNoBandpass,
+      //       ir: this.systemIR,
+      //       iir_psd: {
+      //         y: system_iir_psd['y_conv'],
+      //         x: system_iir_psd['y_conv'],
+      //         y_no_bandpass: system_iir_psd['y_unconv'],
+      //         x_no_bandpass: system_iir_psd['x_unconv'],
+      //       },
+      //       filtered_recording: [],
+      //       convolution: this.systemConvolution,
+      //       convolutionNoBandpass: this.systemConvolutionNoBandpass,
+      //       psd: {
+      //         unconv: {
+      //           x: [],
+      //           y: [],
+      //         },
+      //         conv: {
+      //           x: [],
+      //           y: [],
+      //         },
+      //       },
+      //     },
+      //     component: {
+      //       iir: this.componentInvertedImpulseResponse,
+      //       iir_no_bandpass: this.componentInvertedImpulseResponseNoBandpass,
+      //       ir: this.componentIR,
+      //       ir_in_time_domain: this.componentIRInTimeDomain,
+      //       iir_psd: {
+      //         y: component_iir_psd['y_conv'],
+      //         x: component_iir_psd['x_conv'],
+      //         y_no_bandpass: component_iir_psd['y_unconv'],
+      //         x_no_bandpass: component_iir_psd['x_unconv'],
+      //       },
+      //       convolution: this.componentConvolution,
+      //       convolutionNoBandpass: this.componentConvolutionNoBandpass,
+      //       psd: {
+      //         unconv: {
+      //           x: [],
+      //           y: [],
+      //         },
+      //         conv: {
+      //           x: [],
+      //           y: [],
+      //         },
+      //       },
+      //       gainDBSPL: gainValue,
+      //     },
+      //     mls: this.#mlsBufferView,
+      //     autocorrelations: this.autocorrelations,
+      //     impulseResponses: [],
+      //   };
+      //   if (this.isCalibrating) return null;
+      //   await Promise.all(this.impulseResponses).then(res => {
+      //     for (let i = 0; i < res.length; i++) {
+      //       if (res[i] != undefined) {
+      //         iir_ir_and_plots['impulseResponses'].push(res[i]);
+      //       }
+      //     }
+      //   });
+
+      //   if (this.#download) {
+      //     saveToCSV(this.#mls, 'MLS.csv');
+      //     saveToCSV(this.componentConvolution, 'python_component_convolution_mls_iir.csv');
+      //     saveToCSV(this.systemConvolution, 'python_system_convolution_mls_iir.csv');
+      //     saveToCSV(this.componentInvertedImpulseResponse, 'componentIIR.csv');
+      //     saveToCSV(this.systemInvertedImpulseResponse, 'systemIIR.csv');
+      //     for (let i = 0; i < this.autocorrelations.length; i++) {
+      //       saveToCSV(this.autocorrelations[i], `autocorrelation_${i}`);
+      //     }
+      //     const computedIRagain = await Promise.all(this.impulseResponses).then(res => {
+      //       for (let i = 0; i < res.length; i++) {
+      //         if (res[i] != undefined) {
+      //           saveToCSV(res[i], `IR_${i}`);
+      //         }
+      //       }
+      //     });
+      //   }
+      // }
+    } else {
+      let unconv_rec = this.componentInvertedImpulseResponseNoBandpass;
+      let conv_rec = this.componentInvertedImpulseResponse;
+
+      let return_unconv_rec = unconv_rec;
+      let return_conv_rec = conv_rec;
+
+      const fMLS = this.sourceSamplingRate / this._calibrateSoundBurstDownsample;
+
+      this.addTimeStamp('Compute spectrum of component IIR and component IIR no band pass');
+      if (this.isCalibrating) return null;
+      let component_iir_psd = await this.pyServerAPI
+        .getPSDWithRetry({
+          unconv_rec: this.componentInvertedImpulseResponseNoBandpass,
+          conv_rec: this.componentInvertedImpulseResponse,
+          sampleRate: fMLS,
+          downsample: this._calibrateSoundBurstDownsample,
+        })
+        .then(res => {
+          this.incrementStatusBar();
+          this.status = this.generateTemplate(
+            `All Hz Calibration: done computing the PSD graphs...`
+          ).toString();
+          this.emit('update', {message: this.status});
+          return res;
+        })
+        .catch(err => {
+          console.error(err);
+        });
+
+      this.addTimeStamp('Compute spectrum of speaker+mic IIR and speaker+mic IIR no band pass');
+      if (this.isCalibrating) return null;
+      let system_iir_psd = await this.pyServerAPI
+        .getPSDWithRetry({
+          unconv_rec: this.systemInvertedImpulseResponseNoBandpass,
+          conv_rec: this.systemInvertedImpulseResponse,
+          sampleRate: fMLS,
+          downsample: this._calibrateSoundBurstDownsample,
+        })
+        .then(res => {
+          this.incrementStatusBar();
+          this.status = this.generateTemplate(
+            `All Hz Calibration: done computing the PSD graphs...`
+          ).toString();
+          this.emit('update', {message: this.status});
+          return res;
+        })
+        .catch(err => {
+          console.error(err);
+        });
+
+      let gainValue = this.getGainDBSPL();
+
+      iir_ir_and_plots = {
+        unfiltered_recording: return_unconv_rec,
+        filtered_recording: return_conv_rec,
+
+        system: {
+          iir: this.systemInvertedImpulseResponse,
+          iir_no_bandpass: this.systemInvertedImpulseResponseNoBandpass,
+          ir: this.systemIR,
+          iir_psd: {
+            y: system_iir_psd['y_conv'],
+            x: system_iir_psd['x_conv'],
+            y_no_bandpass: system_iir_psd['y_unconv'],
+            x_no_bandpass: system_iir_psd['x_unconv'],
+          },
+
+          filtered_mls_psd: {},
+          filtered_no_bandpass_mls_psd: {},
+          convolution: this.systemConvolution,
+          convolutionNoBandpass: this.systemConvolutionNoBandpass,
+          psd: {
+            unconv: {x: [], y: []},
+            conv: {x: [], y: []},
+          },
         },
-       
-        filtered_mls_psd:         {},
-        filtered_no_bandpass_mls_psd: {},
-        convolution:              this.systemConvolution,
-        convolutionNoBandpass:    this.systemConvolutionNoBandpass,
-        psd: {
-          unconv: { x: [], y: [] },
-          conv:   { x: [], y: [] },
+
+        component: {
+          iir: this.componentInvertedImpulseResponse,
+          iir_no_bandpass: this.componentInvertedImpulseResponseNoBandpass,
+          ir: this.componentIR,
+          ir_origin: this.componentIROrigin,
+          ir_in_time_domain: this.componentIRInTimeDomain,
+          iir_psd: {
+            y: component_iir_psd['y_conv'],
+            x: component_iir_psd['x_conv'],
+            y_no_bandpass: component_iir_psd['y_unconv'],
+            x_no_bandpass: component_iir_psd['x_unconv'],
+          },
+
+          filtered_mls_psd: {},
+          filtered_no_bandpass_mls_psd: {},
+          convolution: this.componentConvolution,
+          convolutionNoBandpass: this.componentConvolutionNoBandpass,
+          psd: {
+            unconv: {x: [], y: []},
+            conv: {x: [], y: []},
+          },
+          gainDBSPL: gainValue,
         },
-      },
-  
-      component: {
-        iir:                  this.componentInvertedImpulseResponse,
-        iir_no_bandpass:      this.componentInvertedImpulseResponseNoBandpass,
-        ir:                   this.componentIR,
-        ir_origin:            this.componentIROrigin,
-        ir_in_time_domain:    this.componentIRInTimeDomain,
-        iir_psd: {
-          y:                 component_iir_psd['y_conv'],
-          x:                 component_iir_psd['x_conv'],
-          y_no_bandpass:     component_iir_psd['y_unconv'],
-          x_no_bandpass:     component_iir_psd['x_unconv'],
-        },
-       
-        filtered_mls_psd:         {},
-        filtered_no_bandpass_mls_psd: {},
-        convolution:              this.componentConvolution,
-        convolutionNoBandpass:    this.componentConvolutionNoBandpass,
-        psd: {
-          unconv: { x: [], y: [] },
-          conv:   { x: [], y: [] },
-        },
-        gainDBSPL:  gainValue,
-      },
-  
-      mls:               this.#mlsBufferView,
-      autocorrelations:  this.autocorrelations,
-      impulseResponses:  [], // filled below
-    };
-  
-    
-    if (this.isCalibrating) return null;
-    await Promise.all(this.impulseResponses).then(resArray => {
-      for (let i = 0; i < resArray.length; i++) {
-        if (resArray[i] != undefined) {
-          iir_ir_and_plots.impulseResponses.push(resArray[i]);
-        }
-      }
-    });
-  
-    
-    if (this.#download) {
-      saveToCSV(this.#mls, 'MLS.csv');
-      saveToCSV(this.componentConvolution, 'python_component_convolution_mls_iir.csv');
-      saveToCSV(this.systemConvolution, 'python_system_convolution_mls_iir.csv');
-      saveToCSV(this.componentInvertedImpulseResponse, 'componentIIR.csv');
-      saveToCSV(this.systemInvertedImpulseResponse, 'systemIIR.csv');
-      for (let i = 0; i < this.autocorrelations.length; i++) {
-        saveToCSV(this.autocorrelations[i], `autocorrelation_${i}`);
-      }
+
+        mls: this.#mlsBufferView,
+        autocorrelations: this.autocorrelations,
+        impulseResponses: [], // filled below
+      };
+
+      if (this.isCalibrating) return null;
       await Promise.all(this.impulseResponses).then(resArray => {
         for (let i = 0; i < resArray.length; i++) {
           if (resArray[i] != undefined) {
-            saveToCSV(resArray[i], `IR_${i}`);
+            iir_ir_and_plots.impulseResponses.push(resArray[i]);
           }
         }
       });
+
+      if (this.#download) {
+        saveToCSV(this.#mls, 'MLS.csv');
+        saveToCSV(this.componentConvolution, 'python_component_convolution_mls_iir.csv');
+        saveToCSV(this.systemConvolution, 'python_system_convolution_mls_iir.csv');
+        saveToCSV(this.componentInvertedImpulseResponse, 'componentIIR.csv');
+        saveToCSV(this.systemInvertedImpulseResponse, 'systemIIR.csv');
+        for (let i = 0; i < this.autocorrelations.length; i++) {
+          saveToCSV(this.autocorrelations[i], `autocorrelation_${i}`);
+        }
+        await Promise.all(this.impulseResponses).then(resArray => {
+          for (let i = 0; i < resArray.length; i++) {
+            if (resArray[i] != undefined) {
+              saveToCSV(resArray[i], `IR_${i}`);
+            }
+          }
+        });
+      }
     }
-  }
     if (this.isCalibrating) return null;
     this.percent_complete = 100;
     this.status = this.generateTemplate(`All Hz Calibration: Finished`.toString()).toString();
     this.addTimeStamp('Done');
     this.emit('update', {message: this.status});
 
-   
-    console.log("irr_ir_and_plots for none: ", iir_ir_and_plots);
+    console.log('irr_ir_and_plots for none: ', iir_ir_and_plots);
     return iir_ir_and_plots;
   };
 
@@ -3475,6 +3481,8 @@ class Combination extends AudioCalibrator {
     calibrateSoundSimulateLoudspeakerFrequencies = null,
     calibrateSoundSimulateMicrophoneType = 'impulseResponse',
     calibrateSoundSimulateLoudspeakerType = 'impulseResponse',
+    calibrateSoundSimulateMicrophoneFileName = null,
+    calibrateSoundSimulateLoudspeakerFileName = null,
     isLoudspeakerCalibration = true
   ) => {
     this._calibrateSoundBurstDownsample = calibrateSoundBurstDownsample;
@@ -3498,6 +3506,8 @@ class Combination extends AudioCalibrator {
     // Set simulation impulse responses
     this.calibrateSoundSimulateMicrophone = calibrateSoundSimulateMicrophone;
     this.calibrateSoundSimulateLoudspeaker = calibrateSoundSimulateLoudspeaker;
+    this.calibrateSoundSimulateMicrophoneFileName = calibrateSoundSimulateMicrophoneFileName;
+    this.calibrateSoundSimulateLoudspeakerFileName = calibrateSoundSimulateLoudspeakerFileName;
 
     const fMLS = this.sourceSamplingRate / this._calibrateSoundBurstDownsample;
     this.iirLength = Math.floor(_calibrateSoundIIRSec * fMLS);
@@ -3650,6 +3660,7 @@ class Combination extends AudioCalibrator {
           };
           this.componentGainDBSPL = frequencyResponse.gain_at_1000hz;
           lCalib = this.componentGainDBSPL;
+          micInfo['gainDBSPL'] = lCalib;
         }
       } else {
         const impulseResponse = await this.pyServerAPI.getImpulseResponseFromFrequencyResponse({
@@ -3668,6 +3679,7 @@ class Combination extends AudioCalibrator {
           };
           this.componentGainDBSPL = impulseResponse.gain_at_1000hz;
           lCalib = this.componentGainDBSPL;
+          micInfo['gainDBSPL'] = lCalib;
         }
         this.simulatedMicrophoneIR = {
           Freq: impulseResponse.frequencies,

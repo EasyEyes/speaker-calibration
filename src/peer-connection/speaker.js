@@ -154,6 +154,8 @@ class Speaker extends AudioPeer {
     //set sampling rates
     speaker.ac.setSamplingRates(speaker.calibrateSoundHz);
     speaker.ac.setSampleSize(speaker.calibrateSoundSamplingDesiredBits);
+    speaker.#removeUIElems();
+    speaker.#showSpinner();
     speaker.result = await speaker.ac.startCalibration(
       null,
       params.gainValues,
@@ -213,6 +215,8 @@ class Speaker extends AudioPeer {
       params.calibrateSoundSimulateLoudspeakerFrequencies,
       params.calibrateSoundSimulateMicrophoneType,
       params.calibrateSoundSimulateLoudspeakerType,
+      params.calibrateSoundSimulateLoudspeakerFileName,
+      params.calibrateSoundSimulateMicrophoneFileName,
       params.isLoudspeakerCalibration
     );
     speaker.#removeUIElems();
@@ -355,6 +359,8 @@ class Speaker extends AudioPeer {
             params.calibrateSoundSimulateLoudspeakerFrequencies,
             params.calibrateSoundSimulateMicrophoneType,
             params.calibrateSoundSimulateLoudspeakerType,
+            params.calibrateSoundSimulateLoudspeakerFileName,
+            params.calibrateSoundSimulateMicrophoneFileName,
             params.isLoudspeakerCalibration
           );
           speaker.#removeUIElems();
@@ -951,6 +957,8 @@ class Speaker extends AudioPeer {
             params.calibrateSoundSimulateLoudspeakerFrequencies,
             params.calibrateSoundSimulateMicrophoneType,
             params.calibrateSoundSimulateLoudspeakerType,
+            params.calibrateSoundSimulateLoudspeakerFileName,
+            params.calibrateSoundSimulateMicrophoneFileName,
             params.isLoudspeakerCalibration
           );
           clearInterval(permissionCheckInterval);
