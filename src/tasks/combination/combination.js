@@ -846,10 +846,18 @@ class Combination extends AudioCalibrator {
             const usedPeriodStart = this.calibrateSoundBurstPreSec * this.sourceSamplingRate;
             const usedPeriodEnd = (this.calibrateSoundBurstPreSec + this._calibrateSoundBurstRepeats * this.calibrateSoundBurstBurstSec) * this.sourceSamplingRate;
             const payload_skipped_warmUp = payload.slice(usedPeriodStart, usedPeriodEnd);
+
+            console.log('payload.length', payload.length);
+            console.log('usedPeriodStart', usedPeriodStart);
+            console.log('usedPeriodEnd', usedPeriodEnd);
+            console.log('payload_skipped_warmUp.length', payload_skipped_warmUp.length);
+
             const payload_skipped_warmUp_downsampled = this.downsampleSignal(
               payload_skipped_warmUp,
               this._calibrateSoundBurstDownsample
             );
+
+            console.log('payload_skipped_warmUp_downsampled', payload_skipped_warmUp_downsampled);
             // console.log('usedPeriodStart', usedPeriodStart);
             // console.log('payload', payload);
             // console.log('payload_skipped_warmUp', payload_skipped_warmUp);
