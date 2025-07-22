@@ -843,8 +843,8 @@ class Combination extends AudioCalibrator {
             }
             this.recordingChecks['unfiltered'].push(result);
             console.log('start calculate impulse response');
-            const usedPeriodStart = this.calibrateSoundBurstPreSec * this.sourceSamplingRate;
-            const usedPeriodEnd = (this.calibrateSoundBurstPreSec + this._calibrateSoundBurstRepeats * this.calibrateSoundBurstBurstSec) * this.sourceSamplingRate;
+            const usedPeriodStart = this._calibrateSoundBurstPreSec * this.sourceSamplingRate;
+            const usedPeriodEnd = (this._calibrateSoundBurstPreSec + this._calibrateSoundBurstRepeats * this.calibrateSoundBurstBurstSec) * this.sourceSamplingRate;
             const payload_skipped_warmUp = payload.slice(usedPeriodStart, usedPeriodEnd);
 
             console.log('payload.length', payload.length);
