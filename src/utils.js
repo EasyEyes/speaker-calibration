@@ -200,6 +200,16 @@ export function convertAsterisksToList(content) {
   return result;
 }
 
-
+export const reorderMLS = (mlsSignal, preSec, sourceSamplingRate) => {
+  // Number of samples to move
+  const numSamplesToMove = Math.round(preSec * sourceSamplingRate);
+  if (numSamplesToMove <= 0 || numSamplesToMove >= mlsSignal.length) {
+    // Nothing to reorder, return original
+    return mlsSignal;
+  }
+  const lastPart = mlsSignal.slice(-numSamplesToMove);
+  const firstPart = mlsSignal.slice(0, mlsSignal.length - numSamplesToMove);
+  return lastPart.concat(firstPart);
+}
 
 export {sleep, saveToCSV, saveToJSON, csvToArray,findMinValue,findMaxValue, standardDeviation, interpolate};

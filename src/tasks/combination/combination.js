@@ -10,6 +10,7 @@ import {
   getCurrentTimeString,
   standardDeviation,
   interpolate,
+  reorderMLS
 } from '../../utils';
 
 import {volumePowerCheck, getPower} from '../../powerCheck';
@@ -769,7 +770,7 @@ class Combination extends AudioCalibrator {
         sampleRate: fMLS,
         binDesiredSec: this._calibrateSoundPowerBinDesiredSec,
         burstSec: this.desired_time_per_mls,
-        repeats: this.numMLSPerCapture - this.num_mls_to_skip,
+        repeats: this._calibrateSoundBurstRepeats,
         warmUp: this._calibrateSoundBurstPreSec,
         downsample: this._calibrateSoundBurstDownsample,
       })
@@ -842,8 +843,9 @@ class Combination extends AudioCalibrator {
             }
             this.recordingChecks['unfiltered'].push(result);
             console.log('start calculate impulse response');
-            const usedPeriodStart = this.num_mls_to_skip * this.sourceSamplingRate;
-            const payload_skipped_warmUp = payload.slice(usedPeriodStart);
+            const usedPeriodStart = this.calibrateSoundBurstPreSec * this.sourceSamplingRate;
+            const usedPeriodEnd = (this.calibrateSoundBurstPreSec + this._calibrateSoundBurstRepeats * this.calibrateSoundBurstBurstSec) * this.sourceSamplingRate;
+            const payload_skipped_warmUp = payload.slice(usedPeriodStart, usedPeriodEnd);
             const payload_skipped_warmUp_downsampled = this.downsampleSignal(
               payload_skipped_warmUp,
               this._calibrateSoundBurstDownsample
@@ -859,7 +861,7 @@ class Combination extends AudioCalibrator {
                 mls: mls,
                 payload: payload_skipped_warmUp_downsampled,
                 sampleRate: fMLS,
-                numPeriods: (this.numMLSPerCapture - this.num_mls_to_skip) / factor,
+                numPeriods: (this._calibrateSoundBurstRepeats) / factor,
                 downsample: this._calibrateSoundBurstDownsample,
               })
               .then(async res => {
@@ -872,7 +874,7 @@ class Combination extends AudioCalibrator {
                     .getImpulseResponse({
                       mls,
                       sampleRate: fMLS,
-                      numPeriods: (this.numMLSPerCapture - this.num_mls_to_skip) / factor,
+                      numPeriods: (this._calibrateSoundBurstRepeats) / factor,
                       sig: payload_skipped_warmUp_downsampled,
                       fs2: this.fs2,
                       L_new_n: this.L_new_n,
@@ -987,7 +989,7 @@ class Combination extends AudioCalibrator {
     let number_of_bursts_to_skip = 0;
     let time_to_sleep = 0;
     if (this.mode === 'unfiltered') {
-      time_to_sleep = (this.#mls[0].length / this.sourceSamplingRate) * number_of_bursts_to_skip;
+      time_to_sleep = this._calibrateSoundBurstPreSec;
     } else if (this.mode === 'filtered') {
       console.log(this.#currentConvolution.length);
       // time_to_sleep =
@@ -1059,15 +1061,16 @@ class Combination extends AudioCalibrator {
    * @example
    */
   #createCalibrationNodeFromBuffer = dataBuffer => {
+    const mlsSignal = reorderMLS(dataBuffer, this.calibrateSound1000HzPreSec, this.sourceSamplingRate);
     console.log('length databuffer');
-    console.log(dataBuffer.length);
+    console.log(mlsSignal.length);
     if (!this.sourceAudioContext) {
       this.makeNewSourceAudioContext();
     }
 
     const buffer = this.sourceAudioContext.createBuffer(
       1, // number of channels
-      dataBuffer.length,
+      mlsSignal.length,
       this.sourceAudioContext.sampleRate // sample rate
     );
 
@@ -1075,8 +1078,8 @@ class Combination extends AudioCalibrator {
 
     // fill the buffer with our data
     try {
-      for (let i = 0; i < dataBuffer.length; i += 1) {
-        data[i] = dataBuffer[i];
+      for (let i = 0; i < mlsSignal.length; i += 1) {
+        data[i] = mlsSignal[i];
       }
     } catch (error) {
       console.error(error);
@@ -2363,9 +2366,13 @@ class Combination extends AudioCalibrator {
       for (var i = 0; i < this.numCaptures; i++) {
         this.icapture = i;
         if (this.isCalibrating) return null;
-
+      // From Denis July 20th, 2025:
+      // Imagine playing the 10 s MLS, repeatedly, forever, and we record part of it. That piece should be
+      //  2.5+10+10+1 second long. To synthesize this, the pre-interval should be the final 2.5 sec of MLS.
+      //  Followed by two whole MLS. Followed by the initial 1 sec of MLS. Again, all the pieces together 
+      // should be one contiguous piece cut out from an infinitely repeating MLS.
         // Get the MLS signal for this capture
-        const mlsSignal = this.#mlsBufferView[this.icapture];
+        const mlsSignal = reorderMLS(this.#mlsBufferView[this.icapture], this.calibrateSound1000HzPreSec, this.sourceSamplingRate);
 
         // Run the simulation
         await this.simulatedMLSCalibration(
@@ -2385,6 +2392,8 @@ class Combination extends AudioCalibrator {
       }
     } else {
       // Use actual recording mode
+      
+      
       for (var i = 0; i < this.numCaptures; i++) {
         this.icapture = i;
         await this.calibrationSteps(
@@ -3344,7 +3353,7 @@ class Combination extends AudioCalibrator {
         sampleRate: fMLS,
         binDesiredSec: this._calibrateSoundPowerBinDesiredSec,
         burstSec: this.desired_time_per_mls,
-        repeats: this.numMLSPerCapture - this.num_mls_to_skip,
+        repeats: this._calibrateSoundBurstRepeats,
         warmUp: this._calibrateSoundBurstPreSec,
         downsample: this._calibrateSoundBurstDownsample,
       })
