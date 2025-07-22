@@ -857,7 +857,7 @@ class Combination extends AudioCalibrator {
               this._calibrateSoundBurstDownsample
             );
 
-            console.log('payload_skipped_warmUp_downsampled', payload_skipped_warmUp_downsampled);
+            console.log('payload_skipped_warmUp_downsampled', payload_skipped_warmUp_downsampled.length);
             // console.log('usedPeriodStart', usedPeriodStart);
             // console.log('payload', payload);
             // console.log('payload_skipped_warmUp', payload_skipped_warmUp);
