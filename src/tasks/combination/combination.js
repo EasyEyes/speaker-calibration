@@ -1292,7 +1292,7 @@ class Combination extends AudioCalibrator {
     );
     this.filteredMLSRange.system.Min = findMinValue(this.#currentConvolution);
     this.filteredMLSRange.system.Max = findMaxValue(this.#currentConvolution);
-    this.soundCheck = 'system';
+    this.soundCheck = 'speakerAndMic';
 
     if (this.isCalibrating) return null;
 
@@ -1681,7 +1681,7 @@ class Combination extends AudioCalibrator {
       this.calibrateSoundSimulateMicrophone !== null &&
       this.calibrateSoundSimulateLoudspeaker !== null;
 
-    if (this._calibrateSoundCheck != 'system') {
+    if (this._calibrateSoundCheck != 'speakerAndMic') {
       this.#currentConvolution = this.componentConvolution;
       this.#currentConvolution = this.upsampleSignal(
         this.#currentConvolution,
@@ -1713,7 +1713,7 @@ class Combination extends AudioCalibrator {
       );
       this.filteredMLSRange.system.Min = findMinValue(this.#currentConvolution);
       this.filteredMLSRange.system.Max = findMaxValue(this.#currentConvolution);
-      this.soundCheck = 'system';
+      this.soundCheck = 'speakerAndMic';
 
       if (this.isCalibrating) return null;
 
@@ -1732,14 +1732,14 @@ class Combination extends AudioCalibrator {
     }
 
     let conv_recs = this.getAllFilteredRecordedSignals();
-    if (this._calibrateSoundCheck == 'goal') {
+    if (this._calibrateSoundCheck == 'speakerOrMic') {
       if (this.componentAttentuatorGainDB != 0) {
         let linearScaleAttenuation = Math.pow(10, this.componentAttenuatorGainDB / 20);
         conv_recs = conv_recs.map(rec => {
           return rec.map(value => value / this.linearScaleAttenuation);
         });
       }
-    } else if (this._calibrateSoundCheck == 'system') {
+    } else if (this._calibrateSoundCheck == 'speakerAndMic') {
       if (this.systemAttentuatorGainDB != 0) {
         let linearScaleAttenuation = Math.pow(10, this.systemAttenuatorGainDB / 20);
         conv_recs = conv_recs.map(rec => {
@@ -1749,14 +1749,14 @@ class Combination extends AudioCalibrator {
     }
 
     let recs = this.getAllUnfilteredRecordedSignals();
-    if (this._calibrateSoundCheck == 'goal') {
+    if (this._calibrateSoundCheck == 'speakerOrMic') {
       if (this.componentAttentuatorGainDB != 0) {
         let linearScaleAttenuation = Math.pow(10, this.componentAttenuatorGainDB / 20);
         recs = recs.map(rec => {
           return rec.map(value => value / this.linearScaleAttenuation);
         });
       }
-    } else if (this._calibrateSoundCheck == 'system') {
+    } else if (this._calibrateSoundCheck == 'speakerAndMic') {
       if (this.systemAttentuatorGainDB != 0) {
         let linearScaleAttenuation = Math.pow(10, this.systemAttentuatorGainDB / 20);
         recs = recs.map(rec => {
@@ -1780,7 +1780,7 @@ class Combination extends AudioCalibrator {
       this.sourceAudioContext.close();
     }
 
-    if (this._calibrateSoundCheck != 'system') {
+    if (this._calibrateSoundCheck != 'speakerAndMic') {
       let knownGain = this.oldComponentIR.Gain;
       let knownFreq = this.oldComponentIR.Freq;
       let sampleRate = this.sourceSamplingRate || 96000;
@@ -2435,7 +2435,7 @@ class Combination extends AudioCalibrator {
     let iir_ir_and_plots;
     if (this._calibrateSoundCheck != 'none') {
       //do single check
-      if (this._calibrateSoundCheck == 'goal' || this._calibrateSoundCheck == 'system') {
+      if (this._calibrateSoundCheck == 'speakerOrMic' || this._calibrateSoundCheck == 'speakerAndMic') {
         if (this.isCalibrating) return null;
         iir_ir_and_plots = await this.singleSoundCheck(stream);
         if (this.isCalibrating) return null;
@@ -3441,7 +3441,7 @@ class Combination extends AudioCalibrator {
     lCalib = 104.92978421490648,
     componentIR = null,
     microphoneName = 'MiniDSP-UMIK1-711-4754-vertical',
-    _calibrateSoundCheck = 'goal', //GOAL PASSed in by default
+    _calibrateSoundCheck = 'speakerOrMic', //GOAL PASSed in by default
     isSmartPhone = false,
     _calibrateSoundBurstDb = -18,
     _calibrateSoundBurstFilteredExtraDb = 6,
