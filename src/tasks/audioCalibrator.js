@@ -71,19 +71,34 @@ class AudioCalibrator extends AudioRecorder {
   };
 
   addTimeStamp = taskName => {
-    const currentTime = new Date().getTime(); // Current time in ms
-    const elapsedTime = (currentTime - this.startTime) / 1000; // Convert to seconds
-    const stepDuration = elapsedTime - this.currentTime;
-
-    this.currentTime = elapsedTime; // Update for next step
-
-    // Format numbers to 1 decimal place without padding
-    const elapsedStr = elapsedTime.toFixed(1);
-    const stepStr = stepDuration.toFixed(1);
-
-    // Push timestamp string (without padding)
-    this.timeStamp.push(`${elapsedStr} s. ∆ ${stepStr} s.  ${taskName}`);
+    const currentTime   = new Date().getTime();           // ms
+    const elapsedTime   = (currentTime - this.startTime) / 1000;  // s
+    const stepDuration  = elapsedTime - this.currentTime;
+    const startTimeSec  = elapsedTime - stepDuration;
+  
+    this.currentTime = elapsedTime; // for the next call
+  
+    const startStr = startTimeSec.toFixed(1);
+    const stepStr  = stepDuration.toFixed(1);
+  
+    if (taskName === "Plot results") {
+      // first push your normal Plot‐results line
+      this.timeStamp.push(
+        `${startStr} s. ∆ ${stepStr} s.  ${taskName}`
+      );
+      // *then* push the final “Done” line using the final elapsedTime
+      const endStr = elapsedTime.toFixed(1);
+      this.timeStamp.push(
+        `${endStr} s.  Done`
+      );
+    }
+    else {
+      this.timeStamp.push(
+        `${startStr} s. ∆ ${stepStr} s.  ${taskName}`
+      );
+    }
   };
+  
 
   recordBackground = async (
     stream,
@@ -268,7 +283,9 @@ class AudioCalibrator extends AudioRecorder {
     microphoneImpulseResponse,
     afterRecord = () => {},
     lCalib,
-    checkRec
+    checkSD,
+    maxSD,
+    maxRetry
   ) => {
     const totalSec = this.CALIBRATION_TONE_DURATION;
     // Convolve with loudspeaker and microphone impulse responses
@@ -306,7 +323,25 @@ class AudioCalibrator extends AudioRecorder {
     this.saveVolumeRecording(convolvedSignalWithMicrophone);
 
     // Process the simulated recording
-    await afterRecord(lCalib);
+    await afterRecord(lCalib); 
+    const sd = await checkSD();
+    let sdMessage;
+    if (sd <= maxSD) {
+      console.log(`SD =${sd}, less than calibrateSound1000HzMaxSD_dB=${maxSD}`);
+      this.numCalibratingRoundsCompleted += maxRetry;
+      sdMessage = `. SD = ${sd} dB`;
+    } else {
+      // if exist the maxSD do it one more time and only one more time
+      console.log(`SD =${sd}, greater than calibrateSound1000HzMaxSD_dB=${maxSD}`);
+      this.numCalibratingRoundsCompleted += 1;
+      sdMessage = `. SD = ${sd} > ${this.calibrateSound1000HzMaxSD_dB} dB.`;
+    }
+    this.addTimeStamp(
+      `${this.calibrateSound1000HzPreSec.toFixed(1)}` +
+        `+${this.calibrateSound1000HzSec.toFixed(1)}` +
+        `+${this.calibrateSound1000HzPostSec.toFixed(1)} s. ` +
+        `1000 Hz at ${this.inDB} dB${sdMessage}`
+    );
   };
 
   /**
