@@ -526,7 +526,7 @@ class Speaker extends AudioPeer {
       explanation.innerHTML = formatLineBreak(
         this.phrases.RC_skipQR_ExplanationWithoutPreferNot[this.language]
           .replace('xxx', `<b style="user-select: text">${shortURL}</b>`)
-          .replace('XXX', `<b style="user-select: text">${shortURL}</b>`),
+          .replace('𝕏𝕏𝕏', `<b style="user-select: text">${shortURL}</b>`),
         this.phrases.RC_checkInternetConnection[this.language]
       );
 
@@ -629,7 +629,7 @@ class Speaker extends AudioPeer {
     const timeToCalibrateDisplay = document.getElementById(this.timeToCalibrateDisplay);
     if (timeToCalibrateDisplay) {
       const timeToCalibrateText = this.phrases.RC_howLongToCalibrate[this.language];
-      timeToCalibrateDisplay.innerHTML = timeToCalibrateText.replace('111', this.timeToCalibrate);
+      timeToCalibrateDisplay.innerHTML = timeToCalibrateText.replace('𝟙𝟙𝟙', this.timeToCalibrate);
       timeToCalibrateDisplay.style.fontWeight = 'normal';
       timeToCalibrateDisplay.style.fontSize = '1rem';
       // timeToCalibrateDisplay.style.paddingTop = '20px';

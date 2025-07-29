@@ -10,7 +10,7 @@ import {
   getCurrentTimeString,
   standardDeviation,
   interpolate,
-  reorderMLS
+  reorderMLS,
 } from '../../utils';
 
 import {volumePowerCheck, getPower} from '../../powerCheck';
@@ -375,9 +375,9 @@ class Combination extends AudioCalibrator {
       : '';
 
     const samplingParamText = this.phrases.RC_SamplingHzBits[this.language]
-      .replace('111', this.sourceSamplingRate)
-      .replace('222', this.sinkSamplingRate)
-      .replace('333', this.calibrateSoundSamplingDesiredBits);
+      .replace('𝟙𝟙𝟙', this.sourceSamplingRate)
+      .replace('𝟚𝟚𝟚', this.sinkSamplingRate)
+      .replace('𝟛𝟛𝟛', this.calibrateSoundSamplingDesiredBits);
     const reportParameters = `${simulateText}${samplingParamText} ↓${this._calibrateSoundBurstDownsample}:1`;
     if (this.flags) {
       flags = `<br> autoGainControl: ${this.flags.autoGainControl}, echoCancellation: ${this.flags.echoCancellation}, noiseSuppression: ${this.flags.noiseSuppression}`;
@@ -844,7 +844,10 @@ class Combination extends AudioCalibrator {
             this.recordingChecks['unfiltered'].push(result);
             console.log('start calculate impulse response');
             const usedPeriodStart = this._calibrateSoundBurstPreSec * this.sourceSamplingRate;
-            const usedPeriodEnd = (this._calibrateSoundBurstPreSec + this._calibrateSoundBurstRepeats * this._calibrateSoundBurstSec) * this.sourceSamplingRate;
+            const usedPeriodEnd =
+              (this._calibrateSoundBurstPreSec +
+                this._calibrateSoundBurstRepeats * this._calibrateSoundBurstSec) *
+              this.sourceSamplingRate;
             const payload_skipped_warmUp = payload.slice(usedPeriodStart, usedPeriodEnd);
 
             console.log('payload.length', payload.length);
@@ -857,7 +860,10 @@ class Combination extends AudioCalibrator {
               this._calibrateSoundBurstDownsample
             );
 
-            console.log('payload_skipped_warmUp_downsampled', payload_skipped_warmUp_downsampled.length);
+            console.log(
+              'payload_skipped_warmUp_downsampled',
+              payload_skipped_warmUp_downsampled.length
+            );
             // console.log('usedPeriodStart', usedPeriodStart);
             // console.log('payload', payload);
             // console.log('payload_skipped_warmUp', payload_skipped_warmUp);
@@ -869,7 +875,7 @@ class Combination extends AudioCalibrator {
                 mls: mls,
                 payload: payload_skipped_warmUp_downsampled,
                 sampleRate: fMLS,
-                numPeriods: (this._calibrateSoundBurstRepeats) / factor,
+                numPeriods: this._calibrateSoundBurstRepeats / factor,
                 downsample: this._calibrateSoundBurstDownsample,
               })
               .then(async res => {
@@ -882,7 +888,7 @@ class Combination extends AudioCalibrator {
                     .getImpulseResponse({
                       mls,
                       sampleRate: fMLS,
-                      numPeriods: (this._calibrateSoundBurstRepeats) / factor,
+                      numPeriods: this._calibrateSoundBurstRepeats / factor,
                       sig: payload_skipped_warmUp_downsampled,
                       fs2: this.fs2,
                       L_new_n: this.L_new_n,
@@ -1069,7 +1075,11 @@ class Combination extends AudioCalibrator {
    * @example
    */
   #createCalibrationNodeFromBuffer = dataBuffer => {
-    const mlsSignal = reorderMLS(dataBuffer, this.calibrateSound1000HzPreSec, this.sourceSamplingRate);
+    const mlsSignal = reorderMLS(
+      dataBuffer,
+      this.calibrateSound1000HzPreSec,
+      this.sourceSamplingRate
+    );
     console.log('length databuffer');
     console.log(mlsSignal.length);
     if (!this.sourceAudioContext) {
@@ -1409,7 +1419,9 @@ class Combination extends AudioCalibrator {
 
     conv_rec = system_conv_recs[system_conv_recs.length - 1];
     //psd of system
-    this.addTimeStamp('Compute spectrum of filtered recording (speaker+mic) and unfiltered recording');
+    this.addTimeStamp(
+      'Compute spectrum of filtered recording (speaker+mic) and unfiltered recording'
+    );
     if (this.isCalibrating) return null;
     let system_recs_psd = await this.pyServerAPI
       .getPSDWithRetry({
@@ -2044,7 +2056,9 @@ class Combination extends AudioCalibrator {
         impulseResponses: [],
       };
     } else {
-      this.addTimeStamp('Compute spectrum of filtered recording (speaker+mic) and unfiltered recording');
+      this.addTimeStamp(
+        'Compute spectrum of filtered recording (speaker+mic) and unfiltered recording'
+      );
       if (this.isCalibrating) return null;
       const fMLS = this.sourceSamplingRate / this._calibrateSoundBurstDownsample;
       let results = await this.pyServerAPI
@@ -2084,7 +2098,9 @@ class Combination extends AudioCalibrator {
       //iir w/ and without bandpass psd
       unconv_rec = this.componentInvertedImpulseResponseNoBandpass;
       conv_rec = this.componentInvertedImpulseResponse;
-      this.addTimeStamp('Compute spectrum of speaker or mic IIR and speaker or mic IIR no band pass');
+      this.addTimeStamp(
+        'Compute spectrum of speaker or mic IIR and speaker or mic IIR no band pass'
+      );
       if (this.isCalibrating) return null;
       let component_iir_psd = await this.pyServerAPI
         .getPSDWithRetry({
@@ -2374,13 +2390,17 @@ class Combination extends AudioCalibrator {
       for (var i = 0; i < this.numCaptures; i++) {
         this.icapture = i;
         if (this.isCalibrating) return null;
-      // From Denis July 20th, 2025:
-      // Imagine playing the 10 s MLS, repeatedly, forever, and we record part of it. That piece should be
-      //  2.5+10+10+1 second long. To synthesize this, the pre-interval should be the final 2.5 sec of MLS.
-      //  Followed by two whole MLS. Followed by the initial 1 sec of MLS. Again, all the pieces together 
-      // should be one contiguous piece cut out from an infinitely repeating MLS.
+        // From Denis July 20th, 2025:
+        // Imagine playing the 10 s MLS, repeatedly, forever, and we record part of it. That piece should be
+        //  2.5+10+10+1 second long. To synthesize this, the pre-interval should be the final 2.5 sec of MLS.
+        //  Followed by two whole MLS. Followed by the initial 1 sec of MLS. Again, all the pieces together
+        // should be one contiguous piece cut out from an infinitely repeating MLS.
         // Get the MLS signal for this capture
-        const mlsSignal = reorderMLS(this.#mlsBufferView[this.icapture], this.calibrateSound1000HzPreSec, this.sourceSamplingRate);
+        const mlsSignal = reorderMLS(
+          this.#mlsBufferView[this.icapture],
+          this.calibrateSound1000HzPreSec,
+          this.sourceSamplingRate
+        );
 
         // Run the simulation
         await this.simulatedMLSCalibration(
@@ -2400,8 +2420,7 @@ class Combination extends AudioCalibrator {
       }
     } else {
       // Use actual recording mode
-      
-      
+
       for (var i = 0; i < this.numCaptures; i++) {
         this.icapture = i;
         await this.calibrationSteps(
@@ -2435,7 +2454,10 @@ class Combination extends AudioCalibrator {
     let iir_ir_and_plots;
     if (this._calibrateSoundCheck != 'none') {
       //do single check
-      if (this._calibrateSoundCheck == 'speakerOrMic' || this._calibrateSoundCheck == 'speakerAndMic') {
+      if (
+        this._calibrateSoundCheck == 'speakerOrMic' ||
+        this._calibrateSoundCheck == 'speakerAndMic'
+      ) {
         if (this.isCalibrating) return null;
         iir_ir_and_plots = await this.singleSoundCheck(stream);
         if (this.isCalibrating) return null;
@@ -2585,7 +2607,9 @@ class Combination extends AudioCalibrator {
 
       const fMLS = this.sourceSamplingRate / this._calibrateSoundBurstDownsample;
 
-      this.addTimeStamp('Compute spectrum of speaker or mic IIR and speaker or mic IIR no band pass');
+      this.addTimeStamp(
+        'Compute spectrum of speaker or mic IIR and speaker or mic IIR no band pass'
+      );
       if (this.isCalibrating) return null;
       let component_iir_psd = await this.pyServerAPI
         .getPSDWithRetry({
@@ -3005,7 +3029,7 @@ class Combination extends AudioCalibrator {
           return this.recordingChecks['volume'][this.inDB]['sd'];
         },
         this.calibrateSound1000HzMaxSD_dB,
-        this.calibrateSound1000HzMaxTries 
+        this.calibrateSound1000HzMaxTries
       );
     } else {
       // Use actual recording mode
@@ -3071,7 +3095,7 @@ class Combination extends AudioCalibrator {
             return this.recordingChecks['volume'][this.inDB]['sd'];
           },
           this.calibrateSound1000HzMaxSD_dB,
-          this.calibrateSound1000HzMaxTries 
+          this.calibrateSound1000HzMaxTries
         );
       } else {
         // Use actual recording mode
@@ -3380,21 +3404,16 @@ class Combination extends AudioCalibrator {
             this._calibrateSoundBurstRepeats * this._calibrateSoundBurstSec +
             this._calibrateSoundBurstPostSec;
 
-            let soundCheckLabel;
-            if (this.soundCheck === 'component')
-            {
-              soundCheckLabel = 'speaker or mic';
-            }
-            else if (this.soundCheck === 'speakerAndMic')
-            {
-              soundCheckLabel = 'speaker+mic';
-            }
-            else {
-              soundCheckLabel = this.soundCheck;
-            }
-        
+          let soundCheckLabel;
+          if (this.soundCheck === 'component') {
+            soundCheckLabel = 'speaker or mic';
+          } else if (this.soundCheck === 'speakerAndMic') {
+            soundCheckLabel = 'speaker+mic';
+          } else {
+            soundCheckLabel = this.soundCheck;
+          }
+
           if (result['sd'] > this._calibrateSoundBurstMaxSD_dB && this.numSuccessfulCaptured == 0) {
-            
             this.addTimeStamp(
               `Record ${total_dur} s of MLS with ${soundCheckLabel} IIR. SD = ${result['sd']} > ${this._calibrateSoundBurstMaxSD_dB} dB`
             );

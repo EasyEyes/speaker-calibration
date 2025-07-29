@@ -1,4 +1,4 @@
-import Swal from "sweetalert2";
+import Swal from 'sweetalert2';
 //import {phrases} from '../dist/example/i18n.js';
 /** .
  * .
@@ -40,7 +40,7 @@ const saveToCSV = (data, filename = 'recordedMLSignal.csv') => {
 
 const saveToJSON = (data, filename = 'recordedMLSignal.json') => {
   const jsonData = JSON.stringify(data, null, 2);
-  const blob = new Blob([jsonData], { type: 'application/json' });
+  const blob = new Blob([jsonData], {type: 'application/json'});
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.setAttribute('href', url);
@@ -49,7 +49,6 @@ const saveToJSON = (data, filename = 'recordedMLSignal.json') => {
   link.click();
   URL.revokeObjectURL(url);
 };
-
 
 /** .
  * .
@@ -67,22 +66,22 @@ const csvToArray = (csvString, delimiter = ',') =>
     .split('\n')
     .map(row => parseFloat(row.trim().split(delimiter)[1]));
 
-const findMinValue = (array) => {
+const findMinValue = array => {
   let minValue = array[0];
   for (let i = 1; i < array.length; i++) {
-      if (array[i] < minValue) {
-          minValue = array[i];
-      }
+    if (array[i] < minValue) {
+      minValue = array[i];
+    }
   }
   return minValue;
 };
 
-const findMaxValue = (array) => {
+const findMaxValue = array => {
   let maxValue = array[0];
   for (let i = 1; i < array.length; i++) {
-      if (array[i] > maxValue) {
-          maxValue = array[i];
-      }
+    if (array[i] > maxValue) {
+      maxValue = array[i];
+    }
   }
   return maxValue;
 };
@@ -92,22 +91,22 @@ export const getCurrentTimeString = () => {
 
   // Get the date string in the user's locale
   const dateOptions = {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-    timeZoneName: "longOffset",
-    hour: "numeric",
-    minute: "numeric",
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    timeZoneName: 'longOffset',
+    hour: 'numeric',
+    minute: 'numeric',
   };
   const dateString = date.toLocaleDateString(undefined, dateOptions);
 
-  return dateString.replace("at ", "");
+  return dateString.replace('at ', '');
 };
 
-const standardDeviation = (values) => {
+const standardDeviation = values => {
   const avg = average(values);
 
-  const squareDiffs = values.map((value) => {
+  const squareDiffs = values.map(value => {
     const diff = value - avg;
     const sqrDiff = diff * diff;
     return sqrDiff;
@@ -121,7 +120,7 @@ const standardDeviation = (values) => {
   return std.toFixed(1);
 };
 
-const average = (data) => {
+const average = data => {
   const sum = data.reduce((sum, value) => {
     return sum + value;
   }, 0);
@@ -131,22 +130,19 @@ const average = (data) => {
 };
 
 function interpolate(x, x0, x1, y0, y1) {
-  return y0 + (y1 - y0) * (x - x0) / (x1 - x0);
+  return y0 + ((y1 - y0) * (x - x0)) / (x1 - x0);
 }
 
-export const formatLineBreak =(inputStr,checkInternetConnection) => {
+export const formatLineBreak = (inputStr, checkInternetConnection) => {
   let finalStr = inputStr
-  .replace(/\n/g, '<br>')
-  .replace('LLL',
-    `<a href="#" id="check-connection">${checkInternetConnection}</a>`);
-  
+    .replace(/\n/g, '<br>')
+    .replace('𝕃𝕃𝕃', `<a href="#" id="check-connection">${checkInternetConnection}</a>`);
+
   console.log(finalStr);
 
   return finalStr;
-}
+};
 
-
-  
 export const createAndShowPopup = (lang, phrases) => {
   console.log(`
     <div style="text-align: left;"> 
@@ -169,23 +165,23 @@ export const createAndShowPopup = (lang, phrases) => {
       </div>`,
     showConfirmButton: false,
     position: 'bottom',
-    width: "40%",
+    width: '40%',
     customClass: {
-      container:'no-background',
+      container: 'no-background',
     },
     showClass: {
-      popup: "fade-in",
+      popup: 'fade-in',
     },
     hideClass: {
-      popup: "",
+      popup: '',
     },
     didOpen: () => {
-      const okayBtn = document.getElementById("okaybtn");
-      okayBtn.style.display = "flex"; 
+      const okayBtn = document.getElementById('okaybtn');
+      okayBtn.style.display = 'flex';
       okayBtn.addEventListener('click', () => {
         Swal.close(); // Close the Swal popup
       });
-    }
+    },
   });
 };
 
@@ -193,9 +189,9 @@ export function convertAsterisksToList(content) {
   // Replace * with <li> and convert line breaks to </li><li>
   console.log(content);
   let result = content
-      .replace(/\* (.*?)(<br>|$)/g, '<li>$1</li>')
-      .replace(/(<li>)(<\/li>)\s*$/, '') // Remove trailing </li>
-      .replace('<li>', '<ul style="padding-left:40px"> <br> <li>');
+    .replace(/\* (.*?)(<br>|$)/g, '<li>$1</li>')
+    .replace(/(<li>)(<\/li>)\s*$/, '') // Remove trailing </li>
+    .replace('<li>', '<ul style="padding-left:40px"> <br> <li>');
   result = result.replace('</li>5', '</li></ul>5');
   return result;
 }
@@ -210,6 +206,15 @@ export const reorderMLS = (mlsSignal, preSec, sourceSamplingRate) => {
   const lastPart = mlsSignal.slice(-numSamplesToMove);
   const firstPart = mlsSignal.slice(0, mlsSignal.length - numSamplesToMove);
   return lastPart.concat(firstPart);
-}
+};
 
-export {sleep, saveToCSV, saveToJSON, csvToArray,findMinValue,findMaxValue, standardDeviation, interpolate};
+export {
+  sleep,
+  saveToCSV,
+  saveToJSON,
+  csvToArray,
+  findMinValue,
+  findMaxValue,
+  standardDeviation,
+  interpolate,
+};
