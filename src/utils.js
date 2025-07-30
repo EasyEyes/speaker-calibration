@@ -136,7 +136,7 @@ function interpolate(x, x0, x1, y0, y1) {
 export const formatLineBreak = (inputStr, checkInternetConnection) => {
   let finalStr = inputStr
     .replace(/\n/g, '<br>')
-    .replace('𝕃𝕃𝕃', `<a href="#" id="check-connection">${checkInternetConnection}</a>`);
+    .replace('[[LLL]]', `<a href="#" id="check-connection">${checkInternetConnection}</a>`);
 
   console.log(finalStr);
 
