@@ -622,7 +622,7 @@ class Speaker extends AudioPeer {
       // p.style.fontWeight = 'normal';
       // p.style.paddingTop = '20px';
       // const timeToCalibrateText = phrases.RC_howLongToCalibrate['en-US'];
-      // p.innerHTML = timeToCalibrateText.replace('111', this.timeToCalibrate);
+      // p.innerHTML = timeToCalibrateText.replace('[[N11]]', this.timeToCalibrate);
       // instructionDisplay.appendChild(p);
     }
 
@@ -630,7 +630,7 @@ class Speaker extends AudioPeer {
     if (timeToCalibrateDisplay) {
       const timeToCalibrateText = this.phrases.RC_howLongToCalibrate[this.language];
       timeToCalibrateDisplay.innerHTML = timeToCalibrateText.replace(
-        '[[111]]',
+        '[[N11]]',
         this.timeToCalibrate
       );
       timeToCalibrateDisplay.style.fontWeight = 'normal';

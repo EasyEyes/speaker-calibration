@@ -375,9 +375,9 @@ class Combination extends AudioCalibrator {
       : '';
 
     const samplingParamText = this.phrases.RC_SamplingHzBits[this.language]
-      .replace('[[111]]', this.sourceSamplingRate)
-      .replace('[[222]]', this.sinkSamplingRate)
-      .replace('[[333]]', this.calibrateSoundSamplingDesiredBits);
+      .replace('[[N11]]', this.sourceSamplingRate)
+      .replace('[[N22]]', this.sinkSamplingRate)
+      .replace('[[N33]]', this.calibrateSoundSamplingDesiredBits);
     const reportParameters = `${simulateText}${samplingParamText} ↓${this._calibrateSoundBurstDownsample}:1`;
     if (this.flags) {
       flags = `<br> autoGainControl: ${this.flags.autoGainControl}, echoCancellation: ${this.flags.echoCancellation}, noiseSuppression: ${this.flags.noiseSuppression}`;
