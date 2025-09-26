@@ -2810,7 +2810,8 @@ class Combination extends AudioCalibrator {
 
     oscilator.frequency.value = this.#CALIBRATION_TONE_FREQUENCY;
     oscilator.type = this.#CALIBRATION_TONE_TYPE;
-    gainNode.gain.value = gainValue;
+    // Multiply by sqrt(2) so that requested dB (based on RMS) maps to oscillator peak
+    gainNode.gain.value = gainValue * Math.SQRT2;
 
     oscilator.connect(gainNode);
     gainNode.connect(taperGainNode);
@@ -3964,8 +3965,8 @@ class Combination extends AudioCalibrator {
     for (let i = 0; i < numSamples; i++) {
       const t = i / sampleRate;
 
-      // Base sine wave at specified frequency
-      let value = Math.sin(2 * Math.PI * frequency * t) * gainValue;
+      // Base sine wave at specified frequency; scale by sqrt(2) so RMS matches requested dB
+      let value = Math.sin(2 * Math.PI * frequency * t) * gainValue * Math.SQRT2;
 
       // Apply taper at beginning and end
       if (t < this.TAPER_SECS) {
