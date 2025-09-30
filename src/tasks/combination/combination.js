@@ -2339,7 +2339,7 @@ class Combination extends AudioCalibrator {
       this.power_dB = this._calibrateSoundBurstDb + (this.T - this.gainDBSPL);
     }
 
-    const amplitude = Math.pow(10, this.power_dB / 20) / Math.SQRT2;
+    const amplitude = Math.pow(10, this.power_dB / 20);
 
     if (this.isCalibrating) return null;
     await this.pyServerAPI
