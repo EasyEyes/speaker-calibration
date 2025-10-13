@@ -251,10 +251,20 @@ class Speaker extends AudioPeer {
       message: 'Text',
       text: 'Loading...',
     });
+    //only send the following fields, RC_microphonePermissionDenied, RC_microphonePermission, RC_placeSmartphoneMicrophone, RC_turnMeToReadBelow, RC_soundRecording, RC_soundRecordingSmallScreen, RC_soundRecording, RC_backToExperimentWindow, RC_allowMicrophoneUse
     speaker.connectionManager.send({
       name: 'SoundCalibration',
       message: 'phrases',
-      payload: speaker.phrases,
+      payload: {
+        RC_microphonePermissionDenied: speaker.phrases.RC_microphonePermissionDenied,
+        RC_microphonePermission: speaker.phrases.RC_microphonePermission,
+        RC_placeSmartphoneMicrophone: speaker.phrases.RC_placeSmartphoneMicrophone,
+        RC_turnMeToReadBelow: speaker.phrases.RC_turnMeToReadBelow,
+        RC_soundRecording: speaker.phrases.RC_soundRecording,
+        RC_soundRecordingSmallScreen: speaker.phrases.RC_soundRecordingSmallScreen,
+        RC_backToExperimentWindow: speaker.phrases.RC_backToExperimentWindow,
+        RC_allowMicrophoneUse: speaker.phrases.RC_allowMicrophoneUse,
+      },
     });
 
     // Send connection parameters to the listener

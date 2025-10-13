@@ -9,6 +9,7 @@ export class PhonePeer {
       targetElementId: 'display',
       microphoneFromAPI: '',
       microphoneDeviceId: '',
+      lang: 'en',
     };
     this.listener = null;
     this.connectionManager = null;
@@ -38,7 +39,7 @@ export class PhonePeer {
     this.listenerParameters.speakerPeerId = payload.speakerPeerId;
     this.listenerParameters.hz = payload.hz;
     this.listenerParameters.bits = payload.bits;
-    this.listenerParameters.lang = payload.lang;
+    this.listenerParameters.lang = payload.lang ?? 'en';
     this.listenerParameters.deviceId = payload.deviceId;
     this.listenerParameters.sp = payload.sp;
     this.listenerParameters.microphoneDeviceId = payload.deviceId;
@@ -128,7 +129,8 @@ export class PhonePeer {
       await this.checkAndRequestMicrophonePermission();
     } else {
       const allowMicrophoneElement = document.getElementById('allowMicrophone');
-      allowMicrophoneElement.innerText = this.phrases.RC_microphonePermissionDenied['en-US'];
+      let language = this.listenerParameters.lang;
+      allowMicrophoneElement.innerText = this.phrases.RC_microphonePermissionDenied[language];
       this.listener.sendPermissionStatus({
         type: 'error',
         error: 'Connection setup timed out after 30 seconds',
@@ -141,7 +143,8 @@ export class PhonePeer {
     const allowMicrophoneElement = document.getElementById('allowMicrophone');
 
     // Show permission request message
-    allowMicrophoneElement.innerText = this.phrases.RC_microphonePermission['en-US'];
+    let language = this.listenerParameters.lang;
+    allowMicrophoneElement.innerText = this.phrases.RC_microphonePermission[language];
     container.style.display = 'block';
 
     // Function to request microphone access
@@ -154,7 +157,7 @@ export class PhonePeer {
         if (err.name === 'NotAllowedError') {
           console.log('Permission explicitly denied');
           // Permission explicitly denied
-          allowMicrophoneElement.innerText = this.phrases.RC_microphonePermissionDenied['en-US'];
+          allowMicrophoneElement.innerText = this.phrases.RC_microphonePermissionDenied[language];
           // Send denied status and end study
           let error = JSON.stringify(err);
           this.listener.sendPermissionStatus({type: 'denied', error: error});
@@ -169,7 +172,7 @@ export class PhonePeer {
         } else {
           console.log('All retries failed, treating as denied');
           // After all retries failed, treat as denied
-          allowMicrophoneElement.innerText = this.phrases.RC_microphonePermissionDenied['en-US'];
+          allowMicrophoneElement.innerText = this.phrases.RC_microphonePermissionDenied[language];
           let error = JSON.stringify(err);
           this.listener.sendPermissionStatus({type: 'error', error: error});
         }
@@ -180,7 +183,7 @@ export class PhonePeer {
       await requestMicAccess();
     } catch (err) {
       console.error('Error requesting microphone permission:', err);
-      allowMicrophoneElement.innerText = this.phrases.RC_microphonePermissionDenied['en-US'];
+      allowMicrophoneElement.innerText = this.phrases.RC_microphonePermissionDenied[language];
       let error = JSON.stringify(err);
       this.listener.sendPermissionStatus({type: 'error', error: error});
     }
@@ -190,8 +193,9 @@ export class PhonePeer {
     const container = document.getElementById('listenerContainer');
     const allowMicrophoneElement = document.getElementById('allowMicrophone');
     const turnMessageElement = document.getElementById('turnMeToReadBelow');
-    const placeSmartphoneMicrophone = this.phrases.RC_placeSmartphoneMicrophone['en-US'];
-    const turnMeToReadBelow = this.phrases.RC_turnMeToReadBelow['en-US'];
+    let language = this.listenerParameters.lang;
+    const placeSmartphoneMicrophone = this.phrases.RC_placeSmartphoneMicrophone[language];
+    const turnMeToReadBelow = this.phrases.RC_turnMeToReadBelow[language];
 
     allowMicrophoneElement.innerText = placeSmartphoneMicrophone;
     allowMicrophoneElement.style.lineHeight = '1.2rem';
@@ -241,7 +245,7 @@ export class PhonePeer {
     const allowMicrophoneElement = document.getElementById('allowMicrophone');
     const container = document.getElementById('listenerContainer');
     const targetElement = document.getElementById('display');
-
+    let language = this.listenerParameters.lang;
     // Clear unnecessary elements
     calibrationBeginButton.remove();
     turnMessageElement.remove();
@@ -263,8 +267,8 @@ export class PhonePeer {
     const title = document.createElement('h1');
     const titleText =
       window.innerWidth >= 1366
-        ? this.phrases.RC_soundRecording['en-US']
-        : this.phrases.RC_soundRecordingSmallScreen['en-US'];
+        ? this.phrases.RC_soundRecording[language]
+        : this.phrases.RC_soundRecordingSmallScreen[language];
 
     // Split small screen title into lines if needed
     if (window.innerWidth < 1366 && titleText.includes('\n')) {
@@ -441,9 +445,10 @@ export class PhonePeer {
     const container = document.getElementById('listenerContainer');
     const recordingInProgressElement = document.getElementById('recordingInProgress');
     const allowMicrophoneElement = document.getElementById('allowMicrophone');
-    const recordingInProgress = this.phrases.RC_soundRecording['en-US'];
-    const backToExperimentWindow = this.phrases.RC_backToExperimentWindow['en-US'];
-    const allowMicrophone = this.phrases.RC_allowMicrophoneUse['en-US'];
+    let language = this.listenerParameters.lang;
+    const recordingInProgress = this.phrases.RC_soundRecording[language];
+    const backToExperimentWindow = this.phrases.RC_backToExperimentWindow[language];
+    const allowMicrophone = this.phrases.RC_allowMicrophoneUse[language];
 
     // remove the button
     const calibrationBeginButton = document.getElementById('calibrationBeginButton');
