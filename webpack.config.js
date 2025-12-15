@@ -1,4 +1,6 @@
+require('dotenv').config();
 const path = require('path');
+const webpack = require('webpack');
 const {BundleAnalyzerPlugin} = require('webpack-bundle-analyzer');
 
 const config = {
@@ -49,7 +51,13 @@ const config = {
       },
     ],
   },
-  plugins: [],
+  plugins: [
+    new webpack.DefinePlugin({
+      'process.env.FIREBASE_API_KEY': JSON.stringify(
+        process.env.FIREBASE_API_KEY || ''
+      ),
+    }),
+  ],
   resolve: {
     fallback: {
       path: require.resolve('path-browserify'),
