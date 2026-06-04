@@ -6,7 +6,6 @@ const {BundleAnalyzerPlugin} = require('webpack-bundle-analyzer');
 const config = {
   entry: {
     main: './src/main.js',
-    listener: './src/listener-app/listener.js',
     phonePeer: './src/listener-app/PhonePeer.js',
   },
   output: {

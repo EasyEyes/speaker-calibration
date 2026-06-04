@@ -25,7 +25,7 @@ class Speaker extends AudioPeer {
    */
   constructor(params, CalibratorInstance, connectionManager = null) {
     super(params);
-    this.language = params?.language ?? 'en-US';
+    this.language = params?.language ?? 'en';
     this.siteUrl += '/listener?';
     // this.ac = CalibratorInstance;
     this.result = null;
