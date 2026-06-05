@@ -6,7 +6,7 @@ Library has minimal dependencies and is designed to be used in the browser.
 [![Netlify Status](https://api.netlify.com/api/v1/badges/4662ab8c-dd4f-43ce-8e2d-add7a406300a/deploy-status)](https://app.netlify.com/sites/focused-hodgkin-0a6531/deploys)
 
 ## Usage
-
+ 
 ```html
 <!-- index.html --->
 ...
