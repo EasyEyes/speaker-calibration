@@ -1,9 +1,9 @@
-import {phrases} from '../../dist/example/i18n.js';
 import Listener from '../peer-connection/listener.js';
 
 export class PhonePeer {
   constructor() {
-    this.phrases = phrases;
+    // Phrases are injected over the peer channel via handlePhrases (message: 'phrases').
+    this.phrases = {};
     this.name = 'SoundCalibration';
     this.listenerParameters = {
       targetElementId: 'display',
