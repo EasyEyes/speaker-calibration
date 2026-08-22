@@ -447,7 +447,7 @@ export class PhonePeer {
     const allowMicrophoneElement = document.getElementById('allowMicrophone');
     let language = this.listenerParameters.lang;
     const recordingInProgress = this.phrases.RC_soundRecording[language];
-    const backToExperimentWindow = this.phrases.RC_backToExperimentWindow[language];
+    const backToExperimentWindow = this.phrases.RC_backToStudyWindow[language];
     const allowMicrophone = this.phrases.RC_allowMicrophoneUse[language];
 
     // remove the button
